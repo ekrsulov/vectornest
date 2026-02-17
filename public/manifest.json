@@ -1,0 +1,17 @@
+{
+  "name": "VectorNest",
+  "short_name": "VectorNest",
+  "description": "Vector editor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

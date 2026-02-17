@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="79" height="74" viewBox="-8 -8 95 90">
+  <g id="art">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      begin="16s"
+      dur="5s"
+      repeatCount="indefinite"
+      additive="sum"
+      calcMode="linear"
+      values="39.5 37;39.5 37;39.5 37;39.5 37" />
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      begin="16s"
+      dur="5s"
+      repeatCount="indefinite"
+      additive="sum"
+      calcMode="spline"
+      keyTimes="0;0.35;0.90;0.96;1"
+      keySplines="0.4 0 0.2 1; 0.25 0 0.25 1; 0.2 0 0.2 1; 0 0 1 1"
+      values="0 0; 0 -0.9; 0 0.18; 0 0; 0 0" />
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      begin="16s"
+      dur="10s"
+      repeatCount="indefinite"
+      additive="sum"
+      calcMode="spline"
+      keyTimes="0;0.175;0.45;0.5;0.675;0.95;1"
+      keySplines="0.4 0 0.2 1; 0.25 0 0.25 1; 0 0 1 1; 0.4 0 0.2 1; 0.25 0 0.25 1; 0 0 1 1"
+      values="0 0; -0.3 0; 0 0; 0 0; 0.3 0; 0 0; 0 0" />
+    <animateTransform
+      attributeName="transform"
+      type="scale"
+      begin="16s"
+      dur="5s"
+      repeatCount="indefinite"
+      additive="sum"
+      calcMode="spline"
+      keyTimes="0;0.35;0.90;1"
+      keySplines="0.4 0 0.2 1; 0.25 0 0.25 1; 0 0 1 1"
+      values="1 1; 1.07 1.07; 1 1; 1 1" />
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      begin="16s"
+      dur="10s"
+      repeatCount="indefinite"
+      additive="sum"
+      calcMode="spline"
+      keyTimes="0;0.175;0.45;0.5;0.675;0.95;1"
+      keySplines="0.4 0 0.2 1; 0.25 0 0.25 1; 0 0 1 1; 0.4 0 0.2 1; 0.25 0 0.25 1; 0 0 1 1"
+      values="0; -1.2; 0; 0; 1.2; 0; 0" />
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      begin="16s"
+      dur="5s"
+      repeatCount="indefinite"
+      additive="sum"
+      calcMode="linear"
+      values="-39.5 -37;-39.5 -37;-39.5 -37;-39.5 -37" />
+    <path fill="none" stroke="#3d5afe" stroke-dasharray="60" stroke-linecap="round" stroke-linejoin="round" stroke-width="14" d="M42 67 7 32" opacity=".8">
+      <animate fill="freeze" attributeName="stroke-dashoffset"
+        begin="0s" dur="16s" repeatCount="1" calcMode="spline"
+        keySplines="0.4 0 0.2 1; 0 0 1 1"
+        keyTimes="0;0.10;1"
+        values="60;0;0"/>
+    </path>
+
+    <path fill="none" stroke="#3d5afe" stroke-dasharray="70" stroke-linecap="round" stroke-linejoin="round" stroke-width="14" d="M42 67 67 7" opacity=".8">
+      <animate fill="freeze" attributeName="stroke-dashoffset"
+        begin="0s" dur="16s" repeatCount="1" calcMode="spline"
+        keySplines="0.4 0 0.2 1; 0 0 1 1"
+        keyTimes="0;0.10;1"
+        values="70;0;0"/>
+    </path>
+
+    <circle cx="45" cy="80" r="0" fill="#47d6ff" transform="translate(-3 -13)">
+      <animate fill="freeze" attributeName="r"
+        begin="0s" dur="16s" repeatCount="1" calcMode="linear"
+        keyTimes="0;0.10;1"
+        values="0;7;7"/>
+    </circle>
+
+    <circle cx="45" cy="80" r="0" fill="#32a44f" transform="translate(-3 -13)">
+      <animate fill="freeze" attributeName="cx"
+        begin="0s" dur="16s" repeatCount="1" calcMode="spline"
+        keySplines="0.4 0 0.2 1; 0 0 1 1"
+        keyTimes="0;0.10;1"
+        values="45;10;10"/>
+      <animate fill="freeze" attributeName="cy"
+        begin="0s" dur="16s" repeatCount="1" calcMode="spline"
+        keySplines="0.4 0 0.2 1; 0 0 1 1"
+        keyTimes="0;0.10;1"
+        values="80;45;45"/>
+      <animate fill="freeze" attributeName="r"
+        begin="0s" dur="16s" repeatCount="1" calcMode="linear"
+        keyTimes="0;0.10;1"
+        values="0;7;7"/>
+    </circle>
+
+    <path fill="none" stroke="#b8b2b2" stroke-dasharray="70" stroke-linecap="round" stroke-linejoin="round" stroke-width="14" d="m67 7 5 60" opacity=".6">
+      <animate fill="freeze" attributeName="stroke-dashoffset"
+        begin="0s" dur="16s" repeatCount="1" calcMode="spline"
+        keySplines="0 0 1 1; 0.4 0 0.2 1"
+        keyTimes="0;0.22;1"
+        values="70;0;0"/>
+    </path>
+
+    <circle cx="45" cy="80" r="0" fill="#47d6ff" transform="translate(-3 -13)">
+      <animate fill="freeze" attributeName="cx"
+        begin="0s" dur="16s" repeatCount="1" calcMode="spline"
+        keySplines="0.4 0 0.2 1; 0 0 1 1"
+        keyTimes="0;0.10;1"
+        values="45;70;70"/>
+      <animate fill="freeze" attributeName="cy"
+        begin="0s" dur="16s" repeatCount="1" calcMode="spline"
+        keySplines="0.4 0 0.2 1; 0 0 1 1"
+        keyTimes="0;0.10;1"
+        values="80;20;20"/>
+      <animate fill="freeze" attributeName="r"
+        begin="0s" dur="16s" repeatCount="1" calcMode="linear"
+        keyTimes="0;0.10;1"
+        values="0;7;7"/>
+    </circle>
+
+    <circle cx="70" cy="20" r="0" fill="#d75b5b" transform="translate(-3 -13)">
+      <animate fill="freeze" attributeName="cx"
+        begin="0s" dur="16s" repeatCount="1" calcMode="spline"
+        keySplines="0.4 0 0.2 1; 0 0 1 1"
+        keyTimes="0;0.22;1"
+        values="70;75;75"/>
+      <animate fill="freeze" attributeName="cy"
+        begin="0s" dur="16s" repeatCount="1" calcMode="spline"
+        keySplines="0.4 0 0.2 1; 0 0 1 1"
+        keyTimes="0;0.22;1"
+        values="20;80;80"/>
+      <animate fill="freeze" attributeName="r"
+        begin="0s" dur="16s" repeatCount="1" calcMode="linear"
+        keyTimes="0;0.22;1"
+        values="0;7;7"/>
+    </circle>
+  </g>
+</svg>

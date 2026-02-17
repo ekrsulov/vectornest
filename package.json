@@ -1,0 +1,66 @@
+{
+  "name": "ttpe",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bunx --bun vite",
+    "build": "bun run tsc -b && bunx --bun vite build",
+    "lint": "bunx eslint .",
+    "test": "bun test src",
+    "test:vitest": "bunx vitest run",
+    "test:ui": "bunx playwright test --ui",
+    "preview": "bunx --bun vite preview",
+    "type-check": "bun run tsc --noEmit",
+    "typecheck": "bun run tsc --noEmit",
+    "unused-exports": "bunx ts-unused-exports tsconfig.json",
+    "ts-prune": "bunx ts-prune -p tsconfig.app.json",
+    "ts-prune:core": "bunx ts-prune -p tsconfig.app.json | grep -v 'src/plugins' | grep -v '(used in module)'"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "bunx eslint --fix"
+    ]
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.10.9",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@tanstack/react-virtual": "^3.13.12",
+    "esm-potrace-wasm": "^0.4.1",
+    "fast-deep-equal": "^3.1.3",
+    "framer-motion": "^11.18.2",
+    "lucide-react": "^0.544.0",
+    "ngraph.graph": "^20.1.1",
+    "ngraph.path": "^1.6.1",
+    "opentype.js": "^1.3.4",
+    "paper": "^0.12.18",
+    "paperjs-offset": "^1.0.8",
+    "path-data-parser": "^0.1.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "zundo": "^2.3.0",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^24.5.2",
+    "@types/opentype.js": "^1.3.8",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^5.0.0",
+    "baseline-browser-mapping": "^2.8.29",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.33.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "ts-prune": "^0.10.3",
+    "ts-unused-exports": "^11.0.1",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.39.1",
+    "vite": "^7.1.2",
+    "vitest": "^1.4.2"
+  }
+}

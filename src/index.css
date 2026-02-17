@@ -1,0 +1,23 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@font-face {
+  font-family: 'Momo Trust Display';
+  src: url('/fonts/MomoTrustDisplay-Regular.ttf') format('truetype');
+}
+
+/* Prevent tap highlight on mobile devices (especially Android) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Specifically for SVG elements to prevent visual flashing on Android */
+svg, svg * {
+  -webkit-tap-highlight-color: transparent;
+}

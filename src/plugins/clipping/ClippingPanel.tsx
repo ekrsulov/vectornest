@@ -377,13 +377,19 @@ export const ClippingPanel: React.FC = () => {
 
   useEffect(() => {
     if (presetsLoadedRef.current) return;
-    if ((clips?.length ?? 0) > 0) {
-      presetsLoadedRef.current = true;
-      return;
-    }
-    addPresetClip();
     presetsLoadedRef.current = true;
-  }, [addPresetClip, clips]);
+    // Add only the presets that are not yet present.
+    // We cannot simply check clips.length > 0 because an SVG import may have
+    // added clips before the panel was first opened, which would wrongly prevent
+    // the built-in presets from being added altogether.
+    const existingNames = new Set((clips ?? []).map((c) => c.name));
+    const bbox = { x: 0, y: 0, width: 100, height: 100 };
+    CLIPPATH_PRESETS.forEach((p) => {
+      if (existingNames.has(p.name)) return;
+      const content = p.generateContent(bbox);
+      addClipFromRawContent?.(content, p.name, { minX: 0, minY: 0, width: 100, height: 100 });
+    });
+  }, [addPresetClip, clips, addClipFromRawContent]);
 
   // Custom render for the item
   const renderItem = (clip: ClipDefinition, isSelected: boolean) => (

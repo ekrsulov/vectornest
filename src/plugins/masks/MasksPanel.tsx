@@ -663,20 +663,25 @@ export const MasksPanel: React.FC = () => {
     setActiveMaskId(newMask.id);
   }, [setActiveMaskId]);
 
-  const handleAddAllPresets = useCallback(() => {
-    MASK_PRESETS.forEach((p) => handleAddPreset(p.id));
-  }, [handleAddPreset]);
-
   // Prevent double-load in StrictMode mounts
   const hasAutoLoadedRef = useRef(false);
 
-  // Auto-load all presets on first render when no masks exist (same as pressing "Add All")
+  // Auto-load all presets on first render, skipping any that are already present.
+  // We cannot simply check items.length === 0 because an SVG import may have
+  // added masks before the panel was first opened, which would wrongly prevent
+  // the built-in presets from being added altogether.
   useEffect(() => {
-    if (!hasAutoLoadedRef.current && items.length === 0) {
-      hasAutoLoadedRef.current = true;
-      handleAddAllPresets();
-    }
-  }, [items.length, handleAddAllPresets]);
+    if (hasAutoLoadedRef.current) return;
+    hasAutoLoadedRef.current = true;
+    const existingPresetIds = new Set(
+      items.map((m) => (m as MaskDefinition & { presetId?: string }).presetId).filter(Boolean)
+    );
+    MASK_PRESETS.forEach((p) => {
+      if (!existingPresetIds.has(p.id)) {
+        handleAddPreset(p.id);
+      }
+    });
+  }, [items, handleAddPreset]);
 
   const renderItem = (mask: MaskDefinition & { name: string }, isSelected: boolean) => (
     <MaskItemCard

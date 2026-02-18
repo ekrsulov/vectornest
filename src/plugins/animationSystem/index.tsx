@@ -144,7 +144,10 @@ function getDefAncestorInfo(animEl: Element): {
     let symbolChildIndex: number | undefined;
     if (parentElement && parentElement !== (symbolAncestor as Element)) {
       const children = Array.from(symbolAncestor.children).filter(
-        (el) => !['animate', 'animatetransform', 'animatemotion', 'set'].includes(el.tagName.toLowerCase())
+        (el) => {
+          const tag = el.tagName.toLowerCase();
+          return tag !== 'defs' && !['animate', 'animatetransform', 'animatemotion', 'set'].includes(tag);
+        }
       );
       symbolChildIndex = children.indexOf(parentElement as Element);
       if (symbolChildIndex === -1) {
@@ -167,7 +170,10 @@ function getDefAncestorInfo(animEl: Element): {
     let markerChildIndex: number | undefined;
     if (parentElement && parentElement !== (markerAncestor as Element)) {
       const children = Array.from(markerAncestor.children).filter(
-        (el) => !['animate', 'animatetransform', 'animatemotion', 'set'].includes(el.tagName.toLowerCase())
+        (el) => {
+          const tag = el.tagName.toLowerCase();
+          return tag !== 'defs' && !['animate', 'animatetransform', 'animatemotion', 'set'].includes(tag);
+        }
       );
       markerChildIndex = children.indexOf(parentElement as Element);
       if (markerChildIndex === -1) {
@@ -194,8 +200,12 @@ function getDefAncestorInfo(animEl: Element): {
     const parentElement = animEl.parentElement;
     let maskChildIndex: number | undefined;
     if (parentElement && parentElement !== (maskAncestor as Element)) {
+      // Exclude <defs> and animation tags to match injectAnimationsIntoMaskContent indexing
       const children = Array.from(maskAncestor.children).filter(
-        (el) => !['animate', 'animatetransform', 'animatemotion', 'set'].includes(el.tagName.toLowerCase())
+        (el) => {
+          const tag = el.tagName.toLowerCase();
+          return tag !== 'defs' && !['animate', 'animatetransform', 'animatemotion', 'set'].includes(tag);
+        }
       );
       maskChildIndex = children.indexOf(parentElement as Element);
       if (maskChildIndex === -1) {
@@ -218,7 +228,10 @@ function getDefAncestorInfo(animEl: Element): {
     let clipPathChildIndex: number | undefined;
     if (parentElement && parentElement !== (clipAncestor as Element)) {
       const children = Array.from(clipAncestor.children).filter(
-        (el) => !['animate', 'animatetransform', 'animatemotion', 'set'].includes(el.tagName.toLowerCase())
+        (el) => {
+          const tag = el.tagName.toLowerCase();
+          return tag !== 'defs' && !['animate', 'animatetransform', 'animatemotion', 'set'].includes(tag);
+        }
       );
       clipPathChildIndex = children.indexOf(parentElement as Element);
       if (clipPathChildIndex === -1) {
@@ -255,12 +268,15 @@ function getDefAncestorInfo(animEl: Element): {
     const parentElement = animEl.parentElement;
     let patternChildIndex: number | undefined;
     if (parentElement && parentElement !== (patternAncestor as Element)) {
-      // Get direct children of pattern that are shape/path elements
+      // Get direct children of pattern that are shape/path elements (exclude defs)
       const children = Array.from(patternAncestor.children).filter(
-        (el) => el.tagName.toLowerCase() !== 'animate' && 
-               el.tagName.toLowerCase() !== 'animatetransform' && 
-               el.tagName.toLowerCase() !== 'animatemotion' &&
-               el.tagName.toLowerCase() !== 'set'
+        (el) => {
+          const tag = el.tagName.toLowerCase();
+          return tag !== 'defs' && tag !== 'animate' && 
+                 tag !== 'animatetransform' && 
+                 tag !== 'animatemotion' &&
+                 tag !== 'set';
+        }
       );
       patternChildIndex = children.indexOf(parentElement as Element);
       if (patternChildIndex === -1) {

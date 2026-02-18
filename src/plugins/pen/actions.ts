@@ -3,6 +3,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 import type { PenAnchorPoint, PenPath } from './types';
 import type { PenPluginSlice } from './slice';
 import { penPathToCommands, pathDataToPenPath } from './utils/pathConverter';
+import { toLocalPenPath, toWorldPenPath } from './utils/penPathTransforms';
 
 type PenStore = CanvasStore & PenPluginSlice;
 
@@ -289,14 +290,15 @@ export function finalizePath(getState: () => CanvasStore): void {
         path.anchors = anchors;
     }
 
-    // Convert PenPath to Command[] format
-    const commands = penPathToCommands(path);
-
     // Check if we are editing an existing path
     if (penState.editingPathId) {
         const existingElement = state.elements.find(el => el.id === penState.editingPathId);
 
         if (existingElement && existingElement.type === 'path') {
+            // currentPath is stored in world coordinates while editing;
+            // convert back to element-local coordinates before persisting.
+            const localPath = toLocalPenPath(path, penState.editingPathId, state.elements);
+            const commands = penPathToCommands(localPath);
             const pathData = existingElement.data as PathData;
             // Update the specific subpath being edited
             const updatedSubPaths = [...pathData.subPaths];
@@ -311,6 +313,7 @@ export function finalizePath(getState: () => CanvasStore): void {
         }
     } else {
         // Creating new path
+        const commands = penPathToCommands(path);
         // Get stroke/fill settings from centralized StyleSlice
         const style = state.style || {};
 
@@ -461,8 +464,10 @@ export function startEditingPath(
     // Check if the subpath index is valid
     if (subPathIndex < 0 || subPathIndex >= pathData.subPaths.length) return;
 
-    // Convert the specific subpath to PenPath
-    const penPath = pathDataToPenPath(pathData.subPaths[subPathIndex], pathId);
+    // Convert the specific subpath to PenPath (stored in local coordinates)
+    // and project it to world coordinates for pointer interactions/overlays.
+    const localPenPath = pathDataToPenPath(pathData.subPaths[subPathIndex], pathId);
+    const penPath = toWorldPenPath(localPenPath, pathId, state.elements);
 
     state.updatePenState?.({
         mode: 'editing',
@@ -664,7 +669,9 @@ function updatePathOnCanvas(
     if (!element || element.type !== 'path') return;
     const pathData = element.data as PathData;
 
-    const commands = penPathToCommands(path);
+    // currentPath is in world coordinates during editing; persist in local coordinates.
+    const localPath = toLocalPenPath(path, pathId, state.elements);
+    const commands = penPathToCommands(localPath);
 
     // Create a copy of the subPaths array and update only the specific subpath
     const updatedSubPaths = [...pathData.subPaths];

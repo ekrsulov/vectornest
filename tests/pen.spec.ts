@@ -425,3 +425,183 @@ test.describe('Pen Tool - Rubber Band Preview', () => {
         expect(pathCount).toBeGreaterThan(0);
     });
 });
+
+test.describe('Pen Tool - Group Transform Handling', () => {
+    test('should edit transformed grouped path without creating a ghost path', async ({ page }) => {
+        await page.goto('/');
+        await waitForLoad(page);
+
+        const setup = await page.evaluate(() => {
+            const store = (window as any).useCanvasStore;
+            if (!store) throw new Error('Canvas store is not available');
+
+            const {
+                addElement,
+                selectElements,
+                createGroupFromSelection,
+                updateElement,
+            } = store.getState();
+
+            const createOpenPath = (startX: number, startY: number, endX: number, endY: number) => addElement({
+                type: 'path',
+                data: {
+                    subPaths: [[
+                        { type: 'M', position: { x: startX, y: startY } },
+                        { type: 'L', position: { x: endX, y: endY } },
+                    ]],
+                    strokeWidth: 2,
+                    strokeColor: '#000000',
+                    strokeOpacity: 1,
+                    fillColor: 'none',
+                    fillOpacity: 1,
+                },
+            });
+
+            // Target path to edit with Pen.
+            const pathId = createOpenPath(40, 40, 120, 40);
+            // Auxiliary path so grouping has at least two selected elements.
+            const helperPathId = createOpenPath(40, 180, 120, 180);
+
+            selectElements([pathId, helperPathId]);
+            const groupId = createGroupFromSelection('Pen Transform Group');
+            if (!groupId) throw new Error('Failed to create group for test');
+
+            // Apply a visible transform at group level.
+            const tx = 180;
+            const ty = 120;
+            updateElement(groupId, {
+                data: {
+                    transform: {
+                        translateX: tx,
+                        translateY: ty,
+                        rotation: 0,
+                        scaleX: 1,
+                        scaleY: 1,
+                    },
+                },
+            });
+
+            const pathCount = store.getState().elements.filter((el: any) => el.type === 'path').length;
+
+            return {
+                pathId,
+                groupId,
+                pathCount,
+                transform: { tx, ty },
+                worldEndPoint: { x: 120 + tx, y: 40 + ty },
+                worldNewPoint: { x: 220 + tx, y: 100 + ty },
+            };
+        });
+
+        await selectTool(page, 'Pen');
+
+        const clientPoints = await page.evaluate(({ worldEndPoint, worldNewPoint }) => {
+            const store = (window as any).useCanvasStore;
+            if (!store) throw new Error('Canvas store is not available');
+
+            const svg = document.querySelector('svg[data-canvas="true"]') as SVGSVGElement | null;
+            if (!svg) throw new Error('SVG canvas not found');
+
+            const rect = svg.getBoundingClientRect();
+            const { zoom, panX, panY } = store.getState().viewport;
+
+            const toClient = (point: { x: number; y: number }) => ({
+                x: rect.left + point.x * zoom + panX,
+                y: rect.top + point.y * zoom + panY,
+            });
+
+            return {
+                endClient: toClient(worldEndPoint),
+                newClient: toClient(worldNewPoint),
+            };
+        }, {
+            worldEndPoint: setup.worldEndPoint,
+            worldNewPoint: setup.worldNewPoint,
+        });
+
+        // First click on transformed endpoint enters editing mode for the existing path.
+        await page.mouse.click(clientPoints.endClient.x, clientPoints.endClient.y);
+        await page.waitForTimeout(120);
+
+        const penAfterFirstClick = await page.evaluate(() => {
+            const store = (window as any).useCanvasStore;
+            const pen = store?.getState?.().pen;
+            return {
+                mode: pen?.mode ?? null,
+                editingPathId: pen?.editingPathId ?? null,
+                anchors: pen?.currentPath?.anchors?.map((a: any) => ({ x: a.position.x, y: a.position.y })) ?? [],
+            };
+        });
+
+        expect(penAfterFirstClick.mode).toBe('editing');
+        expect(penAfterFirstClick.editingPathId).toBe(setup.pathId);
+        expect(penAfterFirstClick.anchors.length).toBeGreaterThanOrEqual(2);
+        expect(penAfterFirstClick.anchors[0].x).toBeCloseTo(40 + setup.transform.tx, 3);
+        expect(penAfterFirstClick.anchors[0].y).toBeCloseTo(40 + setup.transform.ty, 3);
+        expect(penAfterFirstClick.anchors[1].x).toBeCloseTo(120 + setup.transform.tx, 3);
+        expect(penAfterFirstClick.anchors[1].y).toBeCloseTo(40 + setup.transform.ty, 3);
+
+        // Second click on the same endpoint continues the path and switches to drawing mode.
+        await page.mouse.click(clientPoints.endClient.x, clientPoints.endClient.y);
+        await page.waitForTimeout(120);
+
+        const penAfterSecondClick = await page.evaluate(() => {
+            const store = (window as any).useCanvasStore;
+            const pen = store?.getState?.().pen;
+            return {
+                mode: pen?.mode ?? null,
+                editingPathId: pen?.editingPathId ?? null,
+            };
+        });
+
+        expect(penAfterSecondClick.mode).toBe('drawing');
+        expect(penAfterSecondClick.editingPathId).toBe(setup.pathId);
+
+        // Add a new anchor in world space and finalize.
+        await page.mouse.click(clientPoints.newClient.x, clientPoints.newClient.y);
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(120);
+
+        const finalState = await page.evaluate(({ pathId, tx, ty }) => {
+            const store = (window as any).useCanvasStore;
+            if (!store) throw new Error('Canvas store is not available');
+            const state = store.getState();
+
+            const pathElements = state.elements.filter((el: any) => el.type === 'path');
+            const targetPath = state.elements.find((el: any) => el.id === pathId);
+            if (!targetPath || targetPath.type !== 'path') {
+                throw new Error('Target path not found');
+            }
+
+            const subPath = targetPath.data.subPaths[0];
+            const lastCommand = subPath[subPath.length - 1];
+            const localExpected = { x: 220, y: 100 };
+            const worldExpected = { x: 220 + tx, y: 100 + ty };
+
+            return {
+                totalPathCount: pathElements.length,
+                parentId: targetPath.parentId,
+                commandCount: subPath.length,
+                lastPoint: lastCommand?.type === 'M' || lastCommand?.type === 'L' || lastCommand?.type === 'C'
+                    ? { x: lastCommand.position.x, y: lastCommand.position.y }
+                    : null,
+                localExpected,
+                worldExpected,
+            };
+        }, {
+            pathId: setup.pathId,
+            tx: setup.transform.tx,
+            ty: setup.transform.ty,
+        });
+
+        // No "ghost" path should be created; same path should be edited in-place.
+        expect(finalState.totalPathCount).toBe(setup.pathCount);
+        expect(finalState.commandCount).toBe(3);
+        expect(finalState.parentId).toBe(setup.groupId);
+        expect(finalState.lastPoint).toBeTruthy();
+        expect(finalState.lastPoint?.x).toBeCloseTo(finalState.localExpected.x, 3);
+        expect(finalState.lastPoint?.y).toBeCloseTo(finalState.localExpected.y, 3);
+        expect(finalState.lastPoint?.x).not.toBeCloseTo(finalState.worldExpected.x, 3);
+        expect(finalState.lastPoint?.y).not.toBeCloseTo(finalState.worldExpected.y, 3);
+    });
+});

@@ -42,6 +42,7 @@ import {
 } from '../utils/penGuidelines';
 import type { PenHoverTarget, PenPath } from '../types';
 import { snapManager } from '../../../snap/SnapManager';
+import { toWorldPenPath } from '../utils/penPathTransforms';
 
 /**
  * Main hook for Pen tool pointer event handling
@@ -130,24 +131,35 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     const pathData = editingElement.data as PathData;
                     // Check if the specific subpath exists
                     if (pathData.subPaths?.[penState.editingSubPathIndex]) {
-                        // Convert element to PenPath
-                        const updatedPenPath = pathDataToPenPath(
+                        // Subpath commands are stored in local space; convert to world for Pen interactions.
+                        const updatedLocalPenPath = pathDataToPenPath(
                             pathData.subPaths[penState.editingSubPathIndex],
                             penState.editingPathId
+                        );
+                        const updatedPenPath = toWorldPenPath(
+                            updatedLocalPenPath,
+                            penState.editingPathId,
+                            elements
                         );
 
                         // Only update if the path data actually changed
                         // Compare anchor positions and handles
                         const currentPath = penState.currentPath;
                         if (currentPath) {
+                            const nearlyEqual = (a?: number, b?: number, tolerance = 0.001): boolean => {
+                                if (a === undefined && b === undefined) return true;
+                                if (a === undefined || b === undefined) return false;
+                                return Math.abs(a - b) < tolerance;
+                            };
+
                             const isDifferent =
                                 updatedPenPath.anchors.length !== currentPath.anchors.length ||
                                 updatedPenPath.anchors.some((anchor, i) => {
                                     const curr = currentPath.anchors[i];
                                     if (!curr) return true;
-                                    if (anchor.position.x !== curr.position.x || anchor.position.y !== curr.position.y) return true;
-                                    if (anchor.inHandle?.x !== curr.inHandle?.x || anchor.inHandle?.y !== curr.inHandle?.y) return true;
-                                    if (anchor.outHandle?.x !== curr.outHandle?.x || anchor.outHandle?.y !== curr.outHandle?.y) return true;
+                                    if (!nearlyEqual(anchor.position.x, curr.position.x) || !nearlyEqual(anchor.position.y, curr.position.y)) return true;
+                                    if (!nearlyEqual(anchor.inHandle?.x, curr.inHandle?.x) || !nearlyEqual(anchor.inHandle?.y, curr.inHandle?.y)) return true;
+                                    if (!nearlyEqual(anchor.outHandle?.x, curr.outHandle?.x) || !nearlyEqual(anchor.outHandle?.y, curr.outHandle?.y)) return true;
                                     return false;
                                 });
 

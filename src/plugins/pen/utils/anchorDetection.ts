@@ -3,6 +3,7 @@ import type { PenPath } from '../types';
 import { pathDataToPenPath } from './pathConverter';
 import { distance } from '../../../utils/math';
 import { closestPointOnLineSegment, closestPointOnCubicBezier } from '../../../utils/geometry';
+import { toLocalPointForElement, toWorldPenPath } from './penPathTransforms';
 
 const HIT_THRESHOLD = 8; // pixels
 
@@ -22,15 +23,17 @@ export function findPathAtPoint(
         if (element.type !== 'path') continue;
 
         const pathElement = element as PathElement;
+        const localPoint = toLocalPointForElement(point, pathElement.id, elements);
 
         // Check each subpath
         for (let subIndex = 0; subIndex < pathElement.data.subPaths.length; subIndex++) {
             const subPath = pathElement.data.subPaths[subIndex];
-            const penPath = pathDataToPenPath(subPath, pathElement.id);
+            const localPenPath = pathDataToPenPath(subPath, pathElement.id);
 
             // Check if point is close to any segment or anchor
-            if (isPointNearPath(point, penPath, threshold)) {
-                return { pathId: pathElement.id, penPath, subPathIndex: subIndex };
+            if (isPointNearPath(localPoint, localPenPath, threshold)) {
+                const worldPenPath = toWorldPenPath(localPenPath, pathElement.id, elements);
+                return { pathId: pathElement.id, penPath: worldPenPath, subPathIndex: subIndex };
             }
         }
     }

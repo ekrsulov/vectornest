@@ -10,8 +10,10 @@
  * - Perpendicular and tangent points (future)
  */
 
-import type { Point, PathData, SubPath } from '../../../types';
+import type { CanvasElement, PathData, Point } from '../../../types';
 import type { PenPath } from '../types';
+import { pathDataToPenPath } from './pathConverter';
+import { toWorldPenPath } from './penPathTransforms';
 
 export interface ReferencePoint {
     position: Point;
@@ -38,7 +40,7 @@ export interface PenGuidelineMatch {
 export function collectReferencePoints(
     currentPath: PenPath | null,
     currentPointIndex: number | null, // Exclude this point from current path
-    elements: Array<{ id: string; type: string; data: unknown }>,
+    elements: CanvasElement[],
     viewport: { zoom: number; panX: number; panY: number; width: number; height: number },
     editingPathId: string | null
 ): ReferencePoint[] {
@@ -108,35 +110,49 @@ export function collectReferencePoints(
         const pathData = element.data as PathData;
         if (!pathData?.subPaths) return;
         
-        pathData.subPaths.forEach((subPath: SubPath, subPathIndex: number) => {
+        pathData.subPaths.forEach((subPath, subPathIndex: number) => {
             if (!subPath || subPath.length === 0) return;
-            
-            // Extract anchor points and control points from subPath
-            const { anchors, controlPoints } = extractPointsFromSubPath(subPath);
-            
-            anchors.forEach((pos, anchorIndex) => {
+
+            const localPenPath = pathDataToPenPath(subPath, element.id);
+            const worldPenPath = toWorldPenPath(localPenPath, element.id, elements);
+            const anchors = worldPenPath.anchors;
+
+            anchors.forEach((anchor, anchorIndex) => {
                 points.push({
-                    position: pos,
+                    position: anchor.position,
                     type: 'anchor',
                     sourceId: element.id,
                     label: `${element.id.slice(0, 4)}:${subPathIndex}:${anchorIndex}`,
                 });
-            });
-            
-            // Add control points (handles) as reference points
-            controlPoints.forEach((pos, cpIndex) => {
-                points.push({
-                    position: pos,
-                    type: 'handle',
-                    sourceId: element.id,
-                    label: `${element.id.slice(0, 4)}:${subPathIndex}:cp${cpIndex}`,
-                });
+
+                if (anchor.inHandle) {
+                    points.push({
+                        position: {
+                            x: anchor.position.x + anchor.inHandle.x,
+                            y: anchor.position.y + anchor.inHandle.y,
+                        },
+                        type: 'handle',
+                        sourceId: element.id,
+                        label: `${element.id.slice(0, 4)}:${subPathIndex}:h${anchorIndex}-in`,
+                    });
+                }
+                if (anchor.outHandle) {
+                    points.push({
+                        position: {
+                            x: anchor.position.x + anchor.outHandle.x,
+                            y: anchor.position.y + anchor.outHandle.y,
+                        },
+                        type: 'handle',
+                        sourceId: element.id,
+                        label: `${element.id.slice(0, 4)}:${subPathIndex}:h${anchorIndex}-out`,
+                    });
+                }
             });
             
             // Add midpoints between consecutive anchors
             for (let i = 0; i < anchors.length - 1; i++) {
-                const p1 = anchors[i];
-                const p2 = anchors[i + 1];
+                const p1 = anchors[i].position;
+                const p2 = anchors[i + 1].position;
                 points.push({
                     position: {
                         x: (p1.x + p2.x) / 2,
@@ -192,42 +208,6 @@ export function collectReferencePoints(
     });
     
     return points;
-}
-
-/**
- * Extract anchor points and control points from a SubPath (array of Commands)
- */
-function extractPointsFromSubPath(subPath: SubPath): { anchors: Point[]; controlPoints: Point[] } {
-    const anchors: Point[] = [];
-    const controlPoints: Point[] = [];
-    
-    if (!subPath || subPath.length === 0) return { anchors, controlPoints };
-    
-    for (const command of subPath) {
-        if (command.type === 'M' || command.type === 'L') {
-            anchors.push({ ...command.position });
-        } else if (command.type === 'C') {
-            // Add the end point as anchor
-            anchors.push({ ...command.position });
-            
-            // Add control points (handles)
-            if (command.controlPoint1) {
-                controlPoints.push({ 
-                    x: command.controlPoint1.x, 
-                    y: command.controlPoint1.y 
-                });
-            }
-            if (command.controlPoint2) {
-                controlPoints.push({ 
-                    x: command.controlPoint2.x, 
-                    y: command.controlPoint2.y 
-                });
-            }
-        }
-        // 'Z' commands don't add new points
-    }
-    
-    return { anchors, controlPoints };
 }
 
 /**

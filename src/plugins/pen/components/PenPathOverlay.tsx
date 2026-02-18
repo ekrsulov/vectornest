@@ -4,6 +4,7 @@ import { useCanvasStore } from '../../../store/canvasStore';
 import { pathDataToPenPath } from '../utils/pathConverter';
 import { deriveElementSelectionColors } from '../../../utils/canvasColorUtils';
 import type { PathData } from '../../../types';
+import { toWorldPenPath } from '../utils/penPathTransforms';
 
 /**
  * Render anchors and handles of the current path being drawn
@@ -38,7 +39,8 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
                         const subPath = pathData.subPaths?.[subPathIndex];
                         if (!subPath) return null;
 
-                        const penPath = pathDataToPenPath(subPath, hoveredElement.id);
+                        const localPenPath = pathDataToPenPath(subPath, hoveredElement.id);
+                        const penPath = toWorldPenPath(localPenPath, hoveredElement.id, elements);
                         if (!penPath || penPath.anchors.length === 0) return null;
 
                         // Get contrasting color based on element's stroke/fill

@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
 import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expectToolEnabled} from './helpers';
 
+async function waitForCanvasStore(page: import('@playwright/test').Page): Promise<void> {
+    await page.waitForFunction(() => {
+        const store = (window as any).useCanvasStore;
+        return Boolean(store && typeof store.getState === 'function');
+    }, { timeout: 10_000 });
+}
+
 test.describe('Pen Tool - Path Creation', () => {
     test('should create a straight line with two anchor points', async ({ page }) => {
         await page.goto('/');
@@ -430,6 +437,7 @@ test.describe('Pen Tool - Group Transform Handling', () => {
     test('should edit transformed grouped path without creating a ghost path', async ({ page }) => {
         await page.goto('/');
         await waitForLoad(page);
+        await waitForCanvasStore(page);
 
         const setup = await page.evaluate(() => {
             const store = (window as any).useCanvasStore;

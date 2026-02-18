@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -16,7 +16,6 @@ import {
   Tab,
   TabPanel,
 } from '@chakra-ui/react';
-import { Play } from 'lucide-react';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { CanvasElement } from '../../types';
@@ -58,7 +57,6 @@ export const AnimationWorkspaceDialog: React.FC = () => {
   const animationState = useCanvasStore((state) => (state as unknown as AnimationPluginSlice).animationState);
   const animationSync = useCanvasStore((state) => (state as unknown as AnimationPluginSlice).animationSync);
   const setAnimationWorkspaceOpen = useCanvasStore((state) => (state as unknown as AnimationPluginSlice).setAnimationWorkspaceOpen);
-  const playCanvasPreview = useCanvasStore((state) => (state as unknown as AnimationPluginSlice).playCanvasPreview);
 
   const isWorkspaceOpen = animationState?.isWorkspaceOpen ?? false;
 
@@ -66,15 +64,6 @@ export const AnimationWorkspaceDialog: React.FC = () => {
     if (!selectedIds.length) return undefined;
     return elements.find((el) => el.id === selectedIds[0]);
   }, [elements, selectedIds]);
-
-  const handlePlayOnCanvas = useCallback(() => {
-    // Close the workspace dialog and start canvas preview
-    setAnimationWorkspaceOpen?.(false);
-    // Use setTimeout to ensure the dialog is closed before starting preview
-    setTimeout(() => {
-      playCanvasPreview?.();
-    }, 100);
-  }, [setAnimationWorkspaceOpen, playCanvasPreview]);
 
   if (!isActiveInstance || !isWorkspaceOpen) {
     return null;
@@ -183,18 +172,7 @@ export const AnimationWorkspaceDialog: React.FC = () => {
           </Tabs>
         </ModalBody>
         <ModalFooter borderTop="1px" borderColor={borderColor} px={{ base: 2, md: 4 }} py={{ base: 2, md: 3 }}>
-          <HStack spacing={2} width="100%" justify="space-between">
-            <PanelStyledButton
-              onClick={handlePlayOnCanvas}
-              isDisabled={animations.length === 0}
-              leftIcon={<Play size={14} />}
-              colorScheme="blue"
-              variant="outline"
-            >
-              Preview on Canvas
-            </PanelStyledButton>
-            <PanelStyledButton onClick={handleClose}>Close</PanelStyledButton>
-          </HStack>
+          <PanelStyledButton onClick={handleClose}>Close</PanelStyledButton>
         </ModalFooter>
       </ModalContent>
     </Modal>

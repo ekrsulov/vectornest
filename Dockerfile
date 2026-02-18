@@ -34,4 +34,3 @@ EXPOSE 5173
 
 # Serve the dist folder with SPA support
 CMD ["serve", "-l", "5173", "-s", "dist"]
-CMD ["serve", "-l", "5173", "-s", "dist"]

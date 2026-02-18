@@ -1,0 +1,23 @@
+---
+services:
+  vectornest:
+    build:
+      context: ${DOCKER_BUILD_CONTEXT:-.}
+      dockerfile: ${DOCKER_DOCKERFILE:-Dockerfile}
+      args:
+        - BUN_VERSION=${BUN_VERSION:-latest}
+    image: ${DOCKER_IMAGE_NAME:-vectornest}:${DOCKER_IMAGE_TAG:-latest}
+    container_name: ${DOCKER_CONTAINER_NAME:-vectornest}
+    ports:
+      - "${DOCKER_PORT:-5173}:${DOCKER_INTERNAL_PORT:-5173}"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - VITE_APP_TITLE=${VITE_APP_TITLE:-VectorNest}
+      - VITE_PREVIEW_PORT=${VITE_PREVIEW_PORT:-5173}
+    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${DOCKER_INTERNAL_PORT:-5173}"]
+      interval: ${DOCKER_HEALTH_INTERVAL:-30s}
+      timeout: ${DOCKER_HEALTH_TIMEOUT:-10s}
+      retries: ${DOCKER_HEALTH_RETRIES:-3}
+      start_period: ${DOCKER_HEALTH_START_PERIOD:-40s}

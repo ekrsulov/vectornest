@@ -16,8 +16,8 @@ services:
       - VITE_PREVIEW_PORT=${VITE_PREVIEW_PORT:-5173}
     restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${DOCKER_INTERNAL_PORT:-5173}"]
+      test: ["CMD", "curl", "-f", "-s", "-o", "/dev/null", "-w", "%{http_code}", "http://localhost:${DOCKER_INTERNAL_PORT:-5173}"]
       interval: ${DOCKER_HEALTH_INTERVAL:-30s}
-      timeout: ${DOCKER_HEALTH_TIMEOUT:-10s}
+      timeout: ${DOCKER_HEALTH_TIMEOUT:-5s}
       retries: ${DOCKER_HEALTH_RETRIES:-3}
-      start_period: ${DOCKER_HEALTH_START_PERIOD:-40s}
+      start_period: ${DOCKER_HEALTH_START_PERIOD:-15s}

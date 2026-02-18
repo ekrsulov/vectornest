@@ -20,6 +20,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Copy built dist folder from builder
 COPY --from=builder /app/dist ./dist
 
@@ -30,4 +33,5 @@ RUN npm install -g serve
 EXPOSE 5173
 
 # Serve the dist folder with SPA support
+CMD ["serve", "-l", "5173", "-s", "dist"]
 CMD ["serve", "-l", "5173", "-s", "dist"]

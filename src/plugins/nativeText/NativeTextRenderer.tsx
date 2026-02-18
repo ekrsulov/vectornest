@@ -1,5 +1,5 @@
 import type { NativeTextElement } from './types';
-import type React from 'react';
+import React from 'react';
 import type { CanvasElementRenderer, CanvasRenderContext } from '../../canvas/renderers/CanvasRendererRegistry';
 import { isTouchDevice } from '../../utils/domHelpers';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -35,13 +35,28 @@ export const NativeTextRenderer: CanvasElementRenderer<NativeTextElement> = (
   element,
   context: CanvasRenderContext
 ) => {
+  // Delegate to a proper React component so hooks can be used safely.
+  // Calling hooks directly in the renderer function violates Rules of Hooks
+  // because the renderer is invoked as a nested function from CanvasStage.
+  return <NativeTextRendererInner element={element} context={context} />;
+};
+
+const NativeTextRendererInner: React.FC<{
+  element: NativeTextElement;
+  context: CanvasRenderContext;
+}> = ({ element, context }) => {
   const { viewport, scaleStrokeWithZoom, eventHandlers, isElementSelected, isElementLocked, isPathInteractionDisabled, pathCursorMode, rendererOverrides, extensionsContext } = context;
   const data = element.data;
   const textOverrides = (rendererOverrides?.element?.nativeText as TextRendererOverrides | undefined) ?? undefined;
   const transformAttr = computeTransformAttr(data);
   const wireframeState = (useCanvasStore.getState() as unknown as WireframePluginSlice | undefined)?.wireframe;
   const isWireframe = Boolean(wireframeState?.enabled);
-  const isInlineEditing = (useCanvasStore.getState() as unknown as InlineTextEditSlice | undefined)?.inlineTextEdit?.editingElementId === element.id;
+  // Reactive selector — re-renders whenever editingElementId changes
+  const editingElementId = useCanvasStore((state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null);
+  // SVG text stays VISIBLE during inline editing — the transparent overlay
+  // captures keystrokes and updates the element in real-time, so the SVG
+  // is the display layer. No hiding needed.
+  void editingElementId;
   const removeWireframeFill = Boolean(isWireframe && wireframeState?.removeFill);
   const disableFilter =
     isWireframe
@@ -181,7 +196,6 @@ export const NativeTextRenderer: CanvasElementRenderer<NativeTextElement> = (
         ...(textTransform ? { textTransform } : {}),
         ...(disableFilter ? { filter: 'none' } : {}),
         ...blendStyle,
-        ...(isInlineEditing ? { visibility: 'hidden' as const } : {}),
       }}
       {...clipAttr}
       {...maskAttr}

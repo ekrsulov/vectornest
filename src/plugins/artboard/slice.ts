@@ -16,6 +16,7 @@ const INITIAL_STATE: ArtboardState = {
   backgroundColor: 'none',
   showMargins: false,
   marginSize: 20,
+  showSizes: false,
   exportBounds: null,
 };
 

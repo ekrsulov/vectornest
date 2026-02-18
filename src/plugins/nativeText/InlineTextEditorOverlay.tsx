@@ -1,13 +1,35 @@
-import React, { useCallback, useEffect, useRef, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { InlineTextEditSlice } from './inlineEditSlice';
 import type { NativeTextElement } from './types';
-import { measureNativeTextBounds } from '../../utils/measurementUtils';
+import { isTouchDevice } from '../../utils/domHelpers';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 
 interface InlineTextEditorOverlayProps {
   viewport: { zoom: number; panX: number; panY: number };
   canvasSize: { width: number; height: number };
 }
+
+/**
+ * Returns true when the element has a non-trivial transform that would make
+ * a transparent overlay misleading (rotated, scaled, or matrix-transformed).
+ */
+const hasNonTrivialTransform = (data: NativeTextElement['data']): boolean => {
+  if (data.transformMatrix) {
+    // Matrix [a,b,c,d,e,f]: identity = [1,0,0,1,e,f]
+    const [a, b, c, d] = data.transformMatrix;
+    const isIdentityRotScale = Math.abs(a - 1) < 1e-6 && Math.abs(b) < 1e-6 && Math.abs(c) < 1e-6 && Math.abs(d - 1) < 1e-6;
+    return !isIdentityRotScale;
+  }
+  if (data.transform) {
+    const hasRotation = data.transform.rotation !== undefined && data.transform.rotation !== 0;
+    const hasScale =
+      (data.transform.scaleX !== undefined && data.transform.scaleX !== 1) ||
+      (data.transform.scaleY !== undefined && data.transform.scaleY !== 1);
+    return hasRotation || hasScale;
+  }
+  return false;
+};
 
 /**
  * Parse a contentEditable div into { plainText, html } for committing to the element.
@@ -95,7 +117,7 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
   viewport,
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
-  const committedRef = useRef(false);
+  const cancelledRef = useRef(false);
 
   const editingElementId = useCanvasStore(
     (s) => (s as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null
@@ -113,74 +135,103 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
       | undefined ?? null;
   }, [elements, editingElementId]);
 
-  // Track original text to detect changes
-  const [originalText, setOriginalText] = useState<string>('');
+  // Keep original text for Escape-cancel
+  const originalTextRef = useRef<string>('');
 
-  // Focus the editor when it mounts
+  // Determine panel mode here so useEffect can skip SVG positioning when in panel
+  const isTouch = isTouchDevice();
+
+  // Focus the editor and position it over the SVG element on editing start
   useEffect(() => {
-    if (element && editorRef.current) {
-      committedRef.current = false;
-      const data = element.data;
-      const text = data.text ?? '';
-      setOriginalText(text);
+    if (!element || !editorRef.current) return;
+    cancelledRef.current = false;
 
-      // Set initial content as plain text with <br> for newlines
-      const lines = text.split(/\r?\n/);
-      editorRef.current.innerHTML = lines
-        .map((line, i) => (i === 0 ? escapeHtml(line || '\u200B') : `<div>${escapeHtml(line || '\u200B')}</div>`))
-        .join('');
+    const data = element.data;
+    const text = data.text ?? '';
+    originalTextRef.current = text;
 
-      // Focus and select all
-      editorRef.current.focus();
-      const sel = window.getSelection();
-      if (sel) {
-        sel.selectAllChildren(editorRef.current);
-        // Collapse to end so cursor is at the end
-        sel.collapseToEnd();
+    // In panel mode the editorRef points to the textarea inside the card — skip SVG positioning.
+    const inPanelMode = isTouch || hasNonTrivialTransform(data);
+    if (!inPanelMode) {
+      // Position overlay over SVG text element using DOM rect.
+      // The DOM rect gives tight glyph bounds (no CSS leading).
+      // CSS line-height adds half-leading = (lineH-1)*fontSize/2 above the first line,
+      // pushing the caret down inside the div. Shift top UP and expand height to cancel.
+      const svgTextEl = document.querySelector<SVGTextElement>(`[data-element-id="${element.id}"]`);
+      if (svgTextEl && editorRef.current) {
+        const svgRect = svgTextEl.getBoundingClientRect();
+        const parentEl = editorRef.current.offsetParent as HTMLElement | null;
+        const parentRect = parentEl?.getBoundingClientRect() ?? { left: 0, top: 0 };
+
+        const { zoom } = viewport;
+        const lineHeight = data.lineHeight ?? 1.2;
+        const halfLeadingPx = Math.max(0, lineHeight - 1) * data.fontSize * zoom / 2;
+
+        editorRef.current.style.left = `${svgRect.left - parentRect.left}px`;
+        editorRef.current.style.top = `${svgRect.top - parentRect.top - halfLeadingPx}px`;
+        editorRef.current.style.width = `${svgRect.width}px`;
+        editorRef.current.style.height = `${svgRect.height + halfLeadingPx * 2}px`;
       }
+    }
+
+    // Set initial content as plain text with <br> for newlines
+    const lines = text.split(/\r?\n/);
+    editorRef.current.innerHTML = lines
+      .map((line, i) => (i === 0 ? escapeHtml(line || '\u200B') : `<div>${escapeHtml(line || '\u200B')}</div>`))
+      .join('');
+
+    // Focus and place cursor at end
+    editorRef.current.focus();
+    const sel = window.getSelection();
+    if (sel) {
+      sel.selectAllChildren(editorRef.current);
+      sel.collapseToEnd();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingElementId]);
 
-  const commitEdit = useCallback(() => {
-    if (committedRef.current || !editingElementId || !editorRef.current || !updateElement) return;
-    committedRef.current = true;
-
-    const { plainText } = parseEditableContent(editorRef.current);
-
-    // Only update if text actually changed
-    if (plainText !== originalText) {
-      const el = useCanvasStore.getState().elements.find((e) => e.id === editingElementId);
-      if (el && el.type === 'nativeText') {
-        const data = el.data as NativeTextElement['data'];
-        // For inline editing we update plain text and clear rich text/spans
-        // since the inline editor doesn't support rich formatting
-        const lines = plainText.split(/\r?\n/);
-        const spans = lines.map((lineText, lineIdx) => ({
-          text: lineText,
-          line: lineIdx,
-          fontWeight: data.fontWeight ?? undefined,
-          fontStyle: data.fontStyle ?? undefined,
-        }));
-
-        updateElement(editingElementId, {
-          data: {
-            ...data,
-            text: plainText,
-            richText: plainText,
-            spans: spans.length > 1 ? spans : undefined,
-          },
-        });
-      }
+  // Apply text change to SVG element immediately
+  const applyText = useCallback((plainText: string) => {
+    if (!editingElementId || !updateElement) return;
+    const el = useCanvasStore.getState().elements.find((e) => e.id === editingElementId);
+    if (el && el.type === 'nativeText') {
+      const data = el.data as NativeTextElement['data'];
+      const lines = plainText.split(/\r?\n/);
+      const spans = lines.map((lineText, lineIdx) => ({
+        text: lineText,
+        line: lineIdx,
+        fontWeight: data.fontWeight ?? undefined,
+        fontStyle: data.fontStyle ?? undefined,
+      }));
+      updateElement(editingElementId, {
+        data: {
+          ...data,
+          text: plainText,
+          richText: plainText,
+          spans: spans.length > 1 ? spans : undefined,
+        },
+      });
     }
+  }, [editingElementId, updateElement]);
 
-    stopInlineTextEdit?.();
-  }, [editingElementId, originalText, updateElement, stopInlineTextEdit]);
+  // Real-time update on every keystroke
+  const handleInput = useCallback(() => {
+    if (!editorRef.current) return;
+    const { plainText } = parseEditableContent(editorRef.current);
+    applyText(plainText);
+  }, [applyText]);
 
-  const cancelEdit = useCallback(() => {
-    committedRef.current = true; // prevent commitEdit from running on blur
+  // Blur = commit (text already live, just stop editing)
+  const commitEdit = useCallback(() => {
     stopInlineTextEdit?.();
   }, [stopInlineTextEdit]);
+
+  // Escape = restore original text then stop
+  const cancelEdit = useCallback(() => {
+    cancelledRef.current = true;
+    applyText(originalTextRef.current);
+    stopInlineTextEdit?.();
+  }, [applyText, stopInlineTextEdit]);
 
   // Handle keydown events
   const handleKeyDown = useCallback(
@@ -202,7 +253,7 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
     [cancelEdit]
   );
 
-  // Handle blur — commit changes
+  // Handle blur — commit on desktop transparent mode only
   const handleBlur = useCallback(() => {
     commitEdit();
   }, [commitEdit]);
@@ -215,29 +266,138 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
   if (!element) return null;
 
   const { data } = element;
-  const { zoom, panX, panY } = viewport;
+  const { zoom } = viewport;
+  const usePanelMode = isTouch || hasNonTrivialTransform(data);
 
-  // Bounding box en canvas coords
-  const bounds = measureNativeTextBounds(data);
-  // Convert a la pantalla (canvas overlay coords)
-  const left = bounds.minX * zoom + panX;
-  const top = bounds.minY * zoom + panY;
-  const width = (bounds.maxX - bounds.minX) * zoom;
-  const height = (bounds.maxY - bounds.minY) * zoom;
-
-  const cssTransform = computeEditorTransform(data, zoom);
-  const textAlign = getTextAlign(data.textAnchor);
-  const transformOrigin = getTransformOrigin(data.textAnchor);
   const scaledFontSize = data.fontSize * zoom;
   const lineHeight = data.lineHeight ?? 1.2;
   const letterSpacing = data.letterSpacing ? `${data.letterSpacing * zoom}px` : undefined;
+  const textAlign = getTextAlign(data.textAnchor);
+
+  // ── PANEL MODE: mobile or transformed text ───────────────────────────────────
+  if (usePanelMode) {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: isTouch ? 'flex-start' : 'center',
+          justifyContent: 'center',
+          // On mobile leave top ~15% free so panel sits near top — more space for keyboard
+          paddingTop: isTouch ? '10%' : '0',
+          background: 'rgba(0,0,0,0.35)',
+          pointerEvents: 'auto',
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            background: 'var(--chakra-colors-chakra-body-bg, #fff)',
+            border: '1px solid var(--chakra-colors-chakra-border-color, #E2E8F0)',
+            borderRadius: '10px',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.22)',
+            padding: '10px',
+            width: 'min(96vw, 420px)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+          }}
+        >
+          {/* Header */}
+          <div style={{
+            fontSize: '11px',
+            fontFamily: 'system-ui, sans-serif',
+            fontWeight: 600,
+            color: 'var(--chakra-colors-gray-500, #718096)',
+            userSelect: 'none',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.05em',
+          }}>
+            Edit text
+          </div>
+
+          {/* Editor — fixed height optimized for mobile keyboard space */}
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            role="textbox"
+            aria-label="Text editor"
+            spellCheck={false}
+            style={{
+              width: '100%',
+              // Mobile: short box so keyboard doesn't push it off screen
+              // Desktop: slightly taller
+              minHeight: isTouch ? '56px' : '72px',
+              maxHeight: isTouch ? '28dvh' : '40dvh',
+              overflowY: 'auto',
+              fontSize: '16px', // 16px prevents iOS auto-zoom
+              fontFamily: 'system-ui, sans-serif',
+              lineHeight: 1.5,
+              color: 'var(--chakra-colors-chakra-body-text, #1A202C)',
+              background: 'var(--chakra-colors-chakra-subtle-bg, #F7FAFC)',
+              border: '1px solid var(--chakra-colors-chakra-border-color, #E2E8F0)',
+              borderRadius: '6px',
+              padding: '8px 10px',
+              outline: 'none',
+              caretColor: 'var(--chakra-colors-blue-400, #63B3ED)',
+              boxSizing: 'border-box' as const,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+            onKeyDown={handleKeyDown}
+            onInput={handleInput}
+            onBlur={(e) => {
+              const related = e.relatedTarget as HTMLElement | null;
+              if (related?.dataset.editorAction) return;
+              if (!isTouch) commitEdit();
+            }}
+          />
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+            <PanelStyledButton
+              data-editor-action="cancel"
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={cancelEdit}
+              size="sm"
+              px={3}
+            >
+              Cancel
+            </PanelStyledButton>
+            <PanelStyledButton
+              data-editor-action="commit"
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={commitEdit}
+              size="sm"
+              px={3}
+              bg="blue.500"
+              color="white"
+              borderColor="blue.500"
+              _hover={{ bg: 'blue.600' }}
+              _dark={{ bg: 'blue.400', borderColor: 'blue.400', _hover: { bg: 'blue.500' } }}
+            >
+              Apply
+            </PanelStyledButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── TRANSPARENT OVERLAY MODE: desktop, no significant transform ──────────────
+  const cssTransform = computeEditorTransform(data, zoom);
+  const transformOrigin = getTransformOrigin(data.textAnchor);
 
   const style: React.CSSProperties = {
     position: 'absolute',
-    left,
-    top,
-    width: `${width}px`,
-    height: `${height}px`,
+    // left/top/width/height set imperatively in useEffect from SVG DOM rect
+    left: 0,
+    top: 0,
+    width: '1px',
+    height: '1px',
     fontSize: `${scaledFontSize}px`,
     fontFamily: data.fontFamily,
     fontWeight: data.fontWeight ?? 'normal',
@@ -247,14 +407,15 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
     textAlign,
     textDecoration: data.textDecoration !== 'none' ? data.textDecoration : undefined,
     textTransform: data.textTransform !== 'none' ? data.textTransform : undefined,
-    color: data.fillColor ?? '#000',
-    opacity: data.fillOpacity ?? 1,
+    // Fully transparent text — SVG element is the visual display
+    color: 'transparent',
+    caretColor: 'var(--chakra-colors-blue-400, #3182CE)',
     transform: cssTransform !== 'none' ? cssTransform : undefined,
     transformOrigin,
     outline: 'none',
     border: 'none',
     borderRadius: 0,
-    background: 'none',
+    background: 'transparent',
     boxShadow: 'none',
     boxSizing: 'border-box',
     padding: 0,
@@ -263,27 +424,39 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
     wordBreak: 'keep-all',
     overflowWrap: 'normal',
     zIndex: 9999,
-    caretColor: 'var(--chakra-colors-blue-400, #3182CE)',
     cursor: 'text',
-    // Writing mode
     writingMode: data.writingMode !== 'horizontal-tb' ? (data.writingMode as React.CSSProperties['writingMode']) : undefined,
-    // Pointer events must be enabled
     pointerEvents: 'auto',
+    userSelect: 'text',
+    WebkitUserSelect: 'text',
   };
 
+  // Wrap in an overflow:hidden container so browser text-selection highlights
+  // are clipped to the canvas area and do not bleed over the sidebars.
   return (
     <div
-      ref={editorRef}
-      contentEditable
-      suppressContentEditableWarning
-      role="textbox"
-      aria-label="Inline text editor"
-      spellCheck={false}
-      style={style}
-      onKeyDown={handleKeyDown}
-      onBlur={handleBlur}
-      onPointerDown={handlePointerDown}
-    />
+      style={{
+        position: 'absolute',
+        inset: 0,
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        zIndex: 9999,
+      }}
+    >
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        role="textbox"
+        aria-label="Inline text editor"
+        spellCheck={false}
+        style={{ ...style, zIndex: undefined }}
+        onKeyDown={handleKeyDown}
+        onInput={handleInput}
+        onBlur={handleBlur}
+        onPointerDown={handlePointerDown}
+      />
+    </div>
   );
 };
 

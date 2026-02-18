@@ -7,7 +7,6 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { PanelSwitch } from '../../ui/PanelSwitch';
 import { NumberInput } from '../../ui/NumberInput';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { MultiPaintPicker } from '../../ui/MultiPaintPicker';
@@ -58,6 +57,7 @@ export const ArtboardPanel: React.FC = () => {
   const customHeight = artboard?.customHeight ?? 1080;
   const showMargins = artboard?.showMargins ?? false;
   const marginSize = artboard?.marginSize ?? 20;
+  const showSizes = artboard?.showSizes ?? false;
   const backgroundColor = artboard?.backgroundColor ?? 'none';
   const defaultBackgroundColor = '#FFFFFF';
 
@@ -98,6 +98,11 @@ export const ArtboardPanel: React.FC = () => {
   // Handle margins toggle
   const handleMarginsToggle = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     updateArtboardState?.({ showMargins: e.target.checked });
+  }, [updateArtboardState]);
+
+  // Handle sizes toggle
+  const handleSizesToggle = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    updateArtboardState?.({ showSizes: e.target.checked });
   }, [updateArtboardState]);
 
   const handleBackgroundColorChange = useCallback((value: string) => {
@@ -186,73 +191,85 @@ export const ArtboardPanel: React.FC = () => {
             Swap dimensions
           </PanelStyledButton>
 
-          {/* Background */}
-          <SectionHeader
-            title="Background"
-            titleTransform="uppercase"
-            titleFontWeight="medium"
-          />
-          <VStack spacing={0} align="stretch">
-            <Flex align="center" gap={1} minH="24px" w="100%" flexWrap="nowrap">
-              <Text fontSize="12px" fontWeight="400" minW="50px" h="24px" display="flex" alignItems="center">
-                Fill
-              </Text>
-              <ToggleButton
-                isActive={backgroundColor === 'none'}
-                onClick={handleBackgroundNone}
-                aria-label="Set artboard background to none"
-                variant="icon"
-                icon={<X size={12} />}
-                sx={{ borderRadius: 'full' }}
-              />
-              <Box flex="0 0 auto" minW="24px" display="flex" justifyContent="flex-end">
-                <ConditionalTooltip label="Select artboard background">
-                  <MultiPaintPicker
-                    label="Artboard Background"
-                    value={backgroundColor === 'none' ? defaultBackgroundColor : backgroundColor}
-                    onChange={handleBackgroundColorChange}
-                    defaultColor={defaultBackgroundColor}
-                    mode="fill"
-                    floatingContainerRef={backgroundPickerSlotRef}
-                    fullWidth={true}
-                  />
-                </ConditionalTooltip>
-              </Box>
-            </Flex>
-            <Box ref={backgroundPickerSlotRef} w="100%" />
-          </VStack>
-
-          {/* Margins */}
-          <SectionHeader
-            title="Safe Margins"
-            titleTransform="uppercase"
-            titleFontWeight="medium"
-          />
-          <PanelToggle
-            isChecked={showMargins}
-            onChange={handleMarginsToggle}
-          >
-            Show safe margins
-          </PanelToggle>
-          {showMargins && (
-            <NumberInput
-              label="Margin Size"
-              value={marginSize}
-              min={0}
-              max={200}
-              onChange={handleMarginSizeChange}
-              suffix="px"
-            />
-          )}
-
           {/* Info */}
-          <VStack spacing={0.5} align="stretch">
-            <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
-              Current: {customWidth} × {customHeight} px
-            </Text>
-            <Text fontSize="10px" color="gray.400" _dark={{ color: 'gray.500' }}>
-              Export will use this fixed size
-            </Text>
+          <Text fontSize="10px" color="gray.600" _dark={{ color: 'gray.400' }}>
+            Export will use this fixed size
+          </Text>
+
+          {/* Options Section */}
+          <SectionHeader
+            title="Options"
+            titleTransform="uppercase"
+            titleFontWeight="medium"
+          />
+          <VStack spacing={2} align="stretch">
+
+            {/* Background Fill */}
+            <VStack spacing={0} align="stretch">
+              <Flex align="center" justify="space-between" w="100%">
+                <Text fontSize="12px" fontWeight="400" color="gray.600" _dark={{ color: 'gray.400' }}>
+                  Background fill
+                </Text>
+                <HStack spacing={1}>
+                  <ToggleButton
+                    isActive={backgroundColor === 'none'}
+                    onClick={handleBackgroundNone}
+                    aria-label="Set background color to none (transparent)"
+                    variant="icon"
+                    icon={<X size={12} />}
+                    sx={{ borderRadius: 'full' }}
+                  />
+                  <Box flex="0 0 auto" minW="24px" display="flex" justifyContent="flex-end">
+                    <ConditionalTooltip label="Select artboard background">
+                      <MultiPaintPicker
+                        label="Artboard Background"
+                        value={backgroundColor === 'none' ? defaultBackgroundColor : backgroundColor}
+                        onChange={handleBackgroundColorChange}
+                        defaultColor={defaultBackgroundColor}
+                        mode="fill"
+                        floatingContainerRef={backgroundPickerSlotRef}
+                        fullWidth={true}
+                      />
+                    </ConditionalTooltip>
+                  </Box>
+                </HStack>
+              </Flex>
+              <Box ref={backgroundPickerSlotRef} w="100%" />
+            </VStack>
+
+            {/* Show safe margins */}
+            <Flex align="center" justify="space-between" w="100%">
+              <Text fontSize="12px" fontWeight="400" color="gray.600" _dark={{ color: 'gray.400' }}>
+                Show safe margins
+              </Text>
+              <PanelSwitch
+                isChecked={showMargins}
+                onChange={handleMarginsToggle}
+                aria-label="Toggle safe margins"
+              />
+            </Flex>
+            {showMargins && (
+              <NumberInput
+                label="Margin size"
+                value={marginSize}
+                min={0}
+                max={200}
+                onChange={handleMarginSizeChange}
+                suffix="px"
+              />
+            )}
+
+            {/* Show size on canvas */}
+            <Flex align="center" justify="space-between" w="100%">
+              <Text fontSize="12px" fontWeight="400" color="gray.600" _dark={{ color: 'gray.400' }}>
+                Show size on canvas
+              </Text>
+              <PanelSwitch
+                isChecked={showSizes}
+                onChange={handleSizesToggle}
+                aria-label="Toggle size labels"
+              />
+            </Flex>
           </VStack>
         </VStack>
       ) : null}

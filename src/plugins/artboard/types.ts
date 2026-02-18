@@ -25,6 +25,7 @@ export interface ArtboardState {
   backgroundColor: string;
   showMargins: boolean;
   marginSize: number;
+  showSizes: boolean;
   // Fixed viewBox for export
   exportBounds: {
     minX: number;

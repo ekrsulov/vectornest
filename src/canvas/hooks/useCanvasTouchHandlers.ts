@@ -61,8 +61,19 @@ export const useCanvasTouchHandlers = (
     // Handle canvas touch end - now handles BOTH empty space AND elements via delegation
     const handleCanvasTouchEnd = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
         // Check if the touch target is an element (has data-element-id attribute)
+        // For nested elements (like <tspan> inside <text>), traverse up to find the element-id
         const target = e.target as Element;
-        const elementId = target?.getAttribute?.('data-element-id');
+        let elementId = target?.getAttribute?.('data-element-id');
+
+        // If no elementId found on the target, traverse up the DOM tree
+        // This handles cases where the touch is on a child element (e.g., <tspan> in nativeText)
+        let currentTarget: Element | null = target;
+        while (!elementId && currentTarget && currentTarget !== e.currentTarget) {
+            currentTarget = currentTarget.parentElement;
+            if (currentTarget) {
+                elementId = currentTarget.getAttribute?.('data-element-id');
+            }
+        }
 
         if (elementId) {
             // Touch on an element - detect double tap for element

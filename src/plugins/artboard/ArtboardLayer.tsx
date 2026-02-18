@@ -26,6 +26,7 @@ export const ArtboardLayer: React.FC<ArtboardLayerProps> = (_context) => {
   const { minX, minY, width, height } = artboard.exportBounds;
   const showMargins = artboard.showMargins;
   const marginSize = artboard.marginSize;
+  const showSizes = artboard.showSizes ?? false;
   const backgroundColor = artboard.backgroundColor ?? 'none';
   const shouldRenderBackground = backgroundColor !== 'none' && !isWireframeEnabled;
 
@@ -78,45 +79,50 @@ export const ArtboardLayer: React.FC<ArtboardLayerProps> = (_context) => {
         />
       )}
 
-      {/* Width label (top) */}
-      <text
-        x={minX + width / 2}
-        y={minY - 10}
-        textAnchor="middle"
-        fontSize="10"
-        fill={labelColor}
-        pointerEvents="none"
-        fontFamily="system-ui, -apple-system, sans-serif"
-      >
-        {width}
-      </text>
+      {/* Size labels */}
+      {showSizes && (
+        <>
+          {/* Width label (top) */}
+          <text
+            x={minX + width / 2}
+            y={minY - 10}
+            textAnchor="middle"
+            fontSize="10"
+            fill={labelColor}
+            pointerEvents="none"
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
+            {width}
+          </text>
 
-      {/* Height label (left side) */}
-      <text
-        x={minX - 10}
-        y={minY + height / 2}
-        textAnchor="end"
-        fontSize="10"
-        fill={labelColor}
-        pointerEvents="none"
-        transform={`rotate(-90, ${minX - 10}, ${minY + height / 2})`}
-        fontFamily="system-ui, -apple-system, sans-serif"
-      >
-        {height}
-      </text>
+          {/* Height label (left side) */}
+          <text
+            x={minX - 10}
+            y={minY + height / 2}
+            textAnchor="end"
+            fontSize="10"
+            fill={labelColor}
+            pointerEvents="none"
+            transform={`rotate(-90, ${minX - 10}, ${minY + height / 2})`}
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
+            {height}
+          </text>
 
-      {/* Combined size label (bottom) */}
-      <text
-        x={minX + width / 2}
-        y={minY + height + 15}
-        textAnchor="middle"
-        fontSize="12"
-        fill={labelColor}
-        pointerEvents="none"
-        fontFamily="system-ui, -apple-system, sans-serif"
-      >
-        {width} × {height}
-      </text>
+          {/* Combined size label (bottom) */}
+          <text
+            x={minX + width / 2}
+            y={minY + height + 15}
+            textAnchor="middle"
+            fontSize="12"
+            fill={labelColor}
+            pointerEvents="none"
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
+            {width} × {height}
+          </text>
+        </>
+      )}
     </g>
   );
 };

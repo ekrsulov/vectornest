@@ -6,7 +6,7 @@ import type {
   CanvasRenderContext,
 } from './CanvasRendererRegistry';
 import { isTouchDevice } from '../../utils/domHelpers';
-import { getMaskRuntimeId } from '../../utils/maskUtils';
+import { getClipRuntimeId, getMaskRuntimeId } from '../../utils/maskUtils';
 
 // Cache touch detection at module level — value never changes during a session
 const IS_TOUCH_DEVICE = isTouchDevice();
@@ -92,9 +92,11 @@ const PathElementRendererView = ({
   const pathData = element.data;
   const pathOverrides = rendererOverrides?.path;
   
-  // Get versioned mask ID for cache invalidation when mask position changes
+  // Get versioned mask/clip IDs for cache invalidation when position changes
   const maskVersions = extensionsContext?.maskVersions as Map<string, number> | undefined;
   const maskRuntimeId = getMaskRuntimeId(pathData.maskId, maskVersions);
+  const clipVersions = extensionsContext?.clipVersions as Map<string, number> | undefined;
+  const clipRuntimeId = getClipRuntimeId(pathData.clipPathId, (pathData as unknown as Record<string, unknown>).clipPathTemplateId as string | undefined, clipVersions);
   const markerStartId = normalizeMarkerId(pathData.markerStart);
   const markerMidId = normalizeMarkerId(pathData.markerMid);
   const markerEndId = normalizeMarkerId(pathData.markerEnd);
@@ -169,7 +171,7 @@ const PathElementRendererView = ({
         {...(markerStartId ? { markerStart: toMarkerUrl(markerStartId) } : {})}
         {...(markerMidId ? { markerMid: toMarkerUrl(markerMidId) } : {})}
         {...(markerEndId ? { markerEnd: toMarkerUrl(markerEndId) } : {})}
-        {...(pathData.clipPathId ? { clipPath: `url(#${pathData.clipPathId})` } : {})}
+        {...(clipRuntimeId ? { clipPath: `url(#${clipRuntimeId})` } : {})}
         {...(maskRuntimeId ? { mask: `url(#${maskRuntimeId})` } : {})}
         {...extensionAttributes}
         // On touch devices: don't add individual touch handlers, use canvas-level delegation

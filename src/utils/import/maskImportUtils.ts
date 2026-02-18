@@ -16,10 +16,20 @@ export interface MaskImportDefinition {
 /**
  * Strip animation elements from a node's innerHTML.
  * Animations are imported separately by the animation system.
+ * IDs are pre-assigned on the ORIGINAL node so that both the stored mask content
+ * and importAnimationDefs reference the same target element IDs.
  */
 const stripAnimationsFromContent = (node: Element): string => {
-  const clone = node.cloneNode(true) as Element;
   const animationSelectors = 'animate, animateTransform, animateMotion, animateColor, set';
+  // Pre-assign IDs to parent elements of animations on the ORIGINAL node
+  // so that both the mask content and importAnimationDefs reference the same IDs
+  node.querySelectorAll(animationSelectors).forEach((animEl) => {
+    const parent = animEl.parentElement;
+    if (parent && parent !== node && !parent.getAttribute('id')) {
+      parent.setAttribute('id', generateShortId('ant'));
+    }
+  });
+  const clone = node.cloneNode(true) as Element;
   clone.querySelectorAll(animationSelectors).forEach((el) => el.remove());
   return clone.innerHTML;
 };

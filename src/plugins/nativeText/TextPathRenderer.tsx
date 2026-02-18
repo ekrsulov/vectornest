@@ -8,6 +8,7 @@ import type { WireframePluginSlice } from '../wireframe/slice';
 import { commandsToString } from '../../utils/pathParserUtils';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
 import { ensureChainDelays } from '../animationSystem/chainUtils';
+import { getClipRuntimeId } from '../../utils/maskUtils';
 
 const getEffectiveStrokeColor = (path: PathElement['data']): string => {
   if (path.strokeColor === 'none') return '#00000001';
@@ -31,7 +32,12 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
     const textPath = pathData.textPath;
     if (!textPath || !textPath.text) return;
     const maskUrl = textPath.maskId ?? pathData.maskId;
-    const clipPathUrl = pathData.clipPathId ? `url(#${pathData.clipPathId})` : undefined;
+    const clipRuntimeId = getClipRuntimeId(
+      pathData.clipPathId,
+      (pathData as unknown as Record<string, unknown>).clipPathTemplateId as string | undefined,
+      undefined // TextPathRenderer has no extensionsContext; clips on text-paths are rare, versioning handled on parent element
+    );
+    const clipPathUrl = clipRuntimeId ? `url(#${clipRuntimeId})` : undefined;
 
     const pathD = commandsToString(pathData.subPaths.flat());
     const pathRefId = `${element.id}-textpath-ref`;

@@ -157,17 +157,30 @@ const injectAnimationsIntoMaskContent = (
     return tag !== 'defs' && !ANIMATION_TAGS.has(tag);
   });
 
+  // Build a set of IDs present in the content for quick lookup
+  const contentIds = new Set<string>();
+  svg.querySelectorAll('[id]').forEach((el) => {
+    const id = el.getAttribute('id');
+    if (id) contentIds.add(id);
+  });
+
   // Group animations by target
+  // Prefer ID-based injection (works for deeply nested elements like <circle> inside <g>)
+  // Fall back to index-based injection when the target ID isn't in the content
   const byId = new Map<string, SVGAnimation[]>();
   const byIndex = new Map<number, SVGAnimation[]>();
 
   animations.forEach((anim) => {
-    // If there's a maskChildIndex, use index-based injection
-    if (typeof anim.maskChildIndex === 'number' && anim.maskChildIndex >= 0) {
+    // Prefer ID-based injection when the target ID exists in the mask content
+    if (anim.targetElementId && contentIds.has(anim.targetElementId)) {
+      if (!byId.has(anim.targetElementId)) byId.set(anim.targetElementId, []);
+      byId.get(anim.targetElementId)!.push(anim);
+    } else if (typeof anim.maskChildIndex === 'number' && anim.maskChildIndex >= 0) {
+      // Fall back to index-based injection
       if (!byIndex.has(anim.maskChildIndex)) byIndex.set(anim.maskChildIndex, []);
       byIndex.get(anim.maskChildIndex)!.push(anim);
     } else if (anim.targetElementId) {
-      // Otherwise use ID-based injection
+      // ID not found in content but we have one — try it anyway
       if (!byId.has(anim.targetElementId)) byId.set(anim.targetElementId, []);
       byId.get(anim.targetElementId)!.push(anim);
     } else {
@@ -214,10 +227,20 @@ const injectAnimationsIntoMaskContent = (
 /**
  * Strip animation elements from a node's innerHTML.
  * Animations are imported separately by the animation system.
+ * IDs are pre-assigned on the ORIGINAL node so that both the stored mask content
+ * and importAnimationDefs reference the same target element IDs.
  */
 const stripAnimationsFromContent = (node: Element): string => {
-  const clone = node.cloneNode(true) as Element;
   const animationSelectors = 'animate, animateTransform, animateMotion, animateColor, set';
+  // Pre-assign IDs to parent elements of animations on the ORIGINAL node
+  // so that both the mask content and importAnimationDefs reference the same IDs
+  node.querySelectorAll(animationSelectors).forEach((animEl) => {
+    const parent = animEl.parentElement;
+    if (parent && parent !== node && !parent.getAttribute('id')) {
+      parent.setAttribute('id', generateShortId('ant'));
+    }
+  });
+  const clone = node.cloneNode(true) as Element;
   clone.querySelectorAll(animationSelectors).forEach((el) => el.remove());
   return clone.innerHTML;
 };
@@ -278,18 +301,17 @@ defsContributionRegistry.register({
         const maskAnimations = isActive ? animations.filter((a) => a.maskTargetId === m.id) : [];
         const content = injectAnimationsIntoMaskContent(m.content, maskAnimations, chainDelays);
         
-        // Parse content to React elements and wrap in group with transform if needed
-        // Use dangerouslySetInnerHTML to preserve SMIL animations which don't work with React elements
-        const needsTranslate = m.maskUnits === 'userSpaceOnUse' && (originX !== 0 || originY !== 0);
-        const wrappedContent = needsTranslate
+        // Translate mask content when it uses absolute coordinates (userSpaceOnUse is the default for maskContentUnits)
+        const needsContentTranslate = m.maskContentUnits !== 'objectBoundingBox' && (originX !== 0 || originY !== 0);
+        const wrappedContent = needsContentTranslate
           ? `<g transform="translate(${originX}, ${originY})">${content}</g>`
           : content;
         
-        // Calculate translated mask bounds for userSpaceOnUse masks
-        // The mask's x/y/width/height define the clipping region - must follow the element
+        // Only translate mask bounds (x/y/width/height) when maskUnits is userSpaceOnUse
+        // objectBoundingBox masks have bounds relative to the element - they follow automatically
         let maskX = m.x;
         let maskY = m.y;
-        if (needsTranslate) {
+        if (m.maskUnits === 'userSpaceOnUse' && (originX !== 0 || originY !== 0)) {
           const baseX = parseFloat(m.x ?? '0') || 0;
           const baseY = parseFloat(m.y ?? '0') || 0;
           maskX = String(baseX + originX);
@@ -325,15 +347,14 @@ defsContributionRegistry.register({
     return masks
       .filter((m) => usedIds.has(m.id))
       .map((m) => {
-        // Calculate offset for userSpaceOnUse masks (element movement tracking)
+        // Calculate offset for moved masks (element movement tracking)
         const originX = m.originX ?? 0;
         const originY = m.originY ?? 0;
-        const needsTranslate = m.maskUnits === 'userSpaceOnUse' && (originX !== 0 || originY !== 0);
         
-        // Apply offset to mask bounds
+        // Translate mask bounds only when maskUnits is userSpaceOnUse (absolute coordinates)
         let maskX = m.x;
         let maskY = m.y;
-        if (needsTranslate) {
+        if (m.maskUnits === 'userSpaceOnUse' && (originX !== 0 || originY !== 0)) {
           const baseX = parseFloat(m.x ?? '0') || 0;
           const baseY = parseFloat(m.y ?? '0') || 0;
           maskX = String(baseX + originX);
@@ -352,8 +373,9 @@ defsContributionRegistry.register({
         const maskAnimations = animations.filter((a) => a.maskTargetId === m.id);
         const content = injectAnimationsIntoMaskContent(m.content, maskAnimations, chainDelays);
         
-        // Wrap content with translate for moved masks (userSpaceOnUse)
-        const wrappedContent = needsTranslate
+        // Wrap content with translate when content uses absolute coordinates (default maskContentUnits is userSpaceOnUse)
+        const needsContentTranslate = m.maskContentUnits !== 'objectBoundingBox' && (originX !== 0 || originY !== 0);
+        const wrappedContent = needsContentTranslate
           ? `<g transform="translate(${originX}, ${originY})">${content}</g>`
           : content;
         
@@ -363,6 +385,36 @@ defsContributionRegistry.register({
 });
 
 // Register definition translation contribution to update mask positions when elements move
+/**
+ * Mask movement tracking — mirrors the clip-path mechanism in clipping/index.tsx.
+ *
+ * ── WHY THIS EXISTS ────────────────────────────────────────────────────────────
+ * SVG <mask> content with `maskContentUnits="userSpaceOnUse"` (the default)
+ * stores geometry in absolute canvas coordinates.  When the masked element moves,
+ * the mask content stays fixed at the original import position and the mask
+ * region drifts away or exposes the wrong pixels.  This handler increments
+ * `originX/originY` by the same delta so the mask content stays aligned.
+ *
+ * ── THE DOUBLE-MOVEMENT BUG (fixed 2026-02) ────────────────────────────────────
+ * Identical root cause to the clip-path bug.  For elements that move by changing
+ * their TRANSFORM attribute (e.g. <image> using `transformMatrix`), the SVG mask
+ * coordinate system is the element's LOCAL coordinate system — it shifts with
+ * the transform automatically.  Updating `originX/originY` on top of that causes
+ * the mask to move TWICE as fast as the element.
+ *
+ * Rule:
+ *   • element has `data.transformMatrix`  ──► SKIP origin update (mask follows transform)
+ *   • element encodes position in path data ──► UPDATE origin (mask doesn't follow)
+ *
+ * See the equivalent comment in clipping/index.tsx `translateDefinitions` for the
+ * full SVG coordinate-system explanation.
+ *
+ * ── BROWSER CACHE INVALIDATION ─────────────────────────────────────────────────
+ * Browsers cache SVG mask geometry by <mask id>.  The `version` counter is
+ * appended to the rendered id ("mask-abc" → "mask-abc-v3") to bust the cache
+ * whenever the mask position changes.  All element renderers must call
+ * `getMaskRuntimeId()` from maskUtils.ts to obtain the versioned id.
+ */
 definitionTranslationRegistry.register({
   id: 'masks',
   translateDefinitions: (context, state, setState) => {
@@ -383,10 +435,16 @@ definitionTranslationRegistry.register({
 
     const elementsToCheck = new Set([...allMovedIds, ...movedDescendantIds]);
 
-    // Check both path and group elements for maskId
+    // Check both path and group elements for maskId.
+    // ⚠️  CRITICAL: skip elements that move via transformMatrix.
+    // For those elements the mask coordinate system shifts automatically with
+    // the SVG transform — updating originX/originY would double-move the mask,
+    // causing it to drift 2× faster than the element.
+    // See the translateDefinitions block comment above for the full explanation.
     (state.elements ?? []).forEach((el) => {
       if (!elementsToCheck.has(el.id)) return;
       const data = el.data as Record<string, unknown>;
+      if (data?.transformMatrix) return;
       if (data?.maskId && typeof data.maskId === 'string') {
         usedMaskIds.add(data.maskId);
       }
@@ -394,11 +452,13 @@ definitionTranslationRegistry.register({
 
     if (usedMaskIds.size === 0) return;
 
-    // Update mask definitions that use userSpaceOnUse
+    // Update mask definitions whose content uses absolute coordinates.
+    // maskContentUnits defaults to 'userSpaceOnUse', so content needs translation
+    // unless explicitly set to 'objectBoundingBox'.
     const updatedMasks = masks.map((mask) => {
       if (!usedMaskIds.has(mask.id)) return mask;
-      // Only translate masks with userSpaceOnUse (absolute coordinates)
-      if (mask.maskUnits !== 'userSpaceOnUse') return mask;
+      // Skip masks whose content is in objectBoundingBox coordinates (auto-follows element)
+      if (mask.maskContentUnits === 'objectBoundingBox') return mask;
       
       const newOriginX = (mask.originX ?? 0) + context.deltaX;
       const newOriginY = (mask.originY ?? 0) + context.deltaY;

@@ -7,7 +7,7 @@ import type {
 import { canvasRendererRegistry } from './CanvasRendererRegistry';
 import { collectExtensionAttributes, collectExtensionChildren } from './rendererExtensionRegistry';
 import { areViewportsEqual } from './renderingUtils';
-import { getMaskRuntimeId } from '../../utils/maskUtils';
+import { getClipRuntimeId, getMaskRuntimeId } from '../../utils/maskUtils';
 
 interface GroupElementRendererProps {
     element: GroupElement;
@@ -113,11 +113,12 @@ const GroupElementRendererView = ({
 
     // Group filters and clip paths
     const filter = data.filterId ? `url(#${data.filterId})` : undefined;
-    const clipPathUrl = data.clipPathId ? `url(#${data.clipPathId})` : undefined;
-    
-    // Get versioned mask ID for cache invalidation when mask position changes
+    // Get versioned mask/clip IDs for cache invalidation when position changes
     const maskVersions = context.extensionsContext?.maskVersions as Map<string, number> | undefined;
     const maskRuntimeId = getMaskRuntimeId(data.maskId, maskVersions);
+    const clipVersions = context.extensionsContext?.clipVersions as Map<string, number> | undefined;
+    const clipRuntimeId = getClipRuntimeId(data.clipPathId, (data as unknown as Record<string, unknown>).clipPathTemplateId as string | undefined, clipVersions);
+    const clipPathUrl = clipRuntimeId ? `url(#${clipRuntimeId})` : undefined;
     const maskUrl = maskRuntimeId ? `url(#${maskRuntimeId})` : undefined;
 
     const extensionAttributes = collectExtensionAttributes(element, context);

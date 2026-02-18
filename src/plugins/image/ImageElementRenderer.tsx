@@ -38,6 +38,14 @@ export const ImageElementRenderer: CanvasElementRenderer<ImageElement> = (
   const maskVersion = data.maskId && maskVersions?.get(data.maskId);
   const maskRuntimeId = data.maskId && maskVersion ? `${data.maskId}-v${maskVersion}` : data.maskId;
 
+  // Get versioned clip ID for cache invalidation when clip position changes (SVG clip-path caching issue)
+  const clipVersions = extensionsContext?.clipVersions as Map<string, number> | undefined;
+  const clipTemplateId = data.clipPathTemplateId ?? data.clipPathId;
+  const clipVersion = clipTemplateId && clipVersions?.get(clipTemplateId);
+  const clipRuntimeId = data.clipPathId && clipVersion
+    ? `${data.clipPathId}-v${clipVersion}`
+    : data.clipPathId;
+
   const pointerDownHandler = eventHandlers.onPointerDown;
   const pointerUpHandler = eventHandlers.onPointerUp;
   const isSelected = isElementSelected?.(element.id) ?? false;
@@ -67,7 +75,7 @@ export const ImageElementRenderer: CanvasElementRenderer<ImageElement> = (
     context.animationState as AnimationState | undefined
   );
 
-  const clipAttr = data.clipPathId ? { clipPath: `url(#${data.clipPathId})` } : {};
+  const clipAttr = clipRuntimeId ? { clipPath: `url(#${clipRuntimeId})` } : {};
   const maskAttr = maskRuntimeId ? { mask: `url(#${maskRuntimeId})` } : {};
   const useClip = renderMode !== 'wireframe'; // In wireframe avoid clipping so the outline is visible
   const appliedClipAttr = useClip ? clipAttr : {};

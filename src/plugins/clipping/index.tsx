@@ -524,11 +524,23 @@ const renderClipNode = (
       );
     }
     if (clip.rawContent) {
-      // For userSpaceOnUse with rawContent, coordinates are already absolute in user space.
-      // No transform needed - the clip content should be used as-is.
-      // Parse rawContent to React elements instead of using dangerouslySetInnerHTML
-      // which doesn't work reliably inside clipPath.
-      const parsedElements = parseRawContentToReactElements(clip.rawContent, instanceId);
+      // rawContent holds the original SVG innerHTML of the <clipPath> node as imported.
+      // It is NEVER mutated — every render re-parses it and applies a fresh translate.
+      //
+      // Why translate is needed here:
+      //   Imported <image> elements that use `transformMatrix` will NOT have their
+      //   originX/originY updated (see translateDefinitions), so originX stays 0 and
+      //   needsTranslate is false — the rawContent is rendered without modification.
+      //
+      //   Path/group elements that move via absolute coordinates WILL have originX/originY
+      //   updated, so needsTranslate is true and the translate is injected.
+      //
+      //   objectBoundingBox clips are relative to the element and need no translate.
+      const needsTranslate = clip.clipPathUnits !== 'objectBoundingBox' && (clip.originX !== 0 || clip.originY !== 0);
+      const contentToRender = needsTranslate
+        ? injectTransformToElements(clip.rawContent, `translate(${clip.originX}, ${clip.originY})`)
+        : clip.rawContent;
+      const parsedElements = parseRawContentToReactElements(contentToRender, instanceId);
       return (
         <clipPath
           key={`${instanceId}-${restartKey}`}
@@ -688,9 +700,13 @@ const serializeClipNode = (
         return `<clipPath id="${instanceId}" clipPathUnits="${clip.clipPathUnits ?? 'userSpaceOnUse'}"><${clip.baseElementTag}${attrString ? ` ${attrString}` : ''}>${inner}</${clip.baseElementTag}></clipPath>`;
       }
       if (clip.rawContent) {
-        // For userSpaceOnUse with rawContent, coordinates are already absolute.
-        // No transform needed - use content as-is.
-        const inner = [clip.rawContent, animMarkup].filter(Boolean).join('');
+        // For userSpaceOnUse with rawContent, coordinates are absolute in user space.
+        // Apply originX/originY translation when the element has moved (e.g. after import + drag).
+        const needsTranslate = clip.clipPathUnits !== 'objectBoundingBox' && (clip.originX !== 0 || clip.originY !== 0);
+        const serializedContent = needsTranslate
+          ? injectTransformToElements(clip.rawContent, `translate(${clip.originX}, ${clip.originY})`)
+          : clip.rawContent;
+        const inner = [serializedContent, animMarkup].filter(Boolean).join('');
         return `<clipPath id="${instanceId}" clipPathUnits="${clip.clipPathUnits ?? 'userSpaceOnUse'}">${inner}</clipPath>`;
       }
     const translatedPath = commandsToString(
@@ -799,7 +815,7 @@ const createClipInstances = (
   state: CanvasStore & ClippingPluginSlice,
   usedIds: Set<string>,
   elements: CanvasElement[]
-): Array<{ clip: ClipDefinition; instanceId: string; elementBounds: { minX: number; minY: number; width: number; height: number } }> => {
+): Array<{ clip: ClipDefinition; instanceId: string; runtimeInstanceId: string; elementBounds: { minX: number; minY: number; width: number; height: number } }> => {
   const clips = state.clips ?? [];
   const viewport = state.viewport ?? { zoom: 1, panX: 0, panY: 0 };
   const elementMap = new Map<string, CanvasElement>();
@@ -842,6 +858,7 @@ const createClipInstances = (
           return clip ? {
             clip,
             instanceId: clipPathId,
+            runtimeInstanceId: clip.version ? `${clipPathId}-v${clip.version}` : clipPathId,
             elementBounds: {
               minX: clip.originX ?? 0,
               minY: clip.originY ?? 0,
@@ -861,10 +878,11 @@ const createClipInstances = (
       return {
         clip,
         instanceId: clipPathId,
+        runtimeInstanceId: clip.version ? `${clipPathId}-v${clip.version}` : clipPathId,
         elementBounds,
       };
     })
-    .filter(Boolean) as Array<{ clip: ClipDefinition; instanceId: string; elementBounds: { minX: number; minY: number; width: number; height: number } }>;
+    .filter(Boolean) as Array<{ clip: ClipDefinition; instanceId: string; runtimeInstanceId: string; elementBounds: { minX: number; minY: number; width: number; height: number } }>;
 };
 
 defsContributionRegistry.register({
@@ -888,11 +906,11 @@ defsContributionRegistry.register({
                         hasClipPathAnimations;
     return (
       <>
-        {Array.from(new Map(instances.map(inst => [inst.instanceId, inst])).values()).map(({ clip, instanceId, elementBounds }) => {
+        {Array.from(new Map(instances.map(inst => [inst.instanceId, inst])).values()).map(({ clip, instanceId, runtimeInstanceId, elementBounds }) => {
           const clipAnimations = animations.filter((anim) => anim.clipPathTargetId === clip.id);
           return renderClipNode(
             clip,
-            instanceId,
+            runtimeInstanceId ?? instanceId,
             elementBounds,
             clipAnimations,
             chainDelays,
@@ -916,7 +934,47 @@ defsContributionRegistry.register({
   },
 });
 
-// Register definition translation contribution to update clip origins when elements move
+/**
+ * Clip-path movement tracking — the critical "follow the element" mechanism.
+ *
+ * ── WHY THIS EXISTS ────────────────────────────────────────────────────────────
+ * SVG <clipPath clipPathUnits="userSpaceOnUse"> stores its geometry in ABSOLUTE
+ * canvas coordinates.  When an element moves and its clip-path stays fixed at
+ * the original import position, the clip gradually exposes or hides the wrong
+ * region.  This handler increments `originX/originY` by the same delta the
+ * element moved so the clip path stays visually aligned.
+ *
+ * ── THE DOUBLE-MOVEMENT BUG (fixed 2026-02) ────────────────────────────────────
+ * SVG spec: the coordinate system for a `clip-path` applied to an element is the
+ * coordinate system IN EFFECT AT THAT ELEMENT — which is the element's LOCAL
+ * coordinate system (AFTER its own `transform` attribute has been applied).
+ *
+ * Consequence: for elements that move by changing their TRANSFORM (e.g. <image>
+ * elements that store position in `transformMatrix`), the clip-path coordinate
+ * system SHIFTS WITH THE TRANSFORM automatically.  The clip already follows the
+ * element for free.
+ *
+ * If we ALSO increment originX/originY for those elements, the clip is moved
+ * TWICE per drag step — once by the transform and once by our explicit translate
+ * — resulting in the clip drifting to the right (or down) roughly 2× faster
+ * than the element itself.
+ *
+ * Rule:
+ *   • element moves via transform  (has `data.transformMatrix`)  ──► SKIP origin update
+ *   • element moves via path data  (no `transformMatrix`)         ──► UPDATE origin
+ *
+ * Examples
+ *   PATH  : subPath coords change on move  → clip does NOT follow → origin MUST be updated
+ *   IMAGE : transformMatrix changes on move → clip DOES follow     → origin must NOT be updated
+ *   GROUP : child transforms updated        → depends on child type, handled recursively
+ *
+ * ── BROWSER CACHE INVALIDATION ─────────────────────────────────────────────────
+ * Browsers cache SVG clip geometry by <clipPath id>.  Even when originX changes
+ * and React re-renders the correct translate() value, the browser may serve the
+ * stale shape.  To force a cache miss the `version` counter is appended to the
+ * rendered id ("clip-abc" → "clip-abc-v3").  Any element referencing this clip
+ * must use `getClipRuntimeId()` from maskUtils.ts to obtain the versioned id.
+ */
 definitionTranslationRegistry.register({
   id: 'clipping',
   translateDefinitions: (context, state, setState) => {
@@ -940,6 +998,12 @@ definitionTranslationRegistry.register({
     (state.elements ?? []).forEach((el) => {
       if (!elementsToCheck.has(el.id)) return;
       const data = el.data as PathData;
+      // ⚠️  CRITICAL: skip elements that move via transformMatrix.
+      // For those elements the clip-path coordinate system shifts automatically
+      // with the SVG transform — updating originX/originY would double-move the
+      // clip, causing it to drift 2× faster than the element.
+      // See the translateDefinitions block comment above for full explanation.
+      if ((data as unknown as Record<string, unknown>)?.transformMatrix) return;
       // Use the template ID, not the instance ID
       if (data?.clipPathTemplateId) {
         usedClipTemplateIds.add(data.clipPathTemplateId);
@@ -951,16 +1015,20 @@ definitionTranslationRegistry.register({
 
     if (usedClipTemplateIds.size === 0) return;
 
-    // Update clip definitions that use userSpaceOnUse
+    // Only update clips with userSpaceOnUse — objectBoundingBox clips are relative
+    // to the element bounding box and automatically follow the element.
     const updatedClips = clips.map((clip) => {
       if (!usedClipTemplateIds.has(clip.id)) return clip;
-      // Only translate clips with userSpaceOnUse (absolute coordinates)
       if (clip.clipPathUnits !== 'userSpaceOnUse') return clip;
       
       return {
         ...clip,
         originX: clip.originX + context.deltaX,
         originY: clip.originY + context.deltaY,
+        // Increment version so the rendered <clipPath id> changes (e.g. "clip-abc-v3")
+        // and the browser is forced to re-evaluate the geometry instead of using
+        // the cached stale shape from the previous position.
+        version: (clip.version ?? 0) + 1,
       };
     });
 

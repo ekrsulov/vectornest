@@ -7,6 +7,7 @@ import type { WireframePluginSlice } from '../wireframe/slice';
 import type { InlineTextEditSlice } from './inlineEditSlice';
 import { getInitialAnimationAttributes, renderAnimationsForElement } from '../animationSystem/renderAnimations';
 import type { AnimationState, SVGAnimation } from '../animationSystem/types';
+import { getClipRuntimeId } from '../../utils/maskUtils';
 
 type TextRendererOverrides = {
   fill?: string;
@@ -71,6 +72,8 @@ const NativeTextRendererInner: React.FC<{
   const maskVersion = data.maskId && maskVersions?.get(data.maskId);
   const maskRuntimeId = data.maskId && maskVersion ? `${data.maskId}-v${maskVersion}` : data.maskId;
   const maskAttr = maskRuntimeId ? { mask: `url(#${maskRuntimeId})` } : {};
+  const clipVersions = extensionsContext?.clipVersions as Map<string, number> | undefined;
+  const clipRuntimeId = getClipRuntimeId(data.clipPathId, (data as unknown as Record<string, unknown>).clipPathTemplateId as string | undefined, clipVersions);
   const renderMode = textOverrides?.mode ?? (isWireframe ? 'wireframe' : 'normal');
 
   const pointerDownHandler = eventHandlers.onPointerDown;
@@ -142,7 +145,7 @@ const NativeTextRendererInner: React.FC<{
   const spans = data.spans && data.spans.length > 0 ? data.spans : null;
   const lines = spans ? Array.from(new Set(spans.map(s => s.line))).sort((a, b) => a - b) : (data.text || '').split(/\r?\n/);
 
-  const clipAttr = data.clipPathId ? { clipPath: `url(#${data.clipPathId})` } : {};
+  const clipAttr = clipRuntimeId ? { clipPath: `url(#${clipRuntimeId})` } : {};
   const blendStyle: React.CSSProperties = {};
   if (data.mixBlendMode) blendStyle.mixBlendMode = data.mixBlendMode as React.CSSProperties['mixBlendMode'];
   if (data.isolation) blendStyle.isolation = data.isolation;

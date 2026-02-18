@@ -55,6 +55,13 @@ export const selectAnimationState = (state: object): AnimationState | undefined 
 export const selectMasks = (state: object): Array<{ id: string; version?: number }> =>
   (state as WithMaskState).masks ?? [];
 
+interface WithClipState {
+  clips?: Array<{ id: string; version?: number }>;
+}
+
+export const selectClips = (state: object): Array<{ id: string; version?: number }> =>
+  (state as WithClipState).clips ?? [];
+
 export const selectGradientsRevision = (state: object): unknown[] =>
   (state as WithGradientState).gradients ?? [];
 

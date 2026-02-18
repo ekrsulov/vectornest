@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { CanvasElement, Point } from '../types';
 import type { CanvasRenderContext } from './renderers';
 import type { CanvasLayerContext, RendererOverrides } from '../types/plugins';
-import { selectAnimations, selectAnimationState, selectMasks, selectWireframe } from './pluginStateSelectors';
+import { selectAnimations, selectAnimationState, selectClips, selectMasks, selectWireframe } from './pluginStateSelectors';
 import { useCanvasKeyboardControls } from './hooks/useCanvasKeyboardControls';
 import { useSelectionController } from './hooks/useSelectionController';
 import { useCanvasControllerActions, useCanvasControllerData } from './controller/CanvasControllerContext';
@@ -119,13 +119,24 @@ const CanvasContent: React.FC = () => {
     });
     return versions;
   }, [masks]);
+  const clips = useCanvasStore(useShallow(selectClips));
+  const clipVersions = useMemo(() => {
+    const versions = new Map<string, number>();
+    clips.forEach((clip) => {
+      if (clip.version !== undefined && clip.version > 0) {
+        versions.set(clip.id, clip.version);
+      }
+    });
+    return versions;
+  }, [clips]);
   const rendererExtensionsContext = useMemo(
     () => ({
       animations,
       animationState,
       maskVersions,
+      clipVersions,
     }),
-    [animations, animationState, maskVersions]
+    [animations, animationState, maskVersions, clipVersions]
   );
 
   const animationCurrentTime = animationState?.currentTime ?? 0;

@@ -51,13 +51,17 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   // Hide cursor when snap crosshair is showing
   const isShowingSnapCrosshair = useSnapStore((state) => state.isShowingSnapCrosshair);
 
-  // Subscribe reactively so this component re-renders when elements or style
-  // change.  The returned value is intentionally unused — the actual state is
-  // read imperatively via canvasStoreApi.getState() in renderDefs below,
-  // because DefContributions need the full store snapshot.
+  // Subscribe reactively so this component re-renders when elements, style,
+  // or defs-related state changes.  The returned value is intentionally unused
+  // — the actual state is read imperatively via canvasStoreApi.getState() in
+  // renderDefs below, because DefContributions need the full store snapshot.
+  // Masks and clips must be tracked because their origin offsets change when
+  // masked/clipped elements move, and renderDefs needs the updated definitions.
   useCanvasStore(useShallow((state) => ({
     elements: state.elements,
     style: state.style,
+    masks: (state as Record<string, unknown>).masks,
+    clips: (state as Record<string, unknown>).clips,
   })));
 
   // Determine cursor style (memoized to avoid recalculation on every render)

@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+dist
+build
+.git
+.gitignore
+.env
+.env.local
+.DS_Store
+tests
+.playwright
+.vscode
+.idea
+*.spec.ts
+playwright.config.ts
+CLAUDE.md

@@ -1,13 +1,11 @@
 import { DEFAULT_SIDEBAR_WIDTH } from '../../../constants';
 import { type MainSidebarUiSlice, type LeftSidebarUiSlice, type SidebarState, type UiSliceCreator } from './types';
 
-const IS_DEV = import.meta.env.DEV;
-
-/** Default sidebar state. Persist middleware hydrates previously saved values on top. */
+/** Default sidebar state — open and pinned by default on desktop (mobile closes via useEffect). */
 const createSidebarState = (): SidebarState<string> => ({
   width: DEFAULT_SIDEBAR_WIDTH,
-  isPinned: IS_DEV,
-  isOpen: IS_DEV,
+  isPinned: true,
+  isOpen: true,
   openPanelKey: null,
   maximizedPanelKey: null,
 });

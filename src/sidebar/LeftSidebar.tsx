@@ -27,6 +27,7 @@ export const LeftSidebar: React.FC = () => {
     isLeftSidebarOpen,
     setIsLeftSidebarPinned,
     setIsLeftSidebarOpen,
+    updateSettings,
   } = useCanvasStore(
     useShallow((state) => ({
       activePlugin: state.activePlugin,
@@ -40,6 +41,7 @@ export const LeftSidebar: React.FC = () => {
       isLeftSidebarOpen: state.isLeftSidebarOpen,
       setIsLeftSidebarPinned: state.setIsLeftSidebarPinned,
       setIsLeftSidebarOpen: state.setIsLeftSidebarOpen,
+      updateSettings: state.updateSettings,
     }))
   );
 
@@ -58,6 +60,12 @@ export const LeftSidebar: React.FC = () => {
       setIsLeftSidebarOpen(true);
     }
   }, [showLeftSidebar, isDesktop, isLeftSidebarPinned, isLeftSidebarOpen, setIsLeftSidebarOpen]);
+
+  useEffect(() => {
+    if (!canPinSidebar && showLeftSidebar) {
+      updateSettings({ showLeftSidebar: false });
+    }
+  }, [canPinSidebar, showLeftSidebar, updateSettings]);
 
   useEffect(() => {
     if (!showLeftSidebar) return;

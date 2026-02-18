@@ -1682,7 +1682,7 @@ export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) =
         const next = new Set(
           Array.from(discoveredTags).filter((tag) => tag !== 'svg' && !DEFAULT_HIDDEN_TAGS.has(tag))
         );
-        setStoredEnabledTags(Array.from(next));
+        setTimeout(() => setStoredEnabledTags(Array.from(next)), 0);
         return next;
       }
       const next = new Set<string>();
@@ -1695,7 +1695,7 @@ export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) =
       });
       const isSame = next.size === prev.size && Array.from(next).every((tag) => prev.has(tag));
       if (!isSame) {
-        setStoredEnabledTags(Array.from(next));
+        setTimeout(() => setStoredEnabledTags(Array.from(next)), 0);
       }
       return isSame ? prev : next;
     });

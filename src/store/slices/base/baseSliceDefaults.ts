@@ -1,13 +1,11 @@
 import type { BaseSlice } from './baseSliceTypes';
 
-const IS_DEV = import.meta.env.DEV;
-
 export const createDefaultSettings = (): BaseSlice['settings'] => ({
   keyboardMovementPrecision: 2,
   showRenderCountBadges: false,
   showMinimap: true,
   showTooltips: true,
-  showLeftSidebar: IS_DEV,
+  showLeftSidebar: true,
   defaultStrokeColor: '#000000',
   scaleStrokeWithZoom: true,
   exportPadding: 0,

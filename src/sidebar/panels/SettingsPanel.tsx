@@ -219,8 +219,9 @@ export const SettingsPanel: React.FC = () => {
                 Show left sidebar
               </Text>
               <PanelSwitch
-                isChecked={settings.showLeftSidebar}
+                isChecked={!isMobile && settings.showLeftSidebar}
                 onChange={(e) => updateSettings({ showLeftSidebar: e.target.checked })}
+                isDisabled={isMobile}
                 title="Show left sidebar (Structure/Library)"
                 aria-label="Show left sidebar"
               />

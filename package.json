@@ -11,6 +11,7 @@
     "test:vitest": "bunx vitest run",
     "test:ui": "bunx playwright test --ui",
     "preview": "bunx --bun vite preview",
+    "prod": "bun run build && bunx --bun vite preview",
     "type-check": "bun run tsc --noEmit",
     "typecheck": "bun run tsc --noEmit",
     "unused-exports": "bunx ts-unused-exports tsconfig.json",

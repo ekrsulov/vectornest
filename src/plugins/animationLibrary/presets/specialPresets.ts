@@ -8,7 +8,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Roll In animation - rotate while entering
  */
-export const ROLL_IN_PRESET: AnimationPreset = {
+const ROLL_IN_PRESET: AnimationPreset = {
     id: 'preset-roll-in',
     name: 'Roll In',
     description: 'Enter with a rolling rotation',
@@ -42,7 +42,7 @@ export const ROLL_IN_PRESET: AnimationPreset = {
 /**
  * Roll Out animation - rotate while exiting
  */
-export const ROLL_OUT_PRESET: AnimationPreset = {
+const ROLL_OUT_PRESET: AnimationPreset = {
     id: 'preset-roll-out',
     name: 'Roll Out',
     description: 'Exit with a rolling rotation',
@@ -76,7 +76,7 @@ export const ROLL_OUT_PRESET: AnimationPreset = {
 /**
  * Expand Width animation - horizontal reveal
  */
-export const EXPAND_WIDTH_PRESET: AnimationPreset = {
+const EXPAND_WIDTH_PRESET: AnimationPreset = {
     id: 'preset-expand-width',
     name: 'Expand Width',
     description: 'Reveal by expanding horizontally from center',
@@ -111,7 +111,7 @@ export const EXPAND_WIDTH_PRESET: AnimationPreset = {
 /**
  * Expand Height animation - vertical reveal
  */
-export const EXPAND_HEIGHT_PRESET: AnimationPreset = {
+const EXPAND_HEIGHT_PRESET: AnimationPreset = {
     id: 'preset-expand-height',
     name: 'Expand Height',
     description: 'Reveal by expanding vertically from center',
@@ -146,7 +146,7 @@ export const EXPAND_HEIGHT_PRESET: AnimationPreset = {
 /**
  * Expand Both animation - uniform reveal from center
  */
-export const EXPAND_BOTH_PRESET: AnimationPreset = {
+const EXPAND_BOTH_PRESET: AnimationPreset = {
     id: 'preset-expand-both',
     name: 'Expand Both',
     description: 'Reveal by expanding in both directions from center',
@@ -181,7 +181,7 @@ export const EXPAND_BOTH_PRESET: AnimationPreset = {
 /**
  * Vanish animation - quick disappearance with scale
  */
-export const VANISH_PRESET: AnimationPreset = {
+const VANISH_PRESET: AnimationPreset = {
     id: 'preset-vanish',
     name: 'Vanish',
     description: 'Quick disappearance with scale and fade',
@@ -227,7 +227,7 @@ export const VANISH_PRESET: AnimationPreset = {
 /**
  * Melt Down animation - melting effect downward
  */
-export const MELT_DOWN_PRESET: AnimationPreset = {
+const MELT_DOWN_PRESET: AnimationPreset = {
     id: 'preset-melt-down',
     name: 'Melt Down',
     description: 'Melting effect that collapses downward',
@@ -261,7 +261,7 @@ export const MELT_DOWN_PRESET: AnimationPreset = {
 /**
  * Evaporate Up animation - rising and fading out
  */
-export const EVAPORATE_UP_PRESET: AnimationPreset = {
+const EVAPORATE_UP_PRESET: AnimationPreset = {
     id: 'preset-evaporate-up',
     name: 'Evaporate Up',
     description: 'Rise upward while fading out',
@@ -305,7 +305,7 @@ export const EVAPORATE_UP_PRESET: AnimationPreset = {
 /**
  * Door Open animation - opening door effect
  */
-export const DOOR_OPEN_PRESET: AnimationPreset = {
+const DOOR_OPEN_PRESET: AnimationPreset = {
     id: 'preset-door-open',
     name: 'Door Open',
     description: 'Door opening effect from side',
@@ -340,7 +340,7 @@ export const DOOR_OPEN_PRESET: AnimationPreset = {
 /**
  * Door Close animation - closing door effect
  */
-export const DOOR_CLOSE_PRESET: AnimationPreset = {
+const DOOR_CLOSE_PRESET: AnimationPreset = {
     id: 'preset-door-close',
     name: 'Door Close',
     description: 'Door closing effect from side',

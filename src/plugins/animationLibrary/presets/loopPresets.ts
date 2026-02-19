@@ -8,7 +8,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Blink animation - simple on/off blinking
  */
-export const BLINK_PRESET: AnimationPreset = {
+const BLINK_PRESET: AnimationPreset = {
     id: 'preset-blink',
     name: 'Blink',
     description: 'Simple on/off blinking effect',
@@ -36,7 +36,7 @@ export const BLINK_PRESET: AnimationPreset = {
 /**
  * Flash animation - quick bright flash
  */
-export const FLASH_PRESET: AnimationPreset = {
+const FLASH_PRESET: AnimationPreset = {
     id: 'preset-flash',
     name: 'Flash',
     description: 'Quick bright flash effect',
@@ -65,7 +65,7 @@ export const FLASH_PRESET: AnimationPreset = {
 /**
  * Strobe animation - rapid strobe light effect
  */
-export const STROBE_PRESET: AnimationPreset = {
+const STROBE_PRESET: AnimationPreset = {
     id: 'preset-strobe',
     name: 'Strobe',
     description: 'Rapid strobe light effect',
@@ -93,7 +93,7 @@ export const STROBE_PRESET: AnimationPreset = {
 /**
  * Shimmer animation - subtle light shimmer
  */
-export const SHIMMER_PRESET: AnimationPreset = {
+const SHIMMER_PRESET: AnimationPreset = {
     id: 'preset-shimmer',
     name: 'Shimmer',
     description: 'Subtle light shimmer effect',
@@ -123,7 +123,7 @@ export const SHIMMER_PRESET: AnimationPreset = {
 /**
  * Star Twinkle animation - star-like twinkling
  */
-export const STAR_TWINKLE_PRESET: AnimationPreset = {
+const STAR_TWINKLE_PRESET: AnimationPreset = {
     id: 'preset-star-twinkle',
     name: 'Star Twinkle',
     description: 'Star-like twinkling effect',
@@ -153,7 +153,7 @@ export const STAR_TWINKLE_PRESET: AnimationPreset = {
 /**
  * Glitch animation - digital glitch effect
  */
-export const GLITCH_PRESET: AnimationPreset = {
+const GLITCH_PRESET: AnimationPreset = {
     id: 'preset-glitch',
     name: 'Glitch',
     description: 'Digital glitch displacement effect',
@@ -184,7 +184,7 @@ export const GLITCH_PRESET: AnimationPreset = {
 /**
  * Glitch Extreme animation - intense glitch effect
  */
-export const GLITCH_EXTREME_PRESET: AnimationPreset = {
+const GLITCH_EXTREME_PRESET: AnimationPreset = {
     id: 'preset-glitch-extreme',
     name: 'Glitch Extreme',
     description: 'Intense digital glitch effect',
@@ -215,7 +215,7 @@ export const GLITCH_EXTREME_PRESET: AnimationPreset = {
 /**
  * Wave animation - gentle wave motion
  */
-export const WAVE_PRESET: AnimationPreset = {
+const WAVE_PRESET: AnimationPreset = {
     id: 'preset-wave',
     name: 'Wave',
     description: 'Gentle wave-like oscillation',
@@ -248,7 +248,7 @@ export const WAVE_PRESET: AnimationPreset = {
 /**
  * Cloud Drift animation - slow horizontal drift
  */
-export const CLOUD_DRIFT_PRESET: AnimationPreset = {
+const CLOUD_DRIFT_PRESET: AnimationPreset = {
     id: 'preset-cloud-drift',
     name: 'Cloud Drift',
     description: 'Slow horizontal drifting motion',
@@ -280,7 +280,7 @@ export const CLOUD_DRIFT_PRESET: AnimationPreset = {
 /**
  * Wind Sway animation - natural wind swaying
  */
-export const WIND_SWAY_PRESET: AnimationPreset = {
+const WIND_SWAY_PRESET: AnimationPreset = {
     id: 'preset-wind-sway',
     name: 'Wind Sway',
     description: 'Natural wind swaying motion',
@@ -318,7 +318,7 @@ export const WIND_SWAY_PRESET: AnimationPreset = {
 /**
  * Flame Pulse animation - flickering flame effect
  */
-export const FLAME_PULSE_PRESET: AnimationPreset = {
+const FLAME_PULSE_PRESET: AnimationPreset = {
     id: 'preset-flame-pulse',
     name: 'Flame Pulse',
     description: 'Flickering flame-like pulsation',

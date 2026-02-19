@@ -1,6 +1,3 @@
-import type { StateCreator } from 'zustand';
-import type { CanvasStore } from '../../store/canvasStore';
-
 export interface MaskDefinition {
   id: string;
   name?: string;
@@ -33,10 +30,3 @@ export interface MasksSlice {
   selectedFromSearch?: string | null;
   selectFromSearch?: (id: string | null) => void;
 }
-
-export type MasksSliceCreator = StateCreator<
-  CanvasStore & MasksSlice,
-  [],
-  [],
-  MasksSlice
->;

@@ -7,7 +7,7 @@ import type { MaskDefinition } from '../../masks/types';
 import type { MarkerDefinition } from '../../markers/slice';
 import type { SymbolDefinition } from '../../symbols/slice';
 
-export interface DefReference {
+interface DefReference {
   type: DefTargetType;
   id: string;
   label: string;
@@ -127,54 +127,4 @@ export function extractDefReferences(
   }
 
   return refs;
-}
-
-/**
- * Find all elements that use a specific def ID.
- */
-export function findElementsUsingDef(
-  defId: string,
-  defType: DefTargetType,
-  elements: CanvasElement[]
-): CanvasElement[] {
-  return elements.filter((el) => {
-    const data = el.data as Record<string, unknown>;
-
-    if (defType === 'gradient' || defType === 'pattern') {
-      const extractPaintId = (paint: unknown): string | undefined => {
-        if (typeof paint !== 'string') return undefined;
-        const match = paint.match(/url\(#([^)]+)\)/);
-        return match ? match[1] : undefined;
-      };
-      const fillId = extractPaintId(data.fillColor);
-      const strokeId = extractPaintId(data.strokeColor);
-      return fillId === defId || strokeId === defId;
-    }
-
-    if (defType === 'filter') {
-      return data.filterId === defId;
-    }
-
-    if (defType === 'clipPath') {
-      return data.clipPathTemplateId === defId || data.clipPathId === defId;
-    }
-
-    if (defType === 'mask') {
-      return (data as { maskId?: string }).maskId === defId;
-    }
-
-    if (defType === 'marker') {
-      return (
-        (data as { markerStart?: string }).markerStart === defId ||
-        (data as { markerMid?: string }).markerMid === defId ||
-        (data as { markerEnd?: string }).markerEnd === defId
-      );
-    }
-
-    if (defType === 'symbol') {
-      return (data as { symbolId?: string }).symbolId === defId;
-    }
-
-    return false;
-  });
 }

@@ -49,6 +49,3 @@ export const Wrap3DPreviewLayer: React.FC<Wrap3DPreviewLayerProps> = ({ viewport
     />
   );
 };
-
-// Export for backward compatibility
-export const SpherePreviewLayer = Wrap3DPreviewLayer;

@@ -168,7 +168,7 @@ function createStrokeWidthHandles(ctx: GizmoContext): GizmoHandle[] {
   ];
 }
 
-export const strokeWidthGizmoDefinition: AnimationGizmoDefinition = {
+const strokeWidthGizmoDefinition: AnimationGizmoDefinition = {
   id: 'stroke-width',
   category: 'style',
   priority: 40,
@@ -397,7 +397,7 @@ function createOpacityHandles(ctx: GizmoContext): GizmoHandle[] {
   ];
 }
 
-export const opacityGizmoDefinition: AnimationGizmoDefinition = {
+const opacityGizmoDefinition: AnimationGizmoDefinition = {
   id: 'opacity',
   category: 'style',
   priority: 42,
@@ -585,7 +585,7 @@ function createColorHandles(ctx: GizmoContext): GizmoHandle[] {
   ];
 }
 
-export const colorGizmoDefinition: AnimationGizmoDefinition = {
+const colorGizmoDefinition: AnimationGizmoDefinition = {
   id: 'color',
   category: 'style',
   priority: 41,
@@ -691,8 +691,8 @@ export const colorGizmoDefinition: AnimationGizmoDefinition = {
         {/* Color gradient track for reference */}
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-            {gradientStops.map((stop, i) => (
-              <stop key={i} offset={stop.offset} stopColor={stop.color} />
+            {gradientStops.map((stop) => (
+              <stop key={stop.offset} offset={stop.offset} stopColor={stop.color} />
             ))}
           </linearGradient>
         </defs>

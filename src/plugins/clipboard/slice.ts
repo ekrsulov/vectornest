@@ -160,5 +160,3 @@ export const createClipboardSlice: StateCreator<ClipboardSlice, [], [], Clipboar
     }
   },
 });
-
-export type { ClipboardInternalData as ClipboardData };

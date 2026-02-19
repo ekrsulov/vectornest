@@ -67,11 +67,6 @@ export const PATH_DECIMAL_PRECISION = 4;
 // ============================================================================
 
 /**
- * Default height for the select panel in pixels
- */
-export const DEFAULT_SELECT_PANEL_HEIGHT = 140;
-
-/**
  * Default width for the sidebar in pixels
  */
 export const DEFAULT_SIDEBAR_WIDTH = 250;
@@ -95,11 +90,6 @@ export const DRAG_THRESHOLD_PX = 3;
  * Debounce delay for localStorage writes to prevent excessive disk operations
  */
 export const LOCAL_STORAGE_DEBOUNCE_MS = 100;
-
-/**
- * Default translation offset when duplicating elements (in pixels)
- */
-export const DUPLICATE_OFFSET_PX = 20;
 
 /**
  * Milliseconds window for recognizing a double-tap gesture.

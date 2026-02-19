@@ -125,13 +125,3 @@ export interface UseElement extends CanvasElementBase<'use', UseElementData> {
   type: 'use';
 }
 
-/**
- * Check if an element is a UseElement
- */
-export const isUseElement = (element: unknown): element is UseElement => {
-  return (
-    typeof element === 'object' &&
-    element !== null &&
-    (element as { type?: string }).type === 'use'
-  );
-};

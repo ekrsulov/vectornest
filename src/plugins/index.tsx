@@ -122,6 +122,3 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   // pluginSelectorPlugin must be last so its init() runs after all other plugins are registered
   pluginSelectorPlugin,
 ];
-
-// Plugin modes that should be registered in the mode machine
-export const PLUGIN_MODES = ['transformation', 'edit', 'subpath'];

@@ -12,13 +12,12 @@
 	import { useGizmoContext } from '../gizmos/GizmoContext';
 	import { GizmoOverlay } from '../gizmos/GizmoOverlay';
 	import { useGizmoInteraction } from '../gizmos/GizmoInteractionHandler';
-	import { registerCoreGizmos, animationGizmoRegistry } from '../gizmos';
+	import { registerCoreGizmos } from '../gizmos';
 	import { getViewBoxString } from '../../../canvas/viewport/ViewportController';
 	import { useDoubleTap } from '../../../canvas/hooks/useDoubleTap';
 	import type { AnimationPluginSlice } from '../types';
 	import type { CanvasElement } from '../../../types';
-	import type { GizmoState, AnimationGizmoDefinition, AnimationCategory } from '../gizmos/types';
-	import type { SVGAnimation } from '../types';
+		import type { SVGAnimation } from '../types';
 
 // Track if gizmos have been registered
 let gizmosRegistered = false;
@@ -28,7 +27,7 @@ let gizmosRegistered = false;
  * Should be called once during application startup.
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export function initializeGizmoSystem(): void {
+function initializeGizmoSystem(): void {
   if (gizmosRegistered) return;
   registerCoreGizmos();
   gizmosRegistered = true;
@@ -234,53 +233,4 @@ export const AnimationGizmoOverlay: React.FC<AnimationGizmoOverlayProps> = (prop
   return <AnimationGizmoOverlayInner {...props} />;
 };
 
-/**
- * Hook to access gizmo functionality from within the canvas.
- * Returns functions to manually activate/deactivate gizmos.
- */
-// eslint-disable-next-line react-refresh/only-export-components
-export function useAnimationGizmos() {
-  const context = useGizmoContext();
-  
-  return {
-    activeGizmos: context.activeGizmos,
-    activateGizmo: context.activateGizmo,
-    deactivateGizmo: context.deactivateGizmo,
-    focusGizmo: context.focusGizmo,
-    updateGizmoProps: context.updateGizmoProps,
-  };
-}
 
-/**
- * Hook to get gizmo definitions for a specific animation type.
- */
-// eslint-disable-next-line react-refresh/only-export-components
-export function useGizmosForAnimation(animation: SVGAnimation | null, element: CanvasElement | null): AnimationGizmoDefinition | undefined {
-  return useMemo(() => {
-    if (!animation || !element) return undefined;
-    return animationGizmoRegistry.findForAnimation(animation, element);
-  }, [animation, element]);
-}
-
-/**
- * Hook to get all available gizmo categories.
- */
-// eslint-disable-next-line react-refresh/only-export-components
-export function useGizmoCategories(): AnimationCategory[] {
-  return useMemo(() => {
-    return animationGizmoRegistry.getCategories();
-  }, []);
-}
-
-/**
- * Hook to get gizmos by category.
- */
-// eslint-disable-next-line react-refresh/only-export-components
-export function useGizmosByCategory(category: AnimationCategory): AnimationGizmoDefinition[] {
-  return useMemo(() => {
-    return animationGizmoRegistry.getByCategory(category);
-  }, [category]);
-}
-
-// Re-export types for convenience
-export type { GizmoState, AnimationGizmoDefinition };

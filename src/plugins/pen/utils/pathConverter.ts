@@ -234,20 +234,9 @@ function segmentToCommands(from: PenAnchorPoint, to: PenAnchorPoint): Command[] 
 }
 
 /**
- * Calculate symmetric handle for smooth anchor points
- * Given an anchor position and one handle, calculate the opposite handle
- */
-export function calculateSymmetricHandle(_anchorPos: Point, existingHandle: Point): Point {
-    return {
-        x: -existingHandle.x,
-        y: -existingHandle.y,
-    };
-}
-
-/**
  * Check if two handles are collinear (for smooth anchor determination)
  */
-export function areHandlesCollinear(handle1: Point, handle2: Point, tolerance = 0.01): boolean {
+function areHandlesCollinear(handle1: Point, handle2: Point, tolerance = 0.01): boolean {
     // Handles should be opposite directions with same magnitude for perfect smooth
     // But we'll allow some tolerance for near-collinear
     const mag1 = Math.sqrt(handle1.x ** 2 + handle1.y ** 2);

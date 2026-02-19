@@ -940,7 +940,7 @@ export function reconstructPathsFromSegments(
  * Cleans an array of ReconstructedPath by removing insignificant or duplicate ones and
  * merging tiny fragments that likely represent noise or duplicated geometry.
  */
-export function sanitizeReconstructedPaths(paths: ReconstructedPath[]): ReconstructedPath[] {
+function sanitizeReconstructedPaths(paths: ReconstructedPath[]): ReconstructedPath[] {
   try {
     const cleaned: ReconstructedPath[] = [];
     const seen = new Set<string>();

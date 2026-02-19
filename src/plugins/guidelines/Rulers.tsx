@@ -1,10 +1,6 @@
 import React from 'react';
-import { Rulers as SharedRulers, RULER_SIZE } from '../../ui/Rulers';
+import { Rulers as SharedRulers } from '../../ui/Rulers';
 import { useCanvasStore } from '../../store/canvasStore';
-
-// Re-export RULER_SIZE for backward compatibility
-// eslint-disable-next-line react-refresh/only-export-components
-export { RULER_SIZE };
 
 interface RulersProps {
   width: number;

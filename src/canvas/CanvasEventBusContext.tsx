@@ -4,7 +4,7 @@ import type { Point } from '../types';
 import { logger } from '../utils/logger';
 
 export type CanvasPointerEvent = ReactPointerEvent | globalThis.PointerEvent;
-export type CanvasWheelEvent = ReactWheelEvent | globalThis.WheelEvent;
+type CanvasWheelEvent = ReactWheelEvent | globalThis.WheelEvent;
 
 export interface CanvasPointerEventHelpers {
   beginSelectionRectangle?: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
@@ -125,7 +125,7 @@ export class CanvasEventBus<EventMap extends Record<string, unknown> = CanvasEve
 
 const CanvasEventBusContext = createContext<CanvasEventBus | null>(null);
 
-export type CanvasEventBusProviderProps = PropsWithChildren<{ value?: CanvasEventBus }>;
+type CanvasEventBusProviderProps = PropsWithChildren<{ value?: CanvasEventBus }>;
 
 export const CanvasEventBusProvider = ({ value, children }: CanvasEventBusProviderProps) => {
   const busRef = useRef<CanvasEventBus | null>(value ?? null);

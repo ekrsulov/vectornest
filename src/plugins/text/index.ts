@@ -4,7 +4,6 @@ import { createPluginSlice } from '../../utils/pluginUtils';
 import { createToolPanel } from '../../utils/pluginFactories';
 import { RemoveFormatting } from 'lucide-react';
 import { createTextPluginSlice } from './slice';
-import type { TextPluginSlice } from './slice';
 import React from 'react';
 import { TextPanel } from './TextPanel';
 import { addText } from './actions';
@@ -45,5 +44,3 @@ export const textPlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('text', TextPanel)],
 };
 
-export type { TextPluginSlice };
-export { TextPanel };

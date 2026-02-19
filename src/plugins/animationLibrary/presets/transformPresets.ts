@@ -8,7 +8,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Flip X animation - 3D-like horizontal flip
  */
-export const FLIP_X_PRESET: AnimationPreset = {
+const FLIP_X_PRESET: AnimationPreset = {
     id: 'preset-flip-x',
     name: 'Flip X',
     description: '3D-like flip on horizontal axis',
@@ -42,7 +42,7 @@ export const FLIP_X_PRESET: AnimationPreset = {
 /**
  * Flip Y animation - 3D-like vertical flip
  */
-export const FLIP_Y_PRESET: AnimationPreset = {
+const FLIP_Y_PRESET: AnimationPreset = {
     id: 'preset-flip-y',
     name: 'Flip Y',
     description: '3D-like flip on vertical axis',
@@ -76,7 +76,7 @@ export const FLIP_Y_PRESET: AnimationPreset = {
 /**
  * Flip 3D animation - continuous 3D-like flip loop
  */
-export const FLIP_3D_PRESET: AnimationPreset = {
+const FLIP_3D_PRESET: AnimationPreset = {
     id: 'preset-flip-3d',
     name: 'Flip 3D',
     description: 'Continuous 3D-like flip animation',
@@ -107,7 +107,7 @@ export const FLIP_3D_PRESET: AnimationPreset = {
 /**
  * Skew Loop animation - continuous skewing motion
  */
-export const SKEW_LOOP_PRESET: AnimationPreset = {
+const SKEW_LOOP_PRESET: AnimationPreset = {
     id: 'preset-skew-loop',
     name: 'Skew Loop',
     description: 'Continuous horizontal skewing motion',
@@ -140,7 +140,7 @@ export const SKEW_LOOP_PRESET: AnimationPreset = {
 /**
  * Skew Shake animation - rapid skew trembling
  */
-export const SKEW_SHAKE_PRESET: AnimationPreset = {
+const SKEW_SHAKE_PRESET: AnimationPreset = {
     id: 'preset-skew-shake',
     name: 'Skew Shake',
     description: 'Rapid skewing trembling effect',
@@ -171,7 +171,7 @@ export const SKEW_SHAKE_PRESET: AnimationPreset = {
 /**
  * Tilt animation - gentle tilting motion
  */
-export const TILT_PRESET: AnimationPreset = {
+const TILT_PRESET: AnimationPreset = {
     id: 'preset-tilt',
     name: 'Tilt',
     description: 'Gentle tilting back and forth',
@@ -204,7 +204,7 @@ export const TILT_PRESET: AnimationPreset = {
 /**
  * Pendulum animation - smooth pendulum swing
  */
-export const PENDULUM_PRESET: AnimationPreset = {
+const PENDULUM_PRESET: AnimationPreset = {
     id: 'preset-pendulum',
     name: 'Pendulum',
     description: 'Smooth pendulum-like swinging motion',
@@ -242,7 +242,7 @@ export const PENDULUM_PRESET: AnimationPreset = {
 /**
  * Ringing Bell animation - bell-like ringing motion
  */
-export const RINGING_BELL_PRESET: AnimationPreset = {
+const RINGING_BELL_PRESET: AnimationPreset = {
     id: 'preset-ringing-bell',
     name: 'Ringing Bell',
     description: 'Bell-like ringing motion with decreasing amplitude',
@@ -279,7 +279,7 @@ export const RINGING_BELL_PRESET: AnimationPreset = {
 /**
  * Vibrate animation - rapid micro-movements
  */
-export const VIBRATE_PRESET: AnimationPreset = {
+const VIBRATE_PRESET: AnimationPreset = {
     id: 'preset-vibrate',
     name: 'Vibrate',
     description: 'Rapid micro-vibration effect',
@@ -310,7 +310,7 @@ export const VIBRATE_PRESET: AnimationPreset = {
 /**
  * Jello X animation - jelly-like horizontal squash
  */
-export const JELLO_X_PRESET: AnimationPreset = {
+const JELLO_X_PRESET: AnimationPreset = {
     id: 'preset-jello-x',
     name: 'Jello X',
     description: 'Jelly-like horizontal squash and stretch',
@@ -342,7 +342,7 @@ export const JELLO_X_PRESET: AnimationPreset = {
 /**
  * Jello Y animation - jelly-like vertical squash
  */
-export const JELLO_Y_PRESET: AnimationPreset = {
+const JELLO_Y_PRESET: AnimationPreset = {
     id: 'preset-jello-y',
     name: 'Jello Y',
     description: 'Jelly-like vertical squash and stretch',
@@ -374,7 +374,7 @@ export const JELLO_Y_PRESET: AnimationPreset = {
 /**
  * Wiggle animation - playful wiggling motion
  */
-export const WIGGLE_PRESET: AnimationPreset = {
+const WIGGLE_PRESET: AnimationPreset = {
     id: 'preset-wiggle',
     name: 'Wiggle',
     description: 'Playful wiggling motion combining rotation and translation',
@@ -425,7 +425,7 @@ export const WIGGLE_PRESET: AnimationPreset = {
 /**
  * Tada animation - attention-grabbing celebration effect
  */
-export const TADA_PRESET: AnimationPreset = {
+const TADA_PRESET: AnimationPreset = {
     id: 'preset-tada',
     name: 'Tada',
     description: 'Attention-grabbing celebration effect',

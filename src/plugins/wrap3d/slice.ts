@@ -11,12 +11,12 @@ import {
 /**
  * Original path data stored for each element being transformed
  */
-export interface OriginalPathInfo {
+interface OriginalPathInfo {
   id: string;
   pathData: PathData;
 }
 
-export interface Wrap3DState {
+interface Wrap3DState {
   // Tool activation state
   isActive: boolean;
   
@@ -559,7 +559,3 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
     },
   };
 };
-
-// Re-export for backward compatibility
-export type SphereWrapSlice = Wrap3DSlice;
-export const createSphereWrapSlice = createWrap3DSlice;

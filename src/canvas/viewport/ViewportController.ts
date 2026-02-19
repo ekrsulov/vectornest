@@ -8,7 +8,7 @@ export interface ViewportSize {
   height: number;
 }
 
-export interface ViewportConstraints {
+interface ViewportConstraints {
   minZoom?: number;
   maxZoom?: number;
 }
@@ -36,7 +36,7 @@ export interface FitToSelectionOptions extends ClampOptions {
 }
 
 const DEFAULT_MIN_ZOOM = 0.1;
-export const DEFAULT_MAX_ZOOM = 5;
+const DEFAULT_MAX_ZOOM = 5;
 const DEFAULT_PADDING = 32;
 
 const clampNumber = (value: number, min: number, max: number): number => {

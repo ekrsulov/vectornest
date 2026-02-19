@@ -473,8 +473,3 @@ export class SMILCompiler {
     return { valid: errors.length === 0, errors };
   }
 }
-
-/**
- * Global singleton instance of the SMIL compiler
- */
-export const smilCompiler = new SMILCompiler();

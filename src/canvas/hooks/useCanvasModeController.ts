@@ -14,20 +14,20 @@ import {
   type CanvasModeTransitionResult,
 } from '../modes/CanvasModeMachine';
 
-export type CanvasModeTransitionExecutor = (mode: CanvasMode) => CanvasModeTransitionResult;
+type CanvasModeTransitionExecutor = (mode: CanvasMode) => CanvasModeTransitionResult;
 
-export type CanvasModePointerHandler = NonNullable<PluginDefinition<CanvasStore>['handler']>;
+type CanvasModePointerHandler = NonNullable<PluginDefinition<CanvasStore>['handler']>;
 
-export interface CanvasModeListeners {
+interface CanvasModeListeners {
   pointerdown?: CanvasModePointerHandler;
 }
 
-export interface CanvasModeEffects {
+interface CanvasModeEffects {
   listeners: CanvasModeListeners;
   overlays: ComponentType<Record<string, unknown>>[];
 }
 
-export interface CanvasModeMachineHookResult {
+interface CanvasModeMachineHookResult {
   currentMode: CanvasMode;
   definition: CanvasModeStateConfig;
   transition: CanvasModeTransitionExecutor;

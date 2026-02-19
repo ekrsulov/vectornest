@@ -55,7 +55,7 @@ function extractStyleAnimationValues(animation: SVGAnimation): { from: string; t
 // Spring Physics Gizmo (35)
 // =============================================================================
 
-export const springPhysicsGizmoDefinition: AnimationGizmoDefinition = {
+const springPhysicsGizmoDefinition: AnimationGizmoDefinition = {
   id: 'spring-physics',
   category: 'fx',
   priority: 60,
@@ -199,7 +199,7 @@ export const springPhysicsGizmoDefinition: AnimationGizmoDefinition = {
 // Particle Emit Gizmo (36)
 // =============================================================================
 
-export const particleEmitGizmoDefinition: AnimationGizmoDefinition = {
+const particleEmitGizmoDefinition: AnimationGizmoDefinition = {
   id: 'particle-emit',
   category: 'fx',
   priority: 58,
@@ -401,9 +401,9 @@ export const particleEmitGizmoDefinition: AnimationGizmoDefinition = {
         />
         <circle cx={cx} cy={cy} r={4 / viewport.zoom} fill={color} />
         {/* Particle dots */}
-        {[0.2, 0.5, 0.8].map((t, i) => (
+        {[0.2, 0.5, 0.8].map((t) => (
           <circle
-            key={i}
+            key={t}
             cx={cx + r * t * Math.cos(-90 * Math.PI / 180)}
             cy={cy + r * t * Math.sin(-90 * Math.PI / 180)}
             r={2 / viewport.zoom}
@@ -420,7 +420,7 @@ export const particleEmitGizmoDefinition: AnimationGizmoDefinition = {
 // Wave Distortion Gizmo (37)
 // =============================================================================
 
-export const waveDistortionGizmoDefinition: AnimationGizmoDefinition = {
+const waveDistortionGizmoDefinition: AnimationGizmoDefinition = {
   id: 'wave-distortion',
   category: 'fx',
   priority: 56,
@@ -553,7 +553,7 @@ export const waveDistortionGizmoDefinition: AnimationGizmoDefinition = {
 // Noise Gizmo (38)
 // =============================================================================
 
-export const noiseGizmoDefinition: AnimationGizmoDefinition = {
+const noiseGizmoDefinition: AnimationGizmoDefinition = {
   id: 'noise',
   category: 'fx',
   priority: 54,
@@ -665,7 +665,7 @@ export const noiseGizmoDefinition: AnimationGizmoDefinition = {
       <g className="noise-gizmo">
         {dots.map((dot, i) => (
           <circle
-            key={i}
+            key={`dot-${dot.x}-${dot.y}`}
             cx={dot.x}
             cy={dot.y}
             r={dot.r / viewport.zoom}
@@ -693,7 +693,7 @@ export const noiseGizmoDefinition: AnimationGizmoDefinition = {
 // Parallax Gizmo (39)
 // =============================================================================
 
-export const parallaxGizmoDefinition: AnimationGizmoDefinition = {
+const parallaxGizmoDefinition: AnimationGizmoDefinition = {
   id: 'parallax',
   category: 'fx',
   priority: 52,
@@ -794,7 +794,7 @@ export const parallaxGizmoDefinition: AnimationGizmoDefinition = {
 // Elastic Gizmo (40)
 // =============================================================================
 
-export const elasticGizmoDefinition: AnimationGizmoDefinition = {
+const elasticGizmoDefinition: AnimationGizmoDefinition = {
   id: 'elastic',
   category: 'fx',
   priority: 50,
@@ -886,7 +886,7 @@ export const elasticGizmoDefinition: AnimationGizmoDefinition = {
 // Bounce Gizmo (41)
 // =============================================================================
 
-export const bounceGizmoDefinition: AnimationGizmoDefinition = {
+const bounceGizmoDefinition: AnimationGizmoDefinition = {
   id: 'bounce',
   category: 'fx',
   priority: 48,
@@ -984,7 +984,7 @@ export const bounceGizmoDefinition: AnimationGizmoDefinition = {
 // Jiggle Gizmo (42)
 // =============================================================================
 
-export const jiggleGizmoDefinition: AnimationGizmoDefinition = {
+const jiggleGizmoDefinition: AnimationGizmoDefinition = {
   id: 'jiggle',
   category: 'fx',
   priority: 46,
@@ -1058,7 +1058,7 @@ export const jiggleGizmoDefinition: AnimationGizmoDefinition = {
       <g className="jiggle-gizmo">
         {jiggleOffsets.map((offset, i) => (
           <rect
-            key={i}
+            key={`jiggle-${offset.x}-${offset.y}`}
             x={cx + offset.x - 4 / viewport.zoom}
             y={cy + offset.y - 4 / viewport.zoom}
             width={8 / viewport.zoom}
@@ -1087,7 +1087,7 @@ export const jiggleGizmoDefinition: AnimationGizmoDefinition = {
 // Orbit Gizmo (43)
 // =============================================================================
 
-export const orbitGizmoDefinition: AnimationGizmoDefinition = {
+const orbitGizmoDefinition: AnimationGizmoDefinition = {
   id: 'orbit',
   category: 'fx',
   priority: 44,
@@ -1211,7 +1211,7 @@ export const orbitGizmoDefinition: AnimationGizmoDefinition = {
 // Spiral Gizmo (44)
 // =============================================================================
 
-export const spiralGizmoDefinition: AnimationGizmoDefinition = {
+const spiralGizmoDefinition: AnimationGizmoDefinition = {
   id: 'spiral',
   category: 'fx',
   priority: 42,

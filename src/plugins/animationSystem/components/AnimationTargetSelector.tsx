@@ -11,7 +11,7 @@ import type { MaskDefinition } from '../../masks/types';
 import type { MarkerDefinition } from '../../markers/slice';
 import type { SymbolDefinition } from '../../symbols/slice';
 
-export interface AnimationTargetSelectorProps {
+interface AnimationTargetSelectorProps {
   /** Currently selected element */
   selectedElement?: CanvasElement;
   /** All canvas elements for finding def usages */

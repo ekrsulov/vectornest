@@ -59,15 +59,3 @@ export function registerCoreGizmos(): void {
   animationGizmoRegistry.registerAll(sceneGizmos);
 }
 
-// Export individual gizmo collections for selective registration
-export { transformGizmos } from './TransformGizmos';
-export { vectorGizmos } from './VectorGizmos';
-export { styleGizmos } from './StyleGizmos';
-export { clipMaskGizmos } from './ClipMaskGizmos';
-export { gradientPatternGizmos } from './GradientPatternGizmos';
-export { filterGizmos } from './FilterGizmos';
-export { hierarchyGizmos } from './HierarchyGizmos';
-export { interactiveGizmos } from './InteractiveGizmos';
-export { typographyGizmos } from './TypographyGizmos';
-export { fxGizmos } from './FXGizmos';
-export { sceneGizmos } from './SceneGizmos';

@@ -1,7 +1,5 @@
 import { PluginManager } from './pluginManagerCore';
 
-export { PluginManager } from './pluginManagerCore';
-
 export const pluginManager = new PluginManager();
 
 export type {
@@ -15,9 +13,5 @@ export {
   useDisabledToolIds,
   useIsGlobalUndoRedoDisabled,
 } from './pluginHooks';
-
-export {
-  createPluginSlice,
-} from './pluginUtils';
 
 

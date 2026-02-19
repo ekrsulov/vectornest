@@ -9,7 +9,7 @@ export interface SelectedCommand {
     pointIndex: number;
 }
 
-export interface UseCanvasFeedbackParams {
+interface UseCanvasFeedbackParams {
     currentMode: string | null;
     selectedCommands: SelectedCommand[];
     elements: CanvasElement[];

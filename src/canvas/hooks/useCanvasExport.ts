@@ -1,7 +1,7 @@
 import { useEffect, type RefObject } from 'react';
 import { useCanvasEventBus } from '../CanvasEventBusContext';
 
-export interface UseCanvasExportParams {
+interface UseCanvasExportParams {
     saveAsPng: (selectedOnly: boolean) => void;
     svgRef: RefObject<SVGSVGElement | null>;
 }

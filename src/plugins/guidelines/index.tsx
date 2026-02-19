@@ -167,7 +167,5 @@ export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createSettingsPanel('guidelines', GuidelinesPanel)],
 };
 
-export type { GuidelinesPluginSlice };
-export { GuidelinesPanel };
 // eslint-disable-next-line react-refresh/only-export-components
 export * from './types';

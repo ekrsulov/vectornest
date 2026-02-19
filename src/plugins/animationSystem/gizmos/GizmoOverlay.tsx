@@ -40,6 +40,158 @@ function getHandlePosition(handle: GizmoHandle, context: GizmoContext): Point {
 // Sub-Components
 // =============================================================================
 
+interface HandleVisualProps {
+  type: GizmoHandle['type'];
+  position: Point;
+  size: number;
+  strokeWidth: number;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    fill: string;
+    stroke: string;
+    active: string;
+  };
+  isActive: boolean;
+  isHovered: boolean;
+  hasLabel: boolean;
+}
+
+function HandleVisual({
+  type,
+  position,
+  size,
+  strokeWidth,
+  colors,
+  isActive,
+  isHovered,
+  hasLabel,
+}: HandleVisualProps): React.ReactElement {
+  switch (type) {
+    case 'position':
+    case 'point':
+      return (
+        <circle
+          cx={position.x}
+          cy={position.y}
+          r={size}
+          fill={isActive ? colors.active : colors.fill}
+          stroke={isHovered ? colors.active : colors.stroke}
+          strokeWidth={strokeWidth}
+        />
+      );
+
+    case 'rotation':
+    case 'arc':
+      return (
+        <g>
+          <circle
+            cx={position.x}
+            cy={position.y}
+            r={size}
+            fill={isActive ? colors.active : colors.fill}
+            stroke={colors.accent}
+            strokeWidth={strokeWidth}
+          />
+          {!hasLabel && (
+            <path
+              d={`M ${position.x} ${position.y - size * 1.5} 
+                  A ${size * 1.5} ${size * 1.5} 0 0 1 
+                  ${position.x + size * 1.5} ${position.y}`}
+              fill="none"
+              stroke={colors.accent}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+            />
+          )}
+        </g>
+      );
+
+    case 'scale':
+      return (
+        <rect
+          x={position.x - size}
+          y={position.y - size}
+          width={size * 2}
+          height={size * 2}
+          fill={isActive ? colors.active : colors.fill}
+          stroke={colors.stroke}
+          strokeWidth={strokeWidth}
+        />
+      );
+
+    case 'path':
+      return (
+        <path
+          d={`M ${position.x} ${position.y - size}
+              L ${position.x + size} ${position.y}
+              L ${position.x} ${position.y + size}
+              L ${position.x - size} ${position.y}
+              Z`}
+          fill={isActive ? colors.active : colors.fill}
+          stroke={colors.primary}
+          strokeWidth={strokeWidth}
+        />
+      );
+
+    case 'tangent':
+      return (
+        <g>
+          <circle
+            cx={position.x}
+            cy={position.y}
+            r={size * 0.6}
+            fill={colors.secondary}
+            stroke={colors.stroke}
+            strokeWidth={strokeWidth}
+          />
+        </g>
+      );
+
+    case 'timing':
+      return (
+        <rect
+          x={position.x - size * 1.5}
+          y={position.y - size * 0.4}
+          width={size * 3}
+          height={size * 0.8}
+          rx={size * 0.4}
+          fill={colors.accent}
+          stroke={colors.stroke}
+          strokeWidth={strokeWidth}
+        />
+      );
+
+    case 'value':
+      return (
+        <rect
+          x={position.x - size * 0.4}
+          y={position.y - size * 1.5}
+          width={size * 0.8}
+          height={size * 3}
+          rx={size * 0.4}
+          fill={colors.secondary}
+          stroke={colors.stroke}
+          strokeWidth={strokeWidth}
+        />
+      );
+
+    case 'custom':
+    default:
+      return (
+        <circle
+          cx={position.x}
+          cy={position.y}
+          r={size * 0.8}
+          fill={colors.fill}
+          stroke={colors.stroke}
+          strokeWidth={strokeWidth}
+        />
+      );
+  }
+}
+
 interface GizmoHandleRendererProps {
   handle: GizmoHandle;
   context: GizmoRenderContext;
@@ -121,139 +273,6 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
   const labelFontSize =
     labelDigitCount >= 3 ? style.size * 0.75 : style.size * 0.9;
 
-  // Render based on handle type
-  const renderHandle = () => {
-    switch (handle.type) {
-      case 'position':
-      case 'point': // Point is similar to position
-        return (
-          <circle
-            cx={position.x}
-            cy={position.y}
-            r={style.size}
-            fill={style.isActive ? style.colors.active : style.colors.fill}
-            stroke={style.isHovered ? style.colors.active : style.colors.stroke}
-            strokeWidth={style.strokeWidth}
-          />
-        );
-
-      case 'rotation':
-      case 'arc': // Arc handle for rotation
-        // Rotation handle: circle with arc indicator
-        return (
-          <g>
-            <circle
-              cx={position.x}
-              cy={position.y}
-              r={style.size}
-              fill={style.isActive ? style.colors.active : style.colors.fill}
-              stroke={style.colors.accent}
-              strokeWidth={style.strokeWidth}
-            />
-            {!normalizedLabel && (
-              <path
-                d={`M ${position.x} ${position.y - style.size * 1.5} 
-                    A ${style.size * 1.5} ${style.size * 1.5} 0 0 1 
-                    ${position.x + style.size * 1.5} ${position.y}`}
-                fill="none"
-                stroke={style.colors.accent}
-                strokeWidth={style.strokeWidth}
-                strokeLinecap="round"
-              />
-            )}
-          </g>
-        );
-
-      case 'scale':
-        // Scale handle: square
-        return (
-          <rect
-            x={position.x - style.size}
-            y={position.y - style.size}
-            width={style.size * 2}
-            height={style.size * 2}
-            fill={style.isActive ? style.colors.active : style.colors.fill}
-            stroke={style.colors.stroke}
-            strokeWidth={style.strokeWidth}
-          />
-        );
-
-      case 'path':
-        // Path handle: diamond
-        return (
-          <path
-            d={`M ${position.x} ${position.y - style.size}
-                L ${position.x + style.size} ${position.y}
-                L ${position.x} ${position.y + style.size}
-                L ${position.x - style.size} ${position.y}
-                Z`}
-            fill={style.isActive ? style.colors.active : style.colors.fill}
-            stroke={style.colors.primary}
-            strokeWidth={style.strokeWidth}
-          />
-        );
-
-      case 'tangent':
-        // Tangent handle: small circle with line
-        return (
-          <g>
-            <circle
-              cx={position.x}
-              cy={position.y}
-              r={style.size * 0.6}
-              fill={style.colors.secondary}
-              stroke={style.colors.stroke}
-              strokeWidth={style.strokeWidth}
-            />
-          </g>
-        );
-
-      case 'timing':
-        // Timing handle: horizontal bar
-        return (
-          <rect
-            x={position.x - style.size * 1.5}
-            y={position.y - style.size * 0.4}
-            width={style.size * 3}
-            height={style.size * 0.8}
-            rx={style.size * 0.4}
-            fill={style.colors.accent}
-            stroke={style.colors.stroke}
-            strokeWidth={style.strokeWidth}
-          />
-        );
-
-      case 'value':
-        // Value handle: vertical bar
-        return (
-          <rect
-            x={position.x - style.size * 0.4}
-            y={position.y - style.size * 1.5}
-            width={style.size * 0.8}
-            height={style.size * 3}
-            rx={style.size * 0.4}
-            fill={style.colors.secondary}
-            stroke={style.colors.stroke}
-            strokeWidth={style.strokeWidth}
-          />
-        );
-
-      case 'custom':
-      default:
-        // Default: simple circle
-        return (
-          <circle
-            cx={position.x}
-            cy={position.y}
-            r={style.size * 0.8}
-            fill={style.colors.fill}
-            stroke={style.colors.stroke}
-            strokeWidth={style.strokeWidth}
-          />
-        );
-    }
-  };
-
   return (
     <g
       className="gizmo-handle"
@@ -271,7 +290,16 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
         style={{ cursor, pointerEvents: 'auto' }}
       />
       {/* Visual */}
-      {renderHandle()}
+      <HandleVisual
+        type={handle.type}
+        position={position}
+        size={style.size}
+        strokeWidth={style.strokeWidth}
+        colors={style.colors}
+        isActive={style.isActive}
+        isHovered={style.isHovered}
+        hasLabel={!!normalizedLabel}
+      />
       {normalizedLabel && (
         <text
           x={position.x}
@@ -361,7 +389,7 @@ const SingleGizmoRenderer = memo(function SingleGizmoRenderer({
 // Main Overlay Component
 // =============================================================================
 
-export interface GizmoOverlayProps {
+interface GizmoOverlayProps {
   /** Additional class name */
   className?: string;
   /** Callback for drag start - connects to GizmoInteractionHandler */
@@ -445,24 +473,6 @@ export const GizmoOverlay = memo(function GizmoOverlay({
 });
 
 // =============================================================================
-// Standalone Overlay (with provider check)
-// =============================================================================
-
-/**
- * Standalone overlay that can be used outside GizmoProvider
- * Shows nothing if no provider is present
- */
-export function GizmoOverlayStandalone(props: GizmoOverlayProps): React.ReactElement | null {
-  const gizmoContext = useGizmoContextOptional();
-  
-  if (!gizmoContext) {
-    return null;
-  }
-
-  return <GizmoOverlay {...props} />;
-}
-
-// =============================================================================
 // Utility Functions
 // =============================================================================
 
@@ -490,8 +500,3 @@ function getCursorForHandle(type: GizmoHandle['type']): string {
   }
 }
 
-// =============================================================================
-// Export
-// =============================================================================
-
-export default GizmoOverlay;

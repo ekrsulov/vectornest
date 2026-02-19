@@ -8,7 +8,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Text Typewriter animation - typing effect with clipPath
  */
-export const TEXT_TYPEWRITER_PRESET: AnimationPreset = {
+const TEXT_TYPEWRITER_PRESET: AnimationPreset = {
     id: 'preset-text-typewriter',
     name: 'Typewriter',
     description: 'Classic typing effect with clipPath reveal and cursor.',
@@ -61,7 +61,7 @@ export const TEXT_TYPEWRITER_PRESET: AnimationPreset = {
 /**
  * Text Glow animation - pulsating glow
  */
-export const TEXT_GLOW_PRESET: AnimationPreset = {
+const TEXT_GLOW_PRESET: AnimationPreset = {
     id: 'preset-text-glow',
     name: 'Text Glow',
     description: 'Soft pulsating glow effect for emphasis.',
@@ -106,7 +106,7 @@ export const TEXT_GLOW_PRESET: AnimationPreset = {
 /**
  * Text Wave animation - vertical wave
  */
-export const TEXT_WAVE_PRESET: AnimationPreset = {
+const TEXT_WAVE_PRESET: AnimationPreset = {
     id: 'preset-text-wave',
     name: 'Text Wave',
     description: 'Gentle vertical wave motion.',
@@ -140,7 +140,7 @@ export const TEXT_WAVE_PRESET: AnimationPreset = {
 /**
  * Text Jitter animation - nervous trembling
  */
-export const TEXT_JITTER_PRESET: AnimationPreset = {
+const TEXT_JITTER_PRESET: AnimationPreset = {
     id: 'preset-text-jitter',
     name: 'Text Jitter',
     description: 'Nervous trembling effect for emphasis.',
@@ -173,7 +173,7 @@ export const TEXT_JITTER_PRESET: AnimationPreset = {
 /**
  * Text Zoom animation - rhythmic scale
  */
-export const TEXT_ZOOM_PRESET: AnimationPreset = {
+const TEXT_ZOOM_PRESET: AnimationPreset = {
     id: 'preset-text-zoom',
     name: 'Text Zoom',
     description: 'Rhythmic scale in and out effect.',
@@ -210,7 +210,7 @@ export const TEXT_ZOOM_PRESET: AnimationPreset = {
 /**
  * Text Slide animation - horizontal sliding
  */
-export const TEXT_SLIDE_PRESET: AnimationPreset = {
+const TEXT_SLIDE_PRESET: AnimationPreset = {
     id: 'preset-text-slide',
     name: 'Text Slide',
     description: 'Smooth horizontal sliding motion.',
@@ -244,7 +244,7 @@ export const TEXT_SLIDE_PRESET: AnimationPreset = {
 /**
  * Text Flash animation - rapid blink
  */
-export const TEXT_FLASH_PRESET: AnimationPreset = {
+const TEXT_FLASH_PRESET: AnimationPreset = {
     id: 'preset-text-flash',
     name: 'Text Flash',
     description: 'Rapid flashing for urgent attention.',
@@ -275,7 +275,7 @@ export const TEXT_FLASH_PRESET: AnimationPreset = {
 /**
  * Text Rise animation - ascending reveal
  */
-export const TEXT_RISE_PRESET: AnimationPreset = {
+const TEXT_RISE_PRESET: AnimationPreset = {
     id: 'preset-text-rise',
     name: 'Text Rise',
     description: 'Ascending entrance with fade effect.',
@@ -322,7 +322,7 @@ export const TEXT_RISE_PRESET: AnimationPreset = {
 /**
  * Text Tilt animation - playful rotation
  */
-export const TEXT_TILT_PRESET: AnimationPreset = {
+const TEXT_TILT_PRESET: AnimationPreset = {
     id: 'preset-text-tilt',
     name: 'Text Tilt',
     description: 'Playful tilting rotation effect.',
@@ -356,7 +356,7 @@ export const TEXT_TILT_PRESET: AnimationPreset = {
 /**
  * Text Pop animation - bouncy entrance
  */
-export const TEXT_POP_PRESET: AnimationPreset = {
+const TEXT_POP_PRESET: AnimationPreset = {
     id: 'preset-text-pop',
     name: 'Text Pop',
     description: 'Bouncy elastic pop effect.',
@@ -393,7 +393,7 @@ export const TEXT_POP_PRESET: AnimationPreset = {
 /**
  * Text Weight Shift animation - font weight pulse
  */
-export const TEXT_WEIGHT_SHIFT_PRESET: AnimationPreset = {
+const TEXT_WEIGHT_SHIFT_PRESET: AnimationPreset = {
     id: 'preset-text-weight-shift',
     name: 'Weight Shift',
     description: 'Pulses between light and bold weights.',
@@ -424,7 +424,7 @@ export const TEXT_WEIGHT_SHIFT_PRESET: AnimationPreset = {
 /**
  * Text Spacing animation - letter spacing pulse
  */
-export const TEXT_SPACING_PRESET: AnimationPreset = {
+const TEXT_SPACING_PRESET: AnimationPreset = {
     id: 'preset-text-spacing',
     name: 'Spacing',
     description: 'Letters expand and contract spacing.',
@@ -455,7 +455,7 @@ export const TEXT_SPACING_PRESET: AnimationPreset = {
 /**
  * Text Size Pulse animation - font size breathing
  */
-export const TEXT_SIZE_PULSE_PRESET: AnimationPreset = {
+const TEXT_SIZE_PULSE_PRESET: AnimationPreset = {
     id: 'preset-text-size-pulse',
     name: 'Size Pulse',
     description: 'Font size grows and shrinks smoothly.',
@@ -486,7 +486,7 @@ export const TEXT_SIZE_PULSE_PRESET: AnimationPreset = {
 /**
  * Text Letter Rotate animation - wave rotation
  */
-export const TEXT_LETTER_ROTATE_PRESET: AnimationPreset = {
+const TEXT_LETTER_ROTATE_PRESET: AnimationPreset = {
     id: 'preset-text-letter-rotate',
     name: 'Letter Rotate',
     description: 'Each letter rotates in a wave pattern.',

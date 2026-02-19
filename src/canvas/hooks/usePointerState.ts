@@ -8,7 +8,7 @@ export interface PointerStateSnapshot {
     hasDragMoved: boolean;
 }
 
-export interface UsePointerStateProps {
+interface UsePointerStateProps {
     isSelecting: boolean;
 }
 

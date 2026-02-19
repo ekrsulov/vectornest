@@ -65,7 +65,7 @@ function extractStyleAnimationValues(animation: SVGAnimation): {
 // Linear Gradient Gizmo (14)
 // =============================================================================
 
-export const linearGradientGizmoDefinition: AnimationGizmoDefinition = {
+const linearGradientGizmoDefinition: AnimationGizmoDefinition = {
   id: 'linear-gradient',
   category: 'gradient-pattern',
   priority: 50,
@@ -258,7 +258,7 @@ export const linearGradientGizmoDefinition: AnimationGizmoDefinition = {
 // Radial Gradient Gizmo (15)
 // =============================================================================
 
-export const radialGradientGizmoDefinition: AnimationGizmoDefinition = {
+const radialGradientGizmoDefinition: AnimationGizmoDefinition = {
   id: 'radial-gradient',
   category: 'gradient-pattern',
   priority: 48,
@@ -428,7 +428,7 @@ export const radialGradientGizmoDefinition: AnimationGizmoDefinition = {
 // Pattern Transform Gizmo (16)
 // =============================================================================
 
-export const patternTransformGizmoDefinition: AnimationGizmoDefinition = {
+const patternTransformGizmoDefinition: AnimationGizmoDefinition = {
   id: 'pattern-transform',
   category: 'gradient-pattern',
   priority: 45,
@@ -613,7 +613,7 @@ export const patternTransformGizmoDefinition: AnimationGizmoDefinition = {
 // Gradient Stops Gizmo (17)
 // =============================================================================
 
-export const gradientStopsGizmoDefinition: AnimationGizmoDefinition = {
+const gradientStopsGizmoDefinition: AnimationGizmoDefinition = {
   id: 'gradient-stops',
   category: 'gradient-pattern',
   priority: 44,

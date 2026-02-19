@@ -7,7 +7,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
 import type { PluginImageElement as ImageElement } from './types';
 import { ImagePanel } from './ImagePanel';
-import { createImagePluginSlice, type ImagePluginSlice } from './slice';
+import { createImagePluginSlice } from './slice';
 import { ImageElementRenderer } from './ImageElementRenderer';
 import type { ElementContribution } from '../../utils/elementContributionRegistry';
 import { importImage } from './importer';
@@ -426,5 +426,3 @@ export const imagePlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('image', ImagePanel)],
 };
 
-export type { ImagePluginSlice };
-export { ImagePanel };

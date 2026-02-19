@@ -3,7 +3,6 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createConditionalToolPanel } from '../../utils/pluginFactories';
 import { Route } from 'lucide-react';
 import { createSubpathPluginSlice } from './slice';
-import type { SubpathPluginSlice } from './slice';
 import { SubPathOperationsPanel } from './SubPathOperationsPanel';
 import { EditorPanel } from '../../sidebar/panels/EditorPanel';
 import { SubpathOverlay } from './SubpathOverlay';
@@ -261,6 +260,3 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
   }),
 };
 
-export type { SubpathPluginSlice };
-export { SubPathOperationsPanel };
-export { SubpathOverlay } from './SubpathOverlay';

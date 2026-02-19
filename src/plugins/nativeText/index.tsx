@@ -155,7 +155,7 @@ const NativeTextThumbnail: React.FC<{ element: NativeTextElement }> = ({ element
         >
           {lines.map((line, idx) => (
             <tspan
-              key={`${element.id}-thumb-line-${idx}`}
+              key={`${element.id}-thumb-line-${line}`}
               x={data.x}
               dy={idx === 0 ? 0 : data.fontSize * lineHeight}
             >
@@ -512,5 +512,3 @@ export const nativeTextPlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('nativeText', NativeTextPanel)],
 };
 
-export type { NativeTextPluginSlice };
-export { NativeTextPanel };

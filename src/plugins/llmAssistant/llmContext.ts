@@ -3,14 +3,14 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { calculateMultiElementBounds } from '../../utils/selectionBoundsUtils';
 import { commandsToString } from '../../utils/pathParserUtils';
 
-export interface LlmAssistantSelectionEntry {
+interface LlmAssistantSelectionEntry {
   id: string;
   type: string;
   parentId: string | null;
   data: Record<string, unknown>;
 }
 
-export interface LlmAssistantContext {
+interface LlmAssistantContext {
   document: {
     documentName: string;
     elementCount: number;

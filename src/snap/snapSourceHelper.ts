@@ -20,7 +20,7 @@ import { buildElementMap } from '../utils/elementMapUtils';
 /**
  * Configuration for snap point collection
  */
-export interface SnapSourceConfig {
+interface SnapSourceConfig {
     /** Unique identifier for this snap source */
     sourceId: string;
     /** Whether snapping is enabled for this source */

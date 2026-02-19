@@ -21,7 +21,7 @@ import type { SVGAnimation } from '../../types';
 // Camera Pan Gizmo (45)
 // =============================================================================
 
-export const cameraPanGizmoDefinition: AnimationGizmoDefinition = {
+const cameraPanGizmoDefinition: AnimationGizmoDefinition = {
   id: 'camera-pan',
   category: 'scene',
   priority: 70,
@@ -167,7 +167,7 @@ export const cameraPanGizmoDefinition: AnimationGizmoDefinition = {
 // Camera Zoom Gizmo (46)
 // =============================================================================
 
-export const cameraZoomGizmoDefinition: AnimationGizmoDefinition = {
+const cameraZoomGizmoDefinition: AnimationGizmoDefinition = {
   id: 'camera-zoom',
   category: 'scene',
   priority: 68,
@@ -325,7 +325,7 @@ export const cameraZoomGizmoDefinition: AnimationGizmoDefinition = {
 // Scene Transition Gizmo (47)
 // =============================================================================
 
-export const sceneTransitionGizmoDefinition: AnimationGizmoDefinition = {
+const sceneTransitionGizmoDefinition: AnimationGizmoDefinition = {
   id: 'scene-transition',
   category: 'scene',
   priority: 66,
@@ -472,7 +472,7 @@ export const sceneTransitionGizmoDefinition: AnimationGizmoDefinition = {
 // Timeline Marker Gizmo (48)
 // =============================================================================
 
-export const timelineMarkerGizmoDefinition: AnimationGizmoDefinition = {
+const timelineMarkerGizmoDefinition: AnimationGizmoDefinition = {
   id: 'timeline-marker',
   category: 'scene',
   priority: 64,
@@ -592,7 +592,7 @@ export const timelineMarkerGizmoDefinition: AnimationGizmoDefinition = {
 // Loop Control Gizmo (49)
 // =============================================================================
 
-export const loopControlGizmoDefinition: AnimationGizmoDefinition = {
+const loopControlGizmoDefinition: AnimationGizmoDefinition = {
   id: 'loop-control',
   category: 'scene',
   priority: 62,
@@ -738,7 +738,7 @@ export const loopControlGizmoDefinition: AnimationGizmoDefinition = {
 // Sequence Gizmo (50)
 // =============================================================================
 
-export const sequenceGizmoDefinition: AnimationGizmoDefinition = {
+const sequenceGizmoDefinition: AnimationGizmoDefinition = {
   id: 'sequence',
   category: 'scene',
   priority: 60,

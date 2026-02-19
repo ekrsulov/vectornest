@@ -1,7 +1,7 @@
 import type { ArtboardPreset, ArtboardCategory } from './types';
 
 /** All available artboard presets */
-export const ARTBOARD_PRESETS: ArtboardPreset[] = [
+const ARTBOARD_PRESETS: ArtboardPreset[] = [
   // Paper Sizes (ISO 216)
   {
     id: 'a4-portrait',
@@ -457,17 +457,4 @@ export const ARTBOARD_PRESETS_BY_CATEGORY = ARTBOARD_PRESETS.reduce((acc, preset
 /** Get preset by ID */
 export const getPresetById = (id: string): ArtboardPreset | undefined => {
   return ARTBOARD_PRESETS.find(p => p.id === id);
-};
-
-/** Get category label */
-export const getCategoryLabel = (category: ArtboardCategory): string => {
-  const labels: Record<ArtboardCategory, string> = {
-    paper: 'Paper',
-    social: 'Social Media',
-    print: 'Print',
-    video: 'Video',
-    screens: 'Screens',
-    custom: 'Custom',
-  };
-  return labels[category] ?? category;
 };

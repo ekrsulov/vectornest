@@ -21,14 +21,6 @@ export const registerRendererExtension = (extension: RendererExtension): void =>
   invalidateSortedExtensionsCache();
 };
 
-export const unregisterRendererExtension = (pluginId: string): void => {
-  const index = extensions.findIndex((ext) => ext.pluginId === pluginId);
-  if (index >= 0) {
-    extensions.splice(index, 1);
-    invalidateSortedExtensionsCache();
-  }
-};
-
 const getSortedExtensions = (): RendererExtension[] => {
   if (!sortedExtensionsCache) {
     sortedExtensionsCache = [...extensions].sort(

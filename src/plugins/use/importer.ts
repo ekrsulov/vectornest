@@ -322,13 +322,3 @@ export function importUse(
     data: useData as unknown as Record<string, unknown>,
   };
 }
-
-/**
- * Import contribution for registering with the import system
- */
-export function createUseImportContribution() {
-  return {
-    id: 'use',
-    importer: importUse,
-  };
-}

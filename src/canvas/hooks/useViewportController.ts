@@ -16,7 +16,7 @@ import {
   type ViewportSize,
 } from '../viewport/ViewportController';
 
-export interface ViewportControllerHook {
+interface ViewportControllerHook {
   viewport: Viewport;
   /** Sets an absolute zoom level. */
   setZoom: (zoom: number, options?: SetZoomOptions) => void;
@@ -117,4 +117,3 @@ export const useViewportController = (): ViewportControllerHook => {
   ]);
 };
 
-export type { ViewportSize } from '../viewport/ViewportController';

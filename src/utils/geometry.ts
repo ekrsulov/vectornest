@@ -17,7 +17,7 @@ const CARDINAL_AND_DIAGONAL_DIRS = [
  * Calculate squared distance between two points.
  * Avoids the cost of Math.sqrt when only comparison is needed.
  */
-export const distanceSquared = (a: Point, b: Point): number => {
+const distanceSquared = (a: Point, b: Point): number => {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
     return dx * dx + dy * dy;
@@ -145,14 +145,14 @@ export function closestPointOnCubicBezier(
  * Evaluate a cubic bezier curve at parameter t.
  * Delegates to the canonical implementation in math.ts.
  */
-export function evaluateCubicBezier(t: number, p0: Point, p1: Point, p2: Point, p3: Point): Point {
+function evaluateCubicBezier(t: number, p0: Point, p1: Point, p2: Point, p3: Point): Point {
     return bezierPoint(p0, p1, p2, p3, t);
 }
 
 /**
  * Evaluate the derivative of a cubic bezier curve at parameter t
  */
-export function evaluateCubicBezierDerivative(
+function evaluateCubicBezierDerivative(
     t: number,
     p0: Point,
     p1: Point,

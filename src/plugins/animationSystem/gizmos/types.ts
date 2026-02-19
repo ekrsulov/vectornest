@@ -72,7 +72,7 @@ export type GizmoHandleType =
 /**
  * Constraint axis for handle dragging
  */
-export type DragAxis = 'x' | 'y' | 'free' | 'circular';
+type DragAxis = 'x' | 'y' | 'free' | 'circular';
 
 /**
  * Constraints for handle movement

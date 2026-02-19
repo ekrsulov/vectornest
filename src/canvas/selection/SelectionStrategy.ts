@@ -52,7 +52,7 @@ export interface SelectionData {
 /**
  * Default rectangle selection strategy
  */
-export class RectangleSelectionStrategy implements SelectionStrategy {
+class RectangleSelectionStrategy implements SelectionStrategy {
   id = 'rectangle';
 
   containsPoint(point: Point, selectionData: SelectionData): boolean {

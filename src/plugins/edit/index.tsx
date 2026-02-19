@@ -675,5 +675,3 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
   ],
 };
 
-export type { EditPluginSlice };
-export { EditPanel, ControlPointAlignmentPanel };

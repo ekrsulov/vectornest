@@ -53,7 +53,7 @@ export interface HoverMeasurement {
   perpendicularPosition: number;
 }
 
-export interface GuidelinesConfig {
+interface GuidelinesConfig {
   // Core toggles
   enabled: boolean;
   distanceEnabled: boolean;

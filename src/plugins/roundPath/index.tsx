@@ -3,10 +3,8 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createRoundPathPluginSlice } from './slice';
-import type { RoundPathPluginSlice } from './slice';
 import { RoundPathPanel } from './RoundPathPanel';
 
-export type { RoundPathPluginSlice };
 
 const roundPathSliceFactory = createPluginSlice(createRoundPathPluginSlice);
 export const roundPathPlugin: PluginDefinition<CanvasStore> = {

@@ -109,7 +109,7 @@ function getElementBounds(
  * @param elementMap - Map of all elements
  * @returns Offset object with offsetX and offsetY
  */
-export function calculateDuplicationOffset(
+function calculateDuplicationOffset(
   elementIds: string[],
   elementMap: Map<string, CanvasElement>
 ): DuplicateElementOptions {
@@ -254,7 +254,7 @@ export function duplicateElement(
  * @param elementMap - Map of all elements
  * @returns The ID of the root element
  */
-export function findRootElement(
+function findRootElement(
   elementId: string,
   elementMap: Map<string, CanvasElement>
 ): string {
@@ -284,7 +284,7 @@ export function findRootElement(
  * @param elementMap - Map of all elements
  * @returns Set of unique root element IDs
  */
-export function findRootElements(
+function findRootElements(
   elementIds: string[],
   elementMap: Map<string, CanvasElement>
 ): Set<string> {

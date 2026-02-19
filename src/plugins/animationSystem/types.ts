@@ -90,7 +90,7 @@ export interface SVGAnimation {
   targetId?: string;
 }
 
-export interface AnimationEvent {
+interface AnimationEvent {
   id: string;
   type: 'start' | 'end' | 'repeat' | 'sync';
   sourceAnimationId: string;

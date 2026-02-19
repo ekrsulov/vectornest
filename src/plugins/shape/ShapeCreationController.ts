@@ -1,7 +1,7 @@
 import type { Point } from '../../types';
 import { MIN_SHAPE_CREATION_DISTANCE } from './config';
 
-export interface ShapeFeedback {
+interface ShapeFeedback {
   width: number;
   height: number;
   visible: boolean;
@@ -9,13 +9,13 @@ export interface ShapeFeedback {
   isMultipleOf10: boolean;
 }
 
-export interface PointPositionFeedback {
+interface PointPositionFeedback {
   x: number;
   y: number;
   visible: boolean;
 }
 
-export interface ShapeCreationCallbacks {
+interface ShapeCreationCallbacks {
   createShape: (shapeStart: Point, shapeEnd: Point) => void;
   getSelectedShape: () => string;
 }

@@ -31,7 +31,7 @@ type TransformationConfig = {
 type TransformHandlerPointerDown = (e: React.PointerEvent, id: string, handler: string) => void;
 type TransformHandlerPointerUp = (e: React.PointerEvent) => void;
 
-export const SelectionRectangleComponent: React.FC<{
+const SelectionRectangleComponent: React.FC<{
   isSelecting: boolean;
   selectionStart: Point | null;
   selectionEnd: Point | null;
@@ -71,7 +71,7 @@ export const SelectionRectangleComponent: React.FC<{
 };
 
 // Component for group selection bounds that can use hooks
-export const GroupSelectionBoundsComponent: React.FC<{
+const GroupSelectionBoundsComponent: React.FC<{
   selectedGroupBounds: Array<{ id: string; bounds: { minX: number; minY: number; maxX: number; maxY: number } }>;
   viewport: { zoom: number };
 }> = ({ selectedGroupBounds, viewport }) => {
@@ -106,7 +106,7 @@ export const GroupSelectionBoundsComponent: React.FC<{
 };
 
 // Component for selection bbox from top-left to bottom-right element
-export const SelectionBboxComponent: React.FC<{
+const SelectionBboxComponent: React.FC<{
   selectedIds: string[];
   getElementBounds: (element: CanvasElement) => Bounds | null;
   elementMap: ElementMap;
@@ -736,4 +736,4 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
 
 // Re-export helper function and simple plugins from basePluginDefinitions
 // eslint-disable-next-line react-refresh/only-export-components
-export { getAllElementsShareSameParentGroup, resolveRootGroup, panPlugin, filePlugin, settingsPlugin, libraryPlugin } from './basePluginDefinitions';
+export { panPlugin, filePlugin, settingsPlugin, libraryPlugin } from './basePluginDefinitions';

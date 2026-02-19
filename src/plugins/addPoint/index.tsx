@@ -2,7 +2,6 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createAddPointPluginSlice } from './slice';
-import type { AddPointPluginSlice } from './slice';
 
 // Import listener to ensure it registers itself
 import './listeners/AddPointListener';
@@ -10,7 +9,6 @@ import './listeners/AddPointListener';
 import { AddPointPanel } from './AddPointPanel';
 import { AddPointFeedbackOverlay } from './AddPointFeedbackOverlay';
 import { useAddPointHook } from './hooks/useAddPointHook';
-export type { AddPointPluginSlice };
 
 const addPointSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
     const slice = createAddPointPluginSlice(set, get, api);

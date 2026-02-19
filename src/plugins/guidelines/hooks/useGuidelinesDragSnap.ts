@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import type { PluginHooksContext, PluginContextFull } from '../../../types/plugins';
+import type { PluginContextFull } from '../../../types/plugins';
 import type { CanvasStore } from '../../../store/canvasStore';
 import { useCanvasStore } from '../../../store/canvasStore';
 import type { CanvasElement, PathData } from '../../../types';
@@ -13,7 +12,7 @@ import { calculateElementBoundsMap } from '../../../utils/guidelinesHelpers';
 /**
  * Result of applying guidelines during drag
  */
-export interface GuidelinesDragResult {
+interface GuidelinesDragResult {
   deltaX: number;
   deltaY: number;
   applied: boolean;
@@ -30,7 +29,7 @@ export interface GuidelinesDragResult {
  * 
  * @returns Modified delta values after applying snap
  */
-export function applyGuidelinesDuringDrag(
+function applyGuidelinesDuringDrag(
   originalDeltaX: number,
   originalDeltaY: number,
   selectedIds: string[]
@@ -189,21 +188,6 @@ export function applyGuidelinesDuringDrag(
   }
 
   return { deltaX, deltaY, applied: true };
-}
-
-/**
- * Hook that listens for drag events and applies guidelines snapping.
- * This is registered as a global plugin hook to intercept drag operations.
- */
-export function useGuidelinesDragSnap(_context: PluginHooksContext): void {
-  useEffect(() => {
-    // This hook doesn't need to do anything directly.
-    // The applyGuidelinesDuringDrag function is exported and called
-    // by the pointer handlers when dragging elements.
-    // 
-    // The hook exists to ensure the guidelines plugin is properly
-    // registered and the slice is available in the store.
-  }, []);
 }
 
 /**

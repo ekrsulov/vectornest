@@ -15,4 +15,3 @@ export const SnapOverlay: React.FC = () => {
   );
 };
 
-export { StaticSnapPointsOverlay, ActiveSnapOverlay };

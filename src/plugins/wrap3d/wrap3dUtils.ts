@@ -20,7 +20,7 @@
 
 import type { PathData, SubPath, Command, Point, ControlPoint } from '../../types';
 
-export interface Point3D {
+interface Point3D {
   x: number;
   y: number;
   z: number;
@@ -75,7 +75,7 @@ export interface ShapeParams {
 /**
  * Calculate the bounding box of a path
  */
-export function calculatePathBounds(pathData: PathData): ShapeBounds {
+function calculatePathBounds(pathData: PathData): ShapeBounds {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -118,7 +118,7 @@ export function calculatePathBounds(pathData: PathData): ShapeBounds {
  * Map 2D point to 3D sphere surface.
  * Uses a "bulge" approach where center maps to front of sphere.
  */
-export function mapToSphere(
+function mapToSphere(
   x: number,
   y: number,
   bounds: ShapeBounds,
@@ -155,7 +155,7 @@ export function mapToSphere(
  * Map 2D point to 3D cylinder surface.
  * X maps to angle around cylinder, Y maps to height.
  */
-export function mapToCylinder(
+function mapToCylinder(
   x: number,
   y: number,
   bounds: ShapeBounds,
@@ -190,7 +190,7 @@ export function mapToCylinder(
  * Map 2D point to 3D torus surface.
  * X maps to major angle (around the ring), Y maps to minor angle (around the tube).
  */
-export function mapToTorus(
+function mapToTorus(
   x: number,
   y: number,
   bounds: ShapeBounds,
@@ -231,7 +231,7 @@ export function mapToTorus(
  * Map 2D point to 3D cone surface.
  * X maps to angle around cone, Y maps to position along height (with radius decreasing).
  */
-export function mapToCone(
+function mapToCone(
   x: number,
   y: number,
   bounds: ShapeBounds,
@@ -274,7 +274,7 @@ export function mapToCone(
  * Map 2D point to 3D ellipsoid surface.
  * Similar to sphere but with independent radii for each axis.
  */
-export function mapToEllipsoid(
+function mapToEllipsoid(
   x: number,
   y: number,
   bounds: ShapeBounds,
@@ -316,7 +316,7 @@ export function mapToEllipsoid(
  * Map 2D point to 3D wave surface.
  * Creates a cloth-like undulating surface using sinusoidal waves.
  */
-export function mapToWave(
+function mapToWave(
   x: number,
   y: number,
   bounds: ShapeBounds,
@@ -356,7 +356,7 @@ export function mapToWave(
  * Rotate a 3D point using Euler angles (in degrees)
  * Order: X -> Y -> Z (extrinsic rotations)
  */
-export function rotatePoint3D(
+function rotatePoint3D(
   point: Point3D,
   rotationX: number,
   rotationY: number,
@@ -398,7 +398,7 @@ export function rotatePoint3D(
 /**
  * Project 3D point back to 2D using orthographic projection
  */
-export function projectToScreen(
+function projectToScreen(
   point3D: Point3D,
   bounds: ShapeBounds
 ): Point {
@@ -411,7 +411,7 @@ export function projectToScreen(
 /**
  * Transform a single 2D point through the 3D projection pipeline
  */
-export function projectPointToShape(
+function projectPointToShape(
   point: Point,
   bounds: ShapeBounds,
   shapeType: ShapeType,
@@ -550,26 +550,6 @@ export function transformPathDataToShape(
   }
 }
 
-// Legacy function for backward compatibility
-export function transformPathDataToSphere(
-  pathData: PathData,
-  rotationX: number,
-  rotationY: number,
-  rotationZ: number,
-  sphereRadiusMultiplier: number,
-  precomputedBounds?: ShapeBounds
-): PathData | null {
-  return transformPathDataToShape(
-    pathData,
-    'sphere',
-    rotationX,
-    rotationY,
-    rotationZ,
-    getDefaultShapeParams(sphereRadiusMultiplier),
-    precomputedBounds
-  );
-}
-
 /**
  * Get default shape parameters
  */
@@ -592,6 +572,3 @@ export function getDefaultShapeParams(radiusMultiplier: number = 1.0): ShapePara
     wavePhaseY: 0,
   };
 }
-
-// Re-export ShapeBounds as SphereBounds for backward compatibility
-export type SphereBounds = ShapeBounds;

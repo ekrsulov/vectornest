@@ -92,4 +92,3 @@ export const wireframePlugin: PluginDefinition<CanvasStore> = {
   ],
 };
 
-export type { WireframePluginSlice };

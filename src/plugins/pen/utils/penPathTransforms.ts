@@ -23,7 +23,7 @@ const transformHandle = (
   };
 };
 
-export function transformPenPath(path: PenPath, matrix: Matrix): PenPath {
+function transformPenPath(path: PenPath, matrix: Matrix): PenPath {
   const anchors = path.anchors.map((anchor) => {
     const transformedPosition = applyToPoint(matrix, anchor.position);
 

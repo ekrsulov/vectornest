@@ -109,7 +109,7 @@ function doLinesIntersect(
 /**
  * Check if a point is near a line segment (within a certain distance)
  */
-export function isPointNearLine(
+function isPointNearLine(
   point: { x: number; y: number },
   lineStart: { x: number; y: number },
   lineEnd: { x: number; y: number },

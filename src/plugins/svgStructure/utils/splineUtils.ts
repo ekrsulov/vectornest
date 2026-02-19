@@ -1,15 +1,6 @@
 
 export type CubicBezier = [number, number, number, number];
 
-export interface Segment {
-    t0: number;
-    t1: number;
-    v0: number; // For visualization/graph. Real value might be complex string.
-    v1: number;
-    spline: CubicBezier;
-    index: number; // Index in the keyTimes array (i)
-}
-
 export interface KeyframeTrack {
     values: string[]; // Keep as strings to support complex values like "rotate(360 50 50)"
     keyTimes: number[];
@@ -91,23 +82,3 @@ export const serializeAnimationData = (track: KeyframeTrack) => {
  * E.g. "360 50 50" -> 360
  * "0.5" -> 0.5
  */
-export const extractNumericValue = (valStr: string): number => {
-    if (!valStr) return 0;
-    const match = valStr.match(/-?[\d.]+/);
-    return match ? parseFloat(match[0]) : 0;
-};
-
-export const getSegments = (track: KeyframeTrack): Segment[] => {
-    const segments: Segment[] = [];
-    for (let i = 0; i < track.keyTimes.length - 1; i++) {
-        segments.push({
-            index: i,
-            t0: track.keyTimes[i],
-            t1: track.keyTimes[i + 1],
-            v0: extractNumericValue(track.values[i]),
-            v1: extractNumericValue(track.values[i + 1]),
-            spline: track.keySplines[i] || [0, 0, 1, 1]
-        });
-    }
-    return segments;
-};

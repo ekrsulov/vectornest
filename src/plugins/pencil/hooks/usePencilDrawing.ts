@@ -5,7 +5,7 @@ import type { Point } from '../../../types';
 import type { PencilPluginSlice } from '../slice';
 import type { StyleSlice } from '../../../store/slices/features/styleSlice';
 
-export interface UsePencilDrawingParams {
+interface UsePencilDrawingParams {
   svgRef: React.RefObject<SVGSVGElement | null>;
   currentMode: string;
   pencil: PencilPluginSlice['pencil'];
@@ -24,7 +24,7 @@ export interface UsePencilDrawingParams {
   finalizePath: (points: Point[]) => void;
 }
 
-export interface UsePencilDrawingReturn {
+interface UsePencilDrawingReturn {
   pencilDrawingService: PencilDrawingService;
   registerPencilDrawingService: (service: PencilDrawingService) => void;
   resetPencilDrawingService: () => void;

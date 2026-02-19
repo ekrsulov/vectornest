@@ -12,7 +12,7 @@ import {
   type CanvasControllerValue,
 } from './CanvasControllerContext';
 
-export type CanvasControllerProviderProps = PropsWithChildren<{
+type CanvasControllerProviderProps = PropsWithChildren<{
   value?: CanvasControllerValue;
 }>;
 

@@ -8,7 +8,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Elastic Bounce animation - exaggerated elastic bouncing
  */
-export const ELASTIC_BOUNCE_PRESET: AnimationPreset = {
+const ELASTIC_BOUNCE_PRESET: AnimationPreset = {
     id: 'preset-elastic-bounce',
     name: 'Elastic Bounce',
     description: 'Exaggerated elastic bouncing effect with overshoot',
@@ -42,7 +42,7 @@ export const ELASTIC_BOUNCE_PRESET: AnimationPreset = {
 /**
  * Squash Bounce animation - elastic bounce with impact deformation
  */
-export const SQUASH_BOUNCE_PRESET: AnimationPreset = {
+const SQUASH_BOUNCE_PRESET: AnimationPreset = {
     id: 'preset-squash-bounce',
     name: 'Squash Bounce',
     description: 'Elastic vertical bounce with squash-and-stretch on impact.',
@@ -94,7 +94,7 @@ export const SQUASH_BOUNCE_PRESET: AnimationPreset = {
 /**
  * Orbit animation - circular orbital rotation
  */
-export const ORBIT_PRESET: AnimationPreset = {
+const ORBIT_PRESET: AnimationPreset = {
     id: 'preset-orbit',
     name: 'Orbit',
     description: 'Circular orbital rotation around center',
@@ -127,7 +127,7 @@ export const ORBIT_PRESET: AnimationPreset = {
 /**
  * Spiral animation - spiral scale and rotation
  */
-export const SPIRAL_PRESET: AnimationPreset = {
+const SPIRAL_PRESET: AnimationPreset = {
     id: 'preset-spiral',
     name: 'Spiral',
     description: 'Spiraling scale with rotation effect',
@@ -178,7 +178,7 @@ export const SPIRAL_PRESET: AnimationPreset = {
 /**
  * Rubber Band animation - stretchy elastic effect
  */
-export const RUBBER_BAND_PRESET: AnimationPreset = {
+const RUBBER_BAND_PRESET: AnimationPreset = {
     id: 'preset-rubber-band',
     name: 'Rubber Band',
     description: 'Stretchy rubber band effect with squash and stretch',
@@ -217,7 +217,7 @@ export const RUBBER_BAND_PRESET: AnimationPreset = {
 /**
  * Breathing Glow animation - glow with breathing rhythm (uses filter)
  */
-export const BREATHING_GLOW_PRESET: AnimationPreset = {
+const BREATHING_GLOW_PRESET: AnimationPreset = {
     id: 'preset-breathing-glow',
     name: 'Breathing Glow',
     description: 'Soft glow with slow breathing rhythm',
@@ -266,7 +266,7 @@ export const BREATHING_GLOW_PRESET: AnimationPreset = {
 /**
  * Morph Scale animation - morphing scale with elastic overshoot
  */
-export const MORPH_SCALE_PRESET: AnimationPreset = {
+const MORPH_SCALE_PRESET: AnimationPreset = {
     id: 'preset-morph-scale',
     name: 'Morph Scale',
     description: 'Morphing scale with elastic overshoot effect',

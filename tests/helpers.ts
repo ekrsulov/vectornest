@@ -152,13 +152,6 @@ export async function waitForLoad(page: Page): Promise<void> {
   await page.waitForLoadState('networkidle');
 }
 
-/**
- * Get a button from the sidebar panel (like Duplicate, Add Subpath, etc.)
- */
-export function getSidebarButton(page: Page, title: string): Locator {
-  return page.locator(`[title="${title}"]`);
-}
-
 async function isVisible(locator: Locator): Promise<boolean> {
   try {
     return await locator.isVisible();

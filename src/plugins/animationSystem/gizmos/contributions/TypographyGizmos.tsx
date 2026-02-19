@@ -49,7 +49,7 @@ function extractStyleAnimationValues(animation: SVGAnimation): { from: string; t
 // Text Path Gizmo (31)
 // =============================================================================
 
-export const textPathGizmoDefinition: AnimationGizmoDefinition = {
+const textPathGizmoDefinition: AnimationGizmoDefinition = {
   id: 'text-path',
   category: 'typography',
   priority: 50,
@@ -190,7 +190,7 @@ export const textPathGizmoDefinition: AnimationGizmoDefinition = {
 // Letter Spacing Gizmo (32)
 // =============================================================================
 
-export const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
+const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
   id: 'letter-spacing',
   category: 'typography',
   priority: 48,
@@ -334,7 +334,7 @@ export const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
 // Text Reveal Gizmo (33)
 // =============================================================================
 
-export const textRevealGizmoDefinition: AnimationGizmoDefinition = {
+const textRevealGizmoDefinition: AnimationGizmoDefinition = {
   id: 'text-reveal',
   category: 'typography',
   priority: 46,
@@ -524,7 +524,7 @@ export const textRevealGizmoDefinition: AnimationGizmoDefinition = {
 // Font Variation Gizmo (34)
 // =============================================================================
 
-export const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
+const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
   id: 'font-variation',
   category: 'typography',
   priority: 44,

@@ -725,5 +725,3 @@ export const nativeShapesPlugin: PluginDefinition<CanvasStore> = {
   ],
 };
 
-export type { NativeShapesPluginSlice };
-export { NativeShapesPanel };

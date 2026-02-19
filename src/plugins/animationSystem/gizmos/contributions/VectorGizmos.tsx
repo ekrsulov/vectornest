@@ -272,7 +272,7 @@ function buildMotionPathHandles(ctx: GizmoContext): GizmoHandle[] {
   return handles;
 }
 
-export const motionPathGizmoDefinition: AnimationGizmoDefinition = {
+const motionPathGizmoDefinition: AnimationGizmoDefinition = {
   id: 'motion-path',
   category: 'vector',
   priority: 50,
@@ -390,7 +390,7 @@ export const motionPathGizmoDefinition: AnimationGizmoDefinition = {
 
       const segments: React.ReactNode[] = [];
       let current: Point | null = null;
-      commands.forEach((cmd, idx) => {
+      commands.forEach((cmd) => {
         if (cmd.type === 'M') {
           current = cmd.position;
           return;
@@ -403,7 +403,7 @@ export const motionPathGizmoDefinition: AnimationGizmoDefinition = {
 
           segments.push(
             <line
-              key={`cp1-${idx}`}
+              key={`cp1-${cp1Abs.x}-${cp1Abs.y}`}
               x1={startAbs.x}
               y1={startAbs.y}
               x2={cp1Abs.x}
@@ -414,7 +414,7 @@ export const motionPathGizmoDefinition: AnimationGizmoDefinition = {
               style={{ pointerEvents: 'none' }}
             />,
             <line
-              key={`cp2-${idx}`}
+              key={`cp2-${cp2Abs.x}-${cp2Abs.y}`}
               x1={endAbs.x}
               y1={endAbs.y}
               x2={cp2Abs.x}
@@ -614,7 +614,7 @@ const strokeDrawHandles: GizmoHandle[] = [
   },
 ];
 
-export const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
+const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
   id: 'stroke-draw',
   category: 'vector',
   priority: 45,
@@ -1054,7 +1054,7 @@ function commitMorphPathChanges(ctx: GizmoInteractionContext): void {
   ctx.commitChanges();
 }
 
-export const morphingGizmoDefinition: AnimationGizmoDefinition = {
+const morphingGizmoDefinition: AnimationGizmoDefinition = {
   id: 'morphing',
   category: 'vector',
   priority: 55,
@@ -1230,9 +1230,9 @@ export const morphingGizmoDefinition: AnimationGizmoDefinition = {
         />
         
         {/* Draw tangent lines */}
-        {tangentLines.map((line, i) => (
+        {tangentLines.map((line) => (
           <line
-            key={`tangent-${i}`}
+            key={`tangent-${line.from.x}-${line.from.y}-${line.to.x}-${line.to.y}`}
             x1={line.from.x}
             y1={line.from.y}
             x2={line.to.x}
@@ -1245,9 +1245,9 @@ export const morphingGizmoDefinition: AnimationGizmoDefinition = {
         ))}
         
         {/* Draw path points */}
-        {pathPoints.map((point, i) => (
+        {pathPoints.map((point) => (
           <circle
-            key={`point-${i}`}
+            key={`point-${point.x}-${point.y}`}
             cx={point.x}
             cy={point.y}
             r={4 / viewport.zoom}

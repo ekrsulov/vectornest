@@ -1,7 +1,6 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createDuplicateOnDragPluginSlice } from './slice';
-import type { DuplicateOnDragPluginSlice } from './slice';
 import { pluginManager } from '../../utils/pluginManager';
 import { duplicateOnDragService } from './service';
 import { useDuplicateOnDragHook } from './hooks/useDuplicateOnDragHook';
@@ -32,5 +31,3 @@ export const duplicateOnDragPlugin: PluginDefinition<CanvasStore> = {
   },
 };
 
-export type { DuplicateOnDragPluginSlice };
-export { duplicateOnDragService, DUPLICATE_ON_DRAG_SERVICE_ID } from './service';

@@ -8,7 +8,7 @@ import { findAnchorOnPath, findSegmentOnPath, findHandleOnPath } from './anchorD
  * - With 2 anchors: can close only if there's a curve (any anchor has handles)
  * - With less than 2 anchors: cannot close
  */
-export function canPathBeClosed(path: PenPath | null): boolean {
+function canPathBeClosed(path: PenPath | null): boolean {
     if (!path || path.anchors.length < 2) {
         return false;
     }

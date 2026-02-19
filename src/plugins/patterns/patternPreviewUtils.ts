@@ -7,7 +7,7 @@ const DEFAULT_OBJECT_BBOX_SCALE = 100;
 const MIN_OBJECT_BBOX_SCALE = 1;
 const MIN_PATTERN_TILE_SIZE = 0.001;
 
-export interface PatternTileGeometry {
+interface PatternTileGeometry {
   units: 'userSpaceOnUse' | 'objectBoundingBox';
   tileWidth: number;
   tileHeight: number;

@@ -2,7 +2,7 @@ import type { CanvasElement } from '../types';
 import type { CanvasStore } from './canvasStore';
 import { logger } from '../utils/logger';
 
-export type CleanupHook = (
+type CleanupHook = (
   deletedElementIds: string[],
   remainingElements: CanvasElement[],
   state: CanvasStore
@@ -30,13 +30,6 @@ export function unregisterCleanupHook(pluginId: string): void {
   if (cleanupHooks.delete(pluginId)) {
     notifyListeners();
   }
-}
-
-export function subscribeCleanupHooks(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
 }
 
 export function runCleanupHooks(

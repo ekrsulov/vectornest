@@ -11,7 +11,7 @@ import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
 import { useCanvasStore, canvasStoreApi } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 
-export interface CanvasStageProps {
+interface CanvasStageProps {
   svgRef: RefObject<SVGSVGElement | null>;
   canvasSize: CanvasSize;
   getViewBoxString: (size: CanvasSize) => string;
@@ -27,6 +27,18 @@ export interface CanvasStageProps {
   handleCanvasDoubleClick?: (event: React.MouseEvent<SVGSVGElement>) => void;
   handleCanvasTouchEnd?: (event: React.TouchEvent<SVGSVGElement>) => void;
 }
+
+const computeDefs = defsContributionRegistry.renderDefs.bind(defsContributionRegistry);
+const CanvasDefs: React.FC<{ sortedElements: CanvasElement[] }> = ({ sortedElements }) => {
+  return <>{computeDefs(canvasStoreApi.getState(), sortedElements)}</>;
+};
+
+const CanvasElementRenderer: React.FC<{
+  element: CanvasElement;
+  elementRenderer: (element: CanvasElement) => React.ReactNode;
+}> = ({ element, elementRenderer }) => {
+  return <>{elementRenderer(element)}</>;
+};
 
 /**
  * Presentational component that renders the SVG canvas and its layers.
@@ -103,14 +115,12 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       {...(handleCanvasTouchEnd && { onTouchEnd: handleCanvasTouchEnd })}
     >
       <defs>
-        {defsContributionRegistry.renderDefs(canvasStoreApi.getState(), sortedElements)}
+        <CanvasDefs sortedElements={sortedElements} />
       </defs>
       <CanvasLayers context={canvasLayerContext} placements={['background']} />
       {/* Only render root elements — children are rendered by group renderers */}
       {rootElements.map((element) => (
-          <React.Fragment key={element.id}>
-            {renderElement(element)}
-          </React.Fragment>
+          <CanvasElementRenderer key={element.id} element={element} elementRenderer={renderElement} />
         ))}
       <CanvasLayers context={canvasLayerContext} placements={['midground', 'foreground']} />
       <SnapOverlay />

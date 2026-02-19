@@ -21,13 +21,6 @@ import './persistence';
 import { GizmoProvider } from './gizmos/GizmoContext';
 import { AnimationGizmoOverlay } from './integration';
 
-/**
- * Generate a unique animation ID
- */
-function generateAnimationId(): string {
-  return generateShortId('anm');
-}
-
 // Register cleanup hook to keep animation state in sync with element lifecycle
 registerAnimationCleanupHook();
 
@@ -1006,8 +999,6 @@ export const animationSystemPlugin: PluginDefinition<CanvasStore> = {
   svgDefsEditors: [animationDefsEditor],
 };
 
-export type { AnimationPluginSlice };
-export { generateAnimationId };
 
 // Gizmo system exports
 // eslint-disable-next-line react-refresh/only-export-components

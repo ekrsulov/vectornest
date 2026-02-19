@@ -509,5 +509,3 @@ export const masksPlugin: PluginDefinition<CanvasStore> = {
   ],
 };
 
-export type { MasksSlice, MaskDefinition };
-export { collectMaskIds, parseMaskDefs, ensureMaskImports } from './importer';

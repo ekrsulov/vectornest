@@ -1,12 +1,12 @@
 import type { CanvasElement, Viewport } from '../types';
 
-export interface DocumentAnimationDebugPayload {
+interface DocumentAnimationDebugPayload {
   animations: unknown[];
   animationState?: unknown;
   chainDelays: Array<[string, number]>;
 }
 
-export interface SerializedCanvasDocument {
+interface SerializedCanvasDocument {
   documentName: string;
   elements: CanvasElement[];
   viewport: Viewport;
@@ -15,7 +15,7 @@ export interface SerializedCanvasDocument {
   _debug_animations?: DocumentAnimationDebugPayload;
 }
 
-export interface SaveDocumentParams {
+interface SaveDocumentParams {
   documentName: string;
   elements: CanvasElement[];
   viewport: Viewport;
@@ -23,12 +23,12 @@ export interface SaveDocumentParams {
   animationDebug?: DocumentAnimationDebugPayload;
 }
 
-export interface LoadDocumentResult {
+interface LoadDocumentResult {
   documentName?: string;
   elements: CanvasElement[];
 }
 
-export interface LoadDocumentParams {
+interface LoadDocumentParams {
   append: boolean;
   existingElements: CanvasElement[];
   generateElementId: () => string;

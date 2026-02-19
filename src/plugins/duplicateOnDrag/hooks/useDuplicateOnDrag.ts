@@ -6,7 +6,7 @@ import { DUPLICATE_ON_DRAG_SERVICE_ID, type DuplicateOnDragServiceState } from '
 import type { Point } from '../../../types';
 import { buildElementMap } from '../../../utils';
 
-export interface UseDuplicateOnDragParams {
+interface UseDuplicateOnDragParams {
   svgRef: React.RefObject<SVGSVGElement | null>;
   currentMode: string;
   screenToCanvas: (screenX: number, screenY: number) => Point;

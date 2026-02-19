@@ -268,5 +268,3 @@ export const clipboardPlugin: PluginDefinition<CanvasStore> = {
 // Import useCanvasStore for context menu actions
 import { useCanvasStore } from '../../store/canvasStore';
 
-export type { ClipboardSlice };
-export { ClipboardPanel };

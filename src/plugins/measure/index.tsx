@@ -473,5 +473,3 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('measure', MeasureInfoPanel)],
 };
 
-export type { MeasurePluginSlice };
-export { MeasureInfoPanel };

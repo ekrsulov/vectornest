@@ -1,15 +1,5 @@
 import React from 'react';
-import { Badge, Box, HStack, Text, useColorModeValue } from '@chakra-ui/react';
-
-export const Pill: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const bg = useColorModeValue('gray.100', 'whiteAlpha.200');
-    const color = useColorModeValue('gray.700', 'gray.200');
-    return (
-        <Badge bg={bg} color={color} borderRadius="full" px={3} py={1} fontWeight="semibold" textTransform="none">
-            {children}
-        </Badge>
-    );
-};
+import { Box, HStack, Text, useColorModeValue } from '@chakra-ui/react';
 
 export const ColorSwatch: React.FC<{ color: string; label: string; subLabel?: string }> = ({ color, label, subLabel }) => {
     const borderColor = useColorModeValue('gray.200', 'whiteAlpha.200');

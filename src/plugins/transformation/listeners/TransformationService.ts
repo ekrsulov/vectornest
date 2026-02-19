@@ -1,14 +1,6 @@
-import type { Point } from '../../../types';
 import type { CanvasEventBus, CanvasPointerEventPayload } from '../../../canvas/CanvasEventBusContext';
 import { useCanvasStore } from '../../../store/canvasStore';
 import type { TransformationPluginSlice } from '../slice';
-
-export const TRANSFORMATION_SERVICE_ID = 'transformation-service';
-
-export interface TransformationServiceState {
-  activePlugin: string | null;
-  screenToCanvas: (screenX: number, screenY: number) => Point;
-}
 
 /**
  * TransformationService manages transformation interactions by listening to canvas events.

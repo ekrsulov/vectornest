@@ -63,7 +63,7 @@ function extractStyleAnimationValues(animation: SVGAnimation): {
 // Blur Gizmo (18)
 // =============================================================================
 
-export const blurGizmoDefinition: AnimationGizmoDefinition = {
+const blurGizmoDefinition: AnimationGizmoDefinition = {
   id: 'blur',
   category: 'filter',
   priority: 50,
@@ -197,7 +197,7 @@ export const blurGizmoDefinition: AnimationGizmoDefinition = {
 // Drop Shadow Gizmo (19)
 // =============================================================================
 
-export const dropShadowGizmoDefinition: AnimationGizmoDefinition = {
+const dropShadowGizmoDefinition: AnimationGizmoDefinition = {
   id: 'drop-shadow',
   category: 'filter',
   priority: 48,
@@ -378,7 +378,7 @@ export const dropShadowGizmoDefinition: AnimationGizmoDefinition = {
 // Color Matrix Gizmo (20)
 // =============================================================================
 
-export const colorMatrixGizmoDefinition: AnimationGizmoDefinition = {
+const colorMatrixGizmoDefinition: AnimationGizmoDefinition = {
   id: 'color-matrix',
   category: 'filter',
   priority: 45,

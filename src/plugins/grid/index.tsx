@@ -146,6 +146,3 @@ export const gridPlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createSettingsPanel('grid', GridPanelComponent)],
 };
 
-export type { GridPluginSlice };
-export { GridPanelComponent as GridPanel };
-export { GridOverlay } from './GridOverlay';

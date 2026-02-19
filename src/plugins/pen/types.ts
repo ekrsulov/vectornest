@@ -33,24 +33,6 @@ export interface PenAnchorPoint {
 }
 
 /**
- * Segment connecting two consecutive anchors
- */
-export interface PenSegment {
-    /**
-     * Index of the starting anchor in the path's anchor array
-     */
-    startAnchorIndex: number;
-    /**
-     * Index of the ending anchor in the path's anchor array
-     */
-    endAnchorIndex: number;
-    /**
-     * Segment type based on handle presence
-     */
-    type: 'straight' | 'curved';
-}
-
-/**
  * Path being created/edited with the pen tool
  */
 export interface PenPath {
@@ -111,20 +93,3 @@ export interface PenDragState {
     outHandle?: Point;
 }
 
-/**
- * State of the pen tool
- */
-export interface PenState {
-    mode: PenMode;
-    currentPath: PenPath | null;
-    activeAnchorIndex: number | null; // Index of the anchor being manipulated (if any)
-    previewAnchor: PenAnchorPoint | null; // For rubber band preview
-    dragState: PenDragState | null;
-    cursorState: PenCursorState;
-    autoAddDelete: boolean; // Whether to automatically add/delete anchors on click
-    rubberBandEnabled: boolean;
-    editingPathId: string | null; // ID of the path element currently being edited
-    editingSubPathIndex: number | null; // Index of the subpath within the path element being edited
-    selectedAnchorIndex: number | null; // Index of the selected anchor in the editing path
-    hoverTarget: PenHoverTarget | null; // Current hover target for visual feedback
-}

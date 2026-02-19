@@ -2,14 +2,14 @@
  * Animated ClipPath presets
  */
 
-export interface ClipPathBBox {
+interface ClipPathBBox {
   x: number;
   y: number;
   width: number;
   height: number;
 }
 
-export interface ClipPathPreset {
+interface ClipPathPreset {
   id: string;
   name: string;
   /** Generate clipPath content with animations */
@@ -183,24 +183,3 @@ export const CLIPPATH_PRESETS: ClipPathPreset[] = [
     },
   },
 ];
-
-/**
- * Generate clipPath SVG content from preset
- */
-export const generateClipPathFromPreset = (
-  preset: ClipPathPreset,
-  bbox: ClipPathBBox = { x: 0, y: 0, width: 100, height: 100 }
-): {
-  id: string;
-  name: string;
-  rawContent: string;
-  clipPathUnits: 'userSpaceOnUse';
-} => {
-  const id = `${preset.id}-${Date.now()}`;
-  return {
-    id,
-    name: preset.name,
-    rawContent: preset.generateContent(bbox),
-    clipPathUnits: 'userSpaceOnUse',
-  };
-};

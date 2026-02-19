@@ -17,11 +17,6 @@ interface WithMaskState {
   masks?: Array<{ id: string; version?: number }>;
 }
 
-/** Shape of the store when gradient plugin state is present. */
-interface WithGradientState {
-  gradients?: unknown[];
-}
-
 /** Shape of the store when grid plugin state is present. */
 interface WithGridState {
   grid?: { enabled?: boolean; showRulers?: boolean };
@@ -61,9 +56,6 @@ interface WithClipState {
 
 export const selectClips = (state: object): Array<{ id: string; version?: number }> =>
   (state as WithClipState).clips ?? [];
-
-export const selectGradientsRevision = (state: object): unknown[] =>
-  (state as WithGradientState).gradients ?? [];
 
 export const selectGridEnabled = (state: object): boolean | undefined =>
   (state as WithGridState).grid?.enabled;

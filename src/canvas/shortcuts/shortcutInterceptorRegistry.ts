@@ -11,13 +11,6 @@ export const registerShortcutInterceptor = (interceptor: ShortcutInterceptor): v
   interceptors.push(interceptor);
 };
 
-export const unregisterShortcutInterceptor = (pluginId: string): void => {
-  const idx = interceptors.findIndex((i) => i.pluginId === pluginId);
-  if (idx >= 0) {
-    interceptors.splice(idx, 1);
-  }
-};
-
 export const getInterceptorsForShortcut = (shortcut: string): ShortcutInterceptor[] => {
   return interceptors
     .filter((i) => i.shortcuts.includes(shortcut))

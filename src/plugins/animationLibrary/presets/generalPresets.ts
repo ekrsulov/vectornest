@@ -8,7 +8,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Pulse animation - simple scale up and down
  */
-export const PULSE_PRESET: AnimationPreset = {
+const PULSE_PRESET: AnimationPreset = {
   id: 'preset-pulse',
   name: 'Pulse',
   description: 'Simple pulsing scale effect',
@@ -45,7 +45,7 @@ export const PULSE_PRESET: AnimationPreset = {
 /**
  * Fade In animation
  */
-export const FADE_IN_PRESET: AnimationPreset = {
+const FADE_IN_PRESET: AnimationPreset = {
   id: 'preset-fade-in',
   name: 'Fade In',
   description: 'Fade in from transparent',
@@ -77,7 +77,7 @@ export const FADE_IN_PRESET: AnimationPreset = {
 /**
  * Breathing animation - smooth organic scale effect centered on the element
  */
-export const BREATHING_PRESET: AnimationPreset = {
+const BREATHING_PRESET: AnimationPreset = {
   id: 'preset-breathing',
   name: 'Breathing',
   description: 'Smooth breathing effect that expands and contracts while staying centered.',
@@ -114,7 +114,7 @@ export const BREATHING_PRESET: AnimationPreset = {
 /**
  * Heartbeat animation - double pulse effect
  */
-export const HEARTBEAT_PRESET: AnimationPreset = {
+const HEARTBEAT_PRESET: AnimationPreset = {
   id: 'preset-heartbeat',
   name: 'Heartbeat',
   description: 'Double pulse effect simulating a natural heartbeat rhythm.',
@@ -151,7 +151,7 @@ export const HEARTBEAT_PRESET: AnimationPreset = {
 /**
  * Float animation - gentle vertical movement
  */
-export const FLOAT_PRESET: AnimationPreset = {
+const FLOAT_PRESET: AnimationPreset = {
   id: 'preset-float',
   name: 'Float',
   description: 'Gentle floating motion, moving smoothly up and down.',
@@ -184,7 +184,7 @@ export const FLOAT_PRESET: AnimationPreset = {
 /**
  * Swing animation - pendulum rotation
  */
-export const SWING_PRESET: AnimationPreset = {
+const SWING_PRESET: AnimationPreset = {
   id: 'preset-swing',
   name: 'Swing',
   description: 'Pendulum-like swaying motion, rotating gently from side to side.',
@@ -217,7 +217,7 @@ export const SWING_PRESET: AnimationPreset = {
 /**
  * Spin animation - continuous rotation
  */
-export const SPIN_PRESET: AnimationPreset = {
+const SPIN_PRESET: AnimationPreset = {
   id: 'preset-spin',
   name: 'Spin',
   description: 'Continuous 360° rotation around the center.',
@@ -247,7 +247,7 @@ export const SPIN_PRESET: AnimationPreset = {
 /**
  * Shake animation - rapid trembling
  */
-export const SHAKE_PRESET: AnimationPreset = {
+const SHAKE_PRESET: AnimationPreset = {
   id: 'preset-shake',
   name: 'Shake',
   description: 'Rapid horizontal trembling for attention-grabbing effect.',
@@ -279,7 +279,7 @@ export const SHAKE_PRESET: AnimationPreset = {
 /**
  * Bounce animation - elastic bouncing
  */
-export const BOUNCE_PRESET: AnimationPreset = {
+const BOUNCE_PRESET: AnimationPreset = {
   id: 'preset-bounce',
   name: 'Bounce',
   description: 'Playful elastic bouncing motion.',
@@ -312,7 +312,7 @@ export const BOUNCE_PRESET: AnimationPreset = {
 /**
  * Wobble animation - jelly-like motion
  */
-export const WOBBLE_PRESET: AnimationPreset = {
+const WOBBLE_PRESET: AnimationPreset = {
   id: 'preset-wobble',
   name: 'Wobble',
   description: 'Jelly-like wobbling motion combining rotation and translation.',
@@ -361,7 +361,7 @@ export const WOBBLE_PRESET: AnimationPreset = {
 /**
  * Spin Counter-Clockwise animation
  */
-export const SPIN_CCW_PRESET: AnimationPreset = {
+const SPIN_CCW_PRESET: AnimationPreset = {
   id: 'preset-spin-ccw',
   name: 'Spin CCW',
   description: 'Continuous counter-clockwise 360° rotation.',
@@ -391,7 +391,7 @@ export const SPIN_CCW_PRESET: AnimationPreset = {
 /**
  * Shake Hard animation - intense error shake
  */
-export const SHAKE_HARD_PRESET: AnimationPreset = {
+const SHAKE_HARD_PRESET: AnimationPreset = {
   id: 'preset-shake-hard',
   name: 'Shake Hard',
   description: 'Intense horizontal shake for error states.',

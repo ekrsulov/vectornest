@@ -97,7 +97,7 @@ function extractAnimationValues(animation: SVGAnimation): {
  * Interaction: Drag the ghost to define final position.
  * SMIL Target: <animateTransform type="translate">
  */
-export const translateGizmoDefinition: AnimationGizmoDefinition = {
+const translateGizmoDefinition: AnimationGizmoDefinition = {
   id: 'translate',
   category: 'transform',
   label: 'Translation',
@@ -375,7 +375,7 @@ export const translateGizmoDefinition: AnimationGizmoDefinition = {
 
           {/* Intermediate keyframe markers */}
           {intermediatePoints.map((point, i) => (
-            <g key={`intermediate-${i}`} className="keyframe-marker">
+            <g key={`intermediate-${point.x}-${point.y}`} className="keyframe-marker">
               <circle
                 cx={point.x}
                 cy={point.y}
@@ -541,7 +541,7 @@ export const translateGizmoDefinition: AnimationGizmoDefinition = {
  * Interaction: Drag pivot to change center, drag arc to set angle.
  * SMIL Target: <animateTransform type="rotate">
  */
-export const rotateGizmoDefinition: AnimationGizmoDefinition = {
+const rotateGizmoDefinition: AnimationGizmoDefinition = {
   id: 'rotate',
   category: 'transform',
   label: 'Rotation',
@@ -918,7 +918,7 @@ export const rotateGizmoDefinition: AnimationGizmoDefinition = {
  * Interaction: Drag corners to define target scale.
  * SMIL Target: <animateTransform type="scale">
  */
-export const scaleGizmoDefinition: AnimationGizmoDefinition = {
+const scaleGizmoDefinition: AnimationGizmoDefinition = {
   id: 'scale',
   category: 'transform',
   label: 'Scale',
@@ -1227,7 +1227,7 @@ export const scaleGizmoDefinition: AnimationGizmoDefinition = {
  * Interaction: Drag edge midpoints to skew horizontally/vertically.
  * SMIL Target: <animateTransform type="skewX/Y">
  */
-export const skewGizmoDefinition: AnimationGizmoDefinition = {
+const skewGizmoDefinition: AnimationGizmoDefinition = {
   id: 'skew',
   category: 'transform',
   label: 'Skew',

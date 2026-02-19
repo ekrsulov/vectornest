@@ -2,7 +2,7 @@ import { sanitizeSvgContent, type SanitizeSvgOptions } from '../../utils/sanitiz
 
 export type LlmAssistantMode = 'editSelection' | 'insertNew';
 
-export type LlmAssistantSvgParseResult =
+type LlmAssistantSvgParseResult =
   | { ok: true; svg: string }
   | { ok: false; error: string };
 
@@ -23,7 +23,7 @@ const extractFromCodeFences = (raw: string): string | null => {
 
 const wrapSvgFragment = (fragment: string): string => `<svg xmlns="http://www.w3.org/2000/svg">${fragment}</svg>`;
 
-export function extractSvgFromLlmResponse(raw: string): LlmAssistantSvgParseResult {
+function extractSvgFromLlmResponse(raw: string): LlmAssistantSvgParseResult {
   const trimmedRaw = raw.trim();
   if (!trimmedRaw) return { ok: false, error: 'Empty response.' };
 

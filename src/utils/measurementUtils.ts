@@ -30,10 +30,6 @@ let measurementPath: SVGPathElement | null = null;
  * Clear the path measurement cache.
  * Useful when bulk-modifying elements or freeing memory.
  */
-export function clearMeasurementCache(): void {
-  pathMeasurementCache.clear();
-}
-
 const ensureMeasurementPath = (): SVGPathElement | null => {
   if (typeof document === 'undefined') {
     return null;

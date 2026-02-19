@@ -1,8 +1,5 @@
 /** Types for the Artboard plugin */
 
-/** Orientation of the artboard */
-export type ArtboardOrientation = 'portrait' | 'landscape';
-
 /** Category of artboard preset */
 export type ArtboardCategory = 'paper' | 'social' | 'print' | 'video' | 'screens' | 'custom';
 
@@ -33,14 +30,6 @@ export interface ArtboardState {
     width: number;
     height: number;
   } | null;
-}
-
-/** Artboard export bounds */
-export interface ArtboardExportBounds {
-  minX: number;
-  minY: number;
-  width: number;
-  height: number;
 }
 
 /** Artboard slice */

@@ -1,5 +1,3 @@
-import type { SVGAnimation } from './types';
-
 export type AnimationSelectValue =
     | 'fade'
     | 'rotate'
@@ -208,15 +206,12 @@ export type AnimationSelectValue =
     | 'rulerMarkDrift' | 'guideLineGlow' | 'paddingPulse' | 'marginPulse' | 'zIndexSwap'
     | 'opacityCheck' | 'sizeTracker' | 'positionTracker' | 'debugRotation' | 'idTagReveal';
 
-export interface AnimationOption {
+interface AnimationOption {
     value: AnimationSelectValue | string;
     label: string;
     category: string;
     applyTo: string[];
 }
-
-export const ANIMATION_CATEGORIES = ['All', 'Basic', 'Entrance', 'Exit', 'Loops', 'Liquid', 'Typography', '3D', 'Filters', 'Colors', 'Interactive', 'Paths', 'Natural', 'Geometric', 'Retro', 'Cinematic', 'Artistic', 'Minimalist', 'Specific'];
-export const ANIMATION_APPLY_TO = ['All', 'generic', 'path', 'text', 'circle', 'line', 'filter', 'gradient', 'pattern', 'root'];
 
 export const ANIMATION_TYPE_OPTIONS: AnimationOption[] = [
     { value: 'custom', label: 'Custom configuration', category: 'Basic', applyTo: ['generic'] },
@@ -740,7 +735,7 @@ export const ANIMATION_TYPE_OPTIONS: AnimationOption[] = [
     { value: 'idTagReveal', label: 'Debug ID Tag', category: 'Specific', applyTo: ['generic'] },
 ];
 
-export interface PresetConfig {
+interface PresetConfig {
     type?: 'animate' | 'animateTransform' | 'animateMotion' | 'set';
     attributeName?: string;
     dur?: number;
@@ -1819,52 +1814,3 @@ export const getPresetConfig = (preset: AnimationSelectValue): PresetConfig => {
     }
 };
 
-const toOptional = (value?: string): string | undefined =>
-    value && value.trim().length > 0 ? value : undefined;
-
-/**
- * Build a normalized animation payload from a preset config.
- * This mirrors the defaults used in the workspace editor so both entry points create identical animations.
- */
-export const buildPresetAnimation = (
-    preset: AnimationSelectValue,
-    fallbackTargetId: string
-): Omit<SVGAnimation, 'id'> => {
-    const config = getPresetConfig(preset);
-    const targetElementId = config.targetId ?? fallbackTargetId;
-    const useValues = Boolean(config.useValues && config.values);
-    const repeat =
-        config.repeatCount === 'indefinite'
-            ? 'indefinite'
-            : typeof config.repeatCount === 'number'
-                ? config.repeatCount
-                : Number.isFinite(Number(config.repeatCount))
-                    ? Number(config.repeatCount)
-                    : 1;
-
-    return {
-        targetElementId,
-        type: config.type ?? 'animate',
-        attributeName:
-            config.type === 'animateTransform'
-                ? config.attributeName ?? 'transform'
-                : config.attributeName,
-        transformType: config.transformType,
-        from: useValues ? undefined : config.from,
-        to: useValues ? undefined : config.to,
-        values: useValues ? config.values : undefined,
-        dur: `${config.dur ?? 2}s`,
-        repeatCount: repeat === 'indefinite' ? 'indefinite' : repeat || 1,
-        fill: config.fill ?? 'freeze',
-        calcMode: config.calcMode ?? 'linear',
-        keyTimes: toOptional(config.keyTimes),
-        keySplines: toOptional(config.keySplines),
-        keyPoints: toOptional(config.keyPoints),
-        additive: config.additive ?? 'replace',
-        accumulate: config.accumulate ?? 'none',
-        path: config.mpath ? undefined : config.path,
-        mpath: config.mpath,
-        rotate: config.rotate as SVGAnimation['rotate'],
-        begin: '0s',
-    };
-};

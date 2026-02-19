@@ -141,19 +141,6 @@ export const splitCanvasControllerValue = (
   },
 });
 
-export const useCanvasControllerSource = (): CanvasControllerValue => {
-  const data = useCanvasControllerDataSource();
-  const actions = useCanvasControllerActionsSource();
-
-  return useMemo(
-    () => ({
-      ...data,
-      ...actions,
-    }),
-    [data, actions]
-  );
-};
-
 export const useCanvasControllerData = (): CanvasControllerData => {
   const data = useContext(CanvasControllerDataContext);
   if (!data) {
@@ -170,27 +157,3 @@ export const useCanvasControllerActions = (): CanvasControllerActions => {
   return actions;
 };
 
-export const useCanvasController = (): CanvasControllerValue => {
-  const legacyContext = useContext(CanvasControllerContext);
-  const data = useContext(CanvasControllerDataContext);
-  const actions = useContext(CanvasControllerActionsContext);
-
-  const context = useMemo(() => {
-    if (legacyContext) {
-      return legacyContext;
-    }
-    if (!data || !actions) {
-      return null;
-    }
-    return {
-      ...data,
-      ...actions,
-    };
-  }, [legacyContext, data, actions]);
-
-  if (!context) {
-    throw new Error('useCanvasController must be used within a CanvasControllerProvider');
-  }
-
-  return context;
-};

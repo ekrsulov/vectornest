@@ -56,5 +56,3 @@ export const offsetPathPlugin: PluginDefinition<CanvasStore> = {
   ],
 };
 
-export type { OffsetPathSlice };
-export { OffsetPathPanel };

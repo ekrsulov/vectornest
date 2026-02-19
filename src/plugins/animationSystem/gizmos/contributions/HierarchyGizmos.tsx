@@ -67,7 +67,7 @@ function extractStyleAnimationValues(animation: SVGAnimation): {
 // Transform Origin Gizmo (21)
 // =============================================================================
 
-export const transformOriginGizmoDefinition: AnimationGizmoDefinition = {
+const transformOriginGizmoDefinition: AnimationGizmoDefinition = {
   id: 'transform-origin',
   category: 'hierarchy',
   priority: 50,
@@ -206,7 +206,7 @@ export const transformOriginGizmoDefinition: AnimationGizmoDefinition = {
 // Z-Order Gizmo (22)
 // =============================================================================
 
-export const zOrderGizmoDefinition: AnimationGizmoDefinition = {
+const zOrderGizmoDefinition: AnimationGizmoDefinition = {
   id: 'z-order',
   category: 'hierarchy',
   priority: 48,
@@ -312,17 +312,17 @@ export const zOrderGizmoDefinition: AnimationGizmoDefinition = {
     
     return (
       <g className="z-order-gizmo">
-        {[0, 1, 2].map(i => (
+        {[0, 1, 2].map(level => (
           <rect
-            key={i}
-            x={maxX + 10 / viewport.zoom - i * 3 / viewport.zoom}
-            y={minY - 20 / viewport.zoom + i * 3 / viewport.zoom}
+            key={`z-layer-${level}`}
+            x={maxX + 10 / viewport.zoom - level * 3 / viewport.zoom}
+            y={minY - 20 / viewport.zoom + level * 3 / viewport.zoom}
             width={15 / viewport.zoom}
             height={15 / viewport.zoom}
-            fill={i === 0 ? color : 'none'}
+            fill={level === 0 ? color : 'none'}
             stroke={color}
             strokeWidth={1 / viewport.zoom}
-            opacity={i === 0 ? 1 : 0.4}
+            opacity={level === 0 ? 1 : 0.4}
           />
         ))}
         <text
@@ -342,7 +342,7 @@ export const zOrderGizmoDefinition: AnimationGizmoDefinition = {
 // Parent Inherit Gizmo (23)
 // =============================================================================
 
-export const parentInheritGizmoDefinition: AnimationGizmoDefinition = {
+const parentInheritGizmoDefinition: AnimationGizmoDefinition = {
   id: 'parent-inherit',
   category: 'hierarchy',
   priority: 46,
@@ -473,7 +473,7 @@ export const parentInheritGizmoDefinition: AnimationGizmoDefinition = {
 // Cascade Delay Gizmo (24)
 // =============================================================================
 
-export const cascadeDelayGizmoDefinition: AnimationGizmoDefinition = {
+const cascadeDelayGizmoDefinition: AnimationGizmoDefinition = {
   id: 'cascade-delay',
   category: 'hierarchy',
   priority: 44,
@@ -582,17 +582,17 @@ export const cascadeDelayGizmoDefinition: AnimationGizmoDefinition = {
     
     return (
       <g className="cascade-delay-gizmo">
-        {[0, 1, 2, 3].map(i => (
+        {[0, 1, 2, 3].map(step => (
           <rect
-            key={i}
-            x={minX + (width / 4) * i}
+            key={`cascade-${step}`}
+            x={minX + (width / 4) * step}
             y={maxY + 15 / viewport.zoom}
             width={width / 4 - 2 / viewport.zoom}
             height={6 / viewport.zoom}
             fill={color}
-            opacity={1 - i * 0.2}
+            opacity={1 - step * 0.2}
             rx={2 / viewport.zoom}
-            style={{ transform: `translateX(${i * delay * 20}px)` }}
+            style={{ transform: `translateX(${step * delay * 20}px)` }}
           />
         ))}
       </g>
@@ -604,7 +604,7 @@ export const cascadeDelayGizmoDefinition: AnimationGizmoDefinition = {
 // Group Transform Gizmo (25)
 // =============================================================================
 
-export const groupTransformGizmoDefinition: AnimationGizmoDefinition = {
+const groupTransformGizmoDefinition: AnimationGizmoDefinition = {
   id: 'group-transform',
   category: 'hierarchy',
   priority: 42,
@@ -788,7 +788,7 @@ export const groupTransformGizmoDefinition: AnimationGizmoDefinition = {
 // Anchor Point Gizmo (26)
 // =============================================================================
 
-export const anchorPointGizmoDefinition: AnimationGizmoDefinition = {
+const anchorPointGizmoDefinition: AnimationGizmoDefinition = {
   id: 'anchor-point',
   category: 'hierarchy',
   priority: 40,

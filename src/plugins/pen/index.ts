@@ -166,5 +166,3 @@ export const penPlugin: PluginDefinition<CanvasStore> = {
     sidebarPanels: [createToolPanel('pen', PenPanel)],
 };
 
-export type { PenPluginSlice };
-export { PenPanel };

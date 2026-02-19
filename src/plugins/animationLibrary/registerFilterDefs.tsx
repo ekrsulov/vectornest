@@ -3,9 +3,6 @@ import type { CanvasElement } from '../../types';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
 import { canvasStoreApi } from '../../store/canvasStore';
 
-// Track which filters have been individually registered (runtime only)
-const registeredFilters = new Set<string>();
-
 // Map of filter ID to its JSX definition
 const filterDefinitions: Record<string, () => React.ReactNode> = {
   'filter-glow-400': () => (
@@ -162,9 +159,6 @@ const filterSerializations: Record<string, string> = {
   'filter-breathing-glow': '<filter id="filter-breathing-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="coloredBlur"><animate attributeName="stdDeviation" dur="4s" repeatCount="indefinite" values="3;6;3" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/></feGaussianBlur><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
 };
 
-// All available filter IDs
-export const ALL_ANIMATION_FILTER_IDS = Object.keys(filterDefinitions);
-
 /**
  * Extract filter ID from a value that might be a url(#filter-...) reference
  */
@@ -182,7 +176,7 @@ function extractFilterIdFromValue(value: string | number | undefined): string | 
  * Collect filter IDs used by animations on elements.
  * Scans the animations array for filter references in the 'to' attribute.
  */
-export function collectFilterIdsFromAnimations(
+function collectFilterIdsFromAnimations(
   elements: CanvasElement[],
   animations: unknown[] | undefined
 ): Set<string> {
@@ -232,7 +226,7 @@ export function collectFilterIdsFromAnimations(
  * Register the defs contribution for animation library filters.
  * This is called once at initialization and collects filters from animations.
  */
-export function registerAnimationFilterDefs(): void {
+function registerAnimationFilterDefs(): void {
   defsContributionRegistry.register({
     id: 'animation-library-filters',
     collectUsedIds: (elements) => {
@@ -268,48 +262,3 @@ export function registerAnimationFilterDefs(): void {
 
 // Register the contribution on module load
 registerAnimationFilterDefs();
-
-/**
- * Register a single filter def on-demand.
- * This is called when a filter preset is applied.
- * Note: Filters are now collected from animations, so explicit registration
- * is mainly for ensuring the filter is available immediately.
- * @deprecated Filters are now collected from animations automatically
- */
-export function registerFilterIfNeeded(filterId: string): void {
-  if (registeredFilters.has(filterId)) return;
-  if (!filterDefinitions[filterId]) return;
-  registeredFilters.add(filterId);
-}
-
-/**
- * Extract filter ID from animation preset
- * Looks for filter references in the animations array
- */
-export function extractFilterIdFromPreset(preset: { animations?: Array<{ to?: string | number }> }): string | null {
-  if (!preset.animations) return null;
-
-  for (const anim of preset.animations) {
-    const filterId = extractFilterIdFromValue(anim.to);
-    if (filterId) return filterId;
-  }
-
-  return null;
-}
-
-/**
- * Check if a preset uses filter animations
- */
-export function isFilterPreset(presetId: string): boolean {
-  return presetId.startsWith('preset-blur-') ||
-    presetId.startsWith('preset-glow-') ||
-    presetId.startsWith('preset-shadow-') ||
-    presetId.startsWith('preset-grayscale-') ||
-    presetId.startsWith('preset-sepia-') ||
-    presetId.startsWith('preset-hue-') ||
-    presetId.startsWith('preset-brightness-') ||
-    presetId.startsWith('preset-contrast-') ||
-    presetId.startsWith('preset-invert-') ||
-    presetId.startsWith('preset-turbulence-') ||
-    presetId.startsWith('preset-breathing-');
-}

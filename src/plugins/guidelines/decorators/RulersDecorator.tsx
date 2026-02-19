@@ -7,7 +7,7 @@ import { useCanvasStore } from '../../../store/canvasStore';
 /**
  * Component wrapper for the Rulers to properly use hooks
  */
-export const RulersDecoratorComponent: React.FC<{ context: CanvasDecoratorContext }> = ({ context }) => {
+const RulersDecoratorComponent: React.FC<{ context: CanvasDecoratorContext }> = ({ context }) => {
   const guidelines = useCanvasStore((state) => state.guidelines);
   
   // Don't render if not visible

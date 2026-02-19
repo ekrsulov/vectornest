@@ -4,7 +4,6 @@ import { createPluginSlice } from '../../utils/pluginUtils';
 import { createToolPanel } from '../../utils/pluginFactories';
 import { Shapes } from 'lucide-react';
 import { createShapePluginSlice } from './slice';
-import type { ShapePluginSlice } from './slice';
 import React from 'react';
 import { ShapePanel } from './ShapePanel';
 import { ShapePreview } from './ShapePreview';
@@ -199,5 +198,3 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('shape', ShapePanel)],
 };
 
-export type { ShapePluginSlice };
-export { ShapePanel };

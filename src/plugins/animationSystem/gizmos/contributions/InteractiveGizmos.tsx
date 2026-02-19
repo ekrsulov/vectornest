@@ -19,7 +19,7 @@ import type { SVGAnimation } from '../../types';
 // Hover State Gizmo (27)
 // =============================================================================
 
-export const hoverStateGizmoDefinition: AnimationGizmoDefinition = {
+const hoverStateGizmoDefinition: AnimationGizmoDefinition = {
   id: 'hover-state',
   category: 'interactive',
   priority: 50,
@@ -119,7 +119,7 @@ export const hoverStateGizmoDefinition: AnimationGizmoDefinition = {
 // Click Trigger Gizmo (28)
 // =============================================================================
 
-export const clickTriggerGizmoDefinition: AnimationGizmoDefinition = {
+const clickTriggerGizmoDefinition: AnimationGizmoDefinition = {
   id: 'click-trigger',
   category: 'interactive',
   priority: 48,
@@ -220,7 +220,7 @@ export const clickTriggerGizmoDefinition: AnimationGizmoDefinition = {
 // Scroll Trigger Gizmo (29)
 // =============================================================================
 
-export const scrollTriggerGizmoDefinition: AnimationGizmoDefinition = {
+const scrollTriggerGizmoDefinition: AnimationGizmoDefinition = {
   id: 'scroll-trigger',
   category: 'interactive',
   priority: 46,
@@ -352,7 +352,7 @@ export const scrollTriggerGizmoDefinition: AnimationGizmoDefinition = {
 // Focus State Gizmo (30)
 // =============================================================================
 
-export const focusStateGizmoDefinition: AnimationGizmoDefinition = {
+const focusStateGizmoDefinition: AnimationGizmoDefinition = {
   id: 'focus-state',
   category: 'interactive',
   priority: 44,

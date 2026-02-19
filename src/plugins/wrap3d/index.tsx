@@ -140,12 +140,3 @@ export const wrap3dPlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('wrap3d', Wrap3DPanel)],
 };
 
-// Export types and components
-export type { Wrap3DSlice };
-export { Wrap3DPanel };
-
-// Legacy exports for backward compatibility
-export type { Wrap3DSlice as SphereWrapSlice };
-export { Wrap3DPanel as SphereWrapPanel };
-// eslint-disable-next-line react-refresh/only-export-components
-export const sphereWrapPlugin = wrap3dPlugin;

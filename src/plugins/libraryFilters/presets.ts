@@ -3,7 +3,7 @@
  * Includes basic, color, special effects, and artistic filters
  */
 
-import type { FilterPresetDefinition, FilterPresetType } from './types';
+import type { FilterPresetDefinition } from './types';
 
 export const FILTER_PRESETS: FilterPresetDefinition[] = [
   // ===== BASIC FILTERS =====
@@ -587,11 +587,3 @@ export const FILTER_PRESETS: FilterPresetDefinition[] = [
     }),
   },
 ];
-
-export const getPresetByType = (type: FilterPresetType): FilterPresetDefinition | undefined => {
-  return FILTER_PRESETS.find(p => p.type === type);
-};
-
-export const getPresetsByCategory = (category: 'basic' | 'color' | 'special' | 'artistic' | 'preset'): FilterPresetDefinition[] => {
-  return FILTER_PRESETS.filter(p => p.category === category);
-};

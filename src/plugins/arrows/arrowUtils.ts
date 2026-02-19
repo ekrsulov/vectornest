@@ -479,7 +479,7 @@ function Z(): Command {
 /**
  * Generate path commands for an arrow head
  */
-export function generateArrowHead(
+function generateArrowHead(
   tip: Point,
   angle: number,  // Angle in radians pointing towards the tip
   style: ArrowHeadStyle,
@@ -784,7 +784,7 @@ function getBezierEndAngle(
  * Generate the main line of the arrow, possibly shortened to accommodate heads
  * Supports both straight, curved lines, and multi-waypoint pathfinding
  */
-export function generateArrowLine(
+function generateArrowLine(
   start: Point,
   end: Point,
   startHead: ArrowHeadStyle,
@@ -927,7 +927,7 @@ export function generateArrowLine(
 /**
  * Arrow component types for group creation
  */
-export interface ArrowPathComponent {
+interface ArrowPathComponent {
   type: 'head' | 'line' | 'label';
   pathData: PathData;
 }

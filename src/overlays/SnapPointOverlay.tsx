@@ -85,7 +85,7 @@ interface ActiveSnapPointOverlayProps {
  * Renders the active snap point with enhanced visualization (without label)
  * Use FeedbackOverlay separately to show the snap type label
  */
-export const ActiveSnapPointOverlay: React.FC<ActiveSnapPointOverlayProps> = React.memo(function ActiveSnapPointOverlay({
+const ActiveSnapPointOverlay: React.FC<ActiveSnapPointOverlayProps> = React.memo(function ActiveSnapPointOverlay({
   snapPoint,
   viewport,
 }) {

@@ -16,7 +16,7 @@ import type { GizmoContextValue } from './GizmoContext';
 // Types
 // =============================================================================
 
-export interface GizmoInteractionHandlerConfig {
+interface GizmoInteractionHandlerConfig {
   /** SVG element for coordinate transformation */
   svgElement: SVGSVGElement | null;
   /** Gizmo context for state and actions */
@@ -36,7 +36,7 @@ export interface ModifierState {
 // Class
 // =============================================================================
 
-export class GizmoInteractionHandler {
+class GizmoInteractionHandler {
   private config: GizmoInteractionHandlerConfig;
   private isDragging: boolean = false;
   private modifiers: ModifierState = {
@@ -234,7 +234,7 @@ export class GizmoInteractionHandler {
 import { useEffect, useRef, useCallback } from 'react';
 import { useGizmoContext } from './GizmoContext';
 
-export interface UseGizmoInteractionOptions {
+interface UseGizmoInteractionOptions {
   /** SVG element ref */
   svgRef: React.RefObject<SVGSVGElement | null>;
   /** Whether interactions are enabled */
@@ -313,45 +313,6 @@ export function useGizmoInteraction({
 }
 
 // =============================================================================
-// Utility: Hit Testing
-// =============================================================================
-
-/**
- * Check if a point hits a gizmo handle
- */
-export function hitTestGizmoHandle(
-  event: PointerEvent | MouseEvent,
-  _threshold: number = 10
-): { animationId: string; handleId: string } | null {
-  const target = event.target as Element;
-  
-  // Check if we hit a handle element
-  const handleElement = target.closest('[data-handle-id]');
-  if (!handleElement) return null;
-
-  const handleId = handleElement.getAttribute('data-handle-id');
-  const animationId = handleElement.getAttribute('data-animation-id');
-
-  if (!handleId || !animationId) return null;
-
-  return { animationId, handleId };
-}
-
-/**
- * Check if a point hits any gizmo (not just handle)
- */
-export function hitTestGizmo(
-  event: PointerEvent | MouseEvent
-): string | null {
-  const target = event.target as Element;
-  
-  const gizmoElement = target.closest('[data-gizmo-id]');
-  if (!gizmoElement) return null;
-
-  return gizmoElement.getAttribute('data-animation-id');
-}
-
-// =============================================================================
 // Utility: Constraint Helpers
 // =============================================================================
 
@@ -422,8 +383,3 @@ export function constrainUniformScale(
   };
 }
 
-// =============================================================================
-// Export
-// =============================================================================
-
-export default GizmoInteractionHandler;

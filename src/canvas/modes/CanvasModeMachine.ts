@@ -30,7 +30,7 @@ export interface CanvasModeStateConfig {
   resources?: CanvasModeResources;
 }
 
-export interface CanvasModeMachineDefinition {
+interface CanvasModeMachineDefinition {
   initial: CanvasMode;
   /** Base configuration for built-in modes. */
   states: Record<string, CanvasModeStateConfig>;
@@ -41,7 +41,7 @@ export interface CanvasModeMachineDefinition {
   };
 }
 
-export interface CanvasModeEvent {
+interface CanvasModeEvent {
   type: 'ACTIVATE';
   value: CanvasMode;
 }
@@ -65,7 +65,7 @@ const defaultState: CanvasModeStateConfig = {
  * Builds the canvas mode machine dynamically from registered plugins.
  * This allows plugins to define their own modes with custom configurations.
  */
-export function buildCanvasModeMachine(plugins: PluginDefinition[]): CanvasModeMachineDefinition {
+function buildCanvasModeMachine(plugins: PluginDefinition[]): CanvasModeMachineDefinition {
   const states: Record<string, CanvasModeStateConfig> = {};
 
   // Add all plugin modes (including core modes like select, pan, text, curves)
@@ -115,19 +115,6 @@ export function updateCanvasModeMachine(plugins: PluginDefinition[]): void {
  */
 export function getCanvasModeMachine(): CanvasModeMachineDefinition {
   return CANVAS_MODE_MACHINE;
-}
-
-/**
- * Resets the mode machine to its empty default state.
- * Intended for test isolation — prevents state leaking between test runs.
- */
-export function resetCanvasModeMachine(): void {
-  CANVAS_MODE_MACHINE = {
-    initial: DEFAULT_MODE,
-    states: {},
-    defaultState,
-    global: { onTransition: [] },
-  };
 }
 
 const getStateDefinition = (mode: CanvasMode): CanvasModeStateConfig => {

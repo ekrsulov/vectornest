@@ -9,7 +9,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Blur Pulse animation - pulsating blur effect
  */
-export const BLUR_PULSE_PRESET: AnimationPreset = {
+const BLUR_PULSE_PRESET: AnimationPreset = {
     id: 'preset-blur-pulse',
     name: 'Blur Pulse',
     description: 'Pulsating blur effect using SVG filter',
@@ -39,7 +39,7 @@ export const BLUR_PULSE_PRESET: AnimationPreset = {
 /**
  * Glow Pulse animation - pulsating glow effect
  */
-export const GLOW_PULSE_PRESET: AnimationPreset = {
+const GLOW_PULSE_PRESET: AnimationPreset = {
     id: 'preset-glow-pulse',
     name: 'Glow Pulse',
     description: 'Pulsating glow effect with animated intensity',
@@ -73,7 +73,7 @@ export const GLOW_PULSE_PRESET: AnimationPreset = {
 /**
  * Shadow Pulse animation - pulsating drop shadow
  */
-export const SHADOW_PULSE_PRESET: AnimationPreset = {
+const SHADOW_PULSE_PRESET: AnimationPreset = {
     id: 'preset-shadow-pulse',
     name: 'Shadow Pulse',
     description: 'Pulsating drop shadow effect',
@@ -106,7 +106,7 @@ export const SHADOW_PULSE_PRESET: AnimationPreset = {
 /**
  * Grayscale Pulse animation - pulsating grayscale effect
  */
-export const GRAYSCALE_PULSE_PRESET: AnimationPreset = {
+const GRAYSCALE_PULSE_PRESET: AnimationPreset = {
     id: 'preset-grayscale-pulse',
     name: 'Grayscale Pulse',
     description: 'Grayscale intensity pulses in and out',
@@ -137,7 +137,7 @@ export const GRAYSCALE_PULSE_PRESET: AnimationPreset = {
 /**
  * Sepia Pulse animation - pulsating sepia effect
  */
-export const SEPIA_PULSE_PRESET: AnimationPreset = {
+const SEPIA_PULSE_PRESET: AnimationPreset = {
     id: 'preset-sepia-pulse',
     name: 'Sepia Pulse',
     description: 'Sepia tone intensity pulses in and out',
@@ -172,7 +172,7 @@ export const SEPIA_PULSE_PRESET: AnimationPreset = {
 /**
  * Hue Rotate animation - continuous hue rotation
  */
-export const HUE_ROTATE_PRESET: AnimationPreset = {
+const HUE_ROTATE_PRESET: AnimationPreset = {
     id: 'preset-hue-rotate',
     name: 'Hue Rotate',
     description: 'Continuous color hue rotation through spectrum',
@@ -202,7 +202,7 @@ export const HUE_ROTATE_PRESET: AnimationPreset = {
 /**
  * Brightness Flash animation - brightness pulsation
  */
-export const BRIGHTNESS_FLASH_PRESET: AnimationPreset = {
+const BRIGHTNESS_FLASH_PRESET: AnimationPreset = {
     id: 'preset-brightness-flash',
     name: 'Brightness Flash',
     description: 'Flashing brightness effect',
@@ -242,7 +242,7 @@ export const BRIGHTNESS_FLASH_PRESET: AnimationPreset = {
 /**
  * Contrast Pulse animation - contrast pulsation
  */
-export const CONTRAST_PULSE_PRESET: AnimationPreset = {
+const CONTRAST_PULSE_PRESET: AnimationPreset = {
     id: 'preset-contrast-pulse',
     name: 'Contrast Pulse',
     description: 'Pulsating contrast effect',
@@ -294,7 +294,7 @@ export const CONTRAST_PULSE_PRESET: AnimationPreset = {
 /**
  * Invert Flash animation - flashing color inversion
  */
-export const INVERT_FLASH_PRESET: AnimationPreset = {
+const INVERT_FLASH_PRESET: AnimationPreset = {
     id: 'preset-invert-flash',
     name: 'Invert Flash',
     description: 'Flashing color inversion effect',
@@ -328,7 +328,7 @@ export const INVERT_FLASH_PRESET: AnimationPreset = {
 /**
  * Turbulence Ripple animation - wavy distortion effect
  */
-export const TURBULENCE_RIPPLE_PRESET: AnimationPreset = {
+const TURBULENCE_RIPPLE_PRESET: AnimationPreset = {
     id: 'preset-turbulence-ripple',
     name: 'Turbulence Ripple',
     description: 'Wavy turbulence distortion effect',

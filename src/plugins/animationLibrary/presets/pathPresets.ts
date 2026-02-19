@@ -8,7 +8,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Path Draw animation - progressive path drawing
  */
-export const PATH_DRAW_PRESET: AnimationPreset = {
+const PATH_DRAW_PRESET: AnimationPreset = {
     id: 'preset-path-draw',
     name: 'Draw',
     description: 'Progressively draws the path from start to end.',
@@ -37,7 +37,7 @@ export const PATH_DRAW_PRESET: AnimationPreset = {
 /**
  * Stroke Width Pulse animation - pulsating stroke
  */
-export const STROKE_WIDTH_PULSE_PRESET: AnimationPreset = {
+const STROKE_WIDTH_PULSE_PRESET: AnimationPreset = {
     id: 'preset-stroke-width-pulse',
     name: 'Stroke Pulse',
     description: 'Stroke width pulses between thin and thick.',
@@ -67,7 +67,7 @@ export const STROKE_WIDTH_PULSE_PRESET: AnimationPreset = {
 /**
  * Path Draw Slow animation - slow progressive path drawing
  */
-export const PATH_DRAW_SLOW_PRESET: AnimationPreset = {
+const PATH_DRAW_SLOW_PRESET: AnimationPreset = {
     id: 'preset-path-draw-slow',
     name: 'Draw Slow',
     description: 'Slowly draws the path from start to end.',
@@ -98,7 +98,7 @@ export const PATH_DRAW_SLOW_PRESET: AnimationPreset = {
 /**
  * Dash March animation - marching dash pattern
  */
-export const DASH_MARCH_PRESET: AnimationPreset = {
+const DASH_MARCH_PRESET: AnimationPreset = {
     id: 'preset-dash-march',
     name: 'Dash March',
     description: 'Dashes march along the path continuously.',
@@ -128,7 +128,7 @@ export const DASH_MARCH_PRESET: AnimationPreset = {
 /**
  * Dash Cycle animation - cycling dash pattern changes
  */
-export const DASH_CYCLE_PRESET: AnimationPreset = {
+const DASH_CYCLE_PRESET: AnimationPreset = {
     id: 'preset-dash-cycle',
     name: 'Dash Cycle',
     description: 'Dash pattern cycles between different styles.',

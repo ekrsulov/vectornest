@@ -21,7 +21,7 @@ interface TrimPathOverlayProps {
  * Overlay component for visualizing trim path operations.
  * Shows intersection points and highlights trimmable segments.
  */
-export const TrimPathOverlay: React.FC<TrimPathOverlayProps> = ({
+const TrimPathOverlay: React.FC<TrimPathOverlayProps> = ({
   intersections,
   segments,
   hoveredSegmentId,

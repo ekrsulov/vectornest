@@ -18,7 +18,7 @@ const initPotrace = async () => {
   }
 };
 
-export interface PotraceOptions {
+interface PotraceOptions {
   threshold?: number; // 0-255, default 128
   turnPolicy?: 'black' | 'white' | 'left' | 'right' | 'minority' | 'majority';
   turdSize?: number; // suppress speckles of this size

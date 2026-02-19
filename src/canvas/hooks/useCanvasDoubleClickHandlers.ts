@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 import { useCanvasEventBus } from '../CanvasEventBusContext';
 
-export interface CanvasDoubleClickHandlersProps {
+interface CanvasDoubleClickHandlersProps {
     activePlugin: string | null;
 }
 
-export interface CanvasDoubleClickHandlers {
+interface CanvasDoubleClickHandlers {
     handleElementDoubleClick: (elementId: string, e: React.MouseEvent<Element>) => void;
     handleSubpathDoubleClick: (elementId: string, subpathIndex: number, e: React.MouseEvent<Element>) => void;
 }

@@ -1,7 +1,7 @@
 import type { CanvasElementBase } from '../../types';
 import type { SubPath } from '../../types';
 
-export type ImageElement = CanvasElementBase<'image', {
+type ImageElement = CanvasElementBase<'image', {
   x: number;
   y: number;
   width: number;

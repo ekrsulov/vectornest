@@ -99,5 +99,3 @@ export const pencilPlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('pencil', PencilPanel)],
 };
 
-export type { PencilPluginSlice };
-export { PencilPanel };

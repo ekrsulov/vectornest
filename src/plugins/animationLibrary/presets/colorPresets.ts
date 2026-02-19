@@ -8,7 +8,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Rainbow Fill animation - cycling rainbow colors on fill
  */
-export const RAINBOW_FILL_PRESET: AnimationPreset = {
+const RAINBOW_FILL_PRESET: AnimationPreset = {
   id: 'preset-rainbow-fill',
   name: 'Rainbow Fill',
   description: 'Fill color cycles through rainbow spectrum',
@@ -39,7 +39,7 @@ export const RAINBOW_FILL_PRESET: AnimationPreset = {
 /**
  * Rainbow Stroke animation - cycling rainbow colors on stroke
  */
-export const RAINBOW_STROKE_PRESET: AnimationPreset = {
+const RAINBOW_STROKE_PRESET: AnimationPreset = {
   id: 'preset-rainbow-stroke',
   name: 'Rainbow Stroke',
   description: 'Stroke color cycles through rainbow spectrum',
@@ -70,7 +70,7 @@ export const RAINBOW_STROKE_PRESET: AnimationPreset = {
 /**
  * Color Flash Red animation - urgent red flashing
  */
-export const COLOR_FLASH_RED_PRESET: AnimationPreset = {
+const COLOR_FLASH_RED_PRESET: AnimationPreset = {
   id: 'preset-color-flash-red',
   name: 'Flash Red',
   description: 'Urgent red color flashing effect',
@@ -100,7 +100,7 @@ export const COLOR_FLASH_RED_PRESET: AnimationPreset = {
 /**
  * Color Flash White animation - bright white flash
  */
-export const COLOR_FLASH_WHITE_PRESET: AnimationPreset = {
+const COLOR_FLASH_WHITE_PRESET: AnimationPreset = {
   id: 'preset-color-flash-white',
   name: 'Flash White',
   description: 'Bright white flash effect',
@@ -132,7 +132,7 @@ export const COLOR_FLASH_WHITE_PRESET: AnimationPreset = {
 /**
  * Opacity Pulse animation - pulsating opacity
  */
-export const OPACITY_PULSE_PRESET: AnimationPreset = {
+const OPACITY_PULSE_PRESET: AnimationPreset = {
   id: 'preset-opacity-pulse',
   name: 'Opacity Pulse',
   description: 'Smooth opacity pulsation',
@@ -164,7 +164,7 @@ export const OPACITY_PULSE_PRESET: AnimationPreset = {
 /**
  * Fill Fade Pulse animation - fill opacity pulsation
  */
-export const FILL_FADE_PULSE_PRESET: AnimationPreset = {
+const FILL_FADE_PULSE_PRESET: AnimationPreset = {
   id: 'preset-fill-fade-pulse',
   name: 'Fill Fade Pulse',
   description: 'Fill opacity fades in and out',
@@ -196,7 +196,7 @@ export const FILL_FADE_PULSE_PRESET: AnimationPreset = {
 /**
  * Stroke Fade Pulse animation - stroke opacity pulsation
  */
-export const STROKE_FADE_PULSE_PRESET: AnimationPreset = {
+const STROKE_FADE_PULSE_PRESET: AnimationPreset = {
   id: 'preset-stroke-fade-pulse',
   name: 'Stroke Fade Pulse',
   description: 'Stroke opacity fades in and out',
@@ -228,7 +228,7 @@ export const STROKE_FADE_PULSE_PRESET: AnimationPreset = {
 /**
  * Synthwave Color animation - retro synthwave color cycling
  */
-export const SYNTHWAVE_COLOR_PRESET: AnimationPreset = {
+const SYNTHWAVE_COLOR_PRESET: AnimationPreset = {
   id: 'preset-synthwave-color',
   name: 'Synthwave',
   description: 'Retro synthwave color cycling (magenta/cyan)',

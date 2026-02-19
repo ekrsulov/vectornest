@@ -14,7 +14,7 @@ type StyleSettings = StyleSlice['style'];
 
 type PointerEventType = 'pointermove' | 'pointerup';
 
-export interface AttachPencilDrawingListenersOptions {
+interface AttachPencilDrawingListenersOptions {
   activePlugin: string | null;
   pencil: PencilSettings;
   style: StyleSettings;

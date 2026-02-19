@@ -7,14 +7,4 @@
 
 export {
   AnimationGizmoOverlay,
-  initializeGizmoSystem,
-  useAnimationGizmos,
-  useGizmosForAnimation,
-  useGizmoCategories,
-  useGizmosByCategory,
-} from './AnimationGizmoCanvasIntegration';
-
-export type {
-  GizmoState,
-  AnimationGizmoDefinition,
 } from './AnimationGizmoCanvasIntegration';

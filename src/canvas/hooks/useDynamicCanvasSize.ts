@@ -7,7 +7,7 @@ export interface CanvasSize {
   height: number;
 }
 
-export interface UseDynamicCanvasSizeOptions {
+interface UseDynamicCanvasSizeOptions {
   /**
    * Optional window provider for testing purposes.
    * Defaults to the global window object.

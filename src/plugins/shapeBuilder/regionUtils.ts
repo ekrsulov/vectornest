@@ -231,7 +231,7 @@ export function mergeRegions(regions: Region[]): PathData | null {
 /**
  * Checks if a point is inside a region
  */
-export function isPointInRegion(point: Point, region: Region): boolean {
+function isPointInRegion(point: Point, region: Region): boolean {
     // Quick bounding box check first
     const { bounds } = region;
     if (

@@ -1,6 +1,6 @@
 import type { CanvasElement } from '../../types';
 import type { CanvasStore } from '../../store/canvasStore';
-import { registerCleanupHook, unregisterCleanupHook } from '../../store/cleanupHookRegistry';
+import { registerCleanupHook } from '../../store/cleanupHookRegistry';
 
 type AnimationStore = CanvasStore & {
   animations?: Array<Record<string, unknown>>;
@@ -181,8 +181,4 @@ const animationCleanupHook = (
 
 export const registerAnimationCleanupHook = (): void => {
   registerCleanupHook('animation-system', animationCleanupHook);
-};
-
-export const unregisterAnimationCleanupHook = (): void => {
-  unregisterCleanupHook('animation-system');
 };

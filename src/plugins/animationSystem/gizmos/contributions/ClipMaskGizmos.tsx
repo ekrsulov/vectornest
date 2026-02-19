@@ -219,7 +219,7 @@ const clipPathHandles: GizmoHandle[] = [
   },
 ];
 
-export const clipPathGizmoDefinition: AnimationGizmoDefinition = {
+const clipPathGizmoDefinition: AnimationGizmoDefinition = {
   id: 'clip-path',
   category: 'clip-mask',
   priority: 50,
@@ -316,7 +316,7 @@ export const clipPathGizmoDefinition: AnimationGizmoDefinition = {
 // Mask Reveal Gizmo (12)
 // =============================================================================
 
-export const maskRevealGizmoDefinition: AnimationGizmoDefinition = {
+const maskRevealGizmoDefinition: AnimationGizmoDefinition = {
   id: 'mask-reveal',
   category: 'clip-mask',
   priority: 48,
@@ -454,7 +454,7 @@ export const maskRevealGizmoDefinition: AnimationGizmoDefinition = {
 // Mask Wipe Gizmo (13)
 // =============================================================================
 
-export const maskWipeGizmoDefinition: AnimationGizmoDefinition = {
+const maskWipeGizmoDefinition: AnimationGizmoDefinition = {
   id: 'mask-wipe',
   category: 'clip-mask',
   priority: 46,

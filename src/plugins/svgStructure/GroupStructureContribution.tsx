@@ -39,6 +39,3 @@ export const GroupEditorStructureBadges: React.FC<SvgStructureContributionProps<
 
   return <Badge colorScheme="blue" fontSize="9px">active</Badge>;
 };
-
-// Buttons are now handled in the main contribution component
-export const GroupEditorStructureButtons: React.FC<SvgStructureContributionProps<CanvasStore>> = () => null;

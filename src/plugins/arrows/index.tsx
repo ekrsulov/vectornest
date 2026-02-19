@@ -559,5 +559,3 @@ export const arrowsPlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('arrows', ArrowsPanel)],
 };
 
-export type { ArrowsPluginSlice };
-export { ArrowsPanel };

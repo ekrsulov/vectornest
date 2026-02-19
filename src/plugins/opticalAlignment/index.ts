@@ -60,5 +60,3 @@ export const opticalAlignmentPlugin: PluginDefinition<CanvasStore> = {
   ],
 };
 
-export type { OpticalAlignmentSlice };
-export { OpticalAlignmentPanel };

@@ -8,7 +8,7 @@ import type { AnimationPreset } from '../types';
 /**
  * Fade Out animation
  */
-export const FADE_OUT_PRESET: AnimationPreset = {
+const FADE_OUT_PRESET: AnimationPreset = {
     id: 'preset-fade-out',
     name: 'Fade Out',
     description: 'Fade out to transparent',
@@ -40,7 +40,7 @@ export const FADE_OUT_PRESET: AnimationPreset = {
 /**
  * Pop In animation - scale from 0 with overshoot
  */
-export const POP_IN_PRESET: AnimationPreset = {
+const POP_IN_PRESET: AnimationPreset = {
     id: 'preset-pop-in',
     name: 'Pop In',
     description: 'Elastic pop entrance with bounce overshoot',
@@ -76,7 +76,7 @@ export const POP_IN_PRESET: AnimationPreset = {
 /**
  * Pop Out animation - scale to 0 with anticipation
  */
-export const POP_OUT_PRESET: AnimationPreset = {
+const POP_OUT_PRESET: AnimationPreset = {
     id: 'preset-pop-out',
     name: 'Pop Out',
     description: 'Elastic pop exit with slight anticipation',
@@ -110,7 +110,7 @@ export const POP_OUT_PRESET: AnimationPreset = {
 /**
  * Slide In Left animation
  */
-export const SLIDE_IN_LEFT_PRESET: AnimationPreset = {
+const SLIDE_IN_LEFT_PRESET: AnimationPreset = {
     id: 'preset-slide-in-left',
     name: 'Slide In Left',
     description: 'Enter from the left side',
@@ -144,7 +144,7 @@ export const SLIDE_IN_LEFT_PRESET: AnimationPreset = {
 /**
  * Slide In Right animation
  */
-export const SLIDE_IN_RIGHT_PRESET: AnimationPreset = {
+const SLIDE_IN_RIGHT_PRESET: AnimationPreset = {
     id: 'preset-slide-in-right',
     name: 'Slide In Right',
     description: 'Enter from the right side',
@@ -178,7 +178,7 @@ export const SLIDE_IN_RIGHT_PRESET: AnimationPreset = {
 /**
  * Slide Out Left animation
  */
-export const SLIDE_OUT_LEFT_PRESET: AnimationPreset = {
+const SLIDE_OUT_LEFT_PRESET: AnimationPreset = {
     id: 'preset-slide-out-left',
     name: 'Slide Out Left',
     description: 'Exit to the left side',
@@ -212,7 +212,7 @@ export const SLIDE_OUT_LEFT_PRESET: AnimationPreset = {
 /**
  * Slide Out Right animation
  */
-export const SLIDE_OUT_RIGHT_PRESET: AnimationPreset = {
+const SLIDE_OUT_RIGHT_PRESET: AnimationPreset = {
     id: 'preset-slide-out-right',
     name: 'Slide Out Right',
     description: 'Exit to the right side',
@@ -246,7 +246,7 @@ export const SLIDE_OUT_RIGHT_PRESET: AnimationPreset = {
 /**
  * Slide In Top animation
  */
-export const SLIDE_IN_TOP_PRESET: AnimationPreset = {
+const SLIDE_IN_TOP_PRESET: AnimationPreset = {
     id: 'preset-slide-in-top',
     name: 'Slide In Top',
     description: 'Enter from the top',
@@ -280,7 +280,7 @@ export const SLIDE_IN_TOP_PRESET: AnimationPreset = {
 /**
  * Slide In Bottom animation
  */
-export const SLIDE_IN_BOTTOM_PRESET: AnimationPreset = {
+const SLIDE_IN_BOTTOM_PRESET: AnimationPreset = {
     id: 'preset-slide-in-bottom',
     name: 'Slide In Bottom',
     description: 'Enter from the bottom',
@@ -314,7 +314,7 @@ export const SLIDE_IN_BOTTOM_PRESET: AnimationPreset = {
 /**
  * Slide Out Top animation
  */
-export const SLIDE_OUT_TOP_PRESET: AnimationPreset = {
+const SLIDE_OUT_TOP_PRESET: AnimationPreset = {
     id: 'preset-slide-out-top',
     name: 'Slide Out Top',
     description: 'Exit to the top',
@@ -348,7 +348,7 @@ export const SLIDE_OUT_TOP_PRESET: AnimationPreset = {
 /**
  * Slide Out Bottom animation
  */
-export const SLIDE_OUT_BOTTOM_PRESET: AnimationPreset = {
+const SLIDE_OUT_BOTTOM_PRESET: AnimationPreset = {
     id: 'preset-slide-out-bottom',
     name: 'Slide Out Bottom',
     description: 'Exit to the bottom',

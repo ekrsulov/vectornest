@@ -251,7 +251,3 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('transformation', TransformationPanel)],
 };
 
-export type { TransformationPluginSlice };
-export { TransformationPanel };
-export { TransformationOverlay } from './TransformationOverlay';
-export { useCanvasTransformControls } from './hooks/useCanvasTransformControls';

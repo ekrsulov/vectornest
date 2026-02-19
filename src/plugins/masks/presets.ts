@@ -16,7 +16,7 @@ const DEFAULT_BBOX: MaskBBox = { x: 0, y: 0, width: 100, height: 100 };
 /**
  * Mask preset definition with dynamic content generator
  */
-export interface MaskPreset {
+interface MaskPreset {
   id: string;
   name: string;
   /** Generate content based on bounding box */

@@ -11,13 +11,13 @@ import { buildElementMap } from '../../utils/elementMapUtils';
 import { selectActiveSelectionStrategy } from '../pluginStateSelectors';
 import { useModifierKeys } from './useModifierKeys';
 
-export interface SelectionControllerState {
+interface SelectionControllerState {
   isShiftPressed: boolean;
   isCtrlPressed: boolean;
   isMultiSelectActive: boolean;
 }
 
-export interface UseSelectionControllerResult {
+interface UseSelectionControllerResult {
   isSelecting: boolean;
   selectionStart: Point | null;
   selectionEnd: Point | null;

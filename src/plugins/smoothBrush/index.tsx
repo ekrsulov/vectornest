@@ -7,10 +7,7 @@ import { createSmoothBrushPluginSlice } from './slice';
 import './listeners/SmoothBrushListener';
 
 import { SmoothBrushPanel } from './SmoothBrushPanel';
-export { SmoothBrushPanel };
 import { SmoothBrushCursor } from './SmoothBrushCursor';
-export { SmoothBrushCursor };
-export type { SmoothBrushPluginSlice, SmoothBrush } from './slice';
 import { useSmoothBrushHook } from './hooks/useSmoothBrushHook';
 
 const smoothBrushSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {

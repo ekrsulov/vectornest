@@ -15,7 +15,7 @@ const resolveAnimations = (context: CanvasRenderContext): { animations: SVGAnima
 
 const isPathElement = (element: CanvasElement): element is PathElement => element.type === 'path';
 
-export const animationRendererExtension = {
+const animationRendererExtension = {
   pluginId: 'animation',
   priority: 100,
   getElementAttributes: (element: CanvasElement, context: CanvasRenderContext) => {

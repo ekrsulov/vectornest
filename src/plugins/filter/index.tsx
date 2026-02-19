@@ -9,7 +9,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { createSelectModePanel } from '../../utils/pluginFactories';
 import { paintContributionRegistry } from '../../utils/paintContributionRegistry';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
-import { collectUsedFilterIds, renderFilterDefs, serializeFilterDefs } from './utils';
+import { collectUsedFilterIds, renderFilterDefs as computeFilterDefs, serializeFilterDefs } from './utils';
 import './importContribution';
 import { generateShortId } from '../../utils/idGenerator';
 import { registerStateKeys } from '../../store/persistenceRegistry';
@@ -170,6 +170,10 @@ export const filterPlugin: PluginDefinition<CanvasStore> = {
   },
 };
 
+function FilterDefsContent({ state, used }: { state: FilterSlice; used: Set<string> }) {
+  return <>{computeFilterDefs(state, used)}</>;
+}
+
 paintContributionRegistry.register({
   id: 'filters',
   label: 'Filters',
@@ -178,7 +182,7 @@ paintContributionRegistry.register({
   renderDefs: () => {
     const state = useCanvasStore.getState() as unknown as CanvasStore & FilterSlice;
     const used = collectUsedFilterIds(state.elements);
-    return <>{renderFilterDefs(state, used)}</>;
+    return <FilterDefsContent state={state} used={used} />;
   },
   serializeDefs: (state) => {
     const filterState = state as unknown as CanvasStore & FilterSlice;
@@ -192,7 +196,7 @@ defsContributionRegistry.register({
   collectUsedIds: (elements) => collectUsedFilterIds(elements),
   renderDefs: (state, used) => {
     const filterState = state as unknown as CanvasStore & FilterSlice;
-    return <>{renderFilterDefs(filterState, used)}</>;
+    return <FilterDefsContent state={filterState} used={used} />;
   },
   serializeDefs: (state, used) => {
     const filterState = state as unknown as CanvasStore & FilterSlice;
@@ -200,4 +204,3 @@ defsContributionRegistry.register({
   },
 });
 
-export { collectUsedFilterIds, serializeFilterDefs } from './utils';

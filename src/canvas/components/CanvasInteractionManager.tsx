@@ -45,7 +45,7 @@ interface CanvasInteractionManagerProps {
   children: (state: CanvasInteractionManagerState) => React.ReactNode;
 }
 
-export interface CanvasInteractionManagerState {
+interface CanvasInteractionManagerState {
   isDragging: boolean;
   dragStart: Point | null;
   hasDragMoved: boolean;

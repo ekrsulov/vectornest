@@ -1,6 +1,6 @@
 import type { GradientDef } from './slice';
 
-export type LinearGradientCoordinates = {
+type LinearGradientCoordinates = {
   x1: number;
   y1: number;
   x2: number;

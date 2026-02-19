@@ -3,7 +3,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 
 type FullStore = CanvasStore & SelectSimilarSlice;
 
-export interface SelectSimilarCriteria {
+interface SelectSimilarCriteria {
   fillColor: boolean;
   fillOpacity: boolean;
   strokeColor: boolean;

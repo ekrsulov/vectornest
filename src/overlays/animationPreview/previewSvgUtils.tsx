@@ -105,7 +105,7 @@ export const buildPreviewSvgHtml = ({
   return ReactDOMServer.renderToStaticMarkup(svgMarkup);
 };
 
-export const namespacePreviewDefs = (
+const namespacePreviewDefs = (
   svgElement: SVGSVGElement,
   restartKey: number
 ): void => {

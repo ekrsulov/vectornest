@@ -1,6 +1,6 @@
 import type { BaseSlice } from './baseSliceTypes';
 
-export const createDefaultSettings = (): BaseSlice['settings'] => ({
+const createDefaultSettings = (): BaseSlice['settings'] => ({
   keyboardMovementPrecision: 2,
   showRenderCountBadges: false,
   showMinimap: true,

@@ -4,7 +4,6 @@ import { createPluginSlice } from '../../utils/pluginUtils';
 import { createToolPanel } from '../../utils/pluginFactories';
 import { Wand2 } from 'lucide-react';
 import { createPotracePluginSlice } from './slice';
-import type { PotracePluginSlice } from './slice';
 import { PotracePanel } from './PotracePanel';
 
 const potraceSliceFactory = createPluginSlice(createPotracePluginSlice);
@@ -34,5 +33,3 @@ export const potracePlugin: PluginDefinition<CanvasStore> = {
   sidebarPanels: [createToolPanel('potrace', PotracePanel)],
 };
 
-export type { PotracePluginSlice };
-export { PotracePanel };

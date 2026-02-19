@@ -22,7 +22,7 @@ const QUALITY_PRESETS: Record<SimulationQuality, QualitySettings> = {
 /**
  * Listener for time updates
  */
-export type TimeUpdateListener = (time: number, states: Map<string, ElementAnimationState>) => void;
+type TimeUpdateListener = (time: number, states: Map<string, ElementAnimationState>) => void;
 
 /**
  * Animation Simulation Engine
@@ -669,8 +669,3 @@ export class AnimationEngine {
     this.elementMap.clear();
   }
 }
-
-/**
- * Global singleton instance of the animation engine.
- */
-export const animationEngine = new AnimationEngine();

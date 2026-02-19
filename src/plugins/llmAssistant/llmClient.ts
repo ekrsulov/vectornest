@@ -7,9 +7,9 @@ export interface LlmAssistantProviderConfig {
   maxTokens: number;
 }
 
-export type LlmChatMessage = { role: 'system' | 'user'; content: string };
+type LlmChatMessage = { role: 'system' | 'user'; content: string };
 
-export type LlmCallResult =
+type LlmCallResult =
   | {
       ok: true;
       content: string;

@@ -13,7 +13,7 @@
  * debouncedSave(data1); // Will be cancelled
  * debouncedSave(data2); // Will execute after 300ms
  */
-export type DebouncedFunction<T extends (...args: never[]) => void> = ((
+type DebouncedFunction<T extends (...args: never[]) => void> = ((
   ...args: Parameters<T>
 ) => void) & {
   cancel: () => void;

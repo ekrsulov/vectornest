@@ -323,7 +323,7 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
 
   const showDetails = isDetailsExpanded && !isSvgRoot;
 
-  const numberLabel = useMemo(() => node.numberPath, [node.numberPath]);
+  const numberLabel = node.numberPath;
 
   const fullId = useMemo(() => node.idAttribute ?? node.dataElementId ?? node.displayId, [node.dataElementId, node.displayId, node.idAttribute]);
 

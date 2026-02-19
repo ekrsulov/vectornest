@@ -183,8 +183,6 @@ export type CanvasElementInput = Omit<CanvasElement, 'id' | 'zIndex' | 'parentId
 
 export const isPathElement = (element: CanvasElement): element is PathElement => element.type === 'path';
 export const isGroupElement = (element: CanvasElement): element is GroupElement => element.type === 'group';
-export const isPluginElement = (element: CanvasElement): element is PluginElement =>
-  element.type !== 'path' && element.type !== 'group';
 
 export interface Viewport {
   zoom: number;

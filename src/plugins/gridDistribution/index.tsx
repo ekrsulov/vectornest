@@ -3,7 +3,6 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { LayoutGrid } from 'lucide-react';
 import { GridDistributionPanel } from './GridDistributionPanel';
 import { GridDistributionOverlay } from './GridDistributionOverlay';
-import { createSelectModePanel } from '../../utils/pluginFactories';
 
 export const gridDistributionPlugin: PluginDefinition<CanvasStore> = {
   id: 'gridDistribution',
@@ -13,10 +12,13 @@ export const gridDistributionPlugin: PluginDefinition<CanvasStore> = {
     cursor: 'default',
   },
   supportsMobile: true,
-  sidebarPanels: [
-    createSelectModePanel('grid-distribution-panel', GridDistributionPanel,
-      (ctx) => ctx.selectedElementsCount >= 2
-    ),
+  relatedPluginPanels: [
+    {
+      id: 'grid-distribution-panel',
+      targetPlugin: 'generatorLibrary',
+      component: GridDistributionPanel,
+      order: 220,
+    },
   ],
   canvasLayers: [
     {

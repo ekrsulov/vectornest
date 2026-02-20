@@ -1,5 +1,5 @@
 /**
- * Accordion component theme for TTPE
+ * Accordion component theme for VectorNest
  * Used for collapsible panels like ArrangePanel
  */
 

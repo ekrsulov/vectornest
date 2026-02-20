@@ -1,10 +1,10 @@
-# TTPE Playwright Tests
+# VectorNest Playwright Tests
 
-This directory contains end-to-end tests for the TTPE (Text-to-Path Editor) application using Playwright.
+This directory contains end-to-end tests for the VectorNest application using Playwright.
 
-# TTPE Playwright Tests
+# VectorNest Playwright Tests
 
-This directory contains end-to-end tests for the TTPE (Text-to-Path Editor) application using Playwright.
+This directory contains end-to-end tests for the VectorNest application using Playwright.
 
 ## Test Structure
 

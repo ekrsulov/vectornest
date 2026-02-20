@@ -3,7 +3,6 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { pluginManager } from '../../utils/pluginManager';
 import { ConvertToPathPanel } from './ConvertToPathPanel';
 import { countConvertibleShapes } from './conversion';
-import { createSelectModePanel } from '../../utils/pluginFactories';
 
 export const convertToPathPlugin: PluginDefinition<CanvasStore> = {
   id: 'convertToPath',
@@ -29,9 +28,12 @@ export const convertToPathPlugin: PluginDefinition<CanvasStore> = {
       unregisterElements();
     };
   },
-  sidebarPanels: [
-    createSelectModePanel('convert-to-path', ConvertToPathPanel,
-      (ctx) => (ctx.selectedElementsCount ?? 0) > 0
-    ),
+  relatedPluginPanels: [
+    {
+      id: 'convert-to-path',
+      targetPlugin: 'generatorLibrary',
+      component: ConvertToPathPanel,
+      order: 210,
+    },
   ],
 };

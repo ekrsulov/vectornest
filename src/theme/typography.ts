@@ -1,5 +1,5 @@
 /**
- * Typography configuration for TTPE application
+ * Typography configuration for VectorNest application
  * Maintains existing font stack and sizes
  */
 

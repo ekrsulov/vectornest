@@ -1,5 +1,5 @@
 /**
- * Select component theme for TTPE
+ * Select component theme for VectorNest
  * Used for dropdown selects throughout panels
  */
 

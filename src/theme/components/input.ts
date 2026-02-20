@@ -1,5 +1,5 @@
 /**
- * Input component theme for TTPE
+ * Input component theme for VectorNest
  * Used in form controls throughout panels
  */
 

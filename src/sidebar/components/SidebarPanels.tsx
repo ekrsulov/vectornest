@@ -11,6 +11,20 @@ import {
 import type { PanelComponentProps } from '../../types/panel';
 import { pluginManager } from '../../utils/pluginManager';
 
+const getSettingsPanelSortGroup = (panelConfig: { key: string }): number => {
+  if (panelConfig.key === 'settings') return 0;
+  if (panelConfig.key === 'snap-points') return 1;
+  if (panelConfig.key === 'documentation') return 3;
+  return 2;
+};
+
+const getSettingsPanelSortLabel = (panelConfig: { key: string; pluginId?: string }): string => {
+  if (panelConfig.pluginId) {
+    return pluginManager.getPlugin(panelConfig.pluginId)?.metadata.label ?? panelConfig.key;
+  }
+  return panelConfig.key;
+};
+
 type SidebarPanelsExtendedStore = CanvasStore & {
   llmAssistant?: {
     settings?: {
@@ -194,10 +208,35 @@ export const SidebarPanels: React.FC = () => {
   }, [enabledPlugins, activePlugin]);
 
   const visiblePanelConfigs = useMemo(() => {
-    if (!maximizedSidebarPanelKey) return filteredPanelConfigs;
-    const match = filteredPanelConfigs.find(panelConfig => panelConfig.key === maximizedSidebarPanelKey);
-    return match ? [match] : filteredPanelConfigs;
-  }, [filteredPanelConfigs, maximizedSidebarPanelKey]);
+    const scopedPanels = (() => {
+      if (!maximizedSidebarPanelKey) return filteredPanelConfigs;
+      const match = filteredPanelConfigs.find(panelConfig => panelConfig.key === maximizedSidebarPanelKey);
+      return match ? [match] : filteredPanelConfigs;
+    })();
+
+    if (!showSettingsPanel || maximizedSidebarPanelKey) {
+      return scopedPanels;
+    }
+
+    return [...scopedPanels].sort((a, b) => {
+      const groupA = getSettingsPanelSortGroup(a);
+      const groupB = getSettingsPanelSortGroup(b);
+
+      if (groupA !== groupB) {
+        return groupA - groupB;
+      }
+
+      if (groupA !== 2) {
+        return 0;
+      }
+
+      return getSettingsPanelSortLabel(a).localeCompare(
+        getSettingsPanelSortLabel(b),
+        undefined,
+        { sensitivity: 'base', numeric: true }
+      );
+    });
+  }, [filteredPanelConfigs, maximizedSidebarPanelKey, showSettingsPanel]);
 
   useEffect(() => {
     if (!maximizedSidebarPanelKey) return;

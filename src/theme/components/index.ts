@@ -1,5 +1,5 @@
 /**
- * Component theme overrides for TTPE application
+ * Component theme overrides for VectorNest application
  * Each component file exports theme customizations
  */
 

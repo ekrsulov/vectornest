@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {getCanvas, getCanvasPaths, waitForLoad, selectTool, getToolMenuButton, expectToolVisible} from './helpers';
 
-test.describe('TTPE Application', () => {
+test.describe('VectorNest Application', () => {
   test('should load the application successfully', async ({ page }) => {
     await page.goto('/');
 

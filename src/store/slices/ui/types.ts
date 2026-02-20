@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../canvasStore';
 
-export type LeftSidebarActivePanel = 'structure' | 'library';
+export type LeftSidebarActivePanel = 'structure' | 'library' | 'generatorLibrary';
 
 export interface SidebarState<TPanelKey extends string = string> {
   width: number;

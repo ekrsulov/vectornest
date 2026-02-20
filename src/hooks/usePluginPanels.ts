@@ -8,6 +8,7 @@ interface PluginPanel {
     id: string;
     component: ComponentType<Record<string, unknown>>;
     order: number;
+    pluginLabel: string;
 }
 
 /**
@@ -40,13 +41,24 @@ export function usePluginPanels(targetPluginId: string): PluginPanel[] {
                         id: panelContrib.id,
                         component: panelContrib.component,
                         order: panelContrib.order ?? 999,
+                        pluginLabel: plugin.metadata.label ?? panelContrib.id,
                     });
                 }
             });
         });
 
-        // Sort by order (lower numbers first)
-        panels.sort((a, b) => a.order - b.order);
+        // Gen/Audit panels are sorted alphabetically by plugin title.
+        // Other panel containers preserve explicit "order" semantics.
+        if (targetPluginId === 'generatorLibrary' || targetPluginId === 'auditLibrary') {
+            panels.sort((a, b) =>
+                a.pluginLabel.localeCompare(b.pluginLabel, undefined, {
+                    sensitivity: 'base',
+                    numeric: true,
+                })
+            );
+        } else {
+            panels.sort((a, b) => a.order - b.order);
+        }
 
         return panels;
         // enabledPlugins triggers re-computation when plugins are enabled/disabled

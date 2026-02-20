@@ -1,5 +1,5 @@
 /**
- * IconButton component theme for TTPE
+ * IconButton component theme for VectorNest
  * Used extensively in tool grid and panel actions
  */
 

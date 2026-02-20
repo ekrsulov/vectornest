@@ -1,5 +1,19 @@
 import { test, expect } from '@playwright/test';
-import {getCanvas, getCanvasPaths, waitForLoad, selectTool} from './helpers';
+import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandPanelSection} from './helpers';
+
+/**
+ * Helper: open the Gen panel in the left sidebar, then expand the Offset Path
+ * sub-panel (which starts collapsed by default).
+ */
+async function openOffsetPathPanel(page: import('@playwright/test').Page) {
+  // Click "Gen" tab in the left sidebar to show the generator library
+  const genButton = page.locator('button[aria-label="Gen"]');
+  await genButton.click();
+  await page.waitForTimeout(300);
+
+  // Expand the (collapsed-by-default) Offset Path panel
+  await expandPanelSection(page, 'Offset Path');
+}
 
 test.describe('Offset Path Plugin', () => {
   test('should show Offset Path panel when path is selected in select mode', async ({ page }) => {
@@ -25,6 +39,9 @@ test.describe('Offset Path Plugin', () => {
     await selectTool(page, 'Select');
     await page.mouse.click(canvasBox.x + canvasBox.width * 0.4, canvasBox.y + canvasBox.height * 0.4);
     await page.waitForTimeout(200);
+
+    // Open Gen panel and expand Offset Path
+    await openOffsetPathPanel(page);
 
     // Look for Offset Path panel heading
     const offsetPathHeading = page.getByRole('heading', { name: 'Offset Path' });
@@ -53,6 +70,9 @@ test.describe('Offset Path Plugin', () => {
     await selectTool(page, 'Select');
     await page.mouse.click(canvasBox.x + canvasBox.width * 0.4, canvasBox.y + canvasBox.height * 0.4);
     await page.waitForTimeout(200);
+
+    // Open Gen panel and expand Offset Path
+    await openOffsetPathPanel(page);
 
     // Verify Offset Path panel is visible
     const offsetPathHeading = page.getByRole('heading', { name: 'Offset Path' });
@@ -87,6 +107,9 @@ test.describe('Offset Path Plugin', () => {
     await page.mouse.click(canvasBox.x + canvasBox.width * 0.4, canvasBox.y + canvasBox.height * 0.4);
     await page.waitForTimeout(200);
 
+    // Open Gen panel and expand Offset Path
+    await openOffsetPathPanel(page);
+
     // Look for Apply button (use exact match to avoid matching 'Apply Visual Center')
     const applyButton = page.getByRole('button', { name: 'Apply', exact: true });
     await expect(applyButton).toBeVisible();
@@ -117,6 +140,9 @@ test.describe('Offset Path Plugin', () => {
     await selectTool(page, 'Select');
     await page.mouse.click(canvasBox.x + canvasBox.width * 0.4, canvasBox.y + canvasBox.height * 0.4);
     await page.waitForTimeout(200);
+
+    // Open Gen panel and expand Offset Path
+    await openOffsetPathPanel(page);
 
     // Find and adjust distance slider to a positive value
     const distanceSlider = page.getByRole('slider').first();

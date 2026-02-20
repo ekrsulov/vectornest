@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {getCanvas, waitForLoad, selectTool, expandSnapPointsOptions} from './helpers';
+import { getCanvas, waitForLoad, selectTool, expandSnapPointsOptions } from './helpers';
 
 test.describe('Measure Plugin - Snap Type Toggle Persistence', () => {
   test('toggles are preserved and adjustable after starting measurement', async ({ page }) => {
@@ -41,7 +41,7 @@ test.describe('Measure Plugin - Snap Type Toggle Persistence', () => {
 
     // Verify toggles still reflect the state (midpoints and edges should be unchecked)
     const midCheckbox = page.getByRole('checkbox', { name: 'Midpoint' });
-    const edgeCheckbox = page.getByRole('checkbox', { name: 'Path' });
+    const edgeCheckbox = page.getByRole('checkbox', { name: 'Path', exact: true });
     const anchorCheckbox = page.getByRole('checkbox', { name: 'Anchor' });
 
     expect(await midCheckbox.isChecked()).toBe(false);

@@ -85,7 +85,15 @@ export const LeftSidebar: React.FC = () => {
 
   useEffect(() => {
     if (!showLeftSidebar) return;
-    if ((activePlugin === 'svgStructure' || activePlugin === 'library') && !showFilePanel && !showSettingsPanel) {
+    if (
+      (
+        activePlugin === 'svgStructure' ||
+        activePlugin === 'library' ||
+        activePlugin === 'generatorLibrary'
+      ) &&
+      !showFilePanel &&
+      !showSettingsPanel
+    ) {
       setMode(DEFAULT_MODE);
     }
   }, [showLeftSidebar, activePlugin, showFilePanel, showSettingsPanel, setMode]);

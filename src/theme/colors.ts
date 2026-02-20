@@ -1,5 +1,5 @@
 /**
- * Color palette for TTPE application
+ * Color palette for VectorNest application
  * Based on existing brand colors with Chakra UI scales
  */
 

@@ -1,5 +1,5 @@
 /**
- * Button component theme for TTPE
+ * Button component theme for VectorNest
  * Customized for sidebar buttons and form controls
  */
 

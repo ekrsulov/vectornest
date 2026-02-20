@@ -1,5 +1,5 @@
 /**
- * Drawer component theme for TTPE
+ * Drawer component theme for VectorNest
  * Used for mobile sidebar rendering
  */
 

@@ -49,8 +49,11 @@ export const SidebarToolGrid: React.FC = () => {
     ? UTILITY_TOOLS.filter((tool) => tool.name !== 'library')
     : UTILITY_TOOLS;
   const effectiveSidebarToolbarButtons = showLeftSidebar
-    ? sidebarToolbarButtons.filter((button) => button.pluginId !== 'svgStructure')
+    ? sidebarToolbarButtons.filter(
+      (button) => button.pluginId !== 'svgStructure' && button.pluginId !== 'generatorLibrary'
+    )
     : sidebarToolbarButtons;
+  const shouldUseHorizontalScroll = !showLeftSidebar;
 
   const renderPluginButton = (plugin: ToolConfig) => {
     const handleClick = () => {
@@ -79,7 +82,7 @@ export const SidebarToolGrid: React.FC = () => {
         label={plugin.label}
         isActive={isActive}
         onClick={handleClick}
-        fullWidth
+        fullWidth={!shouldUseHorizontalScroll}
         flex={flexValue}
         icon={undefined}
         iconOnly={false}
@@ -108,7 +111,7 @@ export const SidebarToolGrid: React.FC = () => {
               iconOnly={false}
               onClick={() => onToolClick(button.pluginId)}
               isActive={activePlugin === button.pluginId}
-              fullWidth
+              fullWidth={!shouldUseHorizontalScroll}
               flex={0}
               fontSize="sm"
               borderWidth="1px"
@@ -124,25 +127,44 @@ export const SidebarToolGrid: React.FC = () => {
       bg="surface.panel"
       position="relative"
       pl="6px"
+      pt="4px"
     >
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
       <HStack w="full" spacing={0} alignItems="stretch">
-        <Box flex={1} display="flex">
-          <HStack spacing={2} w="full" justifyContent="space-between">
-            {buttons.map((button) => (
-              <Box
-                key={button.key}
-                flex="1"
-                w="full"
-                display="flex"
-                justifyContent="center"
-              >
-                {button.element}
-              </Box>
-            ))}
-          </HStack>
+        <Box flex={1} minW={0} overflow={shouldUseHorizontalScroll ? 'hidden' : 'visible'}>
+          <Box
+            overflowX={shouldUseHorizontalScroll ? 'auto' : 'visible'}
+            overflowY="hidden"
+            css={shouldUseHorizontalScroll ? {
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': {
+                display: 'none',
+              },
+            } : undefined}
+          >
+            <HStack
+              spacing={shouldUseHorizontalScroll ? 1 : 2}
+              w={shouldUseHorizontalScroll ? 'max-content' : 'full'}
+              minW={shouldUseHorizontalScroll ? 'full' : undefined}
+              pr={shouldUseHorizontalScroll ? 1 : 0}
+              justifyContent={shouldUseHorizontalScroll ? undefined : 'space-between'}
+            >
+              {buttons.map((button) => (
+                <Box
+                  key={button.key}
+                  flex={shouldUseHorizontalScroll ? '0 0 auto' : '1'}
+                  w={shouldUseHorizontalScroll ? undefined : 'full'}
+                  display="flex"
+                  justifyContent="center"
+                >
+                  {button.element}
+                </Box>
+              ))}
+            </HStack>
+          </Box>
         </Box>
         <Box
+          flexShrink={0}
           display="flex"
           alignItems="center"
           pl={0}

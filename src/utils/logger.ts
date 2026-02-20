@@ -7,8 +7,8 @@ export const LogLevel = {
 
 export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
 
-const LOG_LEVEL_STORAGE_KEY = 'ttpe-log-level';
-const SHOW_CALLER_INFO_STORAGE_KEY = 'ttpe-show-caller-info';
+const LOG_LEVEL_STORAGE_KEY = 'vectornest-log-level';
+const SHOW_CALLER_INFO_STORAGE_KEY = 'vectornest-show-caller-info';
 
 interface LoggerConfig {
   level: LogLevel;

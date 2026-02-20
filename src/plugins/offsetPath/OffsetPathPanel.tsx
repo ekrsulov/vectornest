@@ -76,52 +76,57 @@ const OffsetPathPanelComponent: React.FC = () => {
       title="Offset Path"
       isCollapsible
       defaultOpen={false}
-      headerActions={
-        <HStack spacing={1}>
-          <PanelStyledButton onClick={handleApply} isDisabled={!canApply || isApplyingOffset} isLoading={isApplyingOffset} size="xs">Apply</PanelStyledButton>
-        </HStack>
-      }
     >
-        <VStack align="stretch" spacing={1} mt={1}>
-            <FormControl pr={0.5}>
-              <SliderControl
-                inline
-                label="Distance"
-                value={offsetDistance}
-                min={-100}
-                max={100}
-                step={1}
-                onChange={(value) => setOffsetDistance?.(value)}
-                labelWidth="72px"
-                valueWidth="56px"
-              />
-            </FormControl>
+      <VStack align="stretch" spacing={1} mt={1}>
+        <FormControl pr={0.5}>
+          <SliderControl
+            inline
+            label="Distance"
+            value={offsetDistance}
+            min={-100}
+            max={100}
+            step={1}
+            onChange={(value) => setOffsetDistance?.(value)}
+            labelWidth="72px"
+            valueWidth="56px"
+          />
+        </FormControl>
 
-            <FormControl>
-              <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
-                <Text fontSize="12px" minW="72px" h="24px" display="flex" alignItems="center" title="Corner Join" color={labelColor}>
-                  Corner Join
-                </Text>
-                <LinejoinSelector value={offsetJoinType} onChange={(v) => setOffsetJoinType?.(v)} title="Corner Join" />
-              </HStack>
-            </FormControl>
+        <FormControl>
+          <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
+            <Text fontSize="12px" minW="72px" h="24px" display="flex" alignItems="center" title="Corner Join" color={labelColor}>
+              Corner Join
+            </Text>
+            <LinejoinSelector value={offsetJoinType} onChange={(v) => setOffsetJoinType?.(v)} title="Corner Join" />
+          </HStack>
+        </FormControl>
 
-            {offsetJoinType === 'miter' && (
-              <FormControl>
-                <SliderControl
-                  inline
-                  label="Miter Limit"
-                  value={offsetMiterLimit}
-                  min={1}
-                  max={10}
-                  step={0.5}
-                  onChange={(value) => setOffsetMiterLimit?.(value)}
-                  labelWidth="72px"
-                  valueWidth="56px"
-                />
-              </FormControl>
-            )}
-          </VStack>
+        {offsetJoinType === 'miter' && (
+          <FormControl>
+            <SliderControl
+              inline
+              label="Miter Limit"
+              value={offsetMiterLimit}
+              min={1}
+              max={10}
+              step={0.5}
+              onChange={(value) => setOffsetMiterLimit?.(value)}
+              labelWidth="72px"
+              valueWidth="56px"
+            />
+          </FormControl>
+        )}
+
+        <PanelStyledButton
+          onClick={handleApply}
+          isDisabled={!canApply || isApplyingOffset}
+          isLoading={isApplyingOffset}
+          size="xs"
+          alignSelf="flex-start"
+        >
+          Apply
+        </PanelStyledButton>
+      </VStack>
       </Panel>
     );
   };

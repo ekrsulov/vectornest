@@ -6,7 +6,6 @@ import { OffsetPathPanel } from './OffsetPathPanel';
 import { CircleDot } from 'lucide-react';
 import { pluginManager } from '../../utils/pluginManager';
 import { createPluginSlice } from '../../utils/pluginUtils';
-import { createGlobalPanel } from '../../utils/pluginFactories';
 
 type OffsetPathStore = CanvasStore & OffsetPathSlice;
 
@@ -46,13 +45,12 @@ export const offsetPathPlugin: PluginDefinition<CanvasStore> = {
     }
   ],
   slices: [offsetPathSliceFactory],
-  sidebarPanels: [
-    createGlobalPanel('offset-path', OffsetPathPanel, {
-      condition: (ctx) =>
-        (ctx.activePlugin === 'select' || ctx.activePlugin === 'subpath') &&
-        ctx.selectedPathsCount > 0 &&
-        ctx.selectedPathsCount === ctx.selectedElementsCount,
-    }),
+  relatedPluginPanels: [
+    {
+      id: 'offset-path',
+      targetPlugin: 'generatorLibrary',
+      component: OffsetPathPanel,
+      order: 200,
+    },
   ],
 };
-

@@ -35,7 +35,7 @@ export const LeftSidebarToolGrid: React.FC = () => {
     }))
   );
 
-  const switchPanel = (nextPanel: 'structure' | 'library') => {
+  const switchPanel = (nextPanel: 'structure' | 'library' | 'generatorLibrary') => {
     if (leftSidebarActivePanel === 'library' && nextPanel !== 'library') {
       saveCurrentLeftLibraryState();
     }
@@ -78,6 +78,23 @@ export const LeftSidebarToolGrid: React.FC = () => {
           iconOnly={false}
           onClick={() => switchPanel('library')}
           isActive={leftSidebarActivePanel === 'library'}
+          flex={0}
+          fullWidth
+          fontSize="sm"
+          borderWidth="1px"
+          inactiveBorderColor={toolGridBorderColor}
+        />
+      ),
+    },
+    {
+      key: 'generatorLibrary',
+      element: (
+        <SidebarUtilityButton
+          label="Gen"
+          icon={undefined}
+          iconOnly={false}
+          onClick={() => switchPanel('generatorLibrary')}
+          isActive={leftSidebarActivePanel === 'generatorLibrary'}
           flex={0}
           fullWidth
           fontSize="sm"

@@ -48,12 +48,16 @@ export const LeftSidebarContent: React.FC = () => {
       >
         {leftSidebarActivePanel === 'structure' ? (
           <SvgStructurePanel panelKey="svgStructure:svg-structure-panel" />
-        ) : (
+        ) : leftSidebarActivePanel === 'library' ? (
           <LibraryRelatedPanels />
+        ) : (
+          <LibraryRelatedPanels
+            targetPluginId="generatorLibrary"
+            badgeComponentName="GeneratorLibraryPanelRelated"
+          />
         )}
       </Box>
     </Box>
     </SidebarPanelScopeContext.Provider>
   );
 };
-

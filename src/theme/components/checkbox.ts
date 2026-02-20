@@ -1,5 +1,5 @@
 /**
- * Checkbox component theme for TTPE
+ * Checkbox component theme for VectorNest
  * Used in settings and file panels
  */
 

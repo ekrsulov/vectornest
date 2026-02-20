@@ -1,5 +1,5 @@
 /**
- * Main theme configuration for TTPE application
+ * Main theme configuration for VectorNest application
  * Extends Chakra UI's default theme with custom tokens
  */
 

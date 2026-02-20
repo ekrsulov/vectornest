@@ -1,5 +1,5 @@
 /**
- * Spacing configuration for TTPE application
+ * Spacing configuration for VectorNest application
  * Based on existing gap/padding patterns (2px, 4px, 6px, 8px)
  */
 
@@ -96,7 +96,7 @@ export const zIndices = {
   toast: 1700,
   tooltip: 1800,
 
-  // Custom for TTPE
+  // Custom for VectorNest
   expandableToolPanel: 850,  // Below BottomActionBar so it doesn't block menus
   floatingToolbarBottom: 900,
   floatingToolbarTop: 999,

@@ -245,7 +245,7 @@ function getSnapResult(point: Point, state: ArrowsPluginSlice & CanvasStore): Sn
   ) as SnapInfo | null;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export const arrowsPlugin: PluginDefinition<CanvasStore> = {
   id: 'arrows',
   metadata: {

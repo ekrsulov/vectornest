@@ -11,7 +11,7 @@ import { pluginManager } from '../../utils/pluginManager';
 import { selectionHasOnlyPaths } from '../../utils/selectionGuards';
 
 const wrap3dSliceFactory = createPluginSlice(createWrap3DSlice);
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export const wrap3dPlugin: PluginDefinition<CanvasStore> = {
   id: 'wrap3d',
   metadata: {

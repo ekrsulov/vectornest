@@ -26,7 +26,7 @@ let gizmosRegistered = false;
  * Initialize the gizmo system.
  * Should be called once during application startup.
  */
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 function initializeGizmoSystem(): void {
   if (gizmosRegistered) return;
   registerCoreGizmos();

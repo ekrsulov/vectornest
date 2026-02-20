@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import type { PluginDefinition, PluginSliceFactory, SvgDefsEditor } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Sparkle } from 'lucide-react';
@@ -203,4 +204,3 @@ defsContributionRegistry.register({
     return serializeFilterDefs(filterState, used);
   },
 });
-

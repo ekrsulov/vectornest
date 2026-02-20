@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import type { PluginDefinition } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
@@ -223,7 +224,7 @@ const SelectionBboxComponent: React.FC<{
 // Import helper function from basePluginDefinitions
 import { getAllElementsShareSameParentGroup, resolveRootGroup } from './basePluginDefinitions';
 
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export const selectPlugin: PluginDefinition<CanvasStore> = {
   id: 'select',
   metadata: {
@@ -735,5 +736,5 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
 
 
 // Re-export helper function and simple plugins from basePluginDefinitions
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export { panPlugin, filePlugin, settingsPlugin, libraryPlugin } from './basePluginDefinitions';

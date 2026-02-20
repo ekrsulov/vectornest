@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
@@ -250,4 +251,3 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
   expandablePanel: () => React.createElement(TransformationPanel, { hideTitle: true }),
   sidebarPanels: [createToolPanel('transformation', TransformationPanel)],
 };
-

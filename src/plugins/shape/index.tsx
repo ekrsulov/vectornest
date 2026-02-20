@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
@@ -197,4 +198,3 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
   expandablePanel: () => React.createElement(ShapePanel, { hideTitle: true }),
   sidebarPanels: [createToolPanel('shape', ShapePanel)],
 };
-

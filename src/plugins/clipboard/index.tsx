@@ -30,7 +30,7 @@ const clipboardSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) =
   return { state: slice };
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export const clipboardPlugin: PluginDefinition<CanvasStore> = {
   id: 'clipboard',
   metadata: {

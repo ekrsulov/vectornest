@@ -166,6 +166,14 @@ export function importUse(
     return null;
   }
   
+  // If target is a <g>, let the fallback handler in processElementSpecialTags
+  // inline the group's children. The use plugin only captures bounds for groups
+  // but not their visual content, so native <use href="#..."> would fail since
+  // the <g> from <defs> is not emitted in the rendered SVG.
+  if (targetElement.tagName.toLowerCase() === 'g') {
+    return null;
+  }
+  
   // Determine reference type - at this point it's an element reference
   const referenceType: UseReferenceType = 'element';
   
@@ -239,21 +247,6 @@ export function importUse(
       cachedBounds = parsed.bounds;
       if (width === 0) width = cachedBounds.width;
       if (height === 0) height = cachedBounds.height;
-    }
-  } else if (targetElement.tagName.toLowerCase() === 'g') {
-    // Handle group elements - get bounding box from children
-    const bbox =
-      (targetElement as unknown as SVGGraphicsElement).getBBox?.() ??
-      measureElementBBox(targetElement);
-    if (bbox) {
-      cachedBounds = {
-        minX: bbox.x,
-        minY: bbox.y,
-        width: bbox.width,
-        height: bbox.height,
-      };
-      if (width === 0) width = bbox.width;
-      if (height === 0) height = bbox.height;
     }
   } else if (targetElement.tagName.toLowerCase() === 'image') {
     // Handle <image> elements - get dimensions from attributes

@@ -158,7 +158,7 @@ const installListeners = (context: PluginContextFull<CanvasStore>, api: MeasureP
   // the plugin becomes inactive, so no additional subscription is required here.
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export const measurePlugin: PluginDefinition<CanvasStore> = {
   id: 'measure',
   metadata: {

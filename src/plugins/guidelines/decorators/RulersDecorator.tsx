@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import type { CanvasDecorator, CanvasDecoratorContext } from '../../../types/interaction';
 import { Rulers } from '../Rulers';
@@ -29,7 +30,7 @@ const RulersDecoratorComponent: React.FC<{ context: CanvasDecoratorContext }> = 
  * This is registered by the guidelines plugin to display rulers
  * when guidelines and manual guides are enabled.
  */
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export function createRulersDecorator(): CanvasDecorator {
   return {
     id: 'guidelines-rulers',

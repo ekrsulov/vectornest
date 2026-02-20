@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import type { PluginDefinition, SnapOverlayConfig } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { SnapStoreSlice } from '../../snap/types';
@@ -674,4 +675,3 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
 };
-

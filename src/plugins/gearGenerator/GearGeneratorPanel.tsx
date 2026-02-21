@@ -2,13 +2,12 @@ import React, { useCallback } from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { NumberInput } from '../../ui/NumberInput';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
-import { Cog } from 'lucide-react';
 import type { GearGeneratorPluginSlice, GearType } from './slice';
 import { generateGear } from './gearUtils';
 
@@ -23,13 +22,14 @@ const typeOptions = [
 ];
 
 export const GearGeneratorPanel: React.FC = () => {
-  const { gearState, update, addElement } = useCanvasStore(
+  const { gearState, update, addElement, sysStyle } = useCanvasStore(
     useShallow((state) => {
       const s = state as CombinedStore;
       return {
         gearState: s.gearGenerator,
         update: s.updateGearGeneratorState,
         addElement: s.addElement,
+        sysStyle: state.style,
       };
     })
   );
@@ -42,19 +42,20 @@ export const GearGeneratorPanel: React.FC = () => {
         type: 'path' as const,
         data: {
           subPaths,
-          strokeWidth: 1.5,
-          strokeColor: '#37474F',
-          strokeOpacity: 1,
-          fillColor: 'none',
-          fillOpacity: 1,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-          fillRule: 'evenodd',
-          strokeDasharray: 'none',
+          strokeWidth: sysStyle.strokeWidth,
+          strokeColor: sysStyle.strokeColor,
+          strokeOpacity: sysStyle.strokeOpacity,
+          fillColor: sysStyle.fillColor,
+          fillOpacity: sysStyle.fillOpacity,
+          strokeLinecap: sysStyle.strokeLinecap,
+          strokeLinejoin: sysStyle.strokeLinejoin,
+          fillRule: sysStyle.fillRule,
+          strokeDasharray: sysStyle.strokeDasharray,
+          opacity: sysStyle.opacity,
         },
       });
     }
-  }, [gearState, addElement]);
+  }, [gearState, addElement, sysStyle]);
 
   if (!gearState || !update) return null;
 
@@ -173,8 +174,7 @@ export const GearGeneratorPanel: React.FC = () => {
         max={2000}
       />
 
-      <PanelActionButton
-        icon={Cog}
+      <PanelTextActionButton
         label="Generate Gear"
         onClick={handleGenerate}
       />

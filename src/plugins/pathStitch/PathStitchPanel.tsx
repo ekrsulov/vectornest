@@ -2,11 +2,10 @@ import React from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
-import { Cable } from 'lucide-react';
 import type { PathStitchPluginSlice, StitchStyle } from './slice';
 import type { PathData, CanvasElement } from '../../types';
 import { generateStitch } from './stitchUtils';
@@ -34,7 +33,7 @@ export const PathStitchPanel: React.FC = () => {
       return {
         stitchState: s.pathStitch,
         update: s.updatePathStitchState,
-        selectedIds: s.selectedElementIds,
+        selectedIds: s.selectedIds,
         elements: s.elements,
         addElement: s.addElement,
       };
@@ -146,8 +145,7 @@ export const PathStitchPanel: React.FC = () => {
         Connect by centroids
       </PanelToggle>
 
-      <PanelActionButton
-        icon={Cable}
+      <PanelTextActionButton
         label={canApply ? 'Generate Stitch' : 'Select 2+ paths'}
         onClick={handleApply}
         isDisabled={!canApply}

@@ -1,12 +1,11 @@
 import React from 'react';
 import { VStack } from '@chakra-ui/react';
-import { Hexagon } from 'lucide-react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { NumberInput } from '../../ui/NumberInput';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import type { GeometricPatternPluginSlice, PatternType } from './slice';
 import { generatePattern } from './patternUtils';
 
@@ -25,21 +24,22 @@ export const GeometricPatternPanel: React.FC = () => {
     const subPaths = generatePattern(patternState);
     if (subPaths.length === 0) return;
 
-    const style = (store as Record<string, unknown>).style as Record<string, unknown> | undefined;
+    const sysStyle = store.style;
 
     store.addElement({
       type: 'path' as const,
       data: {
         subPaths,
-        strokeWidth: patternState.lineWidth,
-        strokeColor: (style?.strokeColor as string) ?? '#ffffff',
-        strokeOpacity: 1,
-        fillColor: 'none',
-        fillOpacity: 1,
-        strokeLinecap: 'round',
-        strokeLinejoin: 'round',
-        fillRule: 'evenodd',
-        strokeDasharray: 'none',
+        strokeWidth: sysStyle.strokeWidth,
+        strokeColor: sysStyle.strokeColor,
+        strokeOpacity: sysStyle.strokeOpacity,
+        fillColor: sysStyle.fillColor,
+        fillOpacity: sysStyle.fillOpacity,
+        strokeLinecap: sysStyle.strokeLinecap,
+        strokeLinejoin: sysStyle.strokeLinejoin,
+        fillRule: sysStyle.fillRule,
+        strokeDasharray: sysStyle.strokeDasharray,
+        opacity: sysStyle.opacity,
       },
     });
   };
@@ -132,9 +132,8 @@ export const GeometricPatternPanel: React.FC = () => {
           onChange={(v) => updateState?.({ originY: v })}
         />
 
-        <PanelActionButton
-          icon={Hexagon}
-          label="Generate pattern"
+        <PanelTextActionButton
+          label="Generate Pattern"
           onClick={handleGenerate}
         />
       </VStack>

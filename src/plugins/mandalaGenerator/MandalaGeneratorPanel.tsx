@@ -1,12 +1,11 @@
 import React, { useCallback } from 'react';
-import { Flower2 } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { PanelToggle } from '../../ui/PanelToggle';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { MandalaGeneratorPluginSlice, MandalaLayer } from './slice';
 import { generateMandala } from './mandalaUtils';
@@ -22,13 +21,14 @@ const LAYER_OPTIONS: { value: MandalaLayer; label: string }[] = [
 ];
 
 export const MandalaGeneratorPanel: React.FC = () => {
-  const { state, update, addElement } = useCanvasStore(
+  const { state, update, addElement, sysStyle } = useCanvasStore(
     useShallow((s) => {
       const st = s as StoreWithMandala;
       return {
         state: st.mandalaGenerator,
         update: st.updateMandalaGeneratorState,
         addElement: s.addElement,
+        sysStyle: s.style,
       };
     })
   );
@@ -41,19 +41,20 @@ export const MandalaGeneratorPanel: React.FC = () => {
         type: 'path' as const,
         data: {
           subPaths,
-          strokeWidth: 1.5,
-          strokeColor: '#37474F',
-          strokeOpacity: 1,
-          fillColor: 'none',
-          fillOpacity: 1,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-          fillRule: 'evenodd',
-          strokeDasharray: 'none',
+          strokeWidth: sysStyle.strokeWidth,
+          strokeColor: sysStyle.strokeColor,
+          strokeOpacity: sysStyle.strokeOpacity,
+          fillColor: sysStyle.fillColor,
+          fillOpacity: sysStyle.fillOpacity,
+          strokeLinecap: sysStyle.strokeLinecap,
+          strokeLinejoin: sysStyle.strokeLinejoin,
+          fillRule: sysStyle.fillRule,
+          strokeDasharray: sysStyle.strokeDasharray,
+          opacity: sysStyle.opacity,
         },
       });
     }
-  }, [state, addElement]);
+  }, [state, addElement, sysStyle]);
 
   const handleRandomize = useCallback(() => {
     if (!update) return;
@@ -182,8 +183,7 @@ export const MandalaGeneratorPanel: React.FC = () => {
         onChange={(v) => update?.({ seed: v })}
       />
 
-      <PanelActionButton
-        icon={Flower2}
+      <PanelTextActionButton
         label="Generate Mandala"
         onClick={handleGenerate}
       />

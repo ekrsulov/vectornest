@@ -1,11 +1,10 @@
 import React from 'react';
 import { VStack } from '@chakra-ui/react';
-import { Disc3 } from 'lucide-react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { NumberInput } from '../../ui/NumberInput';
 import type { SpiralGeneratorPluginSlice, SpiralType } from './slice';
@@ -129,9 +128,8 @@ export const SpiralGeneratorPanel: React.FC = () => {
           onChange={(v) => updateState?.({ centerY: v })}
         />
 
-        <PanelActionButton
-          icon={Disc3}
-          label="Generate spiral"
+        <PanelTextActionButton
+          label="Generate Spiral"
           onClick={handleGenerate}
         />
       </VStack>

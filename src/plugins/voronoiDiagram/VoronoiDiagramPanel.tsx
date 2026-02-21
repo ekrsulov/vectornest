@@ -2,13 +2,12 @@ import React, { useCallback } from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { NumberInput } from '../../ui/NumberInput';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
-import { Hexagon } from 'lucide-react';
 import type { VoronoiDiagramPluginSlice, VoronoiMode, PointDistribution } from './slice';
 import { generateVoronoiDiagram } from './voronoiUtils';
 
@@ -247,14 +246,13 @@ export const VoronoiDiagramPanel: React.FC = () => {
         Show seed points
       </PanelToggle>
 
-      <PanelActionButton
-        icon={Hexagon}
+      <PanelTextActionButton
         label="Random Seed"
+        variant="secondary"
         onClick={handleRandomSeed}
       />
 
-      <PanelActionButton
-        icon={Hexagon}
+      <PanelTextActionButton
         label="Generate Diagram"
         onClick={handleGenerate}
       />

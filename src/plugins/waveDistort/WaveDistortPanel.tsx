@@ -1,11 +1,10 @@
 import React from 'react';
 import { VStack } from '@chakra-ui/react';
-import { Waves } from 'lucide-react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import type { WaveDistortPluginSlice } from './slice';
 import type { PathData } from '../../types';
 import { applyWaveDistortion } from './waveUtils';
@@ -106,9 +105,8 @@ export const WaveDistortPanel: React.FC = () => {
           onChange={(v) => updateState?.({ resolution: v })}
         />
 
-        <PanelActionButton
-          icon={Waves}
-          label="Apply wave distortion"
+        <PanelTextActionButton
+          label="Apply Wave Distortion"
           onClick={handleApply}
         />
       </VStack>

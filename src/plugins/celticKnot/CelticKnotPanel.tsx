@@ -2,12 +2,11 @@ import React, { useCallback } from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { NumberInput } from '../../ui/NumberInput';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
-import { Infinity as InfinityIcon } from 'lucide-react';
 import type { CelticKnotPluginSlice, KnotStyle } from './slice';
 import { generateCelticKnot } from './celticKnotUtils';
 
@@ -22,13 +21,14 @@ const styleOptions = [
 ];
 
 export const CelticKnotPanel: React.FC = () => {
-  const { knotState, update, addElement } = useCanvasStore(
+  const { knotState, update, addElement, sysStyle } = useCanvasStore(
     useShallow((state) => {
       const s = state as CombinedStore;
       return {
         knotState: s.celticKnot,
         update: s.updateCelticKnotState,
         addElement: s.addElement,
+        sysStyle: state.style,
       };
     })
   );
@@ -41,19 +41,20 @@ export const CelticKnotPanel: React.FC = () => {
         type: 'path' as const,
         data: {
           subPaths,
-          strokeWidth: knotState.strandGap * 0.6,
-          strokeColor: '#2E7D32',
-          strokeOpacity: 1,
-          fillColor: 'none',
-          fillOpacity: 1,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-          fillRule: 'nonzero',
-          strokeDasharray: 'none',
+          strokeWidth: sysStyle.strokeWidth,
+          strokeColor: sysStyle.strokeColor,
+          strokeOpacity: sysStyle.strokeOpacity,
+          fillColor: sysStyle.fillColor,
+          fillOpacity: sysStyle.fillOpacity,
+          strokeLinecap: sysStyle.strokeLinecap,
+          strokeLinejoin: sysStyle.strokeLinejoin,
+          fillRule: sysStyle.fillRule,
+          strokeDasharray: sysStyle.strokeDasharray,
+          opacity: sysStyle.opacity,
         },
       });
     }
-  }, [knotState, addElement]);
+  }, [knotState, addElement, sysStyle]);
 
   if (!knotState || !update) return null;
 
@@ -151,8 +152,7 @@ export const CelticKnotPanel: React.FC = () => {
         max={2000}
       />
 
-      <PanelActionButton
-        icon={InfinityIcon}
+      <PanelTextActionButton
         label="Generate Knot"
         onClick={handleGenerate}
       />

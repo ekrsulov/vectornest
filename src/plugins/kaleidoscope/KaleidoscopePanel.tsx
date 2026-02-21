@@ -1,11 +1,10 @@
 import React from 'react';
 import { VStack, Text } from '@chakra-ui/react';
-import { Flower2 } from 'lucide-react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { NumberInput } from '../../ui/NumberInput';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { PanelToggle } from '../../ui/PanelToggle';
 import type { KaleidoscopePluginSlice } from './slice';
 import type { PathData } from '../../types';
@@ -110,9 +109,8 @@ export const KaleidoscopePanel: React.FC = () => {
           Delete originals
         </PanelToggle>
 
-        <PanelActionButton
-          icon={Flower2}
-          label="Apply kaleidoscope"
+        <PanelTextActionButton
+          label="Apply Kaleidoscope"
           onClick={handleApply}
         />
       </VStack>

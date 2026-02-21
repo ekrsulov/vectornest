@@ -2,13 +2,12 @@ import React, { useCallback } from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { NumberInput } from '../../ui/NumberInput';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
-import { LayoutGrid } from 'lucide-react';
 import type { MazeGeneratorPluginSlice, MazeAlgorithm, MazeShape } from './slice';
 import { generateMaze } from './mazeUtils';
 
@@ -28,13 +27,14 @@ const shapeOptions = [
 ];
 
 export const MazeGeneratorPanel: React.FC = () => {
-  const { mazeState, update, addElement } = useCanvasStore(
+  const { mazeState, update, addElement, sysStyle } = useCanvasStore(
     useShallow((state) => {
       const s = state as CombinedStore;
       return {
         mazeState: s.mazeGenerator,
         update: s.updateMazeGeneratorState,
         addElement: s.addElement,
+        sysStyle: state.style,
       };
     })
   );
@@ -45,14 +45,12 @@ export const MazeGeneratorPanel: React.FC = () => {
       cols,
       rows,
       cellSize,
-      wallThickness,
       algorithm,
       shape,
       offsetX,
       offsetY,
       seed,
       addOpenings,
-      cornerRadius,
     } = mazeState;
     const subPaths = generateMaze({
       cols,
@@ -71,19 +69,20 @@ export const MazeGeneratorPanel: React.FC = () => {
         type: 'path' as const,
         data: {
           subPaths,
-          strokeWidth: wallThickness,
-          strokeColor: '#222222',
-          strokeOpacity: 1,
-          fillColor: 'none',
-          fillOpacity: 1,
-          strokeLinecap: cornerRadius > 0 ? 'round' : 'square',
-          strokeLinejoin: cornerRadius > 0 ? 'round' : 'miter',
-          fillRule: 'nonzero',
-          strokeDasharray: 'none',
+          strokeWidth: sysStyle.strokeWidth,
+          strokeColor: sysStyle.strokeColor,
+          strokeOpacity: sysStyle.strokeOpacity,
+          fillColor: sysStyle.fillColor,
+          fillOpacity: sysStyle.fillOpacity,
+          strokeLinecap: sysStyle.strokeLinecap,
+          strokeLinejoin: sysStyle.strokeLinejoin,
+          fillRule: sysStyle.fillRule,
+          strokeDasharray: sysStyle.strokeDasharray,
+          opacity: sysStyle.opacity,
         },
       });
     }
-  }, [mazeState, addElement]);
+  }, [mazeState, addElement, sysStyle]);
 
   const handleRandomSeed = useCallback(() => {
     update?.({ seed: Math.floor(Math.random() * 100000) });
@@ -204,14 +203,13 @@ export const MazeGeneratorPanel: React.FC = () => {
         Add entrance/exit
       </PanelToggle>
 
-      <PanelActionButton
-        icon={LayoutGrid}
+      <PanelTextActionButton
         label="Random Seed"
+        variant="secondary"
         onClick={handleRandomSeed}
       />
 
-      <PanelActionButton
-        icon={LayoutGrid}
+      <PanelTextActionButton
         label="Generate Maze"
         onClick={handleGenerate}
       />

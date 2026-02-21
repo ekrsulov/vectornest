@@ -5,8 +5,7 @@ import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { SectionHeader } from '../../ui/SectionHeader';
-import { PanelActionButton } from '../../ui/PanelActionButton';
-import { LayoutGrid } from 'lucide-react';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { LayoutEnginePluginSlice, LayoutMode } from './slice';
 import { computeLayout } from './layoutUtils';
@@ -233,8 +232,7 @@ export const LayoutEnginePanel: React.FC = () => {
         onChange={(v) => update({ centerY: v })}
       />
 
-      <PanelActionButton
-        icon={LayoutGrid}
+      <PanelTextActionButton
         label="Apply Layout"
         onClick={handleApply}
         isDisabled={!hasSelection}

@@ -2,12 +2,11 @@ import React, { useCallback } from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { NumberInput } from '../../ui/NumberInput';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
-import { Fingerprint } from 'lucide-react';
 import type { GuillochePluginSlice, GuillochePreset } from './slice';
 import { generateGuilloche } from './guillocheUtils';
 
@@ -22,13 +21,14 @@ const presetOptions = [
 ];
 
 export const GuillochePanel: React.FC = () => {
-  const { gState, update, addElement } = useCanvasStore(
+  const { gState, update, addElement, sysStyle } = useCanvasStore(
     useShallow((state) => {
       const s = state as CombinedStore;
       return {
         gState: s.guilloche,
         update: s.updateGuillocheState,
         addElement: s.addElement,
+        sysStyle: state.style,
       };
     })
   );
@@ -41,19 +41,20 @@ export const GuillochePanel: React.FC = () => {
         type: 'path' as const,
         data: {
           subPaths,
-          strokeWidth: 0.6,
-          strokeColor: '#1A237E',
-          strokeOpacity: 0.85,
-          fillColor: 'none',
-          fillOpacity: 1,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-          fillRule: 'nonzero',
-          strokeDasharray: 'none',
+          strokeWidth: sysStyle.strokeWidth,
+          strokeColor: sysStyle.strokeColor,
+          strokeOpacity: sysStyle.strokeOpacity,
+          fillColor: sysStyle.fillColor,
+          fillOpacity: sysStyle.fillOpacity,
+          strokeLinecap: sysStyle.strokeLinecap,
+          strokeLinejoin: sysStyle.strokeLinejoin,
+          fillRule: sysStyle.fillRule,
+          strokeDasharray: sysStyle.strokeDasharray,
+          opacity: sysStyle.opacity,
         },
       });
     }
-  }, [gState, addElement]);
+  }, [gState, addElement, sysStyle]);
 
   if (!gState || !update) return null;
 
@@ -195,8 +196,7 @@ export const GuillochePanel: React.FC = () => {
         max={2000}
       />
 
-      <PanelActionButton
-        icon={Fingerprint}
+      <PanelTextActionButton
         label="Generate Guilloche"
         onClick={handleGenerate}
       />

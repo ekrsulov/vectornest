@@ -1,26 +1,26 @@
 import React, { useCallback } from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { NumberInput } from '../../ui/NumberInput';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
-import { TreePine } from 'lucide-react';
 import type { FractalTreePluginSlice } from './slice';
 import { generateFractalTree, generateOrganicTree } from './fractalTreeUtils';
 
 type CombinedStore = CanvasStore & FractalTreePluginSlice;
 
 export const FractalTreePanel: React.FC = () => {
-  const { treeState, update, addElement } = useCanvasStore(
+  const { treeState, update, addElement, sysStyle } = useCanvasStore(
     useShallow((state) => {
       const s = state as CombinedStore;
       return {
         treeState: s.fractalTree,
         update: s.updateFractalTreeState,
         addElement: s.addElement,
+        sysStyle: state.style,
       };
     })
   );
@@ -34,7 +34,6 @@ export const FractalTreePanel: React.FC = () => {
       depth,
       trunkLength,
       lengthRatio,
-      trunkWidth,
       angleVariation,
       lengthVariation,
       startX,
@@ -62,19 +61,20 @@ export const FractalTreePanel: React.FC = () => {
         type: 'path' as const,
         data: {
           subPaths,
-          strokeWidth: trunkWidth,
-          strokeColor: '#5D4037',
-          strokeOpacity: 1,
-          fillColor: 'none',
-          fillOpacity: 1,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-          fillRule: 'nonzero',
-          strokeDasharray: 'none',
+          strokeWidth: sysStyle.strokeWidth,
+          strokeColor: sysStyle.strokeColor,
+          strokeOpacity: sysStyle.strokeOpacity,
+          fillColor: sysStyle.fillColor,
+          fillOpacity: sysStyle.fillOpacity,
+          strokeLinecap: sysStyle.strokeLinecap,
+          strokeLinejoin: sysStyle.strokeLinejoin,
+          fillRule: sysStyle.fillRule,
+          strokeDasharray: sysStyle.strokeDasharray,
+          opacity: sysStyle.opacity,
         },
       });
     }
-  }, [treeState, organic, addElement]);
+  }, [treeState, organic, addElement, sysStyle]);
 
   const handleRandomSeed = useCallback(() => {
     update?.({ seed: Math.floor(Math.random() * 100000) });
@@ -213,14 +213,13 @@ export const FractalTreePanel: React.FC = () => {
         Organic curves
       </PanelToggle>
 
-      <PanelActionButton
-        icon={TreePine}
+      <PanelTextActionButton
         label="Random Seed"
+        variant="secondary"
         onClick={handleRandomSeed}
       />
 
-      <PanelActionButton
-        icon={TreePine}
+      <PanelTextActionButton
         label="Generate Tree"
         onClick={handleGenerate}
       />

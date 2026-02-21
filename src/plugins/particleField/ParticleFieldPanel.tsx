@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { VStack, Text, Box, Input, HStack } from '@chakra-ui/react';
+import { VStack, Text, HStack } from '@chakra-ui/react';
+import { PanelColorPicker } from '../../ui/PanelColorPicker';
 import { Shuffle } from 'lucide-react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
@@ -110,7 +111,7 @@ export const ParticleFieldPanel: React.FC = () => {
     <Panel title="Particle Field" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
         {selectedCount === 0 ? (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             Select a closed path to fill with particles.
           </Text>
         ) : (
@@ -130,7 +131,7 @@ export const ParticleFieldPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Count:"
+              label="Count"
               value={count}
               min={5}
               max={500}
@@ -139,7 +140,7 @@ export const ParticleFieldPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Min size:"
+              label="Min size"
               value={minSize}
               min={0.5}
               max={20}
@@ -148,7 +149,7 @@ export const ParticleFieldPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Max size:"
+              label="Max size"
               value={maxSize}
               min={1}
               max={30}
@@ -157,7 +158,7 @@ export const ParticleFieldPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Opacity:"
+              label="Opacity"
               value={particleOpacity}
               min={0.1}
               max={1}
@@ -174,7 +175,7 @@ export const ParticleFieldPanel: React.FC = () => {
 
             {!filled && (
               <SliderControl
-                label="Stroke:"
+                label="Stroke"
                 value={strokeWidth}
                 min={0.1}
                 max={3}
@@ -198,23 +199,10 @@ export const ParticleFieldPanel: React.FC = () => {
             </PanelToggle>
 
             {!useElementColor && (
-              <Box display="flex" alignItems="center" gap={1}>
-                <Text fontSize="11px" minW="50px" color="gray.600" _dark={{ color: 'gray.400' }}>
-                  Color:
-                </Text>
-                <Input
-                  type="color"
-                  value={particleColor}
-                  onChange={(e) => updateState?.({ particleColor: e.target.value })}
-                  size="xs"
-                  w="32px"
-                  h="20px"
-                  p={0}
-                  border="none"
-                  cursor="pointer"
-                />
-                <Text fontSize="10px" fontFamily="mono" color="gray.500">{particleColor}</Text>
-              </Box>
+              <PanelColorPicker
+                value={particleColor}
+                onChange={(hex) => updateState?.({ particleColor: hex })}
+              />
             )}
 
             <HStack gap={1} mt={1}>

@@ -85,7 +85,7 @@ export const HalftonePanel: React.FC = () => {
     <Panel title="Halftone Effect" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
         {selectedCount === 0 ? (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             Select elements to apply halftone effect.
           </Text>
         ) : (
@@ -98,7 +98,7 @@ export const HalftonePanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Dot size:"
+              label="Dot size"
               value={dotSize}
               min={1}
               max={20}
@@ -107,7 +107,7 @@ export const HalftonePanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Spacing:"
+              label="Spacing"
               value={spacing}
               min={2}
               max={30}
@@ -116,7 +116,7 @@ export const HalftonePanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Angle:"
+              label="Angle"
               value={angle}
               min={0}
               max={180}
@@ -125,7 +125,7 @@ export const HalftonePanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Contrast:"
+              label="Contrast"
               value={contrast}
               min={0.5}
               max={5}

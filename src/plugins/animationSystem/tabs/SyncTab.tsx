@@ -101,7 +101,7 @@ export const SyncTab: React.FC = () => {
       </Text>
 
       <VStack spacing={0} align="stretch">
-        <Text fontSize="11px" color="gray.600" _dark={{ color: 'gray.400' }}>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
           Chain Name
         </Text>
         <PanelTextInput
@@ -141,7 +141,7 @@ export const SyncTab: React.FC = () => {
               <Text fontSize="12px" fontWeight="bold">
                 {anim.type} • {anim.dur ?? '2s'}
               </Text>
-              <Text fontSize="11px" color="gray.600" _dark={{ color: 'gray.400' }}>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
                 {anim.attributeName ?? anim.transformType ?? 'motion'}
               </Text>
             </PanelToggle>
@@ -178,7 +178,7 @@ export const SyncTab: React.FC = () => {
             <VStack key={chain.id} spacing={2} align="stretch" borderWidth="1px" borderColor="gray.200" _dark={{ borderColor: 'gray.700' }} borderRadius="md" p={2}>
               <HStack justify="space-between" align="center">
                 <VStack spacing={0} align="stretch" flex="1">
-                  <Text fontSize="11px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
                     Name
                   </Text>
                   <PanelTextInput
@@ -196,7 +196,7 @@ export const SyncTab: React.FC = () => {
               </HStack>
               {chain.animations.map((entry) => (
                 <HStack key={`${chain.id}-${entry.animationId}`} spacing={1} align="center">
-                  <Text fontSize="11px" flex="1">
+                  <Text fontSize="xs" flex="1">
                     {animations.find((a) => a.id === entry.animationId)?.attributeName ?? 'animation'}
                   </Text>
                   <SliderControl

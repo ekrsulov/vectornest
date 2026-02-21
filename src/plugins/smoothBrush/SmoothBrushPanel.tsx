@@ -72,7 +72,7 @@ export const SmoothBrushPanel: React.FC = () => {
 
                 <Box pr={0.5}>
                     <PercentSliderControl
-                            label="Strength:"
+                            label="Strength"
                             value={smoothBrush.strength}
                             step={0.01}
                             onChange={(value) => updateSmoothBrush?.({ strength: value })}
@@ -85,7 +85,7 @@ export const SmoothBrushPanel: React.FC = () => {
                     {smoothBrush.isActive && (
                         <Box pr={0.5}>
                             <SliderControl
-                                label="Radius:"
+                                label="Radius"
                                 value={smoothBrush.radius}
                                 min={6}
                                 max={60}
@@ -101,7 +101,7 @@ export const SmoothBrushPanel: React.FC = () => {
                     {smoothBrush.simplifyPoints && (
                         <Box pr={0.5}>
                             <SliderControl
-                                label="Tolerance:"
+                                label="Tolerance"
                                 value={smoothBrush.simplificationTolerance}
                                 min={0.1}
                                 max={10}
@@ -118,7 +118,7 @@ export const SmoothBrushPanel: React.FC = () => {
                     {smoothBrush.simplifyPoints && (
                         <Box pr={0.5}>
                             <SliderControl
-                                label="Min Dist:"
+                                label="Min Dist"
                                 value={smoothBrush.minDistance}
                                 min={0.1}
                                 max={5.0}

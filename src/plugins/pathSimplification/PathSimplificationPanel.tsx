@@ -37,7 +37,7 @@ export const PathSimplificationPanel: React.FC = () => {
             <VStack spacing={1} align="stretch" pt={0.5} pb={0.5}>
                 <Box pr={0.5}>
                     <SliderControl
-                        label="Tolerance:"
+                        label="Tolerance"
                         value={pathSimplification.tolerance}
                         min={0.01}
                         max={10}

@@ -1,11 +1,10 @@
 import React from 'react';
 import { VStack, Text } from '@chakra-ui/react';
-import { Shuffle } from 'lucide-react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
-import { PanelActionButton } from '../../ui/PanelActionButton';
+import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { PanelToggle } from '../../ui/PanelToggle';
 import type { PathWeavePluginSlice } from './slice';
 import type { PathData } from '../../types';
@@ -73,7 +72,7 @@ export const PathWeavePanel: React.FC = () => {
   return (
     <Panel title="Path Weave" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
-        <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+        <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
           Select 2+ overlapping paths to create an over/under weave pattern.
         </Text>
 
@@ -113,9 +112,8 @@ export const PathWeavePanel: React.FC = () => {
           Alternate over/under
         </PanelToggle>
 
-        <PanelActionButton
-          icon={Shuffle}
-          label="Apply weave"
+        <PanelTextActionButton
+          label="Apply Weave"
           onClick={handleApply}
         />
       </VStack>

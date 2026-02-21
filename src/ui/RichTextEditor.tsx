@@ -319,10 +319,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         onKeyDown={onKeyDown}
         onKeyUp={saveSelection}
         onMouseUp={saveSelection}
+        m={0.5}
         sx={{
           minHeight: '100px',
           border: '1px solid',
           borderColor: 'gray.300',
+          bg: 'white',
           borderRadius: '4px',
           padding: '6px',
           fontSize: '14px', // Fixed size for editor, actual size reflected in canvas
@@ -334,9 +336,17 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           textAlign: textAnchor === 'start' ? 'left' : textAnchor === 'middle' ? 'center' : 'right',
           textTransform,
           outline: 'none',
+          _dark: {
+            borderColor: 'whiteAlpha.300',
+            bg: 'gray.800',
+            _focusWithin: {
+              borderColor: 'whiteAlpha.500',
+              boxShadow: '0 0 0 1px var(--chakra-colors-whiteAlpha-500)'
+            }
+          },
           _focusWithin: {
-            borderColor: 'gray.500',
-            boxShadow: '0 0 0 1px var(--chakra-colors-gray-500)'
+            borderColor: 'gray.600',
+            boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
           }
         }}
       />

@@ -46,19 +46,19 @@ export const StrokeProfileAnalyzerPanel: React.FC = () => {
           {/* Summary */}
           <HStack gap={2} px={2} justify="space-between">
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Stroked</Text>
-              <Text fontSize="xs" color="blue.300" fontFamily="mono">{state.totalStroked}</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Stroked</Text>
+              <Text fontSize="xs" color="blue.600" _dark={{ color: 'blue.300' }} fontFamily="mono">{state.totalStroked}</Text>
             </Box>
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Unstroked</Text>
-              <Text fontSize="xs" color="gray.400" fontFamily="mono">{state.totalUnstroked}</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Unstroked</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} fontFamily="mono">{state.totalUnstroked}</Text>
             </Box>
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Widths</Text>
-              <Text fontSize="xs" color="gray.300" fontFamily="mono">{state.uniqueWidths}</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Widths</Text>
+              <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} fontFamily="mono">{state.uniqueWidths}</Text>
             </Box>
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Consistency</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Consistency</Text>
               <Text fontSize="xs" color={scoreColor} fontFamily="mono">{state.consistencyScore}%</Text>
             </Box>
           </HStack>
@@ -80,23 +80,23 @@ export const StrokeProfileAnalyzerPanel: React.FC = () => {
                 <HStack justify="space-between">
                   <HStack gap={1}>
                     <Box w="12px" h="12px" borderRadius="sm" bg={p.color} border="1px solid" borderColor="whiteAlpha.300" />
-                    <Text fontSize="xs" color="gray.300" fontFamily="mono">
+                    <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} fontFamily="mono">
                       {p.width}px
                     </Text>
                   </HStack>
-                  <Text fontSize="xs" color="blue.300" fontFamily="mono">
+                  <Text fontSize="xs" color="blue.600" _dark={{ color: 'blue.300' }} fontFamily="mono">
                     {p.elementCount} elem{p.elementCount > 1 ? 's' : ''}
                   </Text>
                 </HStack>
                 <HStack gap={2} mt={0.5}>
-                  <Text fontSize="9px" color="gray.500">
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
                     cap: {p.linecap}
                   </Text>
-                  <Text fontSize="9px" color="gray.500">
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
                     join: {p.linejoin}
                   </Text>
                   {p.dasharray !== 'none' && (
-                    <Text fontSize="9px" color="purple.400">
+                    <Text fontSize="xs" color="purple.400">
                       dashed
                     </Text>
                   )}

@@ -3,6 +3,7 @@ import { Box, HStack, Text } from '@chakra-ui/react';
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { SectionHeader } from '../../ui/SectionHeader';
+import { StatRow } from '../../ui/StatRow';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { SelectionStatisticsPluginSlice } from './slice';
@@ -10,15 +11,6 @@ import { computeSelectionStats } from './selStatsUtils';
 import type { CanvasElement } from '../../types';
 
 type SSStore = CanvasStore & SelectionStatisticsPluginSlice;
-
-function StatRow({ label, value, color }: { label: string; value: string | number; color?: string }) {
-  return (
-    <HStack justify="space-between" px={2} py={0.5}>
-      <Text fontSize="xs" color="gray.400">{label}</Text>
-      <Text fontSize="xs" color={color || 'gray.300'} fontFamily="mono">{value}</Text>
-    </HStack>
-  );
-}
 
 export const SelectionStatisticsPanel: React.FC = () => {
   const { state, update, selectedIds, elements } = useCanvasStore(
@@ -63,7 +55,7 @@ export const SelectionStatisticsPanel: React.FC = () => {
 
       {selectedIds.length === 0 && (
         <Box px={2} py={3}>
-          <Text fontSize="xs" color="gray.500" textAlign="center">
+          <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} textAlign="center">
             Select elements to see statistics
           </Text>
         </Box>
@@ -72,7 +64,7 @@ export const SelectionStatisticsPanel: React.FC = () => {
       {s && (
         <>
           <SectionHeader title="Composition" />
-          <StatRow label="Total Elements" value={s.count} color="blue.300" />
+          <StatRow label="Total Elements" value={s.count} color="blue.600" darkColor="blue.300" />
           <StatRow label="Paths" value={s.pathCount} />
           <StatRow label="Groups" value={s.groupCount} />
           {s.otherCount > 0 && <StatRow label="Other" value={s.otherCount} />}
@@ -85,14 +77,14 @@ export const SelectionStatisticsPanel: React.FC = () => {
           <StatRow label="Avg Width" value={`${s.avgWidth} px`} />
           <StatRow label="Avg Height" value={`${s.avgHeight} px`} />
           <HStack px={2} py={0.5} justify="space-between">
-            <Text fontSize="xs" color="gray.400">Width Range</Text>
-            <Text fontSize="xs" color="gray.300" fontFamily="mono">
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Width Range</Text>
+            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} fontFamily="mono">
               {s.minWidth} – {s.maxWidth} px
             </Text>
           </HStack>
           <HStack px={2} py={0.5} justify="space-between">
-            <Text fontSize="xs" color="gray.400">Height Range</Text>
-            <Text fontSize="xs" color="gray.300" fontFamily="mono">
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Height Range</Text>
+            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} fontFamily="mono">
               {s.minHeight} – {s.maxHeight} px
             </Text>
           </HStack>

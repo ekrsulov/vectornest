@@ -387,7 +387,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ onEditAnimation, onAdd
             marginBottom="0"
           />
         </Box>
-        <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.400' }} whiteSpace="nowrap">
+        <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }} whiteSpace="nowrap">
           / {maxDuration.toFixed(1)}s
         </Text>
         <HStack spacing={1}>
@@ -488,16 +488,16 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ onEditAnimation, onAdd
                           {renderThumbnail(displayElementId)}
                           <VStack spacing={0} align="start" flex={1} overflow="hidden">
                             <HStack spacing={1}>
-                              <Text fontSize="11px" fontWeight="medium" noOfLines={1} title={`${anim.type} - ${anim.attributeName ?? anim.transformType ?? 'motion'}`}>
+                              <Text fontSize="xs" fontWeight="medium" noOfLines={1} title={`${anim.type} - ${anim.attributeName ?? anim.transformType ?? 'motion'}`}>
                                 {anim.type}
                               </Text>
                               {displayType && (
-                                <Text fontSize="9px" color={isTransitive ? 'purple.400' : 'blue.400'} fontWeight="bold">
+                                <Text fontSize="2xs" color={isTransitive ? 'purple.400' : 'blue.400'} fontWeight="bold">
                                   {displayType}
                                 </Text>
                               )}
                             </HStack>
-                            <Text fontSize="9px" color="gray.500" noOfLines={1}>
+                            <Text fontSize="2xs" color="gray.500" noOfLines={1}>
                               {displayName} • {anim.attributeName ?? anim.transformType ?? 'motion'}
                             </Text>
                           </VStack>
@@ -575,7 +575,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ onEditAnimation, onAdd
                         left={`${t * PIXELS_PER_SECOND}px`}
                         top="50%"
                         transform="translate(-50%, -50%)"
-                        fontSize="10px"
+                        fontSize="xs"
                         color="gray.500"
                         pointerEvents="none"
                       >
@@ -678,7 +678,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ onEditAnimation, onAdd
 
                           {/* Bar content */}
                           <Text
-                            fontSize="10px"
+                            fontSize="xs"
                             color="white"
                             fontWeight="medium"
                             px={2}

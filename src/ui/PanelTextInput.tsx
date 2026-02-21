@@ -38,11 +38,16 @@ export const PanelTextInput: React.FC<PanelTextInputProps> = ({
       pr={rightElement ? '28px' : 2}
       textAlign={textAlign}
       borderRadius="0"
+      m={0.5}
       borderColor="gray.300"
       bg="white"
       _dark={{
         borderColor: 'whiteAlpha.300',
-        bg: 'gray.800'
+        bg: 'gray.800',
+        _focus: {
+          borderColor: 'whiteAlpha.500',
+          boxShadow: '0 0 0 1px var(--chakra-colors-whiteAlpha-500)'
+        }
       }}
       _focus={{
         borderColor: 'gray.600',
@@ -53,7 +58,7 @@ export const PanelTextInput: React.FC<PanelTextInputProps> = ({
 
   if (leftIcon || rightElement) {
     return (
-      <InputGroup size="sm" h={height} w={width}>
+      <InputGroup size="sm" h={height} w={width} m={0.5}>
         {leftIcon && (
           <InputLeftElement pointerEvents="none" h={height} w="28px" children={leftIcon} />
         )}

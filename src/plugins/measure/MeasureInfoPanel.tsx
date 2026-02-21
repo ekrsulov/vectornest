@@ -42,7 +42,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
               <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
                 From:
               </Text>
-              <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+              <Text fontSize="xs" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
                 ({formatDistance(startPoint.x, units || 'px', precision)}, {formatDistance(startPoint.y, units || 'px', precision)})
               </Text>
             </HStack>
@@ -51,7 +51,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
               <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
                 To:
               </Text>
-              <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+              <Text fontSize="xs" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
                 ({formatDistance(endPoint.x, units || 'px', precision)}, {formatDistance(endPoint.y, units || 'px', precision)})
               </Text>
             </HStack>
@@ -63,7 +63,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
             Distance:
           </Text>
-          <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+          <Text fontSize="xs" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
             {formatDistance(distance || 0, units || 'px', precision)}
           </Text>
         </HStack>
@@ -73,7 +73,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
             ΔX:
           </Text>
-          <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+          <Text fontSize="xs" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
             {formatDistance(Math.abs(deltaX || 0), units || 'px', precision)}
           </Text>
         </HStack>
@@ -83,7 +83,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
             ΔY:
           </Text>
-          <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+          <Text fontSize="xs" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
             {formatDistance(Math.abs(deltaY || 0), units || 'px', precision)}
           </Text>
         </HStack>
@@ -93,7 +93,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
             Angle:
           </Text>
-          <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+          <Text fontSize="xs" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
             {formatAngle(angle || 0, precision)}
           </Text>
         </HStack>

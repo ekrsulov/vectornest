@@ -496,7 +496,7 @@ export const GradientsPanel: React.FC = () => {
                   />
                 ))}
               </Box>
-              <Text fontSize="10px" color="gray.500">
+              <Text fontSize="xs" color="gray.500">
                 Tap/click to add stop. Drag handles to reposition.
               </Text>
               <LibrarySectionHeader title="Stops" action={

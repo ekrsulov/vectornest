@@ -34,8 +34,8 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   onAction,
   actionTitle,
   showAction = true,
-  titleTransform = 'none',
-  titleFontWeight = 'extrabold',
+  titleTransform = 'uppercase',
+  titleFontWeight = 'medium',
 }) => {
   return (
     <Flex 
@@ -50,7 +50,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
     >
       <HStack spacing={1.5}>
         {Icon && <Icon size={16} color="#666" />}
-        <Heading size="xs" fontWeight={titleFontWeight} textTransform={titleTransform}>
+        <Heading size="xs" fontSize="11px" fontWeight={titleFontWeight} textTransform={titleTransform}>
           {title}
         </Heading>
       </HStack>

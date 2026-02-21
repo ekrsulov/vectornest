@@ -73,10 +73,10 @@ export const ProportionCheckerPanel: React.FC = () => {
                   borderColor={isGolden ? 'yellow.400' : isMatch ? 'green.400' : 'gray.600'}
                 >
                   <HStack justify="space-between">
-                    <Text fontSize="xs" color="gray.300" isTruncated maxW="100px">
+                    <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} isTruncated maxW="100px">
                       {r.label}
                     </Text>
-                    <Text fontSize="xs" fontFamily="mono" color="gray.400">
+                    <Text fontSize="xs" fontFamily="mono" color="gray.600" _dark={{ color: 'gray.400' }}>
                       {r.width} × {r.height}
                     </Text>
                   </HStack>
@@ -85,11 +85,11 @@ export const ProportionCheckerPanel: React.FC = () => {
                       {r.closestStandard}
                     </Text>
                     <HStack gap={1}>
-                      <Text fontSize="xs" fontFamily="mono" color="blue.300">
+                      <Text fontSize="xs" fontFamily="mono" color="blue.600" _dark={{ color: 'blue.300' }}>
                         {r.ratio}
                       </Text>
                       <Text
-                        fontSize="9px"
+                        fontSize="xs"
                         color={isMatch ? 'green.400' : 'orange.400'}
                       >
                         ±{r.deviation}%

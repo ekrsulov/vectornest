@@ -4,6 +4,7 @@ import { Panel } from '../../ui/Panel';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SliderControl } from '../../ui/SliderControl';
 import { SectionHeader } from '../../ui/SectionHeader';
+import { StatRow } from '../../ui/StatRow';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { AnchorPointAnalyzerPluginSlice } from './slice';
@@ -12,22 +13,13 @@ import type { CanvasElement } from '../../types';
 
 type APStore = CanvasStore & AnchorPointAnalyzerPluginSlice;
 
-function StatRow({ label, value, color }: { label: string; value: string | number; color?: string }) {
-  return (
-    <HStack justify="space-between" px={2} py={0.5}>
-      <Text fontSize="xs" color="gray.400">{label}</Text>
-      <Text fontSize="xs" color={color || 'gray.300'} fontFamily="mono">{value}</Text>
-    </HStack>
-  );
-}
-
 function TypeBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
     <Box px={2} py={0.5}>
       <HStack justify="space-between" mb={0.5}>
         <Text fontSize="xs" color={color}>{label}</Text>
-        <Text fontSize="xs" color="gray.300" fontFamily="mono">{count} ({Math.round(pct)}%)</Text>
+        <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} fontFamily="mono">{count} ({Math.round(pct)}%)</Text>
       </HStack>
       <Box h="4px" bg="whiteAlpha.100" borderRadius="full" overflow="hidden">
         <Box h="100%" w={`${pct}%`} bg={color} borderRadius="full" />
@@ -86,6 +78,7 @@ export const AnchorPointAnalyzerPanel: React.FC = () => {
         step={0.5}
         onChange={(v) => update({ shortHandleThreshold: v })}
         formatter={(v) => `${v}px`}
+        stacked
       />
 
       <PanelStyledButton onClick={handleAnalyze}>
@@ -95,7 +88,7 @@ export const AnchorPointAnalyzerPanel: React.FC = () => {
       {a && (
         <>
           <SectionHeader title="Overview" />
-          <StatRow label="Total Anchors" value={a.totalAnchors} color="blue.300" />
+          <StatRow label="Total Anchors" value={a.totalAnchors} color="blue.600" darkColor="blue.300" />
 
           <SectionHeader title="Anchor Types" />
           <TypeBar label="Smooth" count={a.smoothCount} total={a.totalAnchors} color="#38A169" />

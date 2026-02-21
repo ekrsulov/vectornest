@@ -95,10 +95,10 @@ export const IntersectionDetectorPanel: React.FC = () => {
                     borderColor="red.400"
                   >
                     <HStack justify="space-between">
-                      <Text fontSize="xs" color="gray.300" isTruncated maxW="130px">
+                      <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} isTruncated maxW="130px">
                         {pt.labelA} ✕ {pt.labelB}
                       </Text>
-                      <Text fontSize="9px" fontFamily="mono" color="gray.500">
+                      <Text fontSize="xs" fontFamily="mono" color="gray.600" _dark={{ color: 'gray.500' }}>
                         ({pt.x}, {pt.y})
                       </Text>
                     </HStack>
@@ -110,7 +110,7 @@ export const IntersectionDetectorPanel: React.FC = () => {
 
           {state.intersections.length === 0 && (
             <Box px={2}>
-              <Text fontSize="xs" color="gray.500">
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
                 No intersections detected. Click the button above to analyze.
               </Text>
             </Box>

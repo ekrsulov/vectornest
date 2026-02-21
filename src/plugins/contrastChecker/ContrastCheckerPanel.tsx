@@ -26,7 +26,7 @@ const WCAGBadge: React.FC<{ label: string; pass: boolean }> = ({ label, pass }) 
     border="1px solid"
     borderColor={pass ? 'green.600' : 'red.600'}
   >
-    <Text fontSize="2xs" fontWeight="bold" color={pass ? 'green.200' : 'red.200'}>
+    <Text fontSize="xs" fontWeight="bold" color={pass ? 'green.200' : 'red.200'}>
       {label}: {pass ? 'PASS' : 'FAIL'}
     </Text>
   </Box>
@@ -41,14 +41,14 @@ const ContrastResultCard: React.FC<{ result: ContrastResult }> = ({ result }) =>
       <HStack justify="space-between" mb={1}>
         <HStack gap={1}>
           <Box w={4} h={4} borderRadius="sm" bg={result.foregroundColor} border="1px solid" borderColor="whiteAlpha.300" />
-          <Text fontSize="2xs" color="gray.400">vs</Text>
+          <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>vs</Text>
           <Box w={4} h={4} borderRadius="sm" bg={result.backgroundColor} border="1px solid" borderColor="whiteAlpha.300" />
         </HStack>
         <HStack gap={1}>
           <Text fontSize="sm" fontWeight="bold" fontFamily="mono" color={ratingColor}>
             {result.ratio.toFixed(2)}:1
           </Text>
-          <Text fontSize="2xs" color={ratingColor}>{rating}</Text>
+          <Text fontSize="xs" color={ratingColor}>{rating}</Text>
         </HStack>
       </HStack>
 
@@ -170,11 +170,11 @@ export const ContrastCheckerPanel: React.FC = () => {
             {suggestions.map((s, i) => (
               <HStack key={i} gap={1} mb={0.5}>
                 <Box w={3} h={3} borderRadius="sm" bg={s.foregroundColor} border="1px solid" borderColor="whiteAlpha.300" />
-                <Text fontSize="2xs" color="gray.400">→</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>→</Text>
                 {s.suggested && (
                   <Box w={3} h={3} borderRadius="sm" bg={s.suggested} border="1px solid" borderColor="whiteAlpha.300" />
                 )}
-                <Text fontSize="2xs" color="gray.400">
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
                   for AA ({s.ratio.toFixed(1)}:1 → 4.5:1)
                 </Text>
               </HStack>
@@ -184,7 +184,7 @@ export const ContrastCheckerPanel: React.FC = () => {
       )}
 
       {selectedPaths.length < 2 && state.results.length === 0 && (
-        <Text fontSize="xs" color="gray.500" px={2} py={2}>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} px={2} py={2}>
           Select at least 2 elements to check contrast ratios
         </Text>
       )}

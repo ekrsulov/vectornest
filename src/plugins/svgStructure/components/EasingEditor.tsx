@@ -130,7 +130,7 @@ export const EasingEditor: React.FC<EasingEditorProps> = ({ value, onChange }) =
                         size="xs"
                         variant="outline"
                         onClick={() => onChange(p.value)}
-                        fontSize="9px"
+                        fontSize="2xs"
                         h="20px"
                     >
                         {p.label}
@@ -138,7 +138,7 @@ export const EasingEditor: React.FC<EasingEditorProps> = ({ value, onChange }) =
                 ))}
             </SimpleGrid>
 
-            <HStack justify="space-between" fontSize="10px" color="text.muted">
+            <HStack justify="space-between" fontSize="xs" color="text.muted">
                 <Text>P1: {value[0]}, {value[1]}</Text>
                 <Text>P2: {value[2]}, {value[3]}</Text>
             </HStack>

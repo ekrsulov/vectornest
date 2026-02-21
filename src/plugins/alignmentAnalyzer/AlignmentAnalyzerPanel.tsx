@@ -134,7 +134,7 @@ export const AlignmentAnalyzerPanel: React.FC = () => {
                     border="1px solid"
                     borderColor={issueColor[type] ?? 'gray.500'}
                   >
-                    <Text fontSize="2xs" color={issueColor[type] ?? 'gray.400'}>
+                    <Text fontSize="xs" color={issueColor[type] ?? 'gray.600'} _dark={{ color: issueColor[type] ?? 'gray.400' }}>
                       {issueLabel[type] ?? type}: {items.length}
                     </Text>
                   </Box>
@@ -151,12 +151,12 @@ export const AlignmentAnalyzerPanel: React.FC = () => {
                     _hover={{ bg: 'whiteAlpha.50' }}
                   >
                     <Box w={2} h={2} borderRadius="full" bg={issueColor[issue.type] ?? 'gray.500'} flexShrink={0} />
-                    <Text fontSize="2xs" color="gray.300" flex={1}>{issue.description}</Text>
-                    <Text fontSize="2xs" fontFamily="mono" color="orange.300">{issue.offset.toFixed(1)}px</Text>
+                    <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} flex={1}>{issue.description}</Text>
+                    <Text fontSize="xs" fontFamily="mono" color="orange.700" _dark={{ color: 'orange.300' }}>{issue.offset.toFixed(1)}px</Text>
                   </HStack>
                 ))}
                 {state.issues.length > 30 && (
-                  <Text fontSize="2xs" color="gray.500" px={1}>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} px={1}>
                     +{state.issues.length - 30} more issues
                   </Text>
                 )}
@@ -165,13 +165,13 @@ export const AlignmentAnalyzerPanel: React.FC = () => {
           )}
 
           {state.issues.length === 0 && selectedIds.length >= 2 && (
-            <Text fontSize="xs" color="green.300" px={2} py={1}>
+            <Text fontSize="xs" color="green.600" _dark={{ color: 'green.300' }} px={2} py={1}>
               No near-miss alignment issues detected
             </Text>
           )}
 
           {selectedIds.length < 2 && (
-            <Text fontSize="xs" color="gray.500" px={2} py={2}>
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} px={2} py={2}>
               Select at least 2 elements to analyze alignment
             </Text>
           )}

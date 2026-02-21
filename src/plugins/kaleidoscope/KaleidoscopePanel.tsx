@@ -59,7 +59,7 @@ export const KaleidoscopePanel: React.FC = () => {
   return (
     <Panel title="Kaleidoscope" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
-        <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+        <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
           Replicate selected paths with rotational symmetry.
           Creates {expectedCopies} copies per source path.
         </Text>

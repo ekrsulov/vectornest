@@ -4,6 +4,7 @@ import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SectionHeader } from '../../ui/SectionHeader';
+import { StatRow } from '../../ui/StatRow';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { PathStatisticsPluginSlice } from './slice';
@@ -11,15 +12,6 @@ import { computePathStats } from './statsUtils';
 import type { CanvasElement } from '../../types';
 
 type StatsStore = CanvasStore & PathStatisticsPluginSlice;
-
-function StatRow({ label, value, color }: { label: string; value: string | number; color?: string }) {
-  return (
-    <HStack justify="space-between" px={2} py={0.5}>
-      <Text fontSize="xs" color="gray.400">{label}</Text>
-      <Text fontSize="xs" color={color || 'gray.300'} fontFamily="mono">{value}</Text>
-    </HStack>
-  );
-}
 
 export const PathStatisticsPanel: React.FC = () => {
   const { state, update, selectedIds, elements } = useCanvasStore(
@@ -99,7 +91,7 @@ export const PathStatisticsPanel: React.FC = () => {
           <StatRow label="Node Density" value={`${s.nodeDensity}/100px`} />
 
           <HStack justify="space-between" px={2} py={1}>
-            <Text fontSize="xs" color="gray.400">Efficiency Score</Text>
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Efficiency Score</Text>
             <Text fontSize="sm" fontWeight="bold" color={effColor}>{s.efficiencyScore}%</Text>
           </HStack>
           <Box px={2} py={1}>

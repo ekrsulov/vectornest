@@ -182,7 +182,7 @@ export const PotracePanel: React.FC<PotracePanelProps> = ({ hideTitle = false })
               max={100}
               step={1}
               textAlign="right"
-              fontSize="11px"
+              fontSize="xs"
               h="20px"
               w="50px"
               px={2}

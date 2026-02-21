@@ -92,25 +92,25 @@ export const BboxVisualizerPanel: React.FC = () => {
               <SectionHeader title="Statistics" />
 
               <HStack justify="space-between" px={2} py={1}>
-                <Text fontSize="xs" color="gray.400">Elements</Text>
-                <Text fontSize="xs" color="gray.300">{state.bboxes.length}</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Elements</Text>
+                <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>{state.bboxes.length}</Text>
               </HStack>
 
               <HStack justify="space-between" px={2} py={1}>
-                <Text fontSize="xs" color="gray.400">Total Bounding Area</Text>
-                <Text fontSize="xs" color="gray.300">{formatArea(state.totalArea)}</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Total Bounding Area</Text>
+                <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>{formatArea(state.totalArea)}</Text>
               </HStack>
 
               {state.overlaps.length > 0 && (
                 <>
                   <HStack justify="space-between" px={2} py={1}>
-                    <Text fontSize="xs" color="gray.400">Overlap Regions</Text>
+                    <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Overlap Regions</Text>
                     <Text fontSize="xs" color="red.400">{state.overlaps.length}</Text>
                   </HStack>
 
                   <HStack justify="space-between" px={2} py={1}>
-                    <Text fontSize="xs" color="gray.400">Overlap Area</Text>
-                    <Text fontSize="xs" color="red.300">{formatArea(state.totalOverlapArea)}</Text>
+                    <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Overlap Area</Text>
+                    <Text fontSize="xs" color="red.700" _dark={{ color: 'red.300' }}>{formatArea(state.totalOverlapArea)}</Text>
                   </HStack>
                 </>
               )}
@@ -131,14 +131,14 @@ export const BboxVisualizerPanel: React.FC = () => {
                       store.selectElements([bbox.id]);
                     }}
                   >
-                    <Text fontSize="xs" color="gray.300" fontWeight="bold" mb={1}>
+                    <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} fontWeight="bold" mb={1}>
                       {bbox.id.slice(0, 12)}...
                     </Text>
                     <HStack justify="space-between">
-                      <Text fontSize="xs" color="gray.500">
+                      <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
                         {bbox.width.toFixed(1)} × {bbox.height.toFixed(1)}
                       </Text>
-                      <Text fontSize="xs" color="gray.500">
+                      <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
                         {formatArea(bbox.area)}
                       </Text>
                     </HStack>

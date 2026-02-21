@@ -116,7 +116,7 @@ export const GridCompliancePanel: React.FC = () => {
           <SectionHeader title="Results" />
 
           <HStack justify="space-between" px={2} py={1}>
-            <Text fontSize="xs" color="gray.400">
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
               Compliance Score
             </Text>
             <Text fontSize="sm" fontWeight="bold" color={complianceColor}>
@@ -125,10 +125,10 @@ export const GridCompliancePanel: React.FC = () => {
           </HStack>
 
           <HStack justify="space-between" px={2} py={1}>
-            <Text fontSize="xs" color="gray.400">
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
               Checks Passed
             </Text>
-            <Text fontSize="xs" color="gray.300">
+            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>
               {state.passedChecks} / {state.totalChecks}
             </Text>
           </HStack>
@@ -165,12 +165,12 @@ export const GridCompliancePanel: React.FC = () => {
                     borderLeft="3px solid"
                     borderColor="red.400"
                   >
-                    <Text fontSize="xs" fontWeight="bold" color="gray.300" mb={1}>
+                    <Text fontSize="xs" fontWeight="bold" color="gray.700" _dark={{ color: 'gray.300' }} mb={1}>
                       {elId.slice(0, 12)}...
                     </Text>
                     {elIssues.map((issue, i) => (
                       <HStack key={i} justify="space-between">
-                        <Text fontSize="xs" color="gray.400">
+                        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
                           {issue.type.replace('off-grid-', '').toUpperCase()}
                         </Text>
                         <Text fontSize="xs" color="red.300">

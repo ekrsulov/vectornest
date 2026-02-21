@@ -259,7 +259,7 @@ const PaintSwatch: React.FC<PaintSwatchProps> = ({
         {/* Paint info */}
         <VStack spacing={0} align="start" flex={1} minW={0}>
           <Text
-            fontSize="11px"
+            fontSize="xs"
             fontFamily="mono"
             color="gray.600"
             _dark={{ color: 'gray.400' }}
@@ -271,7 +271,7 @@ const PaintSwatch: React.FC<PaintSwatchProps> = ({
             {paint.value.length > 20 ? `${paint.value.substring(0, 20)}...` : paint.value}
           </Text>
           {paint.opacity !== undefined && paint.opacity !== 1 && (
-            <Text fontSize="10px" color="gray.500">
+            <Text fontSize="xs" color="gray.500">
               {Math.round(paint.opacity * 100)}% opacity
             </Text>
           )}
@@ -283,7 +283,7 @@ const PaintSwatch: React.FC<PaintSwatchProps> = ({
             <ConditionalTooltip label={`${paint.fillCount} fill${paint.fillCount > 1 ? 's' : ''}`}>
               <Badge
                 colorScheme="purple"
-                fontSize="9px"
+                fontSize="2xs"
                 px={1}
                 borderRadius="full"
               >
@@ -295,7 +295,7 @@ const PaintSwatch: React.FC<PaintSwatchProps> = ({
             <ConditionalTooltip label={`${paint.strokeCount} stroke${paint.strokeCount > 1 ? 's' : ''}`}>
               <Badge
                 colorScheme="blue"
-                fontSize="9px"
+                fontSize="2xs"
                 px={1}
                 borderRadius="full"
               >
@@ -620,7 +620,7 @@ export const PaintsPanel: React.FC<PanelComponentProps> = ({
             borderRadius="md"
             mb={1}
           >
-            <Text fontSize="11px" color="blue.700" _dark={{ color: 'blue.200' }}>
+            <Text fontSize="xs" color="blue.700" _dark={{ color: 'blue.200' }}>
               {!mergeSourcePaint
                 ? "Click a paint to select as source"
                 : "Click another paint to merge into source"
@@ -654,7 +654,7 @@ export const PaintsPanel: React.FC<PanelComponentProps> = ({
 
         {/* Paint list */}
         {visiblePaints.length === 0 ? (
-          <Text fontSize="11px" color="gray.500" textAlign="center" py={2}>
+          <Text fontSize="xs" color="gray.500" textAlign="center" py={2}>
             No paints found
           </Text>
         ) : (
@@ -678,7 +678,7 @@ export const PaintsPanel: React.FC<PanelComponentProps> = ({
 
         {/* More paints indicator */}
         {allPaints.length > maxPaintsToShow && (
-          <Text fontSize="10px" color="gray.500" textAlign="center">
+          <Text fontSize="xs" color="gray.500" textAlign="center">
             +{allPaints.length - maxPaintsToShow} more paints
           </Text>
         )}

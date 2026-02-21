@@ -122,7 +122,7 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await expect(brushModeSwitch.locator('input')).toBeChecked();
 
     // Radius slider should appear when brush is active
-    await expect(page.getByText('Radius:').first()).toBeVisible();
+    await expect(page.getByText('Radius').first()).toBeVisible();
   });
 
   test('should adjust smooth brush settings', async ({ page }) => {
@@ -168,7 +168,7 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await expect(brushModeSwitch.locator('input')).toBeChecked();
 
     // Test strength slider - check for the label
-    const strengthLabel = page.getByText('Strength:').first();
+    const strengthLabel = page.getByText('Strength').first();
     await expect(strengthLabel).toBeVisible();
 
     // Enable simplify points and ensure dependent controls appear
@@ -176,10 +176,10 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await simplifyCheckbox.check({ force: true });
     await expect(simplifyCheckbox).toBeChecked();
 
-    const toleranceLabel = page.getByText('Tolerance:').first();
+    const toleranceLabel = page.getByText('Tolerance').first();
     await expect(toleranceLabel).toBeVisible();
 
-    const minDistLabel = page.getByText('Min Dist:').first();
+    const minDistLabel = page.getByText('Min Dist').first();
     await expect(minDistLabel).toBeVisible();
   });
 
@@ -303,7 +303,7 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await expect(roundPathHeading).toBeVisible();
     const roundPathPanel = roundPathHeading.locator('xpath=../..');
 
-    const radiusLabel = roundPathPanel.getByText('Radius:').first();
+    const radiusLabel = roundPathPanel.getByText('Radius').first();
     await expect(radiusLabel).toBeVisible();
 
     // The control should be editable now - type a value greater than max (e.g., 60 > max 50)
@@ -353,7 +353,7 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     const smoothBrushPanel = smoothBrushHeading.locator('xpath=../..');
 
     // Find the Strength percent control and click its visible value box to edit
-    const strengthLabel = smoothBrushPanel.getByText('Strength:').first();
+    const strengthLabel = smoothBrushPanel.getByText('Strength').first();
     const strengthInput = await openSliderValueInput(strengthLabel);
     await strengthInput.fill('200');
     await strengthInput.press('Enter');

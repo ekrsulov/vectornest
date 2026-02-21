@@ -17,7 +17,7 @@ function SymBar({ label, value }: { label: string; value: number }) {
   return (
     <Box>
       <HStack justify="space-between">
-        <Text fontSize="xs" color="gray.400">{label}</Text>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>{label}</Text>
         <Text fontSize="xs" color={color}>{value}%</Text>
       </HStack>
       <Box h="4px" borderRadius="full" bg="whiteAlpha.100" overflow="hidden">
@@ -77,7 +77,7 @@ export const SymmetryDetectorPanel: React.FC = () => {
         <>
           <SectionHeader title="Overview" />
           <HStack justify="space-between" px={2} py={1}>
-            <Text fontSize="xs" color="gray.400">Average Symmetry</Text>
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Average Symmetry</Text>
             <Text fontSize="sm" fontWeight="bold" color={state.avgSymmetry >= 60 ? 'green.400' : 'orange.400'}>
               {state.avgSymmetry}%
             </Text>
@@ -96,7 +96,7 @@ export const SymmetryDetectorPanel: React.FC = () => {
                 onClick={() => useCanvasStore.getState().selectElements([r.elementId])}
               >
                 <HStack justify="space-between" mb={1}>
-                  <Text fontSize="xs" color="gray.300">{r.elementId.slice(0, 12)}...</Text>
+                  <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>{r.elementId.slice(0, 12)}...</Text>
                   <HStack gap={1}>
                     <Box
                       px={1.5}
@@ -109,7 +109,7 @@ export const SymmetryDetectorPanel: React.FC = () => {
                     >
                       {axisLabels[r.bestAxis]}
                     </Box>
-                    <Text fontSize="xs" color="gray.400">{r.bestScore}%</Text>
+                    <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>{r.bestScore}%</Text>
                   </HStack>
                 </HStack>
                 <VStack gap={0.5} align="stretch">

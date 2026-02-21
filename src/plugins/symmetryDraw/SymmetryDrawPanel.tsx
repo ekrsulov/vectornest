@@ -55,7 +55,7 @@ export const SymmetryDrawPanel: React.FC = () => {
 
           {symmetry.mode === 'radial' && (
             <SliderControl
-              label="Segments:"
+              label="Segments"
               value={symmetry.segments}
               min={3}
               max={16}
@@ -91,7 +91,7 @@ export const SymmetryDrawPanel: React.FC = () => {
 
           {symmetry.showGuides && (
             <SliderControl
-              label="Guide opacity:"
+              label="Guide opacity"
               value={symmetry.guideOpacity}
               min={0.1}
               max={1}

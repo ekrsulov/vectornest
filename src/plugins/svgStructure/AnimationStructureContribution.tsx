@@ -237,12 +237,12 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
 
   const renderTargetLabel = useCallback((animation: SVGAnimation) => {
     const text = (value: string) => (
-      <Text fontSize="10px" color="text.muted" noOfLines={1}>
+      <Text fontSize="xs" color="text.muted" noOfLines={1}>
         {value}
       </Text>
     );
     const badge = (label: string) => (
-      <Badge colorScheme="gray" fontSize="9px" px={1} py={0.25} borderRadius="sm">
+      <Badge colorScheme="gray" fontSize="2xs" px={1} py={0.25} borderRadius="sm">
         {label}
       </Badge>
     );
@@ -252,7 +252,7 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
         {badge(baseType)}
         {childLabel && (
           <>
-            <Text fontSize="10px" color="text.muted">→</Text>
+            <Text fontSize="xs" color="text.muted">→</Text>
             {text(childLabel)}
             {badge(childType ?? 'child')}
           </>
@@ -1217,7 +1217,7 @@ export const AdvancedAnimationStructureBadges: React.FC<SvgStructureContribution
   if (!targetId || directCount + indirectCount === 0) return null;
 
   return (
-    <Badge colorScheme="blue" fontSize="9px" px={1} py={0.5} borderRadius="sm">
+    <Badge colorScheme="blue" fontSize="2xs" px={1} py={0.5} borderRadius="sm">
       {!node.isDefs && indirectCount > 0
         ? directCount > 0
           ? `${directCount} → ${indirectCount}`

@@ -91,7 +91,7 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
     const modeBadge = (
         <Badge
             colorScheme={getModeBadgeColor(mode)}
-            fontSize="9px"
+            fontSize="2xs"
             textTransform="capitalize"
             variant="subtle"
         >

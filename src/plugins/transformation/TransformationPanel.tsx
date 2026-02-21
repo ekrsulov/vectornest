@@ -848,7 +848,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
               <>
                 <Divider borderColor="gray.200" _dark={{ borderColor: 'gray.600' }} />
                 <VStack spacing={1} align="stretch">
-                  <Text fontSize="10px" fontWeight="medium" color="gray.500" _dark={{ color: 'gray.400' }} textTransform="uppercase" letterSpacing="wider">
+                  <Text fontSize="xs" fontWeight="medium" color="gray.500" _dark={{ color: 'gray.400' }} textTransform="uppercase" letterSpacing="wider">
                     Applied Transform
                   </Text>
                   <Grid templateColumns="1fr 1fr" gap={1}>
@@ -856,16 +856,16 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       <>
                         <GridItem>
                           <HStack spacing={1}>
-                            <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Tx</Text>
-                            <Text fontSize="10px" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
+                            <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Tx</Text>
+                            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
                               {transformationDecomposition.translateX}
                             </Text>
                           </HStack>
                         </GridItem>
                         <GridItem>
                           <HStack spacing={1}>
-                            <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Ty</Text>
-                            <Text fontSize="10px" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
+                            <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Ty</Text>
+                            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
                               {transformationDecomposition.translateY}
                             </Text>
                           </HStack>
@@ -875,8 +875,8 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                     {transformationDecomposition.rotation !== 0 && (
                       <GridItem colSpan={2}>
                         <HStack spacing={1}>
-                          <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Rot</Text>
-                          <Text fontSize="10px" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
+                          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Rot</Text>
+                          <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
                             {transformationDecomposition.rotation}°
                           </Text>
                         </HStack>
@@ -886,16 +886,16 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       <>
                         <GridItem>
                           <HStack spacing={1}>
-                            <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Sx</Text>
-                            <Text fontSize="10px" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
+                            <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Sx</Text>
+                            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
                               {transformationDecomposition.scaleX}
                             </Text>
                           </HStack>
                         </GridItem>
                         <GridItem>
                           <HStack spacing={1}>
-                            <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Sy</Text>
-                            <Text fontSize="10px" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
+                            <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">Sy</Text>
+                            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
                               {transformationDecomposition.scaleY}
                             </Text>
                           </HStack>
@@ -906,16 +906,16 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       <>
                         <GridItem>
                           <HStack spacing={1}>
-                            <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">SkX</Text>
-                            <Text fontSize="10px" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
+                            <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">SkX</Text>
+                            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
                               {transformationDecomposition.skewX}°
                             </Text>
                           </HStack>
                         </GridItem>
                         <GridItem>
                           <HStack spacing={1}>
-                            <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">SkY</Text>
-                            <Text fontSize="10px" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
+                            <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }} minW="28px">SkY</Text>
+                            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">
                               {transformationDecomposition.skewY}°
                             </Text>
                           </HStack>

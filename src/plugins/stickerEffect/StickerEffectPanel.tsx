@@ -1,5 +1,6 @@
 import React from 'react';
-import { VStack, Text, Box, Input } from '@chakra-ui/react';
+import { VStack, Text } from '@chakra-ui/react';
+import { PanelColorPicker } from '../../ui/PanelColorPicker';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
 import { Panel } from '../../ui/Panel';
@@ -91,7 +92,7 @@ export const StickerEffectPanel: React.FC = () => {
     <Panel title="Sticker Effect" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
         {selectedCount === 0 ? (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             Select elements to apply sticker effect.
           </Text>
         ) : (
@@ -107,30 +108,17 @@ export const StickerEffectPanel: React.FC = () => {
             {style === 'outline' && (
               <>
                 <SliderControl
-                  label="Width:"
+                  label="Width"
                   value={outlineWidth}
                   min={1}
                   max={20}
                   step={0.5}
                   onChange={(val) => updateStickerEffectState?.({ outlineWidth: val })}
                 />
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Text fontSize="11px" minW="50px" color="gray.600" _dark={{ color: 'gray.400' }}>
-                    Color:
-                  </Text>
-                  <Input
-                    type="color"
-                    value={outlineColor}
-                    onChange={(e) => updateStickerEffectState?.({ outlineColor: e.target.value })}
-                    size="xs"
-                    w="32px"
-                    h="20px"
-                    p={0}
-                    border="none"
-                    cursor="pointer"
-                  />
-                  <Text fontSize="10px" fontFamily="mono" color="gray.500">{outlineColor}</Text>
-                </Box>
+                <PanelColorPicker
+                  value={outlineColor}
+                  onChange={(hex) => updateStickerEffectState?.({ outlineColor: hex })}
+                />
               </>
             )}
 
@@ -138,7 +126,7 @@ export const StickerEffectPanel: React.FC = () => {
             {style === 'shadow' && (
               <>
                 <SliderControl
-                  label="Offset X:"
+                  label="Offset X"
                   value={shadowOffsetX}
                   min={-20}
                   max={20}
@@ -146,7 +134,7 @@ export const StickerEffectPanel: React.FC = () => {
                   onChange={(val) => updateStickerEffectState?.({ shadowOffsetX: val })}
                 />
                 <SliderControl
-                  label="Offset Y:"
+                  label="Offset Y"
                   value={shadowOffsetY}
                   min={-20}
                   max={20}
@@ -154,29 +142,17 @@ export const StickerEffectPanel: React.FC = () => {
                   onChange={(val) => updateStickerEffectState?.({ shadowOffsetY: val })}
                 />
                 <SliderControl
-                  label="Blur:"
+                  label="Blur"
                   value={shadowBlur}
                   min={0}
                   max={20}
                   step={0.5}
                   onChange={(val) => updateStickerEffectState?.({ shadowBlur: val })}
                 />
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Text fontSize="11px" minW="50px" color="gray.600" _dark={{ color: 'gray.400' }}>
-                    Color:
-                  </Text>
-                  <Input
-                    type="color"
-                    value={shadowColor.substring(0, 7)}
-                    onChange={(e) => updateStickerEffectState?.({ shadowColor: e.target.value })}
-                    size="xs"
-                    w="32px"
-                    h="20px"
-                    p={0}
-                    border="none"
-                    cursor="pointer"
-                  />
-                </Box>
+                <PanelColorPicker
+                  value={shadowColor}
+                  onChange={(hex) => updateStickerEffectState?.({ shadowColor: hex })}
+                />
               </>
             )}
 
@@ -184,37 +160,24 @@ export const StickerEffectPanel: React.FC = () => {
             {style === 'neon' && (
               <>
                 <SliderControl
-                  label="Intensity:"
+                  label="Intensity"
                   value={neonIntensity}
                   min={1}
                   max={15}
                   step={0.5}
                   onChange={(val) => updateStickerEffectState?.({ neonIntensity: val })}
                 />
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Text fontSize="11px" minW="50px" color="gray.600" _dark={{ color: 'gray.400' }}>
-                    Color:
-                  </Text>
-                  <Input
-                    type="color"
-                    value={neonColor}
-                    onChange={(e) => updateStickerEffectState?.({ neonColor: e.target.value })}
-                    size="xs"
-                    w="32px"
-                    h="20px"
-                    p={0}
-                    border="none"
-                    cursor="pointer"
-                  />
-                  <Text fontSize="10px" fontFamily="mono" color="gray.500">{neonColor}</Text>
-                </Box>
+                <PanelColorPicker
+                  value={neonColor}
+                  onChange={(hex) => updateStickerEffectState?.({ neonColor: hex })}
+                />
               </>
             )}
 
             {/* Emboss controls */}
             {style === 'emboss' && (
               <SliderControl
-                label="Depth:"
+                label="Depth"
                 value={outlineWidth}
                 min={0.5}
                 max={10}

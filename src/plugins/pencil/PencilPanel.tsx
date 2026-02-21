@@ -23,7 +23,7 @@ export const PencilPanel: React.FC<PencilPanelProps> = ({ hideTitle = false }) =
       <VStack spacing={2} align="stretch" pb={0.5}>
         {/* Path Mode Selection */}
         <HStack spacing={1} justify="space-between">
-          <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>Path Mode:</Text>
+          <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>Path Mode</Text>
           <JoinedButtonGroup
             options={[
               { value: 'add', label: 'Add' },
@@ -37,7 +37,7 @@ export const PencilPanel: React.FC<PencilPanelProps> = ({ hideTitle = false }) =
 
         <Box pr={0.5}>
           <SliderControl
-            label="Tolerance:"
+            label="Tolerance"
             value={pencil?.simplificationTolerance ?? 0}
             min={0}
             max={10}

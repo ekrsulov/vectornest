@@ -151,7 +151,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                         <Box color="gray.600" _dark={{ color: 'gray.400' }}>
                           <Text>Offset</Text>
 
-                          <HStack justify="space-between" fontSize="10px">
+                          <HStack justify="space-between" fontSize="xs">
                             <Text color="gray.600" _dark={{ color: 'gray.400' }}>
                               Current:
                             </Text>
@@ -162,7 +162,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                           </HStack>
 
                           {offsetFromMathCenter && (
-                            <HStack justify="space-between" fontSize="10px">
+                            <HStack justify="space-between" fontSize="xs">
                               <Text color="gray.600" _dark={{ color: 'gray.400' }}>
                                 From math center:
                               </Text>

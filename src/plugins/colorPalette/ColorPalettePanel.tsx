@@ -166,12 +166,12 @@ export const ColorPalettePanel: React.FC = () => {
                     position="absolute"
                     top={-0.5}
                     right={-0.5}
-                    fontSize="2xs"
+                    fontSize="xs"
                     bg="gray.700"
                     borderRadius="full"
                     px={1}
                     lineHeight="1.2"
-                    color="gray.300"
+                    color="gray.700" _dark={{ color: 'gray.300' }}
                   >
                     {color.count}
                   </Text>
@@ -185,14 +185,14 @@ export const ColorPalettePanel: React.FC = () => {
             {state.colors.slice(0, 20).map((color, i) => (
               <HStack key={`detail-${i}`} gap={1} py={0.5} px={1}>
                 <Box w={3} h={3} borderRadius="sm" bg={color.hex} flexShrink={0} border="1px solid" borderColor="whiteAlpha.200" />
-                <Text fontSize="2xs" fontFamily="mono" color="gray.300" flex={1}>{color.hex}</Text>
-                <Text fontSize="2xs" color="gray.500">{color.source}</Text>
-                <Text fontSize="2xs" color="gray.400" fontWeight="bold">×{color.count}</Text>
-                <Text fontSize="2xs" color="gray.500">H{color.hue}°</Text>
+                <Text fontSize="xs" fontFamily="mono" color="gray.700" _dark={{ color: 'gray.300' }} flex={1}>{color.hex}</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>{color.source}</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="bold">×{color.count}</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>H{color.hue}°</Text>
               </HStack>
             ))}
             {state.colors.length > 20 && (
-              <Text fontSize="2xs" color="gray.500" px={1}>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} px={1}>
                 +{state.colors.length - 20} more...
               </Text>
             )}
@@ -210,7 +210,7 @@ export const ColorPalettePanel: React.FC = () => {
       )}
 
       {state.colors.length === 0 && targetElements.length === 0 && (
-        <Text fontSize="xs" color="gray.500" px={2} py={2}>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} px={2} py={2}>
           Select elements or enable "All Elements" to extract colors
         </Text>
       )}

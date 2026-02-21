@@ -66,7 +66,7 @@ export const PathComplexityScorerPanel: React.FC = () => {
       </PanelToggle>
 
       <Box px={2} py={1}>
-        <Text fontSize="xs" color="gray.400" mb={1}>Sort By</Text>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>Sort By</Text>
         <CustomSelect
           size="sm"
           placeholder="Sort"
@@ -95,7 +95,7 @@ export const PathComplexityScorerPanel: React.FC = () => {
                 onClick={() => selectElements([r.elementId])}
               >
                 <HStack justify="space-between" mb={0.5}>
-                  <Text fontSize="xs" color="gray.300" isTruncated maxW="120px">
+                  <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} isTruncated maxW="120px">
                     {r.label}
                   </Text>
                   <HStack gap={1}>
@@ -107,7 +107,7 @@ export const PathComplexityScorerPanel: React.FC = () => {
                       {r.score}
                     </Text>
                     <Text
-                      fontSize="9px"
+                      fontSize="xs"
                       px={1}
                       borderRadius="sm"
                       bg={GRADE_COLORS[r.grade]}
@@ -126,10 +126,10 @@ export const PathComplexityScorerPanel: React.FC = () => {
                   />
                 </Box>
                 <HStack mt={0.5} gap={2}>
-                  <Text fontSize="9px" color="gray.500">pts:{r.points}</Text>
-                  <Text fontSize="9px" color="gray.500">crv:{r.curves}</Text>
-                  <Text fontSize="9px" color="gray.500">cusp:{r.cusps}</Text>
-                  <Text fontSize="9px" color="gray.500">sp:{r.subPaths}</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>pts:{r.points}</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>crv:{r.curves}</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>cusp:{r.cusps}</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>sp:{r.subPaths}</Text>
                 </HStack>
               </Box>
             ))}

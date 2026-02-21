@@ -239,7 +239,7 @@ export const AnimationTargetSelector: React.FC<AnimationTargetSelectorProps> = (
     }
 
     return (
-      <Badge colorScheme="purple" fontSize="10px">
+      <Badge colorScheme="purple" fontSize="xs">
         {label}
       </Badge>
     );
@@ -259,7 +259,7 @@ export const AnimationTargetSelector: React.FC<AnimationTargetSelectorProps> = (
           <Text {...labelStyle} minW={labelWidth} color="blue.500">
             Target
           </Text>
-          <Text fontSize="11px" color="blue.500" isTruncated>
+          <Text fontSize="xs" color="blue.500" isTruncated>
             {targetElementForRefs.id}
           </Text>
         </HStack>
@@ -323,7 +323,7 @@ export const AnimationTargetSelector: React.FC<AnimationTargetSelectorProps> = (
           <Text {...labelStyle} minW={labelWidth} color="gray.500">
             Preview via
           </Text>
-          <Text fontSize="11px" color="gray.500" isTruncated>
+          <Text fontSize="xs" color="gray.500" isTruncated>
             {value.previewElementId}
           </Text>
         </HStack>

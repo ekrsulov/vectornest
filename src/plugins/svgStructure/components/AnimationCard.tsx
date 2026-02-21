@@ -138,7 +138,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
                                 <Box pt={0.5} color={isExpanded ? 'blue.500' : 'text.muted'}>
                                     {getIcon()}
                                 </Box>
-                                <Badge variant="subtle" colorScheme="blue" fontSize="9px" px={1} borderRadius="sm" textTransform="none">
+                                <Badge variant="subtle" colorScheme="blue" fontSize="2xs" px={1} borderRadius="sm" textTransform="none">
                                     {getLabel()}
                                 </Badge>
                             </HStack>
@@ -172,7 +172,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
 
                         {targetLabel && (
                             <HStack spacing={1} align="center" width="100%" overflow="hidden">
-                                <Text fontSize="9px" color="text.muted" flexShrink={0}>on</Text>
+                                <Text fontSize="2xs" color="text.muted" flexShrink={0}>on</Text>
                                 <Box transform="scale(0.9)" transformOrigin="left" width="100%" overflow="hidden" textOverflow="ellipsis">
                                     {targetLabel}
                                 </Box>
@@ -180,7 +180,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
                         )}
 
                         {!isExpanded && summaryText && (
-                            <Text fontSize="10px" color="text.muted" noOfLines={2} pt={0.5} width="100%">
+                            <Text fontSize="xs" color="text.muted" noOfLines={2} pt={0.5} width="100%">
                                 {summaryText}
                             </Text>
                         )}
@@ -192,7 +192,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
                         {/* Target attribute / transform */}
                         {(animation.type === 'animate' || animation.type === 'animateTransform' || animation.type === 'set') && (
                             <VStack spacing={0} align="stretch">
-                                <Text fontSize="9px" color="text.muted">Attribute</Text>
+                                <Text fontSize="2xs" color="text.muted">Attribute</Text>
                                 <PanelTextInput
                                     value={animation.attributeName || ''}
                                     onChange={(val) => handleChange('attributeName', val)}
@@ -204,7 +204,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
 
                         {animation.type === 'animateTransform' && (
                             <VStack spacing={0} align="stretch">
-                                <Text fontSize="9px" color="text.muted">Transform type</Text>
+                                <Text fontSize="2xs" color="text.muted">Transform type</Text>
                                 <CustomSelect
                                     value={animation.transformType || 'translate'}
                                     onChange={(val) => handleChange('transformType', val)}
@@ -222,7 +222,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
 
                         {/* Core Fields */}
                         <VStack spacing={0} align="stretch">
-                            <Text fontSize="9px" color="text.muted">Duration</Text>
+                            <Text fontSize="2xs" color="text.muted">Duration</Text>
                             <SliderControl
                                 value={dur}
                                 min={0.1}
@@ -238,7 +238,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
                         </VStack>
 
                         <VStack spacing={0} align="stretch">
-                            <Text fontSize="9px" color="text.muted">Repeat Count</Text>
+                            <Text fontSize="2xs" color="text.muted">Repeat Count</Text>
                             <PanelTextInput
                                 value={String(animation.repeatCount || '1')}
                                 onChange={(val) => handleChange('repeatCount', val === 'indefinite' ? 'indefinite' : (isNaN(Number(val)) ? val : Number(val)))}
@@ -274,7 +274,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
 	                                <Box key={field.key} role="group">
 	                                    <VStack spacing={0} align="stretch">
 	                                        <HStack spacing={1} align="center" justify="space-between">
-	                                            <Text fontSize="9px" color="text.muted">
+	                                            <Text fontSize="2xs" color="text.muted">
 	                                                {field.label}
 	                                            </Text>
 	                                            <IconButton
@@ -345,10 +345,10 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
                         {/* AnimateMotion Specific Fields */}
                         {animation.type === 'animateMotion' && (
                             <Box borderTopWidth="1px" borderColor="border.subtle" pt={2} mt={1}>
-                                <Text fontSize="10px" fontWeight="bold" mb={2} color="text.subtle">Motion Path</Text>
+                                <Text fontSize="xs" fontWeight="bold" mb={2} color="text.subtle">Motion Path</Text>
                                 <VStack spacing={2}>
                                     <VStack spacing={0} align="stretch" width="100%">
-                                        <Text fontSize="9px" color="text.muted">Reference Path</Text>
+                                        <Text fontSize="2xs" color="text.muted">Reference Path</Text>
                                         <CustomSelect
                                             value={animation.mpath || ''}
                                             onChange={(val) => handleChange('mpath', val)}
@@ -365,7 +365,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
                                     </VStack>
 
                                     <VStack spacing={0} align="stretch" width="100%">
-                                        <Text fontSize="9px" color="text.muted">Rotation</Text>
+                                        <Text fontSize="2xs" color="text.muted">Rotation</Text>
                                         <CustomSelect
                                             value={String(animation.rotate || 'auto')}
                                             onChange={(val) => handleChange('rotate', val)}
@@ -383,7 +383,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
 
                                     {!animation.mpath && (
                                         <VStack spacing={0} align="stretch" width="100%">
-                                            <Text fontSize="9px" color="text.muted">Path</Text>
+                                            <Text fontSize="2xs" color="text.muted">Path</Text>
                                             <PanelTextInput
                                                 value={animation.path || ''}
                                                 onChange={(val) => handleChange('path', val)}
@@ -394,7 +394,7 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
                                     )}
 
                                     <VStack spacing={0} align="stretch" width="100%">
-                                        <Text fontSize="9px" color="text.muted">Key Points</Text>
+                                        <Text fontSize="2xs" color="text.muted">Key Points</Text>
                                         <PanelTextInput
                                             value={animation.keyPoints || ''}
                                             onChange={(val) => handleChange('keyPoints', val)}

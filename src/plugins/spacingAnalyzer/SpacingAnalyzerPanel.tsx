@@ -78,6 +78,7 @@ export const SpacingAnalyzerPanel: React.FC = () => {
             step={0.5}
             onChange={(val) => update({ inconsistencyThreshold: val })}
             formatter={(v) => `${v}px`}
+            stacked
           />
 
           <PanelStyledButton onClick={handleAnalyze}>

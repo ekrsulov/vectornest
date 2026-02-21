@@ -77,13 +77,13 @@ export const LayerDepthPanel: React.FC = () => {
               <SectionHeader title="Summary" />
 
               <HStack justify="space-between" px={2} py={1}>
-                <Text fontSize="xs" color="gray.400">Total Layers</Text>
-                <Text fontSize="xs" color="gray.300">{state.totalLayers}</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Total Layers</Text>
+                <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>{state.totalLayers}</Text>
               </HStack>
 
               {state.fullyObscuredCount > 0 && (
                 <HStack justify="space-between" px={2} py={1}>
-                  <Text fontSize="xs" color="gray.400">Fully Obscured</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Fully Obscured</Text>
                   <Text fontSize="xs" color="red.400" fontWeight="bold">
                     {state.fullyObscuredCount}
                   </Text>
@@ -92,7 +92,7 @@ export const LayerDepthPanel: React.FC = () => {
 
               {state.partiallyObscuredCount > 0 && (
                 <HStack justify="space-between" px={2} py={1}>
-                  <Text fontSize="xs" color="gray.400">Partially Obscured</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Partially Obscured</Text>
                   <Text fontSize="xs" color="orange.400" fontWeight="bold">
                     {state.partiallyObscuredCount}
                   </Text>
@@ -140,7 +140,7 @@ export const LayerDepthPanel: React.FC = () => {
                           >
                             {layer.zIndex}
                           </Box>
-                          <Text fontSize="xs" color="gray.300">
+                          <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>
                             {layer.name}...
                           </Text>
                         </HStack>
@@ -153,7 +153,7 @@ export const LayerDepthPanel: React.FC = () => {
                       </HStack>
 
                       {layer.obscuredBy.length > 0 && (
-                        <Text fontSize="xs" color="gray.500" mt={1}>
+                        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} mt={1}>
                           Behind {layer.obscuredBy.length} element{layer.obscuredBy.length > 1 ? 's' : ''}
                         </Text>
                       )}

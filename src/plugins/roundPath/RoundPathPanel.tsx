@@ -37,7 +37,7 @@ export const RoundPathPanel: React.FC = () => {
             <VStack spacing={1} align="stretch" pt={0.5} pb={0.5}>
                 <Box pr={0.5}>
                     <SliderControl
-                        label="Radius:"
+                        label="Radius"
                         value={pathRounding.radius}
                         min={0.1}
                         max={50}

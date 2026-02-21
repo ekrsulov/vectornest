@@ -119,7 +119,7 @@ export const AccessibilityCheckerPanel: React.FC = () => {
 
           <Box px={2} py={1}>
             <HStack justify="space-between" mb={1}>
-              <Text fontSize="xs" color="gray.400">Accessibility Score</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Accessibility Score</Text>
               <Text
                 fontSize="sm"
                 fontWeight="bold"
@@ -164,9 +164,9 @@ export const AccessibilityCheckerPanel: React.FC = () => {
               >
                 <HStack gap={1} mb={1}>
                   <Text fontSize="xs" color={severityColors[iss.severity]}>{severityIcons[iss.severity]}</Text>
-                  <Text fontSize="xs" color="gray.300">{iss.description}</Text>
+                  <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>{iss.description}</Text>
                 </HStack>
-                <Text fontSize="xs" color="gray.500" fontStyle="italic">{iss.suggestion}</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} fontStyle="italic">{iss.suggestion}</Text>
               </Box>
             ))}
           </VStack>

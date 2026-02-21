@@ -428,7 +428,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         </HStack>
 
         {/* Etiqueta descriptiva siempre visible */}
-        <Text fontSize="11px" color="text.muted">
+        <Text fontSize="xs" color="text.muted">
           {(singlePointInfo.info?.type || 'independent') === 'independent' && 'Points move independently'}
           {(singlePointInfo.info?.type || 'independent') === 'aligned' && 'Points maintain opposite directions'}
           {(singlePointInfo.info?.type || 'independent') === 'mirrored' && 'Points are mirrored across anchor'}
@@ -443,7 +443,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (singlePointInfo.pairedPoint) {
       return (
         <Collapse in={showDetails} animateOpacity>
-          <VStack spacing={0} align="stretch" fontSize="11px" color="text.muted" lineHeight="1.4">
+          <VStack spacing={0} align="stretch" fontSize="xs" color="text.muted" lineHeight="1.4">
             <Text><Text as="strong" color="text.primary">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
             <Text><Text as="strong" color="text.primary">Anchor:</Text> ({formatToPrecision(singlePointInfo.anchor1?.x || 0, settings.keyboardMovementPrecision)}, {formatToPrecision(singlePointInfo.anchor1?.y || 0, settings.keyboardMovementPrecision)})</Text>
             <Text><Text as="strong" color="text.primary">Direction:</Text> {singlePointInfo.angle1?.toFixed(1) || '0'}°</Text>
@@ -527,7 +527,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   />
                 </Box>
               </HStack>
-              <Text fontSize="11px" color="text.muted">
+              <Text fontSize="xs" color="text.muted">
                 Command {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}
               </Text>
             </VStack>
@@ -537,7 +537,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
           {/* Always visible anchor-specific actions */}
           {singlePointInfo && singlePointInfo.isAnchor && (
-            <VStack spacing={1} align="stretch" fontSize="11px" color="text.muted" lineHeight="1.4">
+            <VStack spacing={1} align="stretch" fontSize="xs" color="text.muted" lineHeight="1.4">
               {hasClosingZCommand(selectedCmd.elementId, selectedCmd.commandIndex) && (
                 <>
                   <PanelStyledButton

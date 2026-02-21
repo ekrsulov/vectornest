@@ -14,7 +14,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <HStack gap={1}>
       <Box w="8px" h="8px" borderRadius="full" bg={color} />
-      <Text fontSize="xs" color="gray.400">{label}</Text>
+      <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>{label}</Text>
     </HStack>
   );
 }
@@ -85,7 +85,7 @@ export const CoordinateMapperPanel: React.FC = () => {
           />
 
           <Box px={2} py={2}>
-            <Text fontSize="xs" color="gray.500" mb={1}>Legend</Text>
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} mb={1}>Legend</Text>
             <HStack gap={3}>
               <LegendDot color="#3182CE" label="Anchor" />
               <LegendDot color="#D69E2E" label="Control" />

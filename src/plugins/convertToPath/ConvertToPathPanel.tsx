@@ -36,7 +36,7 @@ export const ConvertToPathPanel: React.FC = () => {
           {label}
         </PanelStyledButton>
         {hasConvertible && (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.500' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.500' }}>
             {convertibleCount} native shape{convertibleCount === 1 ? '' : 's'} detected in the selection.
           </Text>
         )}

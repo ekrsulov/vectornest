@@ -105,8 +105,8 @@ const buildPathAttributeList = ({
 }: BuildPathAttributeListArgs): string[] => {
   const attributes: string[] = [
     `id="${pathElement.id}"`,
-    `d="${pathD}"`,
-    `stroke="${effectiveStrokeColor}"`,
+    ...(pathData.name ? [`data-name="${escapeXmlAttribute(pathData.name)}"`] : []),
+    `d="${pathD}"`,    `stroke="${effectiveStrokeColor}"`,
     `stroke-width="${pathData.strokeWidth}"`,
     `fill="${pathData.fillColor}"`,
     `fill-opacity="${pathData.fillOpacity}"`,

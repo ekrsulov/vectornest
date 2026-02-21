@@ -813,26 +813,26 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
                 cursor="pointer"
               >
                 {numberLabel && (
-                  <Text {...textProps} fontWeight="600" fontSize="10px" noOfLines={1} flexShrink={0}>
+                  <Text {...textProps} fontWeight="600" fontSize="xs" noOfLines={1} flexShrink={0}>
                     {numberLabel}
                   </Text>
                 )}
-                <Text {...textProps} fontWeight="600" fontSize="10px" noOfLines={1} flexShrink={1} minWidth={0}>
+                <Text {...textProps} fontWeight="600" fontSize="xs" noOfLines={1} flexShrink={1} minWidth={0}>
                   {node.displayId}
                 </Text>
               </HStack>
 
               <HStack spacing={1} align="center" justify="flex-end" flexShrink={0} flexWrap="wrap">
-                <Badge variant="subtle" colorScheme="gray" fontSize="9px" px={1.5} py={0.5} borderRadius="sm">
+                <Badge variant="subtle" colorScheme="gray" fontSize="2xs" px={1.5} py={0.5} borderRadius="sm">
                   {node.tagName}
                 </Badge>
-                {node.isDefs && <Badge colorScheme="purple" fontSize="9px" px={1} py={0.5}>D</Badge>}
+                {node.isDefs && <Badge colorScheme="purple" fontSize="2xs" px={1} py={0.5}>D</Badge>}
                 {node.dataElementId && !node.idAttribute && (
-                  <Badge colorScheme="blue" fontSize="9px" px={1} py={0.5}>data-id</Badge>
+                  <Badge colorScheme="blue" fontSize="2xs" px={1} py={0.5}>data-id</Badge>
                 )}
                 {matchingBadgeContributions.map(renderBadgeContribution)}
                 {node.children.length > 0 && (
-                  <Badge variant="outline" colorScheme="gray" fontSize="9px" px={1} py={0.5} borderRadius="sm">
+                  <Badge variant="outline" colorScheme="gray" fontSize="2xs" px={1} py={0.5} borderRadius="sm">
                     {node.children.length}
                   </Badge>
                 )}
@@ -842,7 +842,7 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
         </HStack>
 
         {showDetails && (() => {
-          const showIdSection = fullId && fullId.length >= 13 && fullId !== node.displayId;
+          const showIdSection = fullId && (fullId !== node.displayId || fullId.length >= 13);
           const showDimensions = detailBbox !== null;
           const showPathPoints = pathPointStats !== null;
           const showReferences = referencedDetails.length > 0;
@@ -862,9 +862,9 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
               borderColor="border.subtle"
             >
               {showIdSection && (
-                <Box width="100%">
-                  <Text fontSize="10px" fontWeight="bold" color="gray.500" mb={1}>ID</Text>
-                  <Text {...textProps} fontSize="11px" wordBreak="break-all" userSelect="text" fontFamily="monospace">
+                <Box width="100%" pb={2}>
+                  <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>ID</Text>
+                  <Text {...textProps} fontSize="xs" wordBreak="break-all" userSelect="text" fontFamily="monospace">
                     {fullId}
                   </Text>
                 </Box>
@@ -872,26 +872,26 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
 
               {showDimensions && (
                 <Box width="100%">
-                  <Text fontSize="10px" fontWeight="bold" color="gray.500" mb={1}>DIMENSIONS</Text>
+                  <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>DIMENSIONS</Text>
                   <VStack spacing={1} align="stretch">
                     <HStack spacing={3} align="start" width="100%" justify="space-between">
                       <VStack spacing={0} align="start">
-                        <Text fontSize="9px" color="gray.500">Top-Left</Text>
-                        <Text fontSize="10px" fontFamily="monospace">{formatValue(detailBbox.topLeft.x)},{formatValue(detailBbox.topLeft.y)}</Text>
+                        <Text fontSize="2xs" color="gray.500">Top-Left</Text>
+                        <Text fontSize="xs" fontFamily="monospace">{formatValue(detailBbox.topLeft.x)},{formatValue(detailBbox.topLeft.y)}</Text>
                       </VStack>
                       <VStack spacing={0} align="end">
-                        <Text fontSize="9px" color="gray.500">Width</Text>
-                        <Text fontSize="10px" fontFamily="monospace">{formatValue(detailBbox.width)}</Text>
+                        <Text fontSize="2xs" color="gray.500">Width</Text>
+                        <Text fontSize="xs" fontFamily="monospace">{formatValue(detailBbox.width)}</Text>
                       </VStack>
                     </HStack>
                     <HStack spacing={3} align="start" width="100%" justify="space-between">
                       <VStack spacing={0} align="start">
-                        <Text fontSize="9px" color="gray.500">Height</Text>
-                        <Text fontSize="10px" fontFamily="monospace">{formatValue(detailBbox.height)}</Text>
+                        <Text fontSize="2xs" color="gray.500">Height</Text>
+                        <Text fontSize="xs" fontFamily="monospace">{formatValue(detailBbox.height)}</Text>
                       </VStack>
                       <VStack spacing={0} align="end">
-                        <Text fontSize="9px" color="gray.500">Bottom-Right</Text>
-                        <Text fontSize="10px" fontFamily="monospace">{formatValue(detailBbox.bottomRight.x)},{formatValue(detailBbox.bottomRight.y)}</Text>
+                        <Text fontSize="2xs" color="gray.500">Bottom-Right</Text>
+                        <Text fontSize="xs" fontFamily="monospace">{formatValue(detailBbox.bottomRight.x)},{formatValue(detailBbox.bottomRight.y)}</Text>
                       </VStack>
                     </HStack>
                   </VStack>
@@ -903,19 +903,19 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
                   width="100%"
                   {...(hasSectionAbovePathPoints ? { pt: 2 } : { p: 0 })}
                 >
-                  <Text fontSize="10px" fontWeight="bold" color="gray.500" mb={1}>POINTS</Text>
+                  <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>POINTS</Text>
                   <HStack spacing={3} align="start" width="100%" justify="space-between">
                     <VStack spacing={0} align="start">
-                      <Text fontSize="9px" color="gray.500">Total</Text>
-                      <Text fontSize="10px" fontFamily="monospace">{pathPointStats.totalPoints}</Text>
+                      <Text fontSize="2xs" color="gray.500">Total</Text>
+                      <Text fontSize="xs" fontFamily="monospace">{pathPointStats.totalPoints}</Text>
                     </VStack>
                     <VStack spacing={0} align="start">
-                      <Text fontSize="9px" color="gray.500">Curves</Text>
-                      <Text fontSize="10px" fontFamily="monospace">{pathPointStats.curvePoints}</Text>
+                      <Text fontSize="2xs" color="gray.500">Curves</Text>
+                      <Text fontSize="xs" fontFamily="monospace">{pathPointStats.curvePoints}</Text>
                     </VStack>
                     <VStack spacing={0} align="start">
-                      <Text fontSize="9px" color="gray.500">Lines</Text>
-                      <Text fontSize="10px" fontFamily="monospace">{pathPointStats.linePoints}</Text>
+                      <Text fontSize="2xs" color="gray.500">Lines</Text>
+                      <Text fontSize="xs" fontFamily="monospace">{pathPointStats.linePoints}</Text>
                     </VStack>
                   </HStack>
                 </Box>
@@ -926,7 +926,7 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
                   width="100%"
                   {...(hasSectionAboveReferences ? { pt: 2 } : { p: 0 })}
                 >
-                  <Text fontSize="10px" fontWeight="bold" color="gray.500" mb={1}>REFERENCES</Text>
+                  <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>REFERENCES</Text>
                   <VStack spacing={1} align="stretch">
                     {referencedDetails.map((ref) => (
                       <HStack
@@ -935,10 +935,10 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
                         justify="space-between"
                         align="center"
                       >
-                        <Text fontSize="10px" fontFamily="monospace" color="gray.700" _dark={{ color: 'gray.200' }}>
+                        <Text fontSize="xs" fontFamily="monospace" color="gray.700" _dark={{ color: 'gray.200' }}>
                           {ref.id}
                         </Text>
-                        <Badge variant="outline" colorScheme="gray" fontSize="9px" px={1.5} py={0.5} borderRadius="sm">
+                        <Badge variant="outline" colorScheme="gray" fontSize="2xs" px={1.5} py={0.5} borderRadius="sm">
                           {ref.type}
                         </Badge>
                       </HStack>
@@ -951,7 +951,7 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
                 width="100%"
                 {...(hasSectionAboveActions ? { pt: 2 } : { p: 0 })}
               >
-                <Text fontSize="10px" fontWeight="bold" color="gray.500" mb={1}>ACTIONS</Text>
+                <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>ACTIONS</Text>
                 <VStack spacing={10} align="stretch">
                   <HStack spacing={1} flexWrap="wrap">
                   {!node.isDefs && elementId && (
@@ -1050,7 +1050,7 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
                     key={`${node.key}-${attr.name}`}
                     variant="outline"
                     colorScheme="gray"
-                    fontSize="9px"
+                    fontSize="2xs"
                     px={1.5}
                     py={0.5}
                     borderRadius="sm"
@@ -1071,7 +1071,7 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
 
             {openAttributeEditor && attributeExpandedKeys.has(node.key) && (
               <VStack spacing={0.5} align="stretch" pl={0} pr={1} pt={1} pb={1.5}>
-                <Text fontSize="10px" color="gray.600" _dark={{ color: 'gray.300' }}>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.300' }}>
                   {openAttributeEditor.name}
                 </Text>
                 <PanelTextInput
@@ -1195,7 +1195,7 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
 
             {attributeExpandedKeys.has(node.key) && (
               <VStack spacing={0.5} align="stretch" pl={0} pr={1} pt={0.5} pb={1}>
-                <Text fontSize="10px" color="gray.600" _dark={{ color: 'gray.300' }}>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.300' }}>
                   Add attribute
                 </Text>
                 <HStack spacing={1} align="center">
@@ -1576,7 +1576,14 @@ export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) =
       const idAttribute = el.getAttribute('id');
       const dataElementId = el.getAttribute('data-element-id');
       const idType = idAttribute ? 'id' : dataElementId ? 'data' : null;
-      const displayId = formatDisplayId(idAttribute ?? dataElementId, idType, tagName);
+      // Resolve the canvas element early so we can use data.name as display label
+      const canvasElement = dataElementId
+        ? elementMap.get(dataElementId)
+        : idAttribute
+          ? elementMap.get(idAttribute)
+          : undefined;
+      const elementDataName = (canvasElement?.data as Record<string, unknown> | undefined)?.name as string | undefined;
+      const displayId = elementDataName || formatDisplayId(idAttribute ?? dataElementId, idType, tagName);
       const attributes: SvgStructureAttributeSnapshot[] = Array.from(el.attributes)
         .filter((attr) => attr.name !== 'id' && !attr.name.startsWith('xmlns'))
         .map((attr) => ({
@@ -1620,12 +1627,6 @@ export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) =
         children.push(childNode);
         visibleChildIdx++;
       });
-      const canvasElement = dataElementId
-        ? elementMap.get(dataElementId)
-        : idAttribute
-          ? elementMap.get(idAttribute)
-          : undefined;
-
       return {
         key: path,
         numberPath,

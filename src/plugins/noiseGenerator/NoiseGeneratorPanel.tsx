@@ -130,7 +130,7 @@ export const NoiseGeneratorPanel: React.FC = () => {
     <Panel title="Noise Generator" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
         {selectedCount === 0 ? (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             Select elements to apply noise texture.
           </Text>
         ) : (
@@ -143,7 +143,7 @@ export const NoiseGeneratorPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Freq X:"
+              label="Freq X"
               value={baseFrequencyX}
               min={0.001}
               max={0.2}
@@ -152,7 +152,7 @@ export const NoiseGeneratorPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Freq Y:"
+              label="Freq Y"
               value={baseFrequencyY}
               min={0.001}
               max={0.2}
@@ -161,7 +161,7 @@ export const NoiseGeneratorPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Octaves:"
+              label="Octaves"
               value={numOctaves}
               min={1}
               max={8}
@@ -170,10 +170,10 @@ export const NoiseGeneratorPanel: React.FC = () => {
             />
 
             <HStack gap={1} align="center">
-              <Text fontSize="11px" color="gray.600" _dark={{ color: 'gray.400' }} minW="35px">
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} minW="35px">
                 Seed:
               </Text>
-              <Text fontSize="11px" fontFamily="mono" flex={1}>
+              <Text fontSize="xs" fontFamily="mono" flex={1}>
                 {seed}
               </Text>
               <PanelStyledButton size="xs" onClick={() => randomizeSeed?.()} leftIcon={<Shuffle size={10} />}>
@@ -182,7 +182,7 @@ export const NoiseGeneratorPanel: React.FC = () => {
             </HStack>
 
             <SliderControl
-              label="Opacity:"
+              label="Opacity"
               value={opacity}
               min={0}
               max={1}

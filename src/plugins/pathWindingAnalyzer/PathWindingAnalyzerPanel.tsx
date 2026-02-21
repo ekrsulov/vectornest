@@ -48,7 +48,7 @@ export const PathWindingAnalyzerPanel: React.FC = () => {
         <>
           {conflicts.length > 0 && (
             <Box bg="orange.900" borderRadius="sm" px={2} py={1} mx={2}>
-              <Text fontSize="xs" color="orange.300">
+              <Text fontSize="xs" color="orange.700" _dark={{ color: 'orange.300' }}>
                 {conflicts.length} path{conflicts.length > 1 ? 's' : ''} with mixed winding + nonzero fill
               </Text>
             </Box>
@@ -69,10 +69,10 @@ export const PathWindingAnalyzerPanel: React.FC = () => {
                 borderColor={r.hasConflict ? 'orange.400' : 'green.400'}
               >
                 <HStack justify="space-between">
-                  <Text fontSize="xs" color="gray.300" isTruncated maxW="100px">
+                  <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} isTruncated maxW="100px">
                     {r.label}
                   </Text>
-                  <Text fontSize="9px" color="gray.500" fontFamily="mono">
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} fontFamily="mono">
                     fill-rule: {r.fillRule}
                   </Text>
                 </HStack>
@@ -85,7 +85,7 @@ export const PathWindingAnalyzerPanel: React.FC = () => {
                       borderRadius="sm"
                       bg={sp.direction === 'CW' ? 'blue.900' : 'purple.900'}
                     >
-                      <Text fontSize="9px" color={sp.direction === 'CW' ? 'blue.300' : 'purple.300'}>
+                      <Text fontSize="xs" color={sp.direction === 'CW' ? 'blue.300' : 'purple.300'}>
                         {sp.direction} ({sp.area})
                       </Text>
                     </Box>

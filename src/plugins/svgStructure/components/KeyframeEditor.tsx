@@ -126,7 +126,7 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
     return (
         <VStack spacing={2} align="stretch" w="100%" borderTop="1px solid" borderColor="border.subtle" pt={2} mt={2}>
             <HStack justify="space-between">
-                <Text fontSize="11px" fontWeight="bold" color="text.muted">Keyframe Editor</Text>
+                <Text fontSize="xs" fontWeight="bold" color="text.muted">Keyframe Editor</Text>
                 <IconButton
                     aria-label="Toggle Advanced"
                     icon={<Settings size={12} />}
@@ -142,7 +142,7 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
             <Collapse in={showAdvanced} animateOpacity>
                 <VStack spacing={2} pb={2} mb={2} borderBottom="1px dashed" borderColor="border.subtle" align="stretch" w="100%">
                     <VStack spacing={0} align="stretch">
-                        <Text fontSize="9px" color="text.muted">Values</Text>
+                        <Text fontSize="2xs" color="text.muted">Values</Text>
                         <PanelTextInput
                             value={animation.values || ''}
                             onChange={(val) => onUpdate({ values: val })}
@@ -150,7 +150,7 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
                         />
                     </VStack>
                     <VStack spacing={0} align="stretch">
-                        <Text fontSize="9px" color="text.muted">KeyTimes</Text>
+                        <Text fontSize="2xs" color="text.muted">KeyTimes</Text>
                         <PanelTextInput
                             value={animation.keyTimes || ''}
                             onChange={(val) => onUpdate({ keyTimes: val })}
@@ -158,7 +158,7 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
                         />
                     </VStack>
                     <VStack spacing={0} align="stretch">
-                        <Text fontSize="9px" color="text.muted">KeySplines</Text>
+                        <Text fontSize="2xs" color="text.muted">KeySplines</Text>
                         <PanelTextInput
                             value={animation.keySplines || ''}
                             onChange={(val) => onUpdate({ keySplines: val })}
@@ -179,7 +179,7 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
 
             {/* Instruction */}
             {selectedSegmentIdx === null && (
-                <Text fontSize="10px" color="text.muted" textAlign="center" py={2}>
+                <Text fontSize="xs" color="text.muted" textAlign="center" py={2}>
                     Click a segment to edit easing
                 </Text>
             )}
@@ -188,13 +188,13 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
             <Collapse in={selectedSegmentIdx !== null} animateOpacity>
                 {selectedSegmentIdx !== null && activeSegmentSpline && (
                     <Box mt={2}>
-                        <Text fontSize="10px" mb={1}>
+                        <Text fontSize="xs" mb={1}>
                             Segment {selectedSegmentIdx + 1} Easing
                         </Text>
 
                         <HStack spacing={2} mb={2}>
                             <VStack spacing={0} align="start" w="50%">
-                                <Text fontSize="9px" color="text.muted">Start Value</Text>
+                                <Text fontSize="2xs" color="text.muted">Start Value</Text>
                                 <PanelTextInput
                                     value={track.values[selectedSegmentIdx] || ''}
                                     onChange={(val) => {
@@ -209,7 +209,7 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
                                 />
                             </VStack>
                             <VStack spacing={0} align="start" w="50%">
-                                <Text fontSize="9px" color="text.muted">End Value</Text>
+                                <Text fontSize="2xs" color="text.muted">End Value</Text>
                                 <PanelTextInput
                                     value={track.values[selectedSegmentIdx + 1] || ''}
                                     onChange={(val) => {

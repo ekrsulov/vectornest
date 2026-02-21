@@ -37,5 +37,5 @@ export const GroupEditorStructureBadges: React.FC<SvgStructureContributionProps<
   const isActive = groupEditor?.activeGroupId === elementId;
   if (!isActive) return null;
 
-  return <Badge colorScheme="blue" fontSize="9px">active</Badge>;
+  return <Badge colorScheme="blue" fontSize="2xs">active</Badge>;
 };

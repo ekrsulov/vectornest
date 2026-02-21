@@ -119,6 +119,7 @@ export const DuplicateFinderPanel: React.FC = () => {
         step={1}
         onChange={(val) => update({ shapeTolerance: val })}
         formatter={(v) => `${v}px`}
+        stacked
       />
 
       <SliderControl
@@ -129,6 +130,7 @@ export const DuplicateFinderPanel: React.FC = () => {
         step={0.5}
         onChange={(val) => update({ positionTolerance: val })}
         formatter={(v) => `${v}px`}
+        stacked
       />
 
       <PanelStyledButton onClick={handleSearch}>
@@ -140,16 +142,16 @@ export const DuplicateFinderPanel: React.FC = () => {
           <SectionHeader title="Results" />
 
           <HStack justify="space-between" px={2} py={1}>
-            <Text fontSize="xs" color="gray.400">
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
               Duplicate Groups
             </Text>
-            <Text fontSize="xs" color="orange.300" fontWeight="bold">
+            <Text fontSize="xs" color="orange.700" _dark={{ color: 'orange.300' }} fontWeight="bold">
               {state.groups.length}
             </Text>
           </HStack>
 
           <HStack justify="space-between" px={2} py={1}>
-            <Text fontSize="xs" color="gray.400">
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
               Total Duplicates
             </Text>
             <Text fontSize="xs" color="red.300" fontWeight="bold">
@@ -182,14 +184,14 @@ export const DuplicateFinderPanel: React.FC = () => {
                     _hover={{ bg: 'whiteAlpha.100' }}
                     onClick={() => handleSelectGroup(group)}
                   >
-                    <Text fontSize="xs" color="gray.300">
+                    <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>
                       {group.description}
                     </Text>
                     <HStack justify="space-between" mt={1}>
-                      <Text fontSize="xs" color="gray.500">
+                      <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
                         {group.elementIds.length} elements
                       </Text>
-                      <Text fontSize="xs" color="gray.500">
+                      <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
                         {group.similarity}% match
                       </Text>
                     </HStack>
@@ -203,7 +205,7 @@ export const DuplicateFinderPanel: React.FC = () => {
 
       {state.groups.length === 0 && state.totalDuplicates === 0 && (
         <Box px={2} py={3} textAlign="center">
-          <Text fontSize="xs" color="gray.500">
+          <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
             Click Search to find duplicates
           </Text>
         </Box>

@@ -43,20 +43,20 @@ export const GradientMapperPanel: React.FC = () => {
           {/* Summary */}
           <HStack gap={2} px={2} justify="space-between">
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Total</Text>
-              <Text fontSize="xs" color="blue.300" fontFamily="mono">{state.totalGradients}</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Total</Text>
+              <Text fontSize="xs" color="blue.600" _dark={{ color: 'blue.300' }} fontFamily="mono">{state.totalGradients}</Text>
             </Box>
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Linear</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Linear</Text>
               <Text fontSize="xs" color="green.400" fontFamily="mono">{state.linearCount}</Text>
             </Box>
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Radial</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Radial</Text>
               <Text fontSize="xs" color="purple.400" fontFamily="mono">{state.radialCount}</Text>
             </Box>
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Avg Stops</Text>
-              <Text fontSize="xs" color="gray.300" fontFamily="mono">{state.avgStopCount}</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Avg Stops</Text>
+              <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} fontFamily="mono">{state.avgStopCount}</Text>
             </Box>
           </HStack>
 
@@ -68,10 +68,10 @@ export const GradientMapperPanel: React.FC = () => {
                 {state.similarPairs.map((p, i) => (
                   <Box key={i} p={1.5} borderRadius="sm" bg="orange.900">
                     <HStack justify="space-between">
-                      <Text fontSize="xs" color="orange.300" isTruncated maxW="130px">
+                      <Text fontSize="xs" color="orange.700" _dark={{ color: 'orange.300' }} isTruncated maxW="130px">
                         {p.nameA} ↔ {p.nameB}
                       </Text>
-                      <Text fontSize="xs" fontFamily="mono" color="orange.200">
+                      <Text fontSize="xs" fontFamily="mono" color="orange.700" _dark={{ color: 'orange.200' }}>
                         {Math.round(p.similarity * 100)}%
                       </Text>
                     </HStack>
@@ -94,10 +94,10 @@ export const GradientMapperPanel: React.FC = () => {
                 borderColor={g.type === 'linear' ? 'green.400' : 'purple.400'}
               >
                 <HStack justify="space-between">
-                  <Text fontSize="xs" color="gray.300" isTruncated maxW="100px">
+                  <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} isTruncated maxW="100px">
                     {g.name}
                   </Text>
-                  <Text fontSize="9px" color="gray.500">{g.type}</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>{g.type}</Text>
                 </HStack>
                 {/* Color preview */}
                 <HStack gap={0} mt={1}>
@@ -112,10 +112,10 @@ export const GradientMapperPanel: React.FC = () => {
                   ))}
                 </HStack>
                 <HStack justify="space-between" mt={0.5}>
-                  <Text fontSize="9px" color="gray.500">
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
                     {g.stopCount} stops
                   </Text>
-                  <Text fontSize="9px" color="gray.500">
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>
                     {g.usedByElements.length} elements
                   </Text>
                 </HStack>

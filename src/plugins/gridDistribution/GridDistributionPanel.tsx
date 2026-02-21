@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import { VStack, HStack, Text, Box, useColorModeValue } from '@chakra-ui/react';
+import { VStack, Text, Box, useColorModeValue } from '@chakra-ui/react';
 import { Panel } from '../../ui/Panel';
 import { NumberInput } from '../../ui/NumberInput';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
@@ -414,7 +414,7 @@ export const GridDistributionPanel: React.FC = () => {
           <Text {...textProps}>
             Arrange the selection into a grid starting at the specified origin.
           </Text>
-          <HStack spacing={2}>
+          <VStack gap={1} align="stretch">
             <NumberInput
               label="Start X"
               value={startX}
@@ -431,7 +431,7 @@ export const GridDistributionPanel: React.FC = () => {
               max={1_000_000}
               step={1}
             />
-          </HStack>
+          </VStack>
           <Box pr={0.5}>
             <SliderControl
               label="Padding"

@@ -169,11 +169,16 @@ const NumberInputComponent: React.FC<NumberInputProps> = ({
         w={inputWidth}
         px={2}
         borderRadius="0"
+        m={0.5}
         borderColor="gray.300"
         bg="white"
         _dark={{
           borderColor: 'whiteAlpha.300',
-          bg: 'gray.800'
+          bg: 'gray.800',
+          _focus: {
+            borderColor: 'whiteAlpha.500',
+            boxShadow: '0 0 0 1px var(--chakra-colors-whiteAlpha-500)'
+          }
         }}
         _focus={{
           borderColor: 'gray.600',

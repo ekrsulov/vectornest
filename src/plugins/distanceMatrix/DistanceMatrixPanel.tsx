@@ -47,19 +47,19 @@ export const DistanceMatrixPanel: React.FC = () => {
           {/* Summary stats */}
           <HStack gap={2} px={2} justify="space-between">
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Nearest</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Nearest</Text>
               <Text fontSize="xs" color="green.400" fontFamily="mono">
                 {state.nearestPair?.distance ?? '—'}
               </Text>
             </Box>
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Average</Text>
-              <Text fontSize="xs" color="blue.300" fontFamily="mono">
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Average</Text>
+              <Text fontSize="xs" color="blue.600" _dark={{ color: 'blue.300' }} fontFamily="mono">
                 {state.avgDistance}
               </Text>
             </Box>
             <Box textAlign="center">
-              <Text fontSize="9px" color="gray.500">Farthest</Text>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Farthest</Text>
               <Text fontSize="xs" color="red.400" fontFamily="mono">
                 {state.farthestPair?.distance ?? '—'}
               </Text>
@@ -84,10 +84,10 @@ export const DistanceMatrixPanel: React.FC = () => {
                   borderColor={isNearest ? 'green.400' : isFarthest ? 'red.400' : 'gray.600'}
                 >
                   <HStack justify="space-between">
-                    <Text fontSize="xs" color="gray.300" isTruncated maxW="140px">
+                    <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }} isTruncated maxW="140px">
                       {p.labelA} ↔ {p.labelB}
                     </Text>
-                    <Text fontSize="xs" fontFamily="mono" color="blue.300">
+                    <Text fontSize="xs" fontFamily="mono" color="blue.600" _dark={{ color: 'blue.300' }}>
                       {p.distance}px
                     </Text>
                   </HStack>

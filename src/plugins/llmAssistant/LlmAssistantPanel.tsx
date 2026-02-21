@@ -257,11 +257,11 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
       <VStack spacing={1} align="stretch">
         {showStats ? (
           <VStack spacing={0.5} align="stretch" p={0.5}>
-            <Text fontSize="11px" fontWeight="semibold">
+            <Text fontSize="xs" fontWeight="semibold">
               Token stats
             </Text>
               {statsEntries.length === 0 ? (
-                <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.500' }}>
+                <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.500' }}>
                   No usage recorded yet.
                 </Text>
               ) : (
@@ -271,10 +271,10 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
                   const displayTotal = computedTotal > 0 ? computedTotal : stat.totalTokens;
                   return (
                     <Box key={`${stat.endpoint}-${stat.model}`}>
-                      <Text fontSize="10px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                      <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
                         {stat.model} • {stat.endpoint}
                       </Text>
-                      <Text fontSize="10px">
+                      <Text fontSize="xs">
                         Total: {displayTotal} (prompt {stat.promptTokens}; completion {stat.completionTokens}) • calls {stat.callCount}
                       </Text>
                     </Box>
@@ -311,7 +311,7 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
         </Box>
 
         <HStack spacing={2} align="center" justify="space-between">
-          <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.500' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.500' }}>
             {selectedCount > 0 ? `${selectedCount} selected (editSelection)` : 'No selection (insertNew)'}
           </Text>
           {status === 'running' ? (
@@ -326,7 +326,7 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
         </HStack>
 
         {error ? (
-          <Text fontSize="11px" color="red.500" _dark={{ color: 'red.300' }}>
+          <Text fontSize="xs" color="red.500" _dark={{ color: 'red.300' }}>
             {error}
           </Text>
         ) : null}
@@ -362,7 +362,7 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
 
         {staged ? (
           <HStack spacing={2} align="center" justify="space-between" pt={0.25}>
-            <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.500' }}>
+            <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.500' }}>
               {staged.mode === 'insertNew' ? 'Insert' : 'Edit'} • {staged.svg.length.toLocaleString()} chars
             </Text>
             <HStack spacing={1}>
@@ -379,7 +379,7 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
         {raw ? (
           <VStack spacing={1} align="stretch" pt={1}>
             <HStack justify="space-between" align="center">
-              <Text fontSize="11px" fontWeight="semibold" color="gray.600" _dark={{ color: 'gray.400' }}>
+              <Text fontSize="xs" fontWeight="semibold" color="gray.600" _dark={{ color: 'gray.400' }}>
                 Raw
               </Text>
               <HStack spacing={1} align="center">
@@ -406,11 +406,11 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
                     bg="white"
                     _dark={{ borderColor: 'whiteAlpha.200', bg: 'gray.900' }}
                     p={2}
-                    fontSize="10px"
+                    fontSize="xs"
                     overflowX="auto"
                   >
                     <HStack justify="space-between" align="center" mb={1}>
-                      <Text fontSize="11px" fontWeight="semibold">
+                      <Text fontSize="xs" fontWeight="semibold">
                         LLM thinking
                       </Text>
                       <PanelActionButton
@@ -434,7 +434,7 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
                   bg="white"
                   _dark={{ borderColor: 'whiteAlpha.200', bg: 'gray.900' }}
                   p={2}
-                  fontSize="10px"
+                  fontSize="xs"
                   overflowX="auto"
                 >
                   <Box as="pre" whiteSpace="pre" m={0}>
@@ -448,11 +448,11 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
 
         <VStack spacing={1} align="stretch" pt={1}>
           <HStack justify="space-between" align="center">
-            <Text fontSize="11px" fontWeight="semibold" color="gray.600" _dark={{ color: 'gray.400' }}>
+            <Text fontSize="xs" fontWeight="semibold" color="gray.600" _dark={{ color: 'gray.400' }}>
               History
             </Text>
             <HStack spacing={1}>
-              <Badge colorScheme="gray" fontSize="10px">
+              <Badge colorScheme="gray" fontSize="xs">
                 {history.length}
               </Badge>
               {historyExpanded ? (
@@ -471,7 +471,7 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
 
           {historyExpanded ? (
             history.length === 0 ? (
-              <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.500' }}>
+              <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.500' }}>
                 No history yet.
               </Text>
             ) : (
@@ -481,7 +481,7 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
                     <HStack justify="space-between" align="flex-start" spacing={2} py={0.5}>
                       <Text
                         flex="1"
-                        fontSize="11px"
+                        fontSize="xs"
                         noOfLines={detailItemId === item.id ? undefined : 1}
                         cursor="pointer"
                         onClick={() => handleLoadHistory(item)}
@@ -515,11 +515,11 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
                         borderColor="gray.200"
                         _dark={{ borderColor: 'whiteAlpha.200' }}
                       >
-                        <Text fontSize="10px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
                           {item.mode === 'insertNew' ? 'Insert' : 'Edit'} • {new Date(item.createdAt).toLocaleString()}
                         </Text>
                         {(item.endpoint || item.model) ? (
-                          <Text fontSize="10px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                          <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
                             {item.model ?? 'Unknown model'} • {item.endpoint ?? 'Unknown endpoint'}
                           </Text>
                         ) : null}
@@ -530,7 +530,7 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
                               const computedTotal = prompt + completion;
                               const displayTotal = computedTotal > 0 ? computedTotal : item.tokens.totalTokens ?? 'n/a';
                               return (
-                                <Text fontSize="10px" color="gray.700" _dark={{ color: 'gray.300' }}>
+                                <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>
                                   Tokens: {displayTotal} (prompt {item.tokens.promptTokens ?? 'n/a'}; completion {item.tokens.completionTokens ?? 'n/a'})
                                 </Text>
                               );
@@ -546,7 +546,7 @@ export const LlmAssistantPanel: React.FC<LlmAssistantPanelProps> = ({ hideTitle 
         </VStack>
 
         {!isConfigured ? (
-          <Text fontSize="10px" color="gray.500" _dark={{ color: 'gray.500' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.500' }}>
             Configure your provider/model/API key in the File panel.
           </Text>
         ) : null}

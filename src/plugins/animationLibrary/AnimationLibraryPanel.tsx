@@ -150,18 +150,18 @@ export const AnimationLibraryPanel: React.FC = () => {
             </CompactFieldRow>
             {editingPreset.description && (
               <CompactFieldRow label="Info" labelWidth="40px" compact align="flex-start">
-                <Text fontSize="10px" lineHeight="1.3">
+                <Text fontSize="xs" lineHeight="1.3">
                   {editingPreset.description}
                 </Text>
               </CompactFieldRow>
             )}
             <CompactFieldRow label="Target" labelWidth="40px" compact>
-              <Text fontSize="10px">
+              <Text fontSize="xs">
                 {editingPreset.targetType === 'text' ? 'Text elements' : 'Any element'}
               </Text>
             </CompactFieldRow>
             <CompactFieldRow label="Steps" labelWidth="40px" compact>
-              <Text fontSize="10px">
+              <Text fontSize="xs">
                 {getAnimationCount(editingPreset)} animation{getAnimationCount(editingPreset) !== 1 ? 's' : ''}
               </Text>
             </CompactFieldRow>

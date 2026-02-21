@@ -13,16 +13,17 @@ type InspectorStore = CanvasStore & ElementInspectorPluginSlice;
 
 const PropRow: React.FC<{ label: string; value: string; type?: string }> = ({ label, value, type }) => (
   <HStack justify="space-between" px={2} py={0.5}>
-    <Text fontSize="2xs" color="gray.400" fontFamily="mono">{label}</Text>
+    <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} fontFamily="mono">{label}</Text>
     <HStack gap={1}>
       {type === 'color' && value !== 'none' && (
         <Box w={2.5} h={2.5} borderRadius="sm" bg={value} border="1px solid" borderColor="whiteAlpha.300" />
       )}
       <Text
-        fontSize="2xs"
+        fontSize="xs"
         fontWeight="bold"
         fontFamily="mono"
-        color={type === 'boolean' ? (value === 'true' ? 'green.300' : 'gray.500') : 'gray.200'}
+        color={type === 'boolean' ? (value === 'true' ? 'green.600' : 'gray.600') : 'gray.700'}
+      _dark={{ color: type === 'boolean' ? (value === 'true' ? 'green.300' : 'gray.500') : 'gray.200' }}
         maxW="120px"
         overflow="hidden"
         textOverflow="ellipsis"
@@ -40,9 +41,10 @@ const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void 
     as="button"
     px={2}
     py={1}
-    fontSize="2xs"
+    fontSize="xs"
     fontWeight={active ? 'bold' : 'normal'}
-    color={active ? 'blue.200' : 'gray.400'}
+    color={active ? 'blue.600' : 'gray.600'}
+    _dark={{ color: active ? 'blue.200' : 'gray.400' }}
     bg={active ? 'whiteAlpha.100' : 'transparent'}
     borderRadius="sm"
     cursor="pointer"
@@ -97,13 +99,13 @@ export const ElementInspectorPanel: React.FC = () => {
           {/* Element summary */}
           <Box bg="whiteAlpha.50" borderRadius="md" p={2} mb={1} mx={1}>
             <HStack justify="space-between">
-              <Text fontSize="xs" fontWeight="bold" color="blue.200">{selectedEl.type.toUpperCase()}</Text>
-              <Text fontSize="2xs" fontFamily="mono" color="gray.500" maxW="140px" overflow="hidden" textOverflow="ellipsis">
+              <Text fontSize="xs" fontWeight="bold" color="blue.700" _dark={{ color: 'blue.200' }}>{selectedEl.type.toUpperCase()}</Text>
+              <Text fontSize="xs" fontFamily="mono" color="gray.600" _dark={{ color: 'gray.500' }} maxW="140px" overflow="hidden" textOverflow="ellipsis">
                 {selectedEl.id}
               </Text>
             </HStack>
             {selectedIds.length > 1 && (
-              <Text fontSize="2xs" color="gray.500" mt={0.5}>
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} mt={0.5}>
                 Showing first of {selectedIds.length} selected
               </Text>
             )}
@@ -160,7 +162,7 @@ export const ElementInspectorPanel: React.FC = () => {
             </VStack>
           )}
           {state.activeTab === 'geometry' && !geometry && (
-            <Text fontSize="xs" color="gray.500" px={2} py={2}>
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} px={2} py={2}>
               Geometry info only available for path elements
             </Text>
           )}
@@ -197,7 +199,7 @@ export const ElementInspectorPanel: React.FC = () => {
             </VStack>
           )}
           {state.activeTab === 'style' && !style && (
-            <Text fontSize="xs" color="gray.500" px={2} py={2}>
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} px={2} py={2}>
               Style info only available for path elements
             </Text>
           )}
@@ -219,10 +221,10 @@ export const ElementInspectorPanel: React.FC = () => {
                 maxH="250px"
                 overflowY="auto"
                 fontFamily="mono"
-                fontSize="2xs"
+                fontSize="xs"
                 whiteSpace="pre-wrap"
                 wordBreak="break-all"
-                color="gray.300"
+                color="gray.700" _dark={{ color: 'gray.300' }}
               >
                 {JSON.stringify(
                   state.showInherited ? selectedEl : { id: selectedEl.id, type: selectedEl.type, data: selectedEl.data },
@@ -234,7 +236,7 @@ export const ElementInspectorPanel: React.FC = () => {
           )}
         </>
       ) : (
-        <Text fontSize="xs" color="gray.500" px={2} py={2}>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} px={2} py={2}>
           Select an element to inspect its properties
         </Text>
       )}

@@ -146,15 +146,15 @@ export const ClipboardPanel: React.FC<ClipboardPanelProps> = ({ hideTitle = fals
             Status:
           </Text>
           {clipboardState?.hasInternalData ? (
-            <Badge colorScheme="green" fontSize="10px">
+            <Badge colorScheme="green" fontSize="xs">
               VectorNest data ready
             </Badge>
           ) : hasClipboardContent ? (
-            <Badge colorScheme="blue" fontSize="10px">
+            <Badge colorScheme="blue" fontSize="xs">
               External content
             </Badge>
           ) : (
-            <Badge colorScheme="gray" fontSize="10px">
+            <Badge colorScheme="gray" fontSize="xs">
               Empty
             </Badge>
           )}
@@ -184,13 +184,13 @@ export const ClipboardPanel: React.FC<ClipboardPanelProps> = ({ hideTitle = fals
 
         {/* Status Message */}
         {clipboardState?.statusMessage && (
-          <Text fontSize="11px" color="blue.500" _dark={{ color: 'blue.300' }}>
+          <Text fontSize="xs" color="blue.500" _dark={{ color: 'blue.300' }}>
             {clipboardState.statusMessage}
           </Text>
         )}
 
         {/* Selection Info */}
-        <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.500' }}>
+        <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.500' }}>
           {selectedCount === 0 
             ? 'Select elements to copy or cut'
             : `${selectedCount} element${selectedCount > 1 ? 's' : ''} selected`}
@@ -198,14 +198,14 @@ export const ClipboardPanel: React.FC<ClipboardPanelProps> = ({ hideTitle = fals
 
         {/* Keyboard Shortcuts Info */}
         <VStack spacing={0.5} align="stretch" pt={1}>
-          <Text fontSize="10px" color="gray.500" fontWeight="semibold">
+          <Text fontSize="xs" color="gray.500" fontWeight="semibold">
             Shortcuts:
           </Text>
           <HStack spacing={2}>
-            <Text fontSize="10px" color="gray.500">⌘C Copy</Text>
-            <Text fontSize="10px" color="gray.500">⌘X Cut</Text>
-            <Text fontSize="10px" color="gray.500">⌘V Paste</Text>
-            <Text fontSize="10px" color="gray.500">⌘⇧V In Place</Text>
+            <Text fontSize="xs" color="gray.500">⌘C Copy</Text>
+            <Text fontSize="xs" color="gray.500">⌘X Cut</Text>
+            <Text fontSize="xs" color="gray.500">⌘V Paste</Text>
+            <Text fontSize="xs" color="gray.500">⌘⇧V In Place</Text>
           </HStack>
         </VStack>
       </VStack>

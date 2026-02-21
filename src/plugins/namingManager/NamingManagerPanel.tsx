@@ -58,22 +58,33 @@ export const NamingManagerPanel: React.FC = () => {
 
   const handleApply = useCallback(() => {
     if (!state || !updateElement) return;
-    for (const label of state.labels) {
+    // Generate labels fresh from current elements — no prior Preview click required
+    const labels = generateLabels(targetElements, {
+      prefix: state.prefix,
+      suffix: state.suffix,
+      separator: state.separator,
+      startNumber: state.startNumber,
+      pattern: state.pattern,
+      customPattern: state.customPattern,
+    });
+    for (const label of labels) {
       const el = elements.find((e: CanvasElement) => e.id === label.id);
       if (el) {
-        updateElement(el.id, { data: { ...el.data, name: label.newName } });
+        updateElement(el.id, { data: { name: label.newName } });
       }
     }
-  }, [state, updateElement, elements]);
+    // Sync preview labels so the panel reflects applied names
+    update?.({ labels });
+  }, [state, update, updateElement, elements, targetElements]);
 
   if (!state || !update) return null;
 
   return (
     <Panel title="Naming Manager" isCollapsible defaultOpen={false}>
       <HStack px={2} py={1} gap={3}>
-        <Text fontSize="xs" color="gray.400">Named: {stats.named}</Text>
-        <Text fontSize="xs" color="gray.400">Unnamed: {stats.unnamed}</Text>
-        <Text fontSize="xs" color="gray.400">Total: {stats.total}</Text>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Named: {stats.named}</Text>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Unnamed: {stats.unnamed}</Text>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Total: {stats.total}</Text>
       </HStack>
 
       <CustomSelect
@@ -85,7 +96,7 @@ export const NamingManagerPanel: React.FC = () => {
       />
 
       <Box px={2}>
-        <Text fontSize="xs" color="gray.400" mb={1}>Prefix</Text>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>Prefix</Text>
         <PanelTextInput
           value={state.prefix}
           onChange={(val) => update({ prefix: val })}
@@ -95,7 +106,7 @@ export const NamingManagerPanel: React.FC = () => {
       </Box>
 
       <Box px={2}>
-        <Text fontSize="xs" color="gray.400" mb={1}>Suffix</Text>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>Suffix</Text>
         <PanelTextInput
           value={state.suffix}
           onChange={(val) => update({ suffix: val })}
@@ -105,7 +116,7 @@ export const NamingManagerPanel: React.FC = () => {
       </Box>
 
       <Box px={2}>
-        <Text fontSize="xs" color="gray.400" mb={1}>Separator</Text>
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>Separator</Text>
         <PanelTextInput
           value={state.separator}
           onChange={(val) => update({ separator: val })}
@@ -116,7 +127,7 @@ export const NamingManagerPanel: React.FC = () => {
 
       {state.pattern === 'custom' && (
         <Box px={2}>
-          <Text fontSize="xs" color="gray.400" mb={1}>Custom Pattern</Text>
+          <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>Custom Pattern</Text>
           <PanelTextInput
             value={state.customPattern}
             onChange={(val) => update({ customPattern: val })}
@@ -151,10 +162,10 @@ export const NamingManagerPanel: React.FC = () => {
             {state.labels.map((label) => (
               <Box key={label.id} p={2} bg="whiteAlpha.50" borderRadius="md">
                 <HStack justify="space-between">
-                  <Text fontSize="xs" color="gray.500" textDecoration="line-through">
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} textDecoration="line-through">
                     {label.currentName}
                   </Text>
-                  <Text fontSize="xs" color="green.300" fontWeight="bold">
+                  <Text fontSize="xs" color="green.600" _dark={{ color: 'green.300' }} fontWeight="bold">
                     {label.newName}
                   </Text>
                 </HStack>

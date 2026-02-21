@@ -106,17 +106,17 @@ export const ScatterAlongPathPanel: React.FC = () => {
     <Panel title="Scatter Along Path" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
         {!exactlyTwo ? (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             Select exactly 2 paths: first is the source shape, second is the guide path.
           </Text>
         ) : selectedElements === null ? (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             Both selected elements must be path elements.
           </Text>
         ) : (
           <>
             <SliderControl
-              label="Copies:"
+              label="Copies"
               value={copies}
               min={1}
               max={100}
@@ -139,7 +139,7 @@ export const ScatterAlongPathPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Scale:"
+              label="Scale"
               value={scale}
               min={0.1}
               max={3.0}
@@ -148,7 +148,7 @@ export const ScatterAlongPathPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Scale var.:"
+              label="Scale var."
               value={scaleVariation}
               min={0}
               max={100}
@@ -157,7 +157,7 @@ export const ScatterAlongPathPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Rotation:"
+              label="Rotation"
               value={rotationOffset}
               min={-180}
               max={180}
@@ -166,7 +166,7 @@ export const ScatterAlongPathPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Rot. var.:"
+              label="Rot. var."
               value={rotationVariation}
               min={0}
               max={180}
@@ -175,7 +175,7 @@ export const ScatterAlongPathPanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Offset:"
+              label="Offset"
               value={perpendicularOffset}
               min={-50}
               max={50}

@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { VStack, Text, Box, Input } from '@chakra-ui/react';
+import { VStack, Text } from '@chakra-ui/react';
+import { PanelColorPicker } from '../../ui/PanelColorPicker';
 import { Shuffle } from 'lucide-react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
@@ -105,7 +106,7 @@ export const PathTexturePanel: React.FC = () => {
     <Panel title="Path Texture" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
         {selectedCount === 0 ? (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             Select a path to apply a texture fill.
           </Text>
         ) : (
@@ -125,7 +126,7 @@ export const PathTexturePanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Density:"
+              label="Density"
               value={density}
               min={5}
               max={100}
@@ -134,7 +135,7 @@ export const PathTexturePanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Spacing:"
+              label="Spacing"
               value={spacing}
               min={2}
               max={30}
@@ -143,7 +144,7 @@ export const PathTexturePanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Line width:"
+              label="Line width"
               value={lineWidth}
               min={0.2}
               max={5}
@@ -152,7 +153,7 @@ export const PathTexturePanel: React.FC = () => {
             />
 
             <SliderControl
-              label="Opacity:"
+              label="Opacity"
               value={textureOpacity}
               min={0.1}
               max={1}
@@ -168,23 +169,10 @@ export const PathTexturePanel: React.FC = () => {
             </PanelToggle>
 
             {!useElementColor && (
-              <Box display="flex" alignItems="center" gap={1}>
-                <Text fontSize="11px" minW="50px" color="gray.600" _dark={{ color: 'gray.400' }}>
-                  Color:
-                </Text>
-                <Input
-                  type="color"
-                  value={textureColor}
-                  onChange={(e) => updateState?.({ textureColor: e.target.value })}
-                  size="xs"
-                  w="32px"
-                  h="20px"
-                  p={0}
-                  border="none"
-                  cursor="pointer"
-                />
-                <Text fontSize="10px" fontFamily="mono" color="gray.500">{textureColor}</Text>
-              </Box>
+              <PanelColorPicker
+                value={textureColor}
+                onChange={(hex) => updateState?.({ textureColor: hex })}
+              />
             )}
 
             <PanelStyledButton onClick={handleApply} w="full" mt={1}>

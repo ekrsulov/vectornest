@@ -39,6 +39,7 @@ interface SliderControlProps {
   inline?: boolean; // New prop for inline usage
   gap?: string; // Custom gap for inline usage
   allowOutOfRangeInput?: boolean;
+  stacked?: boolean; // Label above slider row
 }
 
 const SliderControlComponent: React.FC<SliderControlProps> = ({
@@ -55,10 +56,11 @@ const SliderControlComponent: React.FC<SliderControlProps> = ({
   minWidth = '60px',
   labelWidth = '40px',
   valueWidth = '50px',
-  marginBottom = '6px',
+  marginBottom = '0',
   inline = false,
   gap = '8px',
-  allowOutOfRangeInput = false
+  allowOutOfRangeInput = false,
+  stacked = false
 }) => {
   const safeValue = Number.isFinite(value) ? value : (Number.isFinite(min) ? min : 0);
   const currentStep = stepFunction ? stepFunction(safeValue) : step;
@@ -116,18 +118,18 @@ const SliderControlComponent: React.FC<SliderControlProps> = ({
   // When the actual value is outside the slider min/max, show the slider thumb at the clamped value
   const sliderValue = clamp(safeValue, min, max);
 
-  return (
+  const sliderRow = (
     <HStack
       spacing={gap}
-      mb={inline ? 0 : marginBottom}
-      w={inline ? '100%' : undefined}
+      mb={inline ? 0 : stacked ? 0 : marginBottom}
+      w={inline || stacked ? '100%' : undefined}
     >
-      {icon && (
+      {icon && !stacked && (
         <Box color="gray.600" _dark={{ color: 'gray.400' }} flexShrink={0}>
           {icon}
         </Box>
       )}
-      {label && (
+      {label && !stacked && (
         <Text
           fontSize="12px"
           color="gray.600"
@@ -157,10 +159,15 @@ const SliderControlComponent: React.FC<SliderControlProps> = ({
         <Box
           minH="20px"
           w="100%"
+          m={0.5}
           borderWidth="1px"
           borderColor={isEditing ? 'gray.600' : 'gray.300'}
           bg="white"
-          _dark={{ borderColor: isEditing ? 'gray.300' : 'whiteAlpha.300', bg: 'gray.800' }}
+          _dark={{
+            borderColor: isEditing ? 'whiteAlpha.500' : 'whiteAlpha.300',
+            bg: 'gray.800',
+            _focusWithin: { borderColor: 'whiteAlpha.500', boxShadow: '0 0 0 1px var(--chakra-colors-whiteAlpha-500)' }
+          }}
           _focusWithin={{ borderColor: 'gray.600', boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)' }}
           opacity={isEditing ? 1 : 0.95}
           onClick={isEditing ? undefined : () => setIsEditing(true)}
@@ -199,6 +206,27 @@ const SliderControlComponent: React.FC<SliderControlProps> = ({
       </VStack>
     </HStack>
   );
+
+  if (stacked) {
+    return (
+      <VStack align="stretch" gap={0} mb={marginBottom} px={0}>
+        {label && (
+          <Text
+            fontSize="12px"
+            color="gray.600"
+            _dark={{ color: 'gray.400' }}
+            px={2}
+            pt={1}
+          >
+            {label}
+          </Text>
+        )}
+        {sliderRow}
+      </VStack>
+    );
+  }
+
+  return sliderRow;
 };
 
 export const SliderControl = React.memo(SliderControlComponent);

@@ -9,6 +9,8 @@
 export const panelSpacing = {
   /** Vertical spacing between panels (margin-top) - responsive: [mobile, desktop] */
   betweenPanels: ['4px', '8px'], // [spacing.1 or mt={1} on mobile, spacing.2 or mt={2} on desktop]
+  /** Standard gap between controls inside a panel (VStack gap) */
+  controlGap: 0.5, // 2px — tight vertical rhythm for panel controls
 };
 
 export const spacing = {

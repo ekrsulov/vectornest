@@ -11,7 +11,8 @@ export const typography = {
   },
 
   fontSizes: {
-    xs: '10px',   // Extra small (icons in tight spaces)
+    '2xs': '9px', // Micro labels (data metrics, badges, tiny annotations)
+    xs: '10px',   // Extra small (secondary text, descriptions)
     sm: '12px',   // Small - PRIMARY UI text size
     md: '14px',   // Medium - Secondary text, icons
     lg: '16px',   // Large - Headers

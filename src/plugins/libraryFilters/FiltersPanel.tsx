@@ -173,7 +173,7 @@ export const FiltersPanel: React.FC = () => {
             </PanelStyledButton>
           </HStack>
           {!hasSelection && (
-            <Text fontSize="10px" color={mutedColor} textAlign="center">
+            <Text fontSize="xs" color={mutedColor} textAlign="center">
               Select elements to apply filters
             </Text>
           )}

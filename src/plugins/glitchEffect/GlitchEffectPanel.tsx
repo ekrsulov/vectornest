@@ -86,7 +86,7 @@ export const GlitchEffectPanel: React.FC = () => {
     <Panel title="Glitch Effect" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
         {selectedCount === 0 ? (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             Select elements to apply glitch effects.
           </Text>
         ) : (
@@ -101,9 +101,9 @@ export const GlitchEffectPanel: React.FC = () => {
             {/* Displacement controls */}
             {mode === 'displacement' && (
               <>
-                <SliderControl label="Intensity:" value={intensity} min={1} max={80} step={1}
+                <SliderControl label="Intensity" value={intensity} min={1} max={80} step={1}
                   onChange={(val) => updateState?.({ intensity: val })} />
-                <SliderControl label="Frequency:" value={frequency} min={0.001} max={0.15} step={0.002}
+                <SliderControl label="Frequency" value={frequency} min={0.001} max={0.15} step={0.002}
                   onChange={(val) => updateState?.({ frequency: val })} />
               </>
             )}
@@ -111,9 +111,9 @@ export const GlitchEffectPanel: React.FC = () => {
             {/* RGB Shift controls */}
             {mode === 'rgb-shift' && (
               <>
-                <SliderControl label="Shift X:" value={shiftX} min={-30} max={30} step={1}
+                <SliderControl label="Shift X" value={shiftX} min={-30} max={30} step={1}
                   onChange={(val) => updateState?.({ shiftX: val })} />
-                <SliderControl label="Shift Y:" value={shiftY} min={-30} max={30} step={1}
+                <SliderControl label="Shift Y" value={shiftY} min={-30} max={30} step={1}
                   onChange={(val) => updateState?.({ shiftY: val })} />
               </>
             )}
@@ -121,22 +121,22 @@ export const GlitchEffectPanel: React.FC = () => {
             {/* Scanlines controls */}
             {mode === 'scanlines' && (
               <>
-                <SliderControl label="Line gap:" value={scanlineGap} min={1} max={20} step={1}
+                <SliderControl label="Line gap" value={scanlineGap} min={1} max={20} step={1}
                   onChange={(val) => updateState?.({ scanlineGap: val })} />
-                <SliderControl label="Intensity:" value={intensity} min={10} max={100} step={5}
+                <SliderControl label="Intensity" value={intensity} min={10} max={100} step={5}
                   onChange={(val) => updateState?.({ intensity: val })} />
               </>
             )}
 
             {/* Pixelate controls */}
             {mode === 'pixelate' && (
-              <SliderControl label="Pixel size:" value={intensity} min={2} max={50} step={1}
+              <SliderControl label="Pixel size" value={intensity} min={2} max={50} step={1}
                 onChange={(val) => updateState?.({ intensity: val })} />
             )}
 
             {/* Noise controls */}
             {mode === 'noise' && (
-              <SliderControl label="Frequency:" value={frequency} min={0.01} max={0.5} step={0.01}
+              <SliderControl label="Frequency" value={frequency} min={0.01} max={0.5} step={0.01}
                 onChange={(val) => updateState?.({ frequency: val })} />
             )}
 

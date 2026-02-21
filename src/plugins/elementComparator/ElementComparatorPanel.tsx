@@ -59,7 +59,7 @@ export const ElementComparatorPanel: React.FC = () => {
     <Panel title="Element Comparator" isCollapsible defaultOpen={false}>
       {selectedIds.length < 2 ? (
         <Box px={2} py={3} textAlign="center">
-          <Text fontSize="xs" color="gray.500">Select exactly 2 elements to compare</Text>
+          <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }}>Select exactly 2 elements to compare</Text>
         </Box>
       ) : (
         <>
@@ -71,7 +71,7 @@ export const ElementComparatorPanel: React.FC = () => {
             <>
               <SectionHeader title="Summary" />
               <HStack justify="space-between" px={2} py={1}>
-                <Text fontSize="xs" color="gray.400">Match Score</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Match Score</Text>
                 <Text
                   fontSize="sm"
                   fontWeight="bold"
@@ -81,7 +81,7 @@ export const ElementComparatorPanel: React.FC = () => {
                 </Text>
               </HStack>
               <HStack justify="space-between" px={2} py={1}>
-                <Text fontSize="xs" color="gray.400">Differences</Text>
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Differences</Text>
                 <Text fontSize="xs" color={diffCount > 0 ? 'red.400' : 'green.400'} fontWeight="bold">
                   {diffCount}
                 </Text>
@@ -96,11 +96,11 @@ export const ElementComparatorPanel: React.FC = () => {
 
               {/* Column headers */}
               <HStack px={2} py={1} justify="space-between">
-                <Text fontSize="xs" color="gray.500" flex={1}>Property</Text>
-                <Text fontSize="xs" color="blue.300" w="80px" textAlign="center">
+                <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} flex={1}>Property</Text>
+                <Text fontSize="xs" color="blue.600" _dark={{ color: 'blue.300' }} w="80px" textAlign="center">
                   A ({state.idA.slice(0, 6)})
                 </Text>
-                <Text fontSize="xs" color="green.300" w="80px" textAlign="center">
+                <Text fontSize="xs" color="green.600" _dark={{ color: 'green.300' }} w="80px" textAlign="center">
                   B ({state.idB.slice(0, 6)})
                 </Text>
               </HStack>
@@ -120,7 +120,7 @@ export const ElementComparatorPanel: React.FC = () => {
                         bg={d.isDifferent ? 'rgba(127, 29, 29, 0.15)' : 'transparent'}
                         borderRadius="sm"
                       >
-                        <Text fontSize="xs" color="gray.400" flex={1}>{d.property}</Text>
+                        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }} flex={1}>{d.property}</Text>
                         <Text fontSize="xs" color={d.isDifferent ? 'red.300' : 'gray.300'} w="80px" textAlign="center" fontFamily="mono">
                           {d.valueA.length > 10 ? d.valueA.slice(0, 10) + '…' : d.valueA}
                         </Text>

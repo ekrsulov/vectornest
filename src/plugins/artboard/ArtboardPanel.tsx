@@ -192,7 +192,7 @@ export const ArtboardPanel: React.FC = () => {
           </PanelStyledButton>
 
           {/* Info */}
-          <Text fontSize="10px" color="gray.600" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
             Export will use this fixed size
           </Text>
 

@@ -41,7 +41,7 @@ const WaveShapeParams: React.FC = () => {
 
   return (
     <VStack align="stretch" spacing={1}>
-      <Text fontSize="11px" fontWeight="medium" color={labelColor} mb={1}>
+      <Text fontSize="xs" fontWeight="medium" color={labelColor} mb={1}>
         Wave Settings
       </Text>
       <FormControl>
@@ -152,7 +152,7 @@ const ShapeParamsSection: React.FC = () => {
     case 'sphere':
       return (
         <VStack align="stretch" spacing={1}>
-          <Text fontSize="11px" fontWeight="medium" color={labelColor} mb={1}>
+          <Text fontSize="xs" fontWeight="medium" color={labelColor} mb={1}>
             Sphere Settings
           </Text>
           <FormControl>
@@ -175,7 +175,7 @@ const ShapeParamsSection: React.FC = () => {
     case 'cylinder':
       return (
         <VStack align="stretch" spacing={1}>
-          <Text fontSize="11px" fontWeight="medium" color={labelColor} mb={1}>
+          <Text fontSize="xs" fontWeight="medium" color={labelColor} mb={1}>
             Cylinder Settings
           </Text>
           <FormControl>
@@ -212,7 +212,7 @@ const ShapeParamsSection: React.FC = () => {
     case 'torus':
       return (
         <VStack align="stretch" spacing={1}>
-          <Text fontSize="11px" fontWeight="medium" color={labelColor} mb={1}>
+          <Text fontSize="xs" fontWeight="medium" color={labelColor} mb={1}>
             Torus Settings
           </Text>
           <FormControl>
@@ -249,7 +249,7 @@ const ShapeParamsSection: React.FC = () => {
     case 'cone':
       return (
         <VStack align="stretch" spacing={1}>
-          <Text fontSize="11px" fontWeight="medium" color={labelColor} mb={1}>
+          <Text fontSize="xs" fontWeight="medium" color={labelColor} mb={1}>
             Cone Settings
           </Text>
           <FormControl>
@@ -286,7 +286,7 @@ const ShapeParamsSection: React.FC = () => {
     case 'ellipsoid':
       return (
         <VStack align="stretch" spacing={1}>
-          <Text fontSize="11px" fontWeight="medium" color={labelColor} mb={1}>
+          <Text fontSize="xs" fontWeight="medium" color={labelColor} mb={1}>
             Ellipsoid Settings
           </Text>
           <FormControl>
@@ -360,7 +360,7 @@ const RotationControls: React.FC = () => {
       bg={sectionBg} 
       borderRadius="md"
     >
-      <Text fontSize="11px" fontWeight="medium" color={labelColor} mb={1}>
+      <Text fontSize="xs" fontWeight="medium" color={labelColor} mb={1}>
         3D Rotation
       </Text>
       
@@ -532,7 +532,7 @@ const Wrap3DPanelComponent: React.FC = () => {
           </Button>
         </HStack>
 
-        <Text fontSize="10px" color={isLivePreview ? "green.500" : "orange.500"} textAlign="center">
+        <Text fontSize="xs" color={isLivePreview ? "green.500" : "orange.500"} textAlign="center">
           {isLivePreview 
             ? `✓ Transforming ${pathCount} path${pathCount !== 1 ? 's' : ''} - adjust sliders to preview` 
             : "⚠ Select paths to start"}

@@ -67,8 +67,8 @@ export const ElementHeatmapPanel: React.FC = () => {
               <Box flex={1} bg="red.500" />
             </HStack>
             <HStack justify="space-between" mt={0.5}>
-              <Text fontSize="9px" color="gray.500">Low</Text>
-              <Text fontSize="9px" color="gray.500">High</Text>
+              <Text fontSize="2xs" color="gray.500">Low</Text>
+              <Text fontSize="2xs" color="gray.500">High</Text>
             </HStack>
           </Box>
         </>

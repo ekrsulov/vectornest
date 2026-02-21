@@ -114,19 +114,19 @@ export const PathMorphPanel: React.FC = () => {
     <Panel title="Path Morph" isCollapsible defaultOpen={false}>
       <VStack gap={1} align="stretch">
         {pathCount !== 2 ? (
-          <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             {reason || 'Select exactly 2 path elements to morph between them.'}
           </Text>
         ) : (
           <>
             {reason && (
-              <Text fontSize="10px" color="orange.500" _dark={{ color: 'orange.300' }}>
+              <Text fontSize="xs" color="orange.500" _dark={{ color: 'orange.300' }}>
                 {reason}
               </Text>
             )}
 
             <SliderControl
-              label="Steps:"
+              label="Steps"
               value={steps}
               min={1}
               max={20}

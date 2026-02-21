@@ -149,26 +149,26 @@ export const DocumentAuditPanel: React.FC = () => {
           <SectionHeader title="Summary" />
 
           <HStack justify="space-between" px={2} py={1}>
-            <Text fontSize="xs" color="gray.400">Total Elements</Text>
-            <Text fontSize="xs" color="gray.300">{state.summary.totalElements}</Text>
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Total Elements</Text>
+            <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>{state.summary.totalElements}</Text>
           </HStack>
 
           <HStack px={2} py={1} gap={3}>
-            <Text fontSize="xs" color="gray.400">
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
               Paths: {state.summary.pathCount}
             </Text>
-            <Text fontSize="xs" color="gray.400">
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
               Groups: {state.summary.groupCount}
             </Text>
             {state.summary.otherCount > 0 && (
-              <Text fontSize="xs" color="gray.400">
+              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
                 Other: {state.summary.otherCount}
               </Text>
             )}
           </HStack>
 
           <HStack justify="space-between" px={2} py={1}>
-            <Text fontSize="xs" color="gray.400">Issues Found</Text>
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Issues Found</Text>
             <Text
               fontSize="sm"
               fontWeight="bold"
@@ -215,7 +215,7 @@ export const DocumentAuditPanel: React.FC = () => {
           <VStack gap={1} align="stretch" maxH="300px" overflowY="auto" px={2}>
             {[...issuesByCategory.entries()].map(([category, catIssues]) => (
               <Box key={category}>
-                <Text fontSize="xs" fontWeight="bold" color="gray.300" mb={1}>
+                <Text fontSize="xs" fontWeight="bold" color="gray.700" _dark={{ color: 'gray.300' }} mb={1}>
                   {categoryLabels[category] || category} ({catIssues.length})
                 </Text>
 
@@ -236,11 +236,11 @@ export const DocumentAuditPanel: React.FC = () => {
                       <Text fontSize="xs" color={severityColors[issue.severity]}>
                         {severityIcons[issue.severity]}
                       </Text>
-                      <Text fontSize="xs" color="gray.300">
+                      <Text fontSize="xs" color="gray.700" _dark={{ color: 'gray.300' }}>
                         {issue.description}
                       </Text>
                     </HStack>
-                    <Text fontSize="xs" color="gray.500" fontStyle="italic">
+                    <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} fontStyle="italic">
                       {issue.suggestion}
                     </Text>
                   </Box>

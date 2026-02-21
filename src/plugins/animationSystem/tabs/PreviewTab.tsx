@@ -244,7 +244,7 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
         <Text>Target:</Text>
         <Text isTruncated>{targetInfo}</Text>
         {isTransitiveAnimation && (
-          <Badge colorScheme="purple" fontSize="9px" ml={1}>transitive</Badge>
+          <Badge colorScheme="purple" fontSize="2xs" ml={1}>transitive</Badge>
         )}
       </HStack>
       <AnimationPreviewPanel

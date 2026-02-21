@@ -333,7 +333,7 @@ export const PatternsPanel: React.FC = () => {
             From Selection
           </PanelStyledButton>
           {selectedCount === 0 && (
-            <Text fontSize="10px" color={mutedTextColor}>
+            <Text fontSize="xs" color={mutedTextColor}>
               Select elements in canvas to create a pattern.
             </Text>
           )}

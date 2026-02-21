@@ -14,8 +14,8 @@ type AnatomyStore = CanvasStore & PathAnatomyPluginSlice;
 
 const MetricRow: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
   <HStack justify="space-between" px={2} py={0.5}>
-    <Text fontSize="xs" color="gray.400">{label}</Text>
-    <Text fontSize="xs" fontWeight="bold" color="gray.200" fontFamily="mono">{value}</Text>
+    <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>{label}</Text>
+    <Text fontSize="xs" fontWeight="bold" color="gray.700" _dark={{ color: 'gray.200' }} fontFamily="mono">{value}</Text>
   </HStack>
 );
 
@@ -125,17 +125,17 @@ export const PathAnatomyPanel: React.FC = () => {
               <HStack gap={2} px={2} pb={1}>
                 <Box flex={1} textAlign="center">
                   <Box w={3} h={3} bg={state.lineColor} borderRadius="sm" mx="auto" mb={0.5} />
-                  <Text fontSize="2xs" color="gray.400">Lines</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Lines</Text>
                   <Text fontSize="xs" fontWeight="bold">{metrics.lineSegments}</Text>
                 </Box>
                 <Box flex={1} textAlign="center">
                   <Box w={3} h={3} bg={state.curveColor} borderRadius="full" mx="auto" mb={0.5} />
-                  <Text fontSize="2xs" color="gray.400">Curves</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Curves</Text>
                   <Text fontSize="xs" fontWeight="bold">{metrics.curveSegments}</Text>
                 </Box>
                 <Box flex={1} textAlign="center">
                   <Box w={3} h={3} bg={state.moveColor} borderRadius="full" mx="auto" mb={0.5} />
-                  <Text fontSize="2xs" color="gray.400">Moves</Text>
+                  <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>Moves</Text>
                   <Text fontSize="xs" fontWeight="bold">{metrics.moveCommands}</Text>
                 </Box>
               </HStack>
@@ -143,7 +143,7 @@ export const PathAnatomyPanel: React.FC = () => {
           )}
 
           {!metrics && selectedIds.length === 0 && (
-            <Text fontSize="xs" color="gray.500" px={2} py={2}>
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.500' }} px={2} py={2}>
               Select a path element to analyze
             </Text>
           )}

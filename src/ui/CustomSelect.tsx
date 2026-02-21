@@ -113,6 +113,7 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
         fontSize={fontSize}
         h={height}
         minW="120px"
+        my={0.5}
         opacity={isDisabled ? 0.5 : 1}
         p={padding}
         pointerEvents={isDisabled ? 'none' : 'auto'}

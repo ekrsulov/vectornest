@@ -716,7 +716,7 @@ export const MasksPanel: React.FC = () => {
                 />
               </Box>
             </CompactFieldRow>
-            <Text fontSize="10px" color="gray.500" mb={2}>
+            <Text fontSize="xs" color="gray.500" mb={2}>
               Units: {activeMask.maskUnits ?? 'objectBoundingBox'}
             </Text>
             <MaskPreviewBox mask={activeMask} animations={animations} />

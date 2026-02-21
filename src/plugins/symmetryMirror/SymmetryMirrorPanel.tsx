@@ -47,12 +47,12 @@ export const SymmetryMirrorPanel: React.FC = () => {
       {mirror?.enabled && (
         <VStack gap={1} align="stretch">
           {!symmetryEnabled ? (
-            <Text fontSize="11px" color="orange.500">
+            <Text fontSize="xs" color="orange.500">
               Enable Symmetry Draw guides first to set the mirror axis and center point.
             </Text>
           ) : (
             <>
-              <Text fontSize="11px" color="gray.500" _dark={{ color: 'gray.400' }}>
+              <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
                 New paths drawn will be automatically mirrored across the symmetry axes.
                 Mode: <strong>{symmetry?.mode}</strong>
                 {symmetry?.mode === 'radial' && ` (${symmetry?.segments} segments)`}
@@ -72,7 +72,7 @@ export const SymmetryMirrorPanel: React.FC = () => {
                 Auto-group mirrors
               </PanelToggle>
 
-              <Text fontSize="10px" color="gray.400" _dark={{ color: 'gray.500' }}>
+              <Text fontSize="xs" color="gray.400" _dark={{ color: 'gray.500' }}>
                 Mirrored elements: {mirror.mirroredIds.length}
               </Text>
 

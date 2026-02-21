@@ -101,6 +101,8 @@ export interface PresentationAttributes {
 
 export interface PathData extends StrokeProperties, FillProperties, PresentationAttributes {
   subPaths: SubPath[]; // Structured representation of SVG path commands
+  /** Optional human-readable name (set by Naming Manager or user) */
+  name?: string;
   isPencilPath?: boolean; // Indicates if this path was created with the pencil tool
   textPath?: {
     text: string;

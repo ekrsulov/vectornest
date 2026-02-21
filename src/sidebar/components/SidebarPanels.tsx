@@ -112,6 +112,10 @@ export const SidebarPanels: React.FC = () => {
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel || showLibraryPanel;
 
+  // Gen/Audit panels also hide the footer but are NOT treated as special panel mode
+  // (so their own tool panels still render via createToolPanel's !isInSpecialPanelMode check)
+  const isFooterHidingPlugin = activePlugin === 'generatorLibrary' || activePlugin === 'auditLibrary' || activePlugin === 'svgStructure';
+
   const {
     canPerformOpticalAlignment,
     selectedSubpathsCount,
@@ -246,7 +250,7 @@ export const SidebarPanels: React.FC = () => {
     }
   }, [conditionContext, filteredPanelConfigs, maximizedSidebarPanelKey, setMaximizedSidebarPanelKey]);
 
-  const isFooterVisible = !isInSpecialPanelMode && !maximizedSidebarPanelKey;
+  const isFooterVisible = !isInSpecialPanelMode && !isFooterHidingPlugin && !maximizedSidebarPanelKey;
 
   return (
     <Box

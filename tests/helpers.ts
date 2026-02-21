@@ -17,6 +17,7 @@ const TOOL_GROUP_MAP: Record<string, 'Basic Tools' | 'Creation Tools' | 'Advance
   'Wrap 3D': 'Advanced Tools',
   Arrows: 'Advanced Tools',
   Measure: 'Advanced Tools',
+  'Smart Eraser': 'Advanced Tools',
 };
 
 const TOOL_GROUPS = ['Basic Tools', 'Creation Tools', 'Advanced Tools'] as const;

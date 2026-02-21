@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { Box, HStack } from '@chakra-ui/react';
+import { Box, HStack, Flex } from '@chakra-ui/react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
@@ -113,7 +113,7 @@ export const ColorHarmonyPanel: React.FC = () => {
     if (!state) return [];
     return generateHarmony(
       state.baseHue, state.baseSaturation, state.baseLightness,
-      state.mode, state.analogousAngle
+      state.mode, state.analogousAngle, state.monochromaticSamples
     );
   }, [state]);
 
@@ -127,10 +127,16 @@ export const ColorHarmonyPanel: React.FC = () => {
     selectedEls.forEach((el: CanvasElement, i: number) => {
       const color = colors[i % colors.length];
       if (el.type === 'path') {
+        const updates: Partial<CanvasElement['data']> = {};
         if (state.applyAsFill) {
-          updateElement(el.id, { data: { ...el.data, fillColor: color.hex, fillOpacity: 1 } });
-        } else {
-          updateElement(el.id, { data: { ...el.data, strokeColor: color.hex } });
+          updates.fillColor = color.hex;
+          updates.fillOpacity = 1;
+        }
+        if (state.applyAsStroke) {
+          updates.strokeColor = color.hex;
+        }
+        if (Object.keys(updates).length > 0) {
+          updateElement(el.id, { data: { ...el.data, ...updates } });
         }
       }
     });
@@ -150,13 +156,15 @@ export const ColorHarmonyPanel: React.FC = () => {
         analogousAngle={state.analogousAngle}
       />
 
-      <CustomSelect
-        size="sm"
-        placeholder="Harmony Mode"
-        value={state.mode}
-        onChange={(val) => update({ mode: val as HarmonyMode })}
-        options={MODE_OPTIONS}
-      />
+      <Box mb={3}>
+        <CustomSelect
+          size="sm"
+          placeholder="Harmony Mode"
+          value={state.mode}
+          onChange={(val) => update({ mode: val as HarmonyMode })}
+          options={MODE_OPTIONS}
+        />
+      </Box>
 
       <SliderControl
         label="Hue"
@@ -196,7 +204,23 @@ export const ColorHarmonyPanel: React.FC = () => {
         />
       )}
 
-      <SectionHeader title="Palette" />
+      {state.mode === 'monochromatic' && (
+        <SliderControl
+          label="Samples"
+          value={state.monochromaticSamples}
+          min={5}
+          max={10}
+          onChange={(v) => update({ monochromaticSamples: v })}
+          formatter={(v) => `${v}`}
+        />
+      )}
+
+      <SectionHeader
+        title="PALETTE"
+        onAction={handleApply}
+        actionLabel="Apply"
+        actionTitle="Apply colors to selected elements"
+      />
 
       <HStack gap={1} flexWrap="wrap" mb={2}>
         {colors.map((c, i) => (
@@ -213,19 +237,21 @@ export const ColorHarmonyPanel: React.FC = () => {
         ))}
       </HStack>
 
-      <PanelToggle
-        isChecked={state.applyAsFill}
-        onChange={(e) => update({ applyAsFill: e.target.checked })}
-      >
-        Apply as Fill
-      </PanelToggle>
+      <Flex display="flex" flexDirection="column" gap={2}>
+        <PanelToggle
+          isChecked={state.applyAsFill}
+          onChange={(e) => update({ applyAsFill: e.target.checked })}
+        >
+          Apply as Fill
+        </PanelToggle>
 
-      <SectionHeader
-        title="Apply"
-        onAction={handleApply}
-        actionLabel="Apply"
-        actionTitle="Apply colors to selected elements"
-      />
+        <PanelToggle
+          isChecked={state.applyAsStroke}
+          onChange={(e) => update({ applyAsStroke: e.target.checked })}
+        >
+          Apply as Stroke
+        </PanelToggle>
+      </Flex>
     </Panel>
   );
 };

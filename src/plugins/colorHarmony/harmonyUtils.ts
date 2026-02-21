@@ -50,7 +50,8 @@ export function generateHarmony(
   baseSaturation: number,
   baseLightness: number,
   mode: HarmonyMode,
-  analogousAngle: number
+  analogousAngle: number,
+  monochromaticSamples: number = 5
 ): HarmonyColor[] {
   const h = baseHue;
   const s = baseSaturation;
@@ -92,14 +93,23 @@ export function generateHarmony(
         makeColor(h + 270, s, l, 'Tetradic 3'),
       ];
 
-    case 'monochromatic':
-      return [
-        makeColor(h, s, Math.max(10, l - 30), 'Dark'),
-        makeColor(h, s, Math.max(10, l - 15), 'Medium Dark'),
-        makeColor(h, s, l, 'Base'),
-        makeColor(h, s, Math.min(90, l + 15), 'Medium Light'),
-        makeColor(h, s, Math.min(90, l + 30), 'Light'),
-      ];
+    case 'monochromatic': {
+      const samples: HarmonyColor[] = [];
+      const range = 45; // Total lightness range
+      const step = range / (monochromaticSamples - 1);
+      const startLightness = l - range / 2;
+
+      for (let i = 0; i < monochromaticSamples; i++) {
+        const lightness = Math.max(10, Math.min(90, startLightness + step * i));
+        const label = i === Math.floor(monochromaticSamples / 2)
+          ? 'Base'
+          : i < Math.floor(monochromaticSamples / 2)
+            ? `Shade ${Math.floor(monochromaticSamples / 2) - i}`
+            : `Tint ${i - Math.floor(monochromaticSamples / 2)}`;
+        samples.push(makeColor(h, s, lightness, label));
+      }
+      return samples;
+    }
   }
 }
 

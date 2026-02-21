@@ -119,6 +119,25 @@ import { distanceMatrixPlugin } from './distanceMatrix';
 import { gradientMapperPlugin } from './gradientMapper';
 import { intersectionDetectorPlugin } from './intersectionDetector';
 import { strokeProfileAnalyzerPlugin } from './strokeProfileAnalyzer';
+import { knifePlugin } from './knife';
+import { blobBrushPlugin } from './blobBrush';
+import { perspectiveGridPlugin } from './perspectiveGrid';
+import { smartEraserPlugin } from './smartEraser';
+import { sprayCanPlugin } from './sprayCan';
+import { pathWeldPlugin } from './pathWeld';
+import { shapeCutterPlugin } from './shapeCutter';
+import { roughenToolPlugin } from './roughenTool';
+import { cornerRounderPlugin } from './cornerRounder';
+import { zigzagToolPlugin } from './zigzagTool';
+import { stampBrushPlugin } from './stampBrush';
+import { stippleBrushPlugin } from './stippleBrush';
+import { coilToolPlugin } from './coilTool';
+import { starBurstPlugin } from './starBurst';
+import { erodeDilatePlugin } from './erodeDilate';
+import { scallopToolPlugin } from './scallopTool';
+import { fractureToolPlugin } from './fractureTool';
+import { bridgeToolPlugin } from './bridgeTool';
+import { smoothPaintPlugin } from './smoothPaint';
 
 export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectPlugin,
@@ -145,12 +164,21 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   editPlugin,
   pathPlugin,
   convertToPathPlugin,
+  knifePlugin,
+  pathWeldPlugin,
+  shapeCutterPlugin,
+  roughenToolPlugin,
+  cornerRounderPlugin,
+  smartEraserPlugin,
+  blobBrushPlugin,
+  sprayCanPlugin,
   gridFillPlugin,
   measurePlugin,
   opticalAlignmentPlugin,
   guidelinesPlugin,
   objectSnapPlugin,
   gridPlugin,
+  perspectiveGridPlugin,
   artboardPlugin,
   wireframePlugin,
   minimapPlugin,
@@ -245,6 +273,16 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   gradientMapperPlugin,
   intersectionDetectorPlugin,
   strokeProfileAnalyzerPlugin,
+  zigzagToolPlugin,
+  stampBrushPlugin,
+  stippleBrushPlugin,
+  coilToolPlugin,
+  starBurstPlugin,
+  erodeDilatePlugin,
+  scallopToolPlugin,
+  fractureToolPlugin,
+  bridgeToolPlugin,
+  smoothPaintPlugin,
   // pluginSelectorPlugin must be last so its init() runs after all other plugins are registered
   pluginSelectorPlugin,
 ];

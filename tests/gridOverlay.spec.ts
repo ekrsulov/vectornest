@@ -11,7 +11,7 @@ test.describe('Grid Plugin', () => {
     await page.waitForTimeout(100);
 
     // Look for Grid panel heading
-    const gridHeading = page.getByRole('heading', { name: 'Grid' });
+    const gridHeading = page.getByRole('heading', { name: 'Grid', exact: true });
     await expect(gridHeading).toBeVisible();
   });
 

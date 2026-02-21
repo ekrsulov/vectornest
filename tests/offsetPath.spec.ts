@@ -110,8 +110,9 @@ test.describe('Offset Path Plugin', () => {
     // Open Gen panel and expand Offset Path
     await openOffsetPathPanel(page);
 
-    // Look for Apply button (use exact match to avoid matching 'Apply Visual Center')
-    const applyButton = page.getByRole('button', { name: 'Apply', exact: true });
+    // Look for Apply button scoped within the Offset Path panel
+    const offsetPanel = page.getByRole('heading', { name: 'Offset Path' }).locator('xpath=ancestor::div[contains(@class, "panel") or contains(@class, "css-")]/..');
+    const applyButton = offsetPanel.getByRole('button', { name: 'Apply', exact: true }).first();
     await expect(applyButton).toBeVisible();
   });
 
@@ -156,8 +157,9 @@ test.describe('Offset Path Plugin', () => {
       await page.waitForTimeout(100);
     }
 
-    // Click Apply button (use exact match)
-    const applyButton = page.getByRole('button', { name: 'Apply', exact: true });
+    // Click Apply button scoped within the Offset Path panel
+    const offsetPanel = page.getByRole('heading', { name: 'Offset Path' }).locator('xpath=ancestor::div[contains(@class, "panel") or contains(@class, "css-")]/..');
+    const applyButton = offsetPanel.getByRole('button', { name: 'Apply', exact: true }).first();
     await applyButton.click();
     await page.waitForTimeout(300);
 

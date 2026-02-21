@@ -1,7 +1,6 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
-import { createToolPanel } from '../../utils/pluginFactories';
 import { Wand2 } from 'lucide-react';
 import { createPotracePluginSlice } from './slice';
 import { PotracePanel } from './PotracePanel';
@@ -23,13 +22,12 @@ export const potracePlugin: PluginDefinition<CanvasStore> = {
     context.store.getState().setMode('select');
   },
   slices: [potraceSliceFactory],
-
-  toolDefinition: {
-    order: 20,
-    visibility: 'dynamic',
-    toolGroup: 'advanced',
-    isDisabled: (store) => store.selectedIds.length === 0,
-  },
-  sidebarPanels: [createToolPanel('potrace', PotracePanel)],
+  relatedPluginPanels: [
+    {
+      id: 'potrace',
+      targetPlugin: 'generatorLibrary',
+      component: PotracePanel,
+    },
+  ],
 };
 

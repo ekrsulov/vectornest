@@ -99,6 +99,59 @@ All functionality is implemented as plugins in `src/plugins/<name>/`. Each plugi
 
 **Central orchestrator**: `pluginManager` in `src/utils/pluginManager.ts` handles plugin registration, lifecycle, slice injection, and inter-plugin communication.
 
+### Sidebar Panel Groups
+
+The right sidebar organizes plugin panels into three tab groups, each with a distinct purpose and registration mechanism:
+
+#### Gen (Generator Library)
+
+**Purpose**: Generation of new elements, application of advanced effects/transforms, and utility operations that modify or create canvas content. These plugins typically present a configuration panel with parameters and an "Apply" action button.
+
+**Registration**: Plugins contribute their panel via `relatedPluginPanels` with `targetPlugin: 'generatorLibrary'`. Panels are sorted **alphabetically** by plugin label.
+
+**Sub-categories and plugins**:
+
+| Sub-category | Plugins |
+|---|---|
+| **Generative patterns** | `celticKnot`, `fractalTree`, `gearGenerator`, `geometricPattern`, `guilloche`, `kaleidoscope`, `mandalaGenerator`, `mazeGenerator`, `noiseGenerator`, `particleField`, `spiralGenerator`, `voronoiDiagram` |
+| **Path effects & transforms** | `glitchEffect`, `halftone`, `offsetPath`, `pathMorph`, `pathStitch`, `pathTexture`, `pathWeave`, `scatterAlongPath`, `stickerEffect`, `waveDistort` |
+| **Layout & distribution** | `gridDistribution`, `isometricGrid`, `layoutEngine`, `manualMove`, `smartDistribute` |
+| **Conversion utilities** | `convertToPath` |
+
+---
+
+#### Audit (Audit Library)
+
+**Purpose**: Read-only informational reports and analysis about the SVG document and its elements. These plugins inspect and present data without modifying the canvas. They typically have a "Run" button that triggers analysis and displays results.
+
+**Registration**: Plugins contribute their panel via `relatedPluginPanels` with `targetPlugin: 'auditLibrary'`. Panels are sorted **alphabetically** by plugin label.
+
+**Sub-categories and plugins**:
+
+| Sub-category | Plugins |
+|---|---|
+| **Document-level analysis** | `documentAudit`, `svgSizeAnalyzer`, `duplicateFinder`, `namingManager` |
+| **Color & visual analysis** | `colorPalette`, `contrastChecker`, `gradientMapper` |
+| **Geometry & structure** | `anchorPointAnalyzer`, `distanceMatrix`, `elementComparator`, `elementInspector`, `pathComplexityScorer`, `pathStatistics`, `pathWindingAnalyzer`, `proportionChecker`, `selectionStatistics`, `strokeProfileAnalyzer`, `symmetryDetector`, `whiteSpaceAnalyzer` |
+| **Compliance & accessibility** | `accessibilityChecker`, `gridCompliance` |
+
+---
+
+#### Prefs (Settings Panels)
+
+**Purpose**: Activation/deactivation and configuration of plugins that provide persistent visual overlays or real-time on-canvas feedback. Each panel features an enable/disable toggle (`PanelSwitch`) and configuration controls (sliders, selects) that take effect immediately on the canvas. These plugins always register a `canvasLayer` (foreground/background overlay) alongside their settings panel.
+
+**Registration**: Plugins register their panel via `createSettingsPanel(key, component)` in `sidebarPanels`, which shows the panel when `ctx.showSettingsPanel` is true. Panels are sorted by explicit `order`.
+
+**Sub-categories and plugins**:
+
+| Sub-category | Plugins |
+|---|---|
+| **Canvas guides & grids** | `grid`, `guidelines`, `compositionGuides`, `isometricGrid` (overlay aspect) |
+| **Path visualization** | `curvatureComb`, `pathDirection`, `pathAnatomy`, `tangentVisualizer` |
+| **Element analysis overlays** | `bboxVisualizer`, `elementHeatmap`, `elementRuler`, `layerDepth`, `spacingAnalyzer`, `alignmentAnalyzer`, `intersectionDetector`, `coordinateMapper` |
+| **Drawing aids** | `symmetryDraw`, `symmetryMirror` |
+
 ### State Management
 
 Zustand store (`src/store/canvasStore.ts`) with:

@@ -20,8 +20,12 @@ export interface ColorHarmonyState extends Record<string, unknown> {
   mode: HarmonyMode;
   /** Analogous spread angle */
   analogousAngle: number;
-  /** Apply as fill (true) or stroke (false) */
+  /** Number of samples for monochromatic mode (5-10) */
+  monochromaticSamples: number;
+  /** Apply as fill */
   applyAsFill: boolean;
+  /** Apply as stroke */
+  applyAsStroke: boolean;
 }
 
 export interface ColorHarmonyPluginSlice {
@@ -42,6 +46,8 @@ export const createColorHarmonySlice: StateCreator<
     baseLightness: 50,
     mode: 'complementary',
     analogousAngle: 30,
+    monochromaticSamples: 5,
     applyAsFill: true,
+    applyAsStroke: false,
   }
 );

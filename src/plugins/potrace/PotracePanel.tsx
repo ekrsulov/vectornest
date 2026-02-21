@@ -73,7 +73,12 @@ export const PotracePanel: React.FC<PotracePanelProps> = ({ hideTitle = false })
   };
 
   return (
-    <Panel title="Potrace Vectorization" hideHeader={hideTitle}>
+    <Panel
+      title="Potrace Vectorization"
+      hideHeader={hideTitle}
+      isCollapsible
+      defaultOpen={false}
+    >
       <VStack spacing={0} align="stretch">
 
         {/* Output Mode Section */}

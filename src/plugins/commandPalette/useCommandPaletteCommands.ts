@@ -573,6 +573,7 @@ export function useCommandPaletteCommands(): PaletteCommand[] {
       execute: () => {},
       panelComponent: SvgStructurePanel as ComponentType,
       panelLabel: 'Struct',
+      panelCategory: 'editor',
       keywords: ['struct', 'structure', 'svg', 'tree', 'layers', 'hierarchy', 'groups', 'elements', 'panel'],
     });
 

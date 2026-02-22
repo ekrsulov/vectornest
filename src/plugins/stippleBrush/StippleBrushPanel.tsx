@@ -6,7 +6,7 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { StippleBrushPluginSlice } from './slice';
 
-export const StippleBrushPanel: React.FC = () => {
+export const StippleBrushPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const stippleBrush = useCanvasStore(
         (state) => (state as CanvasStore & StippleBrushPluginSlice).stippleBrush
     );
@@ -15,7 +15,7 @@ export const StippleBrushPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Stipple Brush" isCollapsible defaultOpen={true}>
+        <Panel title="Stipple Brush" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Brush Radius"
                 value={stippleBrush?.brushRadius ?? 30}

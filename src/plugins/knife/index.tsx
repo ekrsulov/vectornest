@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createKnifePluginSlice, type KnifePluginSlice } from './slice';
+import React from 'react';
 import { KnifePanel } from './KnifePanel';
 import { KnifeOverlay } from './KnifeOverlay';
 import { cutElementsWithPath } from './knifeUtils';
@@ -27,6 +28,7 @@ export const knifePlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Cut paths by drawing across them',
     },
+    expandablePanel: () => React.createElement(KnifePanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'knife-panel',

@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createBlobBrushPluginSlice, type BlobBrushPluginSlice } from './slice';
+import React from 'react';
 import { BlobBrushPanel } from './BlobBrushPanel';
 import { BlobBrushOverlay } from './BlobBrushOverlay';
 import { createBlobBrushShape } from './blobBrushUtils';
@@ -27,6 +28,7 @@ export const blobBrushPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Draw filled shapes that automatically merge',
     },
+    expandablePanel: () => React.createElement(BlobBrushPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'blob-brush-panel',

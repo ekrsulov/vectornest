@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createStarBurstPluginSlice, type StarBurstPluginSlice } from './slice';
+import React from 'react';
 import { StarBurstPanel } from './StarBurstPanel';
 import { StarBurstOverlay } from './StarBurstOverlay';
 import { createStarBurst } from './starBurstUtils';
@@ -27,6 +28,7 @@ export const starBurstPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Click and drag to create a radiating star burst shape',
     },
+    expandablePanel: () => React.createElement(StarBurstPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'star-burst-panel',

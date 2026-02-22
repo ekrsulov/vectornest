@@ -50,7 +50,7 @@ export function useFloatingContextMenuActions(
 ): FloatingContextMenuAction[] {
   const enabledPlugins = useEnabledPlugins();
 
-  const { isSidebarPinned } = useSidebarLayout();
+  const { isSidebarPinned, isWithoutDistractionMode } = useSidebarLayout();
   const {
     isSidebarOpen,
     toggleSidebar,
@@ -106,10 +106,10 @@ export function useFloatingContextMenuActions(
 
   return useMemo<FloatingContextMenuAction[]>(() => {
     const sidebarActions: FloatingContextMenuAction[] = [];
-    if (!isSidebarPinned) {
+    if (!isWithoutDistractionMode && !isSidebarPinned) {
       sidebarActions.push(sidebarAction);
     }
-    if (showLeftSidebar && !isLeftSidebarPinned) {
+    if (!isWithoutDistractionMode && showLeftSidebar && !isLeftSidebarPinned) {
       sidebarActions.push(leftSidebarAction);
     }
 
@@ -135,6 +135,7 @@ export function useFloatingContextMenuActions(
     pluginActions,
     groupActions,
     clipboardActions,
+    isWithoutDistractionMode,
     isSidebarPinned,
     sidebarAction,
     showLeftSidebar,

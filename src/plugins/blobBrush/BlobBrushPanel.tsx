@@ -5,7 +5,7 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { BlobBrushPluginSlice } from './slice';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
-export const BlobBrushPanel: React.FC = () => {
+export const BlobBrushPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const blobBrush = useCanvasStore(
         (state) => (state as CanvasStore & BlobBrushPluginSlice).blobBrush
     );
@@ -14,7 +14,7 @@ export const BlobBrushPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Blob Brush" isCollapsible defaultOpen={true}>
+        <Panel title="Blob Brush" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <RenderCountBadgeWrapper componentName="BlobBrushPanel" position="top-left" />
             <SliderControl
                 label="Brush Size"

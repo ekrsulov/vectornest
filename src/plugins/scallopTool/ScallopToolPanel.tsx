@@ -4,7 +4,7 @@ import { SliderControl } from '../../ui/SliderControl';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { ScallopToolPluginSlice } from './slice';
 
-export const ScallopToolPanel: React.FC = () => {
+export const ScallopToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const scallopTool = useCanvasStore(
         (state) => (state as CanvasStore & ScallopToolPluginSlice).scallopTool
     );
@@ -13,7 +13,7 @@ export const ScallopToolPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Scallop Tool" isCollapsible defaultOpen={true}>
+        <Panel title="Scallop Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Brush Radius"
                 value={scallopTool?.brushRadius ?? 30}

@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createShapeCutterPluginSlice, type ShapeCutterPluginSlice } from './slice';
+import React from 'react';
 import { ShapeCutterPanel } from './ShapeCutterPanel';
 import { ShapeCutterOverlay } from './ShapeCutterOverlay';
 import { cutWithShape } from './shapeCutterUtils';
@@ -27,6 +28,7 @@ export const shapeCutterPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Draw a freehand region to cut or keep portions of paths',
     },
+    expandablePanel: () => React.createElement(ShapeCutterPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'shape-cutter-panel',

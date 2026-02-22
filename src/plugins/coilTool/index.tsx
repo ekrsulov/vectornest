@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createCoilToolPluginSlice, type CoilToolPluginSlice } from './slice';
+import React from 'react';
 import { CoilToolPanel } from './CoilToolPanel';
 import { CoilToolOverlay } from './CoilToolOverlay';
 import { createCoilPath } from './coilUtils';
@@ -27,6 +28,7 @@ export const coilToolPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Draw freehand to create a coil/spring path',
     },
+    expandablePanel: () => React.createElement(CoilToolPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'coil-tool-panel',

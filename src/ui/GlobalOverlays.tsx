@@ -34,19 +34,24 @@ interface GlobalOverlaysProps {
   isIOS?: boolean;
 }
 
+interface GlobalOverlayEntry {
+  id: string;
+  component: React.ComponentType<Record<string, unknown>>;
+}
+
 /**
  * Renders global overlays from plugins and iOS edge guard.
  * Extracted from App.tsx to reduce complexity.
  */
 export const GlobalOverlays: React.FC<GlobalOverlaysProps> = ({ isIOS = false }) => {
   // Get global overlays from plugins (includes MinimapPanel)
-  const [globalOverlays, setGlobalOverlays] = useState<React.ComponentType<Record<string, unknown>>[]>(
-    () => pluginManager.getGlobalOverlays() as React.ComponentType<Record<string, unknown>>[]
+  const [globalOverlays, setGlobalOverlays] = useState<GlobalOverlayEntry[]>(
+    () => pluginManager.getGlobalOverlays() as GlobalOverlayEntry[]
   );
 
   // Re-query overlays after plugin registration changes
   const refreshOverlays = useCallback(() => {
-    setGlobalOverlays(pluginManager.getGlobalOverlays() as React.ComponentType<Record<string, unknown>>[]);
+    setGlobalOverlays(pluginManager.getGlobalOverlays() as GlobalOverlayEntry[]);
   }, []);
 
   // Subscribe to plugin registration events so late-registered overlays appear
@@ -59,20 +64,16 @@ export const GlobalOverlays: React.FC<GlobalOverlaysProps> = ({ isIOS = false })
     return () => { unsubscribe?.(); };
   }, [refreshOverlays]);
 
-  // Build stable keys from overlay component displayName or fallback
-  const overlayKeys = globalOverlays.map(
-    (Component, index) => Component.displayName || Component.name || `global-overlay-${index}`
-  );
-
   return (
     <>
       {/* iOS back swipe prevention */}
       <IOSEdgeGuard isIOS={isIOS} />
 
       {/* Render global overlays from plugins */}
-      {globalOverlays.map((OverlayComponent, index) => (
-        <OverlayComponent key={overlayKeys[index]} />
-      ))}
+      {globalOverlays.map((overlay) => {
+        const OverlayComponent = overlay.component;
+        return <OverlayComponent key={overlay.id} />;
+      })}
     </>
   );
 };

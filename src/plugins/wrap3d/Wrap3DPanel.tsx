@@ -412,7 +412,7 @@ const RotationControls: React.FC = () => {
   );
 };
 
-const Wrap3DPanelComponent: React.FC = () => {
+const Wrap3DPanelComponent: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
   const isActive = useCanvasStore(state => (state as unknown as Wrap3DSlice).isActive ?? false);
   const selectedShape = useCanvasStore(state => (state as unknown as Wrap3DSlice).selectedShape ?? 'sphere');
   const isLivePreview = useCanvasStore(state => (state as unknown as Wrap3DSlice).isLivePreview ?? false);
@@ -457,7 +457,7 @@ const Wrap3DPanelComponent: React.FC = () => {
 
   if (!canApply && !isActive) {
     return (
-      <Panel title="Wrap 3D">
+      <Panel title="Wrap 3D" hideHeader={hideTitle}>
         <VStack align="stretch" spacing={2}>
           <Text fontSize="12px" color={labelColor} textAlign="center">
             Select paths, groups, or a mix to use Wrap 3D

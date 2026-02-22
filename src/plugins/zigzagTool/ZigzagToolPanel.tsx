@@ -1,12 +1,12 @@
 import React from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
-import { CustomSelect } from '../../ui/CustomSelect';
+import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { ZigzagToolPluginSlice } from './slice';
 
-export const ZigzagToolPanel: React.FC = () => {
+export const ZigzagToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const zigzagTool = useCanvasStore(
         (state) => (state as CanvasStore & ZigzagToolPluginSlice).zigzagTool
     );
@@ -15,18 +15,20 @@ export const ZigzagToolPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Zigzag Tool" isCollapsible defaultOpen={true}>
+        <Panel title="Zigzag Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SectionHeader title="Wave Style" />
-            <CustomSelect
+            <JoinedButtonGroup
+                options={[
+                    { label: 'Zigzag', value: 'zigzag' },
+                    { label: 'Sine', value: 'sine', description: 'Sine Wave' },
+                    { label: 'Square', value: 'square', description: 'Square Wave' },
+                ]}
                 value={zigzagTool?.style ?? 'zigzag'}
                 onChange={(val) =>
                     updateZigzagToolState?.({ style: val as 'zigzag' | 'sine' | 'square' })
                 }
-                options={[
-                    { label: 'Zigzag', value: 'zigzag' },
-                    { label: 'Sine Wave', value: 'sine' },
-                    { label: 'Square Wave', value: 'square' },
-                ]}
+                size="sm"
+                fullWidth
             />
             <SliderControl
                 label="Amplitude"

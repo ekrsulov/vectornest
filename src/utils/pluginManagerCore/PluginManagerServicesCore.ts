@@ -193,7 +193,7 @@ export abstract class PluginManagerServicesCore extends PluginManagerRegistratio
     return this.uiContributionManager.getOverlays(toolName);
   }
 
-  getGlobalOverlays(): React.ComponentType<Record<string, unknown>>[] {
+  getGlobalOverlays(): Array<{ id: string; component: React.ComponentType<Record<string, unknown>> }> {
     return this.uiContributionManager.getGlobalOverlays();
   }
 

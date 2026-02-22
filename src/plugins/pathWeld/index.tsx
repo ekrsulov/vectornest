@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPathWeldPluginSlice, type PathWeldPluginSlice } from './slice';
+import React from 'react';
 import { PathWeldPanel } from './PathWeldPanel';
 import { PathWeldOverlay } from './PathWeldOverlay';
 import { weldElementsWithPath } from './pathWeldUtils';
@@ -27,6 +28,7 @@ export const pathWeldPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Draw over overlapping paths to unite them',
     },
+    expandablePanel: () => React.createElement(PathWeldPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'path-weld-panel',

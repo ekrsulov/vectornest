@@ -22,6 +22,9 @@ interface CustomSelectProps {
   searchable?: boolean;
 }
 
+const MIN_DROPDOWN_HEIGHT = 80;
+const DROPDOWN_MARGIN = 8;
+
 const CustomSelectComponent: React.FC<CustomSelectProps> = ({
   value,
   onChange,
@@ -35,8 +38,11 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
   const { input: { bg, menuBg, borderColor, textColor, hoverBg, selectedBg, selectedColor } } = useThemeColors();
   const selectedRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [placement, setPlacement] = useState<'bottom-start' | 'top-start'>('bottom-start');
+  const [dropdownMaxH, setDropdownMaxH] = useState(200);
 
   const selectedOption = options.find(option => option.value === value);
   const displayText = selectedOption ? selectedOption.label : placeholder;
@@ -56,12 +62,25 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
     // Reset search when opening
     setSearchQuery('');
 
+    // Calculate available space and flip if needed
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom - DROPDOWN_MARGIN;
+      const spaceAbove = rect.top - DROPDOWN_MARGIN;
+
+      if (spaceBelow < MIN_DROPDOWN_HEIGHT && spaceAbove > spaceBelow) {
+        setPlacement('top-start');
+        setDropdownMaxH(Math.min(300, spaceAbove));
+      } else {
+        setPlacement('bottom-start');
+        setDropdownMaxH(Math.min(300, spaceBelow));
+      }
+    }
+
     // Clear any pending timers from a previous open
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
 
-    // We disable autoSelect={false} on Menu so Chakra doesn't force scroll to the first item.
-    // We then use multiple attempts to ensure the scroll happens after the menu is fully opened and focused.
     const scroll = () => {
       if (selectedRef.current) {
         selectedRef.current.scrollIntoView({
@@ -71,12 +90,10 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
       }
     };
 
-    // Multiple attempts to beat any competing focus/rendering cycles
     timersRef.current.push(setTimeout(scroll, 50));
     timersRef.current.push(setTimeout(scroll, 150));
     timersRef.current.push(setTimeout(scroll, 300));
 
-    // Focus search input if searchable
     if (searchable) {
       timersRef.current.push(setTimeout(() => {
         searchInputRef.current?.focus();
@@ -98,47 +115,49 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
   };
 
   return (
-    <Menu onOpen={handleOpen} onClose={handleClose} autoSelect={false}>
-      <MenuButton
-        as={Box}
-        bg={bg}
-        border="1px solid"
-        borderColor={borderColor}
-        borderRadius="full"
-        color={textColor}
-        cursor={isDisabled ? 'not-allowed' : 'pointer'}
-        display="flex"
-        alignItems="center"
-        flex={flex}
-        fontSize={fontSize}
-        h={height}
-        minW="120px"
-        my={0.5}
-        opacity={isDisabled ? 0.5 : 1}
-        p={padding}
-        pointerEvents={isDisabled ? 'none' : 'auto'}
-        position="relative"
-        whiteSpace="nowrap"
-        _hover={{ bg: hoverBg }}
-        _focus={{ outline: 'none', ring: 2, ringColor: 'blue.500' }}
-      >
-        <Text>{displayText}</Text>
-        <Box
-          position="absolute"
-          right="8px"
-          top="50%"
-          transform="translateY(-50%)"
+    <Menu onOpen={handleOpen} onClose={handleClose} autoSelect={false} placement={placement}>
+      <Box ref={triggerRef}>
+        <MenuButton
+          as={Box}
+          bg={bg}
+          border="1px solid"
+          borderColor={borderColor}
+          borderRadius="full"
+          color={textColor}
+          cursor={isDisabled ? 'not-allowed' : 'pointer'}
+          display="flex"
+          alignItems="center"
+          flex={flex}
+          fontSize={fontSize}
+          h={height}
+          minW="120px"
+          my={0.5}
+          opacity={isDisabled ? 0.5 : 1}
+          p={padding}
+          pointerEvents={isDisabled ? 'none' : 'auto'}
+          position="relative"
+          whiteSpace="nowrap"
+          _hover={{ bg: hoverBg }}
+          _focus={{ outline: 'none', ring: 2, ringColor: 'blue.500' }}
         >
-          <ChevronDown size={14} />
-        </Box>
-      </MenuButton>
+          <Text>{displayText}</Text>
+          <Box
+            position="absolute"
+            right="8px"
+            top="50%"
+            transform="translateY(-50%)"
+          >
+            <ChevronDown size={14} />
+          </Box>
+        </MenuButton>
+      </Box>
       <MenuList
         bg={menuBg}
         borderColor={borderColor}
         borderRadius="md"
         boxShadow="lg"
         minW="120px"
-        maxH="300px"
+        maxH={`${dropdownMaxH}px`}
         overflowY="auto"
         zIndex={9999}
       >
@@ -158,7 +177,6 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
                 pl="28px"
                 _focus={{ outline: 'none', borderColor: 'blue.500' }}
                 onKeyDown={(e) => {
-                  // Prevent menu from closing on arrow key navigation
                   e.stopPropagation();
                 }}
               />

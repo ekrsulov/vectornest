@@ -5,7 +5,7 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { KnifePluginSlice } from './slice';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
-export const KnifePanel: React.FC = () => {
+export const KnifePanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const knife = useCanvasStore(
         (state) => (state as CanvasStore & KnifePluginSlice).knife
     );
@@ -14,7 +14,7 @@ export const KnifePanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Knife Tool" isCollapsible defaultOpen={true}>
+        <Panel title="Knife Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <RenderCountBadgeWrapper componentName="KnifePanel" position="top-left" />
             <SliderControl
                 label="Cut Width"

@@ -4,7 +4,7 @@ import { SliderControl } from '../../ui/SliderControl';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { CornerRounderPluginSlice } from './slice';
 
-export const CornerRounderPanel: React.FC = () => {
+export const CornerRounderPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const cornerRounder = useCanvasStore(
         (state) => (state as CanvasStore & CornerRounderPluginSlice).cornerRounder
     );
@@ -13,7 +13,7 @@ export const CornerRounderPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Corner Rounder" isCollapsible defaultOpen={true}>
+        <Panel title="Corner Rounder" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Round Radius"
                 value={cornerRounder?.roundRadius ?? 10}

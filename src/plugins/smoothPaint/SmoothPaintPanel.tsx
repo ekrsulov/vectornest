@@ -5,7 +5,7 @@ import { PanelSwitch } from '../../ui/PanelSwitch';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { SmoothPaintPluginSlice } from './slice';
 
-export const SmoothPaintPanel: React.FC = () => {
+export const SmoothPaintPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const smoothPaint = useCanvasStore(
         (state) => (state as CanvasStore & SmoothPaintPluginSlice).smoothPaint
     );
@@ -16,7 +16,7 @@ export const SmoothPaintPanel: React.FC = () => {
     if (!smoothPaint) return null;
 
     return (
-        <Panel title="Smooth Paint" isCollapsible defaultOpen>
+        <Panel title="Smooth Paint" hideHeader={hideTitle} isCollapsible defaultOpen>
             <SliderControl
                 label="Brush Radius"
                 value={smoothPaint.brushRadius}

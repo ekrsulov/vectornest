@@ -4,7 +4,7 @@ import { SliderControl } from '../../ui/SliderControl';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { RoughenToolPluginSlice } from './slice';
 
-export const RoughenToolPanel: React.FC = () => {
+export const RoughenToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const roughenTool = useCanvasStore(
         (state) => (state as CanvasStore & RoughenToolPluginSlice).roughenTool
     );
@@ -13,7 +13,7 @@ export const RoughenToolPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Roughen Tool" isCollapsible defaultOpen={true}>
+        <Panel title="Roughen Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Brush Radius"
                 value={roughenTool?.roughenRadius ?? 30}

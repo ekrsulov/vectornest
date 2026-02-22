@@ -8,7 +8,7 @@ import { PanelToggle } from '../../ui/PanelToggle';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { ColorHarmonyPluginSlice, HarmonyMode } from './slice';
-import { generateHarmony, getWheelAngles } from './harmonyUtils';
+import { generateHarmony, getWheelAngles, normalizeHue, wheelPointFromHue } from './harmonyUtils';
 import type { CanvasElement } from '../../types';
 
 type HarmonyStore = CanvasStore & ColorHarmonyPluginSlice;
@@ -38,19 +38,17 @@ const HarmonyWheel: React.FC<{
       <svg width="100" height="100" viewBox="0 0 100 100">
         {/* Hue ring */}
         {Array.from({ length: 36 }, (_, i) => {
-          const a1 = (i * 10 * Math.PI) / 180;
-          const outerX = cx + r * Math.cos(a1);
-          const outerY = cy + r * Math.sin(a1);
-          const innerX = cx + (r - 10) * Math.cos(a1);
-          const innerY = cy + (r - 10) * Math.sin(a1);
+          const hue = i * 10;
+          const outer = wheelPointFromHue(hue, cx, cy, r);
+          const inner = wheelPointFromHue(hue, cx, cy, r - 10);
           return (
             <line
               key={i}
-              x1={innerX}
-              y1={innerY}
-              x2={outerX}
-              y2={outerY}
-              stroke={`hsl(${i * 10}, 70%, 50%)`}
+              x1={inner.x}
+              y1={inner.y}
+              x2={outer.x}
+              y2={outer.y}
+              stroke={`hsl(${hue}, 70%, 50%)`}
               strokeWidth={8}
               strokeLinecap="round"
             />
@@ -62,8 +60,8 @@ const HarmonyWheel: React.FC<{
           <polygon
             points={angles
               .map((a) => {
-                const rad = ((a - 90) * Math.PI) / 180;
-                return `${cx + (r - 5) * Math.cos(rad)},${cy + (r - 5) * Math.sin(rad)}`;
+                const point = wheelPointFromHue(a, cx, cy, r - 5);
+                return `${point.x},${point.y}`;
               })
               .join(' ')}
             fill="none"
@@ -75,16 +73,14 @@ const HarmonyWheel: React.FC<{
 
         {/* Angle markers */}
         {angles.map((a, i) => {
-          const rad = ((a - 90) * Math.PI) / 180;
-          const mx = cx + (r - 5) * Math.cos(rad);
-          const my = cy + (r - 5) * Math.sin(rad);
+          const marker = wheelPointFromHue(a, cx, cy, r - 5);
           return (
             <circle
               key={i}
-              cx={mx}
-              cy={my}
+              cx={marker.x}
+              cy={marker.y}
               r={i === 0 ? 5 : 4}
-              fill={`hsl(${a}, 70%, 50%)`}
+              fill={`hsl(${normalizeHue(a)}, 70%, 50%)`}
               stroke="white"
               strokeWidth={2}
             />

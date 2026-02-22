@@ -5,7 +5,7 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { SmartEraserPluginSlice } from './slice';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
-export const SmartEraserPanel: React.FC = () => {
+export const SmartEraserPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const smartEraser = useCanvasStore(
         (state) => (state as CanvasStore & SmartEraserPluginSlice).smartEraser
     );
@@ -14,7 +14,7 @@ export const SmartEraserPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Smart Eraser" isCollapsible defaultOpen={true}>
+        <Panel title="Smart Eraser" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <RenderCountBadgeWrapper componentName="SmartEraserPanel" position="top-left" />
             <SliderControl
                 label="Eraser Size"

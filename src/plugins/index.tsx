@@ -138,6 +138,8 @@ import { scallopToolPlugin } from './scallopTool';
 import { fractureToolPlugin } from './fractureTool';
 import { bridgeToolPlugin } from './bridgeTool';
 import { smoothPaintPlugin } from './smoothPaint';
+import { commandPalettePlugin } from './commandPalette';
+import { contextActionsPlugin } from './contextActions';
 
 export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectPlugin,
@@ -283,6 +285,8 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   fractureToolPlugin,
   bridgeToolPlugin,
   smoothPaintPlugin,
+  commandPalettePlugin,
+  contextActionsPlugin,
   // pluginSelectorPlugin must be last so its init() runs after all other plugins are registered
   pluginSelectorPlugin,
 ];

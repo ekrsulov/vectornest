@@ -30,6 +30,7 @@ export interface AppSettings {
   showMinimap: boolean;
   showTooltips: boolean;
   showLeftSidebar: boolean;
+  withoutDistractionMode?: boolean;
   defaultStrokeColor: string;
   scaleStrokeWithZoom: boolean;
   exportPadding: number;

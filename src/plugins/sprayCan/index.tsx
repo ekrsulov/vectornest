@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSprayCanPluginSlice, type SprayCanPluginSlice } from './slice';
+import React from 'react';
 import { SprayCanPanel } from './SprayCanPanel';
 import { SprayCanOverlay } from './SprayCanOverlay';
 import { createSprayDots } from './sprayCanUtils';
@@ -27,6 +28,7 @@ export const sprayCanPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Spray scattered dots and shapes on the canvas',
     },
+    expandablePanel: () => React.createElement(SprayCanPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'spray-can-panel',

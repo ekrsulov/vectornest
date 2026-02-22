@@ -1,12 +1,12 @@
 import React from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
-import { CustomSelect } from '../../ui/CustomSelect';
+import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { FractureToolPluginSlice } from './slice';
 
-export const FractureToolPanel: React.FC = () => {
+export const FractureToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const fractureTool = useCanvasStore(
         (state) => (state as CanvasStore & FractureToolPluginSlice).fractureTool
     );
@@ -15,7 +15,7 @@ export const FractureToolPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Fracture Tool" isCollapsible defaultOpen={true}>
+        <Panel title="Fracture Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Pieces"
                 value={fractureTool?.numPieces ?? 6}
@@ -25,16 +25,18 @@ export const FractureToolPanel: React.FC = () => {
                 onChange={(val) => updateFractureToolState?.({ numPieces: val })}
             />
             <SectionHeader title="Pattern" />
-            <CustomSelect
-                value={fractureTool?.pattern ?? 'voronoi'}
-                onChange={(val) =>
-                    updateFractureToolState?.({ pattern: val as 'voronoi' | 'grid' | 'radial' })
-                }
+            <JoinedButtonGroup
                 options={[
                     { label: 'Voronoi', value: 'voronoi' },
                     { label: 'Grid', value: 'grid' },
                     { label: 'Radial', value: 'radial' },
                 ]}
+                value={fractureTool?.pattern ?? 'voronoi'}
+                onChange={(val) =>
+                    updateFractureToolState?.({ pattern: val as 'voronoi' | 'grid' | 'radial' })
+                }
+                size="sm"
+                fullWidth
             />
         </Panel>
     );

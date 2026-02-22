@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createFractureToolPluginSlice, type FractureToolPluginSlice } from './slice';
+import React from 'react';
 import { FractureToolPanel } from './FractureToolPanel';
 import { FractureToolOverlay } from './FractureToolOverlay';
 import { fractureElement } from './fractureUtils';
@@ -27,6 +28,7 @@ export const fractureToolPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Click on a closed path to fracture it into multiple pieces',
     },
+    expandablePanel: () => React.createElement(FractureToolPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'fracture-tool-panel',

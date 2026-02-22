@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { PluginDefinition, PluginSliceFactory, SvgDefsEditor } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { Sparkle } from 'lucide-react';
+import { Sparkle, X } from 'lucide-react';
 import { FilterPanel } from './FilterPanel';
 import { createFilterSlice, type FilterSlice } from './slice';
 import type { FilterDefinition, FilterType } from './filters';
@@ -83,6 +83,17 @@ const applyFilterToSelection = (
   });
 };
 
+const removeAllFiltersFromSelection = (store: CanvasStore & FilterSlice) => {
+  store.selectedIds.forEach(id => {
+    const el = store.elements.find(e => e.id === id);
+    if (!el) return;
+    const data = (el as { data?: { filterId?: string } }).data;
+    if (!data || !data.filterId) return;
+    const newData = { ...data, filterId: undefined };
+    store.updateElement?.(id, { data: newData });
+  });
+};
+
 const importFilterDefs = (doc: Document): Record<string, FilterDefinition[]> | null => {
   const nodes = Array.from(doc.querySelectorAll('filter'));
   if (!nodes.length) return null;
@@ -145,6 +156,12 @@ export const filterPlugin: PluginDefinition<CanvasStore> = {
           icon: Sparkle,
           onClick: () => applyFilterToSelection(type, 50, store),
         }));
+        submenu.push({
+          id: 'remove-all-filters',
+          label: 'Remove All Filters',
+          icon: X,
+          onClick: () => removeAllFiltersFromSelection(store),
+        });
         return {
           id: 'filter-submenu',
           label: 'Filters',

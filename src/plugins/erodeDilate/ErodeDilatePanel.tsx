@@ -1,12 +1,12 @@
 import React from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
-import { CustomSelect } from '../../ui/CustomSelect';
+import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { ErodeDilatePluginSlice } from './slice';
 
-export const ErodeDilatePanel: React.FC = () => {
+export const ErodeDilatePanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const erodeDilate = useCanvasStore(
         (state) => (state as CanvasStore & ErodeDilatePluginSlice).erodeDilate
     );
@@ -15,17 +15,19 @@ export const ErodeDilatePanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Erode / Dilate" isCollapsible defaultOpen={true}>
+        <Panel title="Erode / Dilate" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SectionHeader title="Mode" />
-            <CustomSelect
+            <JoinedButtonGroup
+                options={[
+                    { label: 'Dilate', value: 'dilate', description: 'Expand paths outward' },
+                    { label: 'Erode', value: 'erode', description: 'Shrink paths inward' },
+                ]}
                 value={erodeDilate?.mode ?? 'dilate'}
                 onChange={(val) =>
                     updateErodeDilateState?.({ mode: val as 'erode' | 'dilate' })
                 }
-                options={[
-                    { label: 'Dilate (Expand)', value: 'dilate' },
-                    { label: 'Erode (Shrink)', value: 'erode' },
-                ]}
+                size="sm"
+                fullWidth
             />
             <SliderControl
                 label="Brush Radius"

@@ -4,7 +4,7 @@ import { SliderControl } from '../../ui/SliderControl';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { SprayCanPluginSlice } from './slice';
 
-export const SprayCanPanel: React.FC = () => {
+export const SprayCanPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const sprayCan = useCanvasStore(
         (state) => (state as CanvasStore & SprayCanPluginSlice).sprayCan
     );
@@ -13,7 +13,7 @@ export const SprayCanPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Spray Can" isCollapsible defaultOpen={true}>
+        <Panel title="Spray Can" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Spray Radius"
                 value={sprayCan?.sprayRadius ?? 40}

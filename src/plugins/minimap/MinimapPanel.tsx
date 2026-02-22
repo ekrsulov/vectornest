@@ -172,11 +172,14 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
   const resetZoom = useCanvasStore((state) => state.resetZoom);
   const isElementHidden = useCanvasStore((state) => state.isElementHidden);
   const showMinimap = useCanvasStore((state) => state.settings.showMinimap);
+  const isWithoutDistractionMode = useCanvasStore(
+    (state) => Boolean(state.settings.withoutDistractionMode)
+  );
   const enabledPlugins = useCanvasStore(
     (state) => (state as unknown as PluginSelectorSlice).pluginSelector.enabledPlugins
   );
   const isMinimapPluginEnabled = enabledPlugins.length === 0 || enabledPlugins.includes('minimap');
-  const shouldShowMinimap = showMinimap && isMinimapPluginEnabled;
+  const shouldShowMinimap = showMinimap && isMinimapPluginEnabled && !isWithoutDistractionMode;
   const selectedIds = useCanvasStore((state) => state.selectedIds);
   const canvasSize = useCanvasStore((state) => state.canvasSize);
   const artboard = useCanvasStore((state) => state.artboard);

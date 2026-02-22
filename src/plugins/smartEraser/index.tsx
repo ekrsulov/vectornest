@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSmartEraserPluginSlice, type SmartEraserPluginSlice } from './slice';
+import React from 'react';
 import { SmartEraserPanel } from './SmartEraserPanel';
 import { SmartEraserOverlay } from './SmartEraserOverlay';
 import { eraseElementsWithPath } from './smartEraserUtils';
@@ -27,6 +28,7 @@ export const smartEraserPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Erase portions of paths or shapes',
     },
+    expandablePanel: () => React.createElement(SmartEraserPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'smart-eraser-panel',

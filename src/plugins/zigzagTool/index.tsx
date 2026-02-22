@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createZigzagToolPluginSlice, type ZigzagToolPluginSlice } from './slice';
+import React from 'react';
 import { ZigzagToolPanel } from './ZigzagToolPanel';
 import { ZigzagToolOverlay } from './ZigzagToolOverlay';
 import { createZigzagPath } from './zigzagUtils';
@@ -27,6 +28,7 @@ export const zigzagToolPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Draw freehand to create zigzag, sine, or square wave paths',
     },
+    expandablePanel: () => React.createElement(ZigzagToolPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'zigzag-tool-panel',

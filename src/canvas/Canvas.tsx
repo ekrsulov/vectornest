@@ -53,6 +53,7 @@ const CanvasContent: React.FC = () => {
     settings,
     hiddenElementIds,
     lockedElementIds,
+    withoutDistractionMode,
     sidebarWidth,
     isSidebarPinned,
     isSidebarOpen,
@@ -67,6 +68,7 @@ const CanvasContent: React.FC = () => {
       settings: state.settings,
       hiddenElementIds: state.hiddenElementIds,
       lockedElementIds: state.lockedElementIds,
+      withoutDistractionMode: Boolean(state.settings.withoutDistractionMode),
       sidebarWidth: state.sidebarWidth,
       isSidebarPinned: state.isSidebarPinned,
       isSidebarOpen: state.isSidebarOpen,
@@ -176,10 +178,15 @@ const CanvasContent: React.FC = () => {
 
   const rawCanvasSize = useDynamicCanvasSize();
   const viewportInsets = useMemo(() => {
+    if (withoutDistractionMode) {
+      return { left: 0, right: 0 };
+    }
+
     const left = settings.showLeftSidebar && (isLeftSidebarPinned || isLeftSidebarOpen) ? leftSidebarWidth : 0;
     const right = (isSidebarPinned || isSidebarOpen) ? sidebarWidth : 0;
     return { left, right };
   }, [
+    withoutDistractionMode,
     settings.showLeftSidebar,
     isLeftSidebarPinned,
     isLeftSidebarOpen,

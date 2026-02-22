@@ -6,6 +6,7 @@ const createDefaultSettings = (): BaseSlice['settings'] => ({
   showMinimap: true,
   showTooltips: true,
   showLeftSidebar: true,
+  withoutDistractionMode: false,
   defaultStrokeColor: '#000000',
   scaleStrokeWithZoom: true,
   exportPadding: 0,

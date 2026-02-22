@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createRoughenToolPluginSlice, type RoughenToolPluginSlice } from './slice';
+import React from 'react';
 import { RoughenToolPanel } from './RoughenToolPanel';
 import { RoughenToolOverlay } from './RoughenToolOverlay';
 import { roughenElements } from './roughenUtils';
@@ -27,6 +28,7 @@ export const roughenToolPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Paint over paths to add roughness and a hand-drawn feel',
     },
+    expandablePanel: () => React.createElement(RoughenToolPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'roughen-tool-panel',

@@ -19,11 +19,14 @@ import { SliderControl } from '../../ui/SliderControl';
 import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { useFullscreen } from './settings/useFullscreen';
+import { DEFAULT_MODE } from '../../constants';
 
 export const SettingsPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const settings = useCanvasStore(state => state.settings);
   const updateSettings = useCanvasStore(state => state.updateSettings);
+  const setMode = useCanvasStore(state => state.setMode);
+  const setShowSettingsPanel = useCanvasStore(state => state.setShowSettingsPanel);
   const { setColorMode } = useColorMode();
 
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
@@ -76,6 +79,18 @@ export const SettingsPanel: React.FC = () => {
       updateSettings({ keyboardMovementPrecision: value });
       logger.debug('Keyboard movement precision changed to', value);
     }
+  };
+
+  const handleWithoutDistractionModeToggle = (enabled: boolean) => {
+    updateSettings({ withoutDistractionMode: enabled });
+
+    if (!enabled) {
+      return;
+    }
+
+    // Exit Prefs mode so BottomActionBar renders standard tool groups.
+    setShowSettingsPanel(false);
+    setMode(DEFAULT_MODE);
   };
 
   const getLogLevelName = (level: LogLevel): string => {
@@ -226,6 +241,21 @@ export const SettingsPanel: React.FC = () => {
                 aria-label="Show left sidebar"
               />
             </Flex>
+
+            {/* Non Distraction Mode - Desktop only */}
+            {!isMobile && (
+              <Flex justify="space-between" align="center">
+                <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                  Non distraction mode
+                </Text>
+                <PanelSwitch
+                  isChecked={Boolean(settings.withoutDistractionMode)}
+                  onChange={(e) => handleWithoutDistractionModeToggle(e.target.checked)}
+                  title="Show only the expandable tool panel and command palette"
+                  aria-label="Non distraction mode"
+                />
+              </Flex>
+            )}
 
             {/* Fullscreen toggle (available on both desktop and mobile now) */}
             <Flex justify="space-between" align="center">

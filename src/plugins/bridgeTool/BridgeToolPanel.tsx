@@ -6,7 +6,7 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { BridgeToolPluginSlice } from './slice';
 
-export const BridgeToolPanel: React.FC = () => {
+export const BridgeToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const bridgeTool = useCanvasStore(
         (state) => (state as CanvasStore & BridgeToolPluginSlice).bridgeTool
     );
@@ -15,7 +15,7 @@ export const BridgeToolPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Bridge Tool" isCollapsible defaultOpen={true}>
+        <Panel title="Bridge Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Bridge Width"
                 value={bridgeTool?.bridgeWidth ?? 8}

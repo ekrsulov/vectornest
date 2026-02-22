@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSmoothPaintPluginSlice, type SmoothPaintPluginSlice } from './slice';
+import React from 'react';
 import { SmoothPaintPanel } from './SmoothPaintPanel';
 import { SmoothPaintOverlay } from './SmoothPaintOverlay';
 import { smoothElements } from './smoothPaintUtils';
@@ -27,6 +28,7 @@ export const smoothPaintPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Paint over rough paths to smooth them',
     },
+    expandablePanel: () => React.createElement(SmoothPaintPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'smooth-paint-panel',

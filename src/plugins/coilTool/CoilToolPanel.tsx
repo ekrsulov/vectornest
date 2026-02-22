@@ -6,7 +6,7 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { CoilToolPluginSlice } from './slice';
 
-export const CoilToolPanel: React.FC = () => {
+export const CoilToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const coilTool = useCanvasStore(
         (state) => (state as CanvasStore & CoilToolPluginSlice).coilTool
     );
@@ -15,7 +15,7 @@ export const CoilToolPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Coil Tool" isCollapsible defaultOpen={true}>
+        <Panel title="Coil Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Coil Radius"
                 value={coilTool?.coilRadius ?? 15}

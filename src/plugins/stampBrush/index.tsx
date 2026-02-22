@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createStampBrushPluginSlice, type StampBrushPluginSlice } from './slice';
+import React from 'react';
 import { StampBrushPanel } from './StampBrushPanel';
 import { StampBrushOverlay } from './StampBrushOverlay';
 import { createStampedCopies } from './stampBrushUtils';
@@ -27,6 +28,7 @@ export const stampBrushPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Stamp copies of the selected element along a freehand stroke',
     },
+    expandablePanel: () => React.createElement(StampBrushPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'stamp-brush-panel',

@@ -51,6 +51,14 @@ export interface RegisteredOverlay {
 }
 
 /**
+ * Registered global overlay with resolved ID
+ */
+export interface RegisteredGlobalOverlay {
+  id: string;
+  component: React.ComponentType<Record<string, unknown>>;
+}
+
+/**
  * Callback type for checking if a plugin is enabled
  */
 type PluginEnabledChecker = (pluginId: string) => boolean;
@@ -206,12 +214,13 @@ export class UIContributionManager {
   /**
    * Get all global overlays from all plugins
    */
-  getGlobalOverlays(): React.ComponentType<Record<string, unknown>>[] {
-    return this.getPlugins()
-      .flatMap((plugin) =>
-        plugin.overlays?.filter((overlay) => overlay.placement === 'global') ?? []
-      )
-      .map((overlay) => overlay.component as React.ComponentType<Record<string, unknown>>);
+  getGlobalOverlays(): RegisteredGlobalOverlay[] {
+    return this.getPlugins().flatMap((plugin) =>
+      (plugin.overlays?.filter((overlay) => overlay.placement === 'global') ?? []).map((overlay) => ({
+        id: `${plugin.id}:${overlay.id}`,
+        component: overlay.component as React.ComponentType<Record<string, unknown>>,
+      }))
+    );
   }
 
   /**

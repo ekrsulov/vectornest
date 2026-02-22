@@ -4,7 +4,7 @@ import { SliderControl } from '../../ui/SliderControl';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { PathWeldPluginSlice } from './slice';
 
-export const PathWeldPanel: React.FC = () => {
+export const PathWeldPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const pathWeld = useCanvasStore(
         (state) => (state as CanvasStore & PathWeldPluginSlice).pathWeld
     );
@@ -13,7 +13,7 @@ export const PathWeldPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Path Weld" isCollapsible defaultOpen={true}>
+        <Panel title="Path Weld" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Weld Width"
                 value={pathWeld?.weldWidth ?? 4}

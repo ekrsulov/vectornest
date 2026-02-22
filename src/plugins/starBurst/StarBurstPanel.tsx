@@ -1,12 +1,12 @@
 import React from 'react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
-import { CustomSelect } from '../../ui/CustomSelect';
+import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { StarBurstPluginSlice } from './slice';
 
-export const StarBurstPanel: React.FC = () => {
+export const StarBurstPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const starBurst = useCanvasStore(
         (state) => (state as CanvasStore & StarBurstPluginSlice).starBurst
     );
@@ -15,7 +15,7 @@ export const StarBurstPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Star Burst" isCollapsible defaultOpen={true}>
+        <Panel title="Star Burst" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Rays"
                 value={starBurst?.rays ?? 12}
@@ -33,16 +33,18 @@ export const StarBurstPanel: React.FC = () => {
                 onChange={(val) => updateStarBurstState?.({ innerRadiusRatio: val })}
             />
             <SectionHeader title="Ray Style" />
-            <CustomSelect
-                value={starBurst?.rayStyle ?? 'pointed'}
-                onChange={(val) =>
-                    updateStarBurstState?.({ rayStyle: val as 'pointed' | 'rounded' | 'flat' })
-                }
+            <JoinedButtonGroup
                 options={[
                     { label: 'Pointed', value: 'pointed' },
                     { label: 'Rounded', value: 'rounded' },
                     { label: 'Flat', value: 'flat' },
                 ]}
+                value={starBurst?.rayStyle ?? 'pointed'}
+                onChange={(val) =>
+                    updateStarBurstState?.({ rayStyle: val as 'pointed' | 'rounded' | 'flat' })
+                }
+                size="sm"
+                fullWidth
             />
         </Panel>
     );

@@ -31,16 +31,33 @@ function hslToHex(h: number, s: number, l: number): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-function wrapHue(h: number): number {
+export function normalizeHue(h: number): number {
   return ((h % 360) + 360) % 360;
+}
+
+export function hueToRadians(h: number): number {
+  return (normalizeHue(h) * Math.PI) / 180;
+}
+
+export function wheelPointFromHue(
+  hue: number,
+  cx: number,
+  cy: number,
+  radius: number
+): { x: number; y: number } {
+  const rad = hueToRadians(hue);
+  return {
+    x: cx + radius * Math.cos(rad),
+    y: cy + radius * Math.sin(rad),
+  };
 }
 
 function makeColor(h: number, s: number, l: number, label: string): HarmonyColor {
   return {
-    hue: wrapHue(h),
+    hue: normalizeHue(h),
     saturation: s,
     lightness: l,
-    hex: hslToHex(wrapHue(h), s, l),
+    hex: hslToHex(normalizeHue(h), s, l),
     label,
   };
 }

@@ -4,7 +4,7 @@ import { SliderControl } from '../../ui/SliderControl';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { StampBrushPluginSlice } from './slice';
 
-export const StampBrushPanel: React.FC = () => {
+export const StampBrushPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
     const stampBrush = useCanvasStore(
         (state) => (state as CanvasStore & StampBrushPluginSlice).stampBrush
     );
@@ -13,7 +13,7 @@ export const StampBrushPanel: React.FC = () => {
     );
 
     return (
-        <Panel title="Stamp Brush" isCollapsible defaultOpen={true}>
+        <Panel title="Stamp Brush" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
             <SliderControl
                 label="Spacing"
                 value={stampBrush?.spacing ?? 40}

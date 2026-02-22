@@ -24,6 +24,9 @@ export const ExpandableToolPanel: React.FC = () => {
 
   // Get active plugin from store
   const activePlugin = useCanvasStore(state => state.activePlugin);
+  const isWithoutDistractionMode = useCanvasStore(
+    (state) => Boolean(state.settings.withoutDistractionMode)
+  );
 
   const { expandable: { bg, borderColor, iconColor, hoverBg } } = useThemeColors();
   const borderWidth = useColorModeValue('0px', '0px');
@@ -42,11 +45,14 @@ export const ExpandableToolPanel: React.FC = () => {
   const leftPosition = (effectiveSidebarWidth > 0 || effectiveLeftSidebarWidth > 0)
     ? `calc(50% + ${offset}px)`
     : '50%';
+  const bottomPosition = isWithoutDistractionMode
+    ? { base: isExpanded ? '12px' : '8px', md: isExpanded ? '16px' : '12px' }
+    : { base: isExpanded ? '48px' : '44px', md: isExpanded ? '60px' : '56px' };
 
   return (
     <Box
       position="fixed"
-      bottom={{ base: isExpanded ? "48px" : "44px", md: isExpanded ? "60px" : "56px" }}
+      bottom={bottomPosition}
       left={leftPosition}
       transform="translateX(-50%)"
       zIndex={zIndices.expandableToolPanel}

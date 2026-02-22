@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createErodeDilatePluginSlice, type ErodeDilatePluginSlice } from './slice';
+import React from 'react';
 import { ErodeDilatePanel } from './ErodeDilatePanel';
 import { ErodeDilateOverlay } from './ErodeDilateOverlay';
 import { erodeOrDilateElements } from './erodeDilateUtils';
@@ -27,6 +28,7 @@ export const erodeDilatePlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Paint over paths to erode (shrink) or dilate (expand) them',
     },
+    expandablePanel: () => React.createElement(ErodeDilatePanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'erode-dilate-panel',

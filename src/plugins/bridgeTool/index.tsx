@@ -3,6 +3,7 @@ import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createBridgeToolPluginSlice, type BridgeToolPluginSlice } from './slice';
+import React from 'react';
 import { BridgeToolPanel } from './BridgeToolPanel';
 import { BridgeToolOverlay } from './BridgeToolOverlay';
 import { bridgeElements } from './bridgeUtils';
@@ -27,6 +28,7 @@ export const bridgeToolPlugin: PluginDefinition<CanvasStore> = {
     modeConfig: {
         description: 'Draw a stroke between paths to bridge/connect them',
     },
+    expandablePanel: () => React.createElement(BridgeToolPanel, { hideTitle: true }),
     sidebarPanels: [
         {
             key: 'bridge-tool-panel',

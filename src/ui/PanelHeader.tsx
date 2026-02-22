@@ -48,6 +48,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
 
   return (
     <Flex
+      data-panel-header
       align="center"
       bg="transparent"
       px={0}
@@ -155,6 +156,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
             w="22px"
             p={0}
             ml={1.5}
+            data-panel-collapse-toggle
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation()
               onToggle?.()

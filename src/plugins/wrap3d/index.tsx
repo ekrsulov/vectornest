@@ -4,6 +4,7 @@ import { createPluginSlice } from '../../utils/pluginUtils';
 import { createToolPanel } from '../../utils/pluginFactories';
 import { createWrap3DSlice } from './slice';
 import type { Wrap3DSlice } from './slice';
+import React from 'react';
 import { Wrap3DPanel } from './Wrap3DPanel';
 import { Wrap3DPreviewLayer } from './Wrap3DPreviewLayer';
 import { Box } from 'lucide-react';
@@ -109,34 +110,8 @@ export const wrap3dPlugin: PluginDefinition<CanvasStore> = {
       },
     },
   ],
-  contextMenuActions: [
-    {
-      id: 'wrap-3d',
-      action: (context) => {
-        // Wrap 3D is available for paths, groups, or mixed selections
-        if (context.type !== 'path' && context.type !== 'group' && context.type !== 'multiselection') {
-          return null;
-        }
-
-        const store = pluginManager.requireStoreApi();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const state = store.getState() as any;
-
-        if (!state.canApplyWrap3D?.()) return null;
-
-        return {
-          id: 'wrap-3d',
-          label: 'Wrap 3D',
-          icon: Box,
-          onClick: () => {
-            // Switch to wrap3d mode
-            state.setActivePlugin?.('wrap3d');
-          },
-        };
-      },
-    },
-  ],
   slices: [wrap3dSliceFactory],
+  expandablePanel: () => React.createElement(Wrap3DPanel, { hideTitle: true }),
   sidebarPanels: [createToolPanel('wrap3d', Wrap3DPanel)],
 };
 

@@ -13,6 +13,7 @@ import { FILTER_PRESETS } from './presets';
 import { FilterEffectEditor } from './FilterEffectEditor';
 import { FilterItemCard } from './FilterItemCard';
 import { LibraryPanelHelper } from '../../ui/LibraryPanelHelper';
+import { useTransientActionFeedback } from '../../hooks/useTransientActionFeedback';
 
 // ... (previous imports)
 
@@ -114,6 +115,23 @@ export const FiltersPanel: React.FC = () => {
     removeFilterFromSelection?.();
   }, [hasSelection, removeFilterFromSelection]);
 
+  const canApplyFilter = Boolean(hasSelection && editingFilter);
+  const canClearFilter = hasSelection;
+  const [isApplyFeedbackActive, triggerApplyFeedback] = useTransientActionFeedback();
+  const [isClearFeedbackActive, triggerClearFeedback] = useTransientActionFeedback();
+
+  const handleApplyWithFeedback = useCallback(() => {
+    if (!canApplyFilter) return;
+    handleApplyToSelection();
+    triggerApplyFeedback();
+  }, [canApplyFilter, handleApplyToSelection, triggerApplyFeedback]);
+
+  const handleClearWithFeedback = useCallback(() => {
+    if (!canClearFilter) return;
+    handleRemoveFromSelection();
+    triggerClearFeedback();
+  }, [canClearFilter, handleRemoveFromSelection, triggerClearFeedback]);
+
   const renderItem = (filter: FilterDefinition, isSelected: boolean) => (
     <FilterItemCard
       filter={filter}
@@ -156,20 +174,20 @@ export const FiltersPanel: React.FC = () => {
             <PanelStyledButton
               size="sm"
               flex={1}
-              onClick={handleApplyToSelection}
-              isDisabled={!hasSelection || !editingFilter}
+              onClick={handleApplyWithFeedback}
+              isDisabled={!canApplyFilter || isApplyFeedbackActive}
               colorScheme="blue"
             >
-              Apply {editingFilter?.name}
+              {isApplyFeedbackActive ? 'Applied' : `Apply ${editingFilter?.name}`}
             </PanelStyledButton>
             <PanelStyledButton
               size="sm"
-              onClick={handleRemoveFromSelection}
-              isDisabled={!hasSelection}
+              onClick={handleClearWithFeedback}
+              isDisabled={!canClearFilter || isClearFeedbackActive}
               colorScheme="red"
               variant="outline"
             >
-              Clear
+              {isClearFeedbackActive ? 'Cleared' : 'Clear'}
             </PanelStyledButton>
           </HStack>
           {!hasSelection && (

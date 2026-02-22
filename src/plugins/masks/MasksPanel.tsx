@@ -17,6 +17,7 @@ import { ActionButtonGroup, StatusMessage } from '../../ui/PresetButtonGrid';
 import { SvgEditor } from '../../ui/SvgPreview';
 import { LibrarySectionHeader } from '../../ui/LibrarySectionHeader';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
+import { useTransientActionFeedback } from '../../hooks/useTransientActionFeedback';
 
 const EMPTY_MASKS: MaskDefinition[] = [];
 
@@ -615,14 +616,31 @@ export const MasksPanel: React.FC = () => {
     setActiveMaskId(maskId);
   }, [assignMask, ensureMaskAnimationsRegistered, hasSelection, items, updateMask]);
 
-  const handleAssign = () => {
+  const handleAssign = useCallback(() => {
     if (!activeMaskId) return;
     applyMaskToSelection(activeMaskId);
-  };
+  }, [activeMaskId, applyMaskToSelection]);
 
   const handleAdd = () => {
     if (hasPathSelection) createMask?.();
   };
+
+  const canApplyMask = Boolean(activeMask && hasSelection);
+  const canClearMasks = hasSelection;
+  const [isApplyFeedbackActive, triggerApplyFeedback] = useTransientActionFeedback();
+  const [isClearFeedbackActive, triggerClearFeedback] = useTransientActionFeedback();
+
+  const handleApplyWithFeedback = useCallback(() => {
+    if (!canApplyMask) return;
+    handleAssign();
+    triggerApplyFeedback();
+  }, [canApplyMask, handleAssign, triggerApplyFeedback]);
+
+  const handleClearWithFeedback = useCallback(() => {
+    if (!canClearMasks) return;
+    clearMask?.();
+    triggerClearFeedback();
+  }, [canClearMasks, clearMask, triggerClearFeedback]);
 
   const handleAddPreset = useCallback((presetId: string) => {
     const preset = MASK_PRESETS.find((p) => p.id === presetId);
@@ -732,11 +750,11 @@ export const MasksPanel: React.FC = () => {
       Actions={
         <>
           <ActionButtonGroup>
-            <PanelStyledButton onClick={handleAssign} isDisabled={!activeMask || !hasSelection} w="full">
-              Apply mask
+            <PanelStyledButton onClick={handleApplyWithFeedback} isDisabled={!canApplyMask || isApplyFeedbackActive} w="full">
+              {isApplyFeedbackActive ? 'Applied' : 'Apply mask'}
             </PanelStyledButton>
-            <PanelStyledButton onClick={() => clearMask?.()} isDisabled={!hasSelection} w="full">
-              Clear masks
+            <PanelStyledButton onClick={handleClearWithFeedback} isDisabled={!canClearMasks || isClearFeedbackActive} w="full">
+              {isClearFeedbackActive ? 'Cleared' : 'Clear masks'}
             </PanelStyledButton>
           </ActionButtonGroup>
           {!hasSelection && (

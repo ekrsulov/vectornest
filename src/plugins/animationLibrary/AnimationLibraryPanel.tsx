@@ -12,6 +12,7 @@ import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { CompactFieldRow } from '../../ui/CompactFieldRow';
 import { ActionButtonGroup, StatusMessage } from '../../ui/PresetButtonGrid';
 import { SvgPreview } from '../../ui/SvgPreview';
+import { useTransientActionFeedback } from '../../hooks/useTransientActionFeedback';
 
 const EMPTY_PRESETS: AnimationPreset[] = [];
 
@@ -114,10 +115,26 @@ export const AnimationLibraryPanel: React.FC = () => {
     return true;
   }, [hasSelection, hasTextSelection, editingPreset]);
 
-  const handleApply = () => {
+  const handleApply = useCallback(() => {
     if (!editingPresetId || !canApplySelectedPreset) return;
     applyPreset?.(editingPresetId);
-  };
+  }, [applyPreset, canApplySelectedPreset, editingPresetId]);
+
+  const canClearAnimations = hasSelection;
+  const [isApplyFeedbackActive, triggerApplyFeedback] = useTransientActionFeedback();
+  const [isClearFeedbackActive, triggerClearFeedback] = useTransientActionFeedback();
+
+  const handleApplyWithFeedback = useCallback(() => {
+    if (!canApplySelectedPreset) return;
+    handleApply();
+    triggerApplyFeedback();
+  }, [canApplySelectedPreset, handleApply, triggerApplyFeedback]);
+
+  const handleClearWithFeedback = useCallback(() => {
+    if (!canClearAnimations) return;
+    clearAnimations?.();
+    triggerClearFeedback();
+  }, [canClearAnimations, clearAnimations, triggerClearFeedback]);
 
   const handleItemDoubleClick = useCallback((presetId: string) => {
     const preset = presets.find((p) => p.id === presetId);
@@ -180,18 +197,18 @@ export const AnimationLibraryPanel: React.FC = () => {
         <>
           <ActionButtonGroup>
             <PanelStyledButton
-              onClick={handleApply}
-              isDisabled={!canApplySelectedPreset}
+              onClick={handleApplyWithFeedback}
+              isDisabled={!canApplySelectedPreset || isApplyFeedbackActive}
               w="full"
             >
-              Apply to Selection
+              {isApplyFeedbackActive ? 'Applied' : 'Apply to Selection'}
             </PanelStyledButton>
             <PanelStyledButton
-              onClick={() => clearAnimations?.()}
-              isDisabled={!hasSelection}
+              onClick={handleClearWithFeedback}
+              isDisabled={!canClearAnimations || isClearFeedbackActive}
               w="full"
             >
-              Clear Animations
+              {isClearFeedbackActive ? 'Cleared' : 'Clear Animations'}
             </PanelStyledButton>
           </ActionButtonGroup>
           {!hasSelection && (

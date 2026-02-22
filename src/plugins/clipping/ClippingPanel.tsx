@@ -17,6 +17,7 @@ import { CLIPPATH_PRESETS } from './presets';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
 import { generateShortId } from '../../utils/idGenerator';
 import { canvasStoreApi } from '../../store/canvasStore';
+import { useTransientActionFeedback } from '../../hooks/useTransientActionFeedback';
 
 /** Animation tag names to look for in clip content */
 const ANIMATION_SELECTORS = 'animate, animateTransform, animateMotion, set';
@@ -345,11 +346,11 @@ export const ClippingPanel: React.FC = () => {
     });
   }, [clips]);
 
-  const handleAssign = () => {
+  const handleAssign = useCallback(() => {
     if (!activeClipId) return;
     ensureClipAnimationsRegistered(activeClipId);
     assignClip?.(activeClipId);
-  };
+  }, [activeClipId, assignClip, ensureClipAnimationsRegistered]);
 
   const handleItemDoubleClick = useCallback((clipId: string) => {
     if (!hasSelection) return;
@@ -361,6 +362,23 @@ export const ClippingPanel: React.FC = () => {
   const handleAdd = () => {
     if (hasPathSelection) createClip?.();
   };
+
+  const canApplyClip = Boolean(activeClip && hasSelection);
+  const canClearClips = hasSelection;
+  const [isApplyFeedbackActive, triggerApplyFeedback] = useTransientActionFeedback();
+  const [isClearFeedbackActive, triggerClearFeedback] = useTransientActionFeedback();
+
+  const handleApplyWithFeedback = useCallback(() => {
+    if (!canApplyClip) return;
+    handleAssign();
+    triggerApplyFeedback();
+  }, [canApplyClip, handleAssign, triggerApplyFeedback]);
+
+  const handleClearWithFeedback = useCallback(() => {
+    if (!canClearClips) return;
+    clearClip?.();
+    triggerClearFeedback();
+  }, [canClearClips, clearClip, triggerClearFeedback]);
 
   const presetsLoadedRef = useRef(false);
   const addPresetClip = useCallback((presetId?: string) => {
@@ -438,11 +456,11 @@ export const ClippingPanel: React.FC = () => {
       Actions={
         <>
           <ActionButtonGroup>
-            <PanelStyledButton onClick={handleAssign} isDisabled={!activeClip || !hasSelection} w="full">
-              Apply clip
+            <PanelStyledButton onClick={handleApplyWithFeedback} isDisabled={!canApplyClip || isApplyFeedbackActive} w="full">
+              {isApplyFeedbackActive ? 'Applied' : 'Apply clip'}
             </PanelStyledButton>
-            <PanelStyledButton onClick={() => clearClip?.()} isDisabled={!hasSelection} w="full">
-              Clear clips
+            <PanelStyledButton onClick={handleClearWithFeedback} isDisabled={!canClearClips || isClearFeedbackActive} w="full">
+              {isClearFeedbackActive ? 'Cleared' : 'Clear clips'}
             </PanelStyledButton>
           </ActionButtonGroup>
           {!hasSelection && (

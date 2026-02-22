@@ -186,6 +186,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
           <g key={index}>
             {/* Transparent overlay for easier interaction */}
             <circle
+              data-edit-point-hit="true"
               cx={displayX}
               cy={displayY}
               r={hitAreaSize}
@@ -528,6 +529,7 @@ const ControlPointLines: React.FC<{
                   y2={control1Y}
                   stroke={lineColor}
                   strokeWidth={1 / viewport.zoom}
+                  pointerEvents="none"
                 />
                 <line
                   x1={control2X}
@@ -536,6 +538,7 @@ const ControlPointLines: React.FC<{
                   y2={endY}
                   stroke={lineColor}
                   strokeWidth={1 / viewport.zoom}
+                  pointerEvents="none"
                 />
               </g>
             );

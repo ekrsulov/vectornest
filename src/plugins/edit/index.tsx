@@ -124,16 +124,23 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     target,
     context
   ) => {
-    // Check if active plugin prevents selection (e.g., drawing tools, add point mode)
-    const shouldPreventSelection = pluginManager.shouldPreventSelection();
+    // Check only the active plugin's flag.
+    // Aggregate checks across all plugins can block selection in edit mode.
+    const shouldPreventSelection =
+      pluginManager.getBehaviorFlagsManager().getActivePluginBehaviorFlags().preventsSelection ?? false;
 
     // Don't start selection rectangle if any plugin prevents it
     if (shouldPreventSelection) {
       return;
     }
 
-    // Allow selection rectangle to start on SVG or on path elements (but not on edit points)
-    if (target.tagName === 'svg' || target.tagName === 'path') {
+    // Keep direct point interactions (click/drag) under the point overlay handler.
+    if (target.closest('[data-edit-point-hit="true"]')) {
+      return;
+    }
+
+    // Start marquee/lasso selection on any canvas SVG target that is not a point hit area.
+    if (target.namespaceURI === 'http://www.w3.org/2000/svg') {
       context.helpers.beginSelectionRectangle?.(point, !event.shiftKey, false);
     }
   },

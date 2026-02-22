@@ -242,20 +242,18 @@ export const SettingsPanel: React.FC = () => {
               />
             </Flex>
 
-            {/* Non Distraction Mode - Desktop only */}
-            {!isMobile && (
-              <Flex justify="space-between" align="center">
-                <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
-                  Non distraction mode
-                </Text>
-                <PanelSwitch
-                  isChecked={Boolean(settings.withoutDistractionMode)}
-                  onChange={(e) => handleWithoutDistractionModeToggle(e.target.checked)}
-                  title="Show only the expandable tool panel and command palette"
-                  aria-label="Non distraction mode"
-                />
-              </Flex>
-            )}
+            {/* Non Distraction Mode */}
+            <Flex justify="space-between" align="center">
+              <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                Non distraction mode
+              </Text>
+              <PanelSwitch
+                isChecked={Boolean(settings.withoutDistractionMode)}
+                onChange={(e) => handleWithoutDistractionModeToggle(e.target.checked)}
+                title="Show only the expandable tool panel and command palette"
+                aria-label="Non distraction mode"
+              />
+            </Flex>
 
             {/* Fullscreen toggle (available on both desktop and mobile now) */}
             <Flex justify="space-between" align="center">

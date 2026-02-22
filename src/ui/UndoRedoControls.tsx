@@ -11,7 +11,15 @@ import ConditionalTooltip from './ConditionalTooltip';
 export const UndoRedoControls: React.FC = () => {
     const { undo, redo, pastStates, futureStates } = useTemporalState();
     const isUndoRedoDisabledByPlugin = useIsGlobalUndoRedoDisabled();
-    const { sidebarWidth, isSidebarOpen, isSidebarPinned, leftSidebarWidth, isLeftSidebarOpen, isLeftSidebarPinned } = useSidebarLayout();
+    const {
+        sidebarWidth,
+        isSidebarOpen,
+        isSidebarPinned,
+        leftSidebarWidth,
+        isLeftSidebarOpen,
+        isLeftSidebarPinned,
+        isWithoutDistractionMode,
+    } = useSidebarLayout();
     const { toggleSidebar, toggleLeftSidebar, showLeftSidebar } = useCanvasStore(
         useShallow((state) => ({
             toggleSidebar: state.toggleSidebar,
@@ -54,7 +62,7 @@ export const UndoRedoControls: React.FC = () => {
 
     return (
         <>
-            {showLeftSidebar && !isLeftSidebarPinned && (
+            {showLeftSidebar && !isLeftSidebarPinned && !isWithoutDistractionMode && (
                 <Box
                     position="absolute"
                     top={4}
@@ -82,7 +90,7 @@ export const UndoRedoControls: React.FC = () => {
             >
                 <VStack spacing={2}>
                     {/* Sidebar Toggle - Only visible when unpinned */}
-                    {!isSidebarPinned && (
+                    {!isSidebarPinned && !isWithoutDistractionMode && (
                         <ConditionalTooltip label={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"} placement="left">
                             <IconButton
                                 {...buttonProps}

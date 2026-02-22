@@ -96,9 +96,9 @@ function App() {
         {!isWithoutDistractionMode && <LeftSidebar />}
         {!isWithoutDistractionMode && <Sidebar />}
         {!isWithoutDistractionMode && <BottomActionBar />}
-        {!isWithoutDistractionMode && <UndoRedoControls />}
+        <UndoRedoControls />
         <ExpandableToolPanel />
-        {!isWithoutDistractionMode && <VirtualShiftButton />}
+        <VirtualShiftButton />
         <GlobalOverlays isIOS={isIOS} />
       </div>
     </PluginProviders>

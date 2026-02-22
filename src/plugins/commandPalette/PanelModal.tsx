@@ -151,6 +151,13 @@ export const PanelModal: React.FC<PanelModalProps> = ({
     return () => window.removeEventListener('keydown', handleKey, true);
   }, [isOpen, onClose]);
 
+  const isHeaderHiddenMode = !preserveCollapses;
+  const panelContentOverrides = preserveCollapses
+    ? SELF_MANAGED_PANEL_OVERRIDES
+    : isPrefsPanel
+      ? PREFS_PANEL_OVERRIDES
+      : PANEL_OVERRIDES;
+
   if (!isOpen) return null;
 
   return (
@@ -244,8 +251,9 @@ export const PanelModal: React.FC<PanelModalProps> = ({
           overflowY="auto"
           maxH="calc(80vh - 36px)"
           px={1}
+          pt={isHeaderHiddenMode ? 1 : 0}
           pb={2}
-          sx={preserveCollapses ? SELF_MANAGED_PANEL_OVERRIDES : isPrefsPanel ? PREFS_PANEL_OVERRIDES : PANEL_OVERRIDES}
+          sx={panelContentOverrides}
         >
           <Suspense
             fallback={

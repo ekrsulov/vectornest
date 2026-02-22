@@ -5,8 +5,8 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { ComponentType } from 'react';
-import { Box, Input, VStack, HStack, Text, Kbd, SimpleGrid } from '@chakra-ui/react';
-import { Search } from 'lucide-react';
+import { Box, Input, InputGroup, InputRightElement, IconButton, VStack, HStack, Text, Kbd, SimpleGrid } from '@chakra-ui/react';
+import { Search, CircleX } from 'lucide-react';
 import { useColorMode } from '@chakra-ui/react';
 import { useCommandPaletteCommands } from './useCommandPaletteCommands';
 import type { PaletteCommand } from './types';
@@ -34,6 +34,47 @@ const CATEGORY_CHIPS = [
 
 const FILTERABLE_CATEGORIES = new Set<string>(CATEGORY_CHIPS.map((c) => c.category));
 const ALL_CHIP_CATEGORIES = new Set<string>(CATEGORY_CHIPS.map((c) => c.category));
+const COMMAND_USAGE_STORAGE_KEY = 'vectornest:command-palette:usage:v1';
+const MAX_FREQUENT_COMMANDS = 10;
+
+type CommandUsageMap = Record<string, number>;
+
+const loadCommandUsage = (): CommandUsageMap => {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  try {
+    const raw = window.localStorage.getItem(COMMAND_USAGE_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+    const usageMap = parsed as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.entries(usageMap).filter((entry): entry is [string, number] => {
+        const [, value] = entry;
+        return typeof value === 'number' && Number.isFinite(value) && value > 0;
+      })
+    );
+  } catch {
+    return {};
+  }
+};
+
+const persistCommandUsage = (usage: CommandUsageMap) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  try {
+    window.localStorage.setItem(COMMAND_USAGE_STORAGE_KEY, JSON.stringify(usage));
+  } catch {
+    // Ignore storage errors (quota / private mode)
+  }
+};
 
 /** Simple fuzzy match: checks if all query chars appear in order in the target */
 function fuzzyMatch(query: string, target: string): { match: boolean; score: number } {
@@ -105,6 +146,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
   onClose,
 }) => {
   const [query, setQuery] = useState('');
+  const [commandUsage, setCommandUsage] = useState<CommandUsageMap>(() => loadCommandUsage());
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeCategories, setActiveCategories] = useState<Set<string>>(
     () => new Set(ALL_CHIP_CATEGORIES)
@@ -130,6 +172,10 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
       setModalPanel(null);
     }
   }, [isAnimationWorkspaceOpen, modalPanel]);
+
+  useEffect(() => {
+    persistCommandUsage(commandUsage);
+  }, [commandUsage]);
 
   // Library item search results (card-based, separate from commands)
   const libraryResults = useLibrarySearchResults(query);
@@ -176,6 +222,39 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
     );
   }, [queryFiltered, activeCategories]);
 
+  const frequentCommands = useMemo(() => {
+    if (query.trim()) {
+      return [] as PaletteCommand[];
+    }
+
+    const seen = new Set<string>();
+    return allCommands
+      .filter((cmd) => {
+        if (seen.has(cmd.id)) return false;
+        seen.add(cmd.id);
+        return (commandUsage[cmd.id] ?? 0) > 0;
+      })
+      .sort((a, b) => {
+        const scoreDiff = (commandUsage[b.id] ?? 0) - (commandUsage[a.id] ?? 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        return a.label.localeCompare(b.label, undefined, { sensitivity: 'base' });
+      })
+      .slice(0, MAX_FREQUENT_COMMANDS)
+      .map((cmd) => ({
+        ...cmd,
+        category: 'Frequent',
+      }));
+  }, [allCommands, commandUsage, query]);
+
+  const commandsForDisplay = useMemo(() => {
+    if (frequentCommands.length === 0) {
+      return filtered;
+    }
+    const frequentIds = new Set(frequentCommands.map((cmd) => cmd.id));
+    const remaining = filtered.filter((cmd) => !frequentIds.has(cmd.id));
+    return [...frequentCommands, ...remaining];
+  }, [filtered, frequentCommands]);
+
   // On open: focus input and reset cursor — keep query and active chips as-is (persisted between opens)
   useEffect(() => {
     if (isOpen) {
@@ -197,8 +276,16 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
     }
   }, [selectedIndex]);
 
+  const trackCommandUsage = useCallback((commandId: string) => {
+    setCommandUsage((previous) => ({
+      ...previous,
+      [commandId]: (previous[commandId] ?? 0) + 1,
+    }));
+  }, []);
+
   const executeCommand = useCallback(
     (cmd: PaletteCommand) => {
+      trackCommandUsage(cmd.id);
       if (cmd.panelComponent) {
         // Open the panel in a modal instead of executing
         onClose();
@@ -214,7 +301,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
         requestAnimationFrame(() => cmd.execute());
       }
     },
-    [onClose]
+    [onClose, trackCommandUsage]
   );
 
   /**
@@ -240,7 +327,11 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex((prev) => Math.min(prev + 1, filtered.length - 1));
+          setSelectedIndex((prev) =>
+            commandsForDisplay.length === 0
+              ? 0
+              : Math.min(prev + 1, commandsForDisplay.length - 1)
+          );
           break;
         case 'ArrowUp':
           e.preventDefault();
@@ -248,8 +339,8 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
           break;
         case 'Enter':
           e.preventDefault();
-          if (filtered[selectedIndex]) {
-            executeCommand(filtered[selectedIndex]);
+          if (commandsForDisplay[selectedIndex]) {
+            executeCommand(commandsForDisplay[selectedIndex]);
           }
           break;
         case 'Escape':
@@ -258,7 +349,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
           break;
       }
     },
-    [filtered, selectedIndex, executeCommand, onClose]
+    [commandsForDisplay, selectedIndex, executeCommand, onClose]
   );
 
   // Reset selection when filter changes
@@ -269,13 +360,21 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
   // Group commands by category for display
   const groupedCommands = useMemo(() => {
     const groups = new Map<string, PaletteCommand[]>();
-    for (const cmd of filtered) {
+    for (const cmd of commandsForDisplay) {
       const existing = groups.get(cmd.category) ?? [];
       existing.push(cmd);
       groups.set(cmd.category, existing);
     }
     return groups;
-  }, [filtered]);
+  }, [commandsForDisplay]);
+
+  const handleClearQuery = useCallback(() => {
+    setQuery('');
+    setSelectedIndex(0);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }, []);
 
   const bgColor = isDark ? 'gray.800' : 'white';
   const borderColor = isDark ? 'gray.600' : 'gray.200';
@@ -364,24 +463,44 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
         {/* Search input */}
         <HStack px={4} py={3} borderBottom="1px solid" borderColor={borderColor} spacing={3}>
           <Search size={18} color={isDark ? '#a0aec0' : '#718096'} />
-          <Input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a command..."
-            variant="unstyled"
-            size="md"
-            fontSize="15px"
-            color={textColor}
-            bg={inputBg}
-            px={3}
-            py={1.5}
-            borderRadius="md"
-            _placeholder={{ color: secondaryColor }}
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-          />
+          <InputGroup flex={1}>
+            <Input
+              ref={inputRef}
+              data-tour="command-palette-search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Type a command..."
+              variant="unstyled"
+              size="md"
+              fontSize="15px"
+              color={textColor}
+              bg={inputBg}
+              px={3}
+              py={1.5}
+              pr={query.trim() ? '34px' : '12px'}
+              borderRadius="md"
+              _placeholder={{ color: secondaryColor }}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            {query.trim() && (
+              <InputRightElement h="full" width="32px">
+                <IconButton
+                  aria-label="Clear search"
+                  icon={<CircleX size={14} />}
+                  size="xs"
+                  variant="ghost"
+                  borderRadius="full"
+                  minW="20px"
+                  h="20px"
+                  color={secondaryColor}
+                  _hover={{ color: textColor, bg: isDark ? 'whiteAlpha.200' : 'blackAlpha.100' }}
+                  onClick={handleClearQuery}
+                />
+              </InputRightElement>
+            )}
+          </InputGroup>
           <Kbd
             fontSize="xs"
             color={secondaryColor}
@@ -468,7 +587,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
 
         {/* Command list */}
         <Box ref={listRef} overflowY="auto" maxH={{ base: '50vh', md: '360px' }} py={1}>
-          {filtered.length === 0 && (!libraryResults || Object.values(libraryResults).every(arr => arr.length === 0)) ? (
+          {commandsForDisplay.length === 0 && (!libraryResults || Object.values(libraryResults).every(arr => arr.length === 0)) ? (
             <Box px={4} py={6} textAlign="center">
               <Text color={secondaryColor} fontSize="sm">
                 {query.trim() ? 'No results found' : 'No matching commands'}

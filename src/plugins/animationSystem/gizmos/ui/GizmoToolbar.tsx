@@ -11,7 +11,6 @@ import {
   Button,
   HStack,
   Text,
-  Tooltip,
   VStack,
   Badge,
 } from '@chakra-ui/react';
@@ -26,6 +25,7 @@ import { animationGizmoRegistry } from '../registry/GizmoRegistry';
 import type { SVGAnimation, AnimationPluginSlice } from '../../types';
 import type { CanvasElement } from '../../../../types';
 import { GizmoKeyframeTrack } from './GizmoKeyframeTrack';
+import ConditionalTooltip from '../../../../ui/ConditionalTooltip';
 
 // =============================================================================
 // Compact Version
@@ -65,7 +65,7 @@ function AnimationGizmoRow({
       </Text>
       
       {/* Enter/Exit button - activates gizmo and edit mode */}
-      <Tooltip label={isActive ? 'Exit gizmo mode' : 'Enter gizmo mode'}>
+      <ConditionalTooltip label={isActive ? 'Exit gizmo mode' : 'Enter gizmo mode'}>
         <Button
           size="xs"
           leftIcon={isActive ? <LogOut size={12} /> : <LogIn size={12} />}
@@ -75,7 +75,7 @@ function AnimationGizmoRow({
         >
           {isActive ? 'Exit' : 'Enter'}
         </Button>
-      </Tooltip>
+      </ConditionalTooltip>
     </HStack>
   );
 }
@@ -266,4 +266,3 @@ export function GizmoToolbarCompact(): React.ReactElement | null {
     </VStack>
   );
 }
-

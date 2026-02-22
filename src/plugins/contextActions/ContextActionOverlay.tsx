@@ -9,13 +9,14 @@
  */
 
 import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react';
-import { Box, HStack, Tooltip, VStack, Text, Portal, useColorModeValue } from '@chakra-ui/react';
+import { Box, HStack, VStack, Text, Portal, useColorModeValue } from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';
 import { useContextActions, type QuickAction, type ActionGroup } from './useContextActions';
 import { useResponsive, useThemeColors, useSidebarLayout, useToolbarPositionStyles } from '../../hooks';
 import { NO_FOCUS_STYLES_DEEP } from '../../hooks/useThemeColors';
 import type { CanvasOverlayProps } from '../../types/ui-contributions';
 import { useCanvasStore } from '../../store/canvasStore';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
 
 /** Minimum distance from viewport edges */
 const EDGE_PADDING = 8;
@@ -88,9 +89,9 @@ const QuickActionButton: React.FC<{
   if (isMobile) return button;
 
   return (
-    <Tooltip label={action.label} placement="top" fontSize="xs" hasArrow openDelay={300}>
+    <ConditionalTooltip label={action.label} placement="top" fontSize="xs" openDelay={300}>
       {button}
-    </Tooltip>
+    </ConditionalTooltip>
   );
 });
 QuickActionButton.displayName = 'QuickActionButton';
@@ -247,16 +248,15 @@ const GroupActionButton: React.FC<{
       {isMobile ? (
         button
       ) : (
-        <Tooltip
+        <ConditionalTooltip
           label={group.label}
           placement="top"
           fontSize="xs"
-          hasArrow
           openDelay={300}
           isDisabled={isOpen}
         >
           {button}
-        </Tooltip>
+        </ConditionalTooltip>
       )}
 
       {isOpen && (

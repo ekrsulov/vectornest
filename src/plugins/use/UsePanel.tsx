@@ -6,13 +6,13 @@ import {
   HStack,
   Badge,
   IconButton,
-  Tooltip,
   useColorModeValue,
 } from '@chakra-ui/react';
 import { Link2, Unlink, Copy } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { UseElement, UseElementData } from './types';
 import type { UsePluginSlice } from './slice';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
 
 /**
  * Panel component for displaying use element properties
@@ -138,7 +138,7 @@ export const UsePanel: React.FC = () => {
               )}
               
               <HStack justify="flex-end" pt={1}>
-                <Tooltip label="Detach (convert to independent element)">
+                <ConditionalTooltip label="Detach (convert to independent element)">
                   <IconButton
                     aria-label="Detach use element"
                     icon={<Unlink size={14} />}
@@ -146,7 +146,7 @@ export const UsePanel: React.FC = () => {
                     variant="ghost"
                     onClick={() => handleDetach(element.id)}
                   />
-                </Tooltip>
+                </ConditionalTooltip>
               </HStack>
             </VStack>
           </Box>

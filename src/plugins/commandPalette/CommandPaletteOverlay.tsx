@@ -12,6 +12,7 @@ import { useCommandPaletteCommands } from './useCommandPaletteCommands';
 import type { PaletteCommand } from './types';
 import { PanelModal } from './PanelModal';
 import { NO_FOCUS_STYLES_DEEP } from '../../hooks/useThemeColors';
+import { useResponsive } from '../../hooks';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useLibrarySearchResults, LIBRARY_CHIP_ITEMS, LIB_TYPE_LABELS } from './useLibrarySearchResults';
 import { LibraryCardRenderer } from './LibraryCardRenderer';
@@ -159,6 +160,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const { colorMode } = useColorMode();
+  const { isMobile } = useResponsive();
   const isDark = colorMode === 'dark';
   const allCommands = useCommandPaletteCommands();
 
@@ -200,6 +202,16 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
     }
     return counts;
   }, [queryFiltered, libraryResults]);
+  const hasQuery = query.trim().length > 0;
+  const firstVisibleLibraryCategory = useMemo(() => {
+    if (!hasQuery) {
+      return LIBRARY_CHIP_ITEMS[0]?.category ?? null;
+    }
+    const firstVisible = LIBRARY_CHIP_ITEMS.find(
+      (chip) => (categoryCounts.get(chip.category) ?? 0) > 0
+    );
+    return firstVisible?.category ?? null;
+  }, [hasQuery, categoryCounts]);
 
   // Toggle a category chip on/off (always keep at least one active)
   const toggleCategory = useCallback((category: string) => {
@@ -461,8 +473,14 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
         sx={NO_FOCUS_STYLES_DEEP}
       >
         {/* Search input */}
-        <HStack px={4} py={3} borderBottom="1px solid" borderColor={borderColor} spacing={3}>
-          <Search size={18} color={isDark ? '#a0aec0' : '#718096'} />
+        <HStack
+          px={isMobile ? 1.5 : 4}
+          py={isMobile ? 1.5 : 3}
+          borderBottom="1px solid"
+          borderColor={borderColor}
+          spacing={isMobile ? 1.5 : 3}
+        >
+          {!isMobile && <Search size={18} color={isDark ? '#a0aec0' : '#718096'} />}
           <InputGroup flex={1}>
             <Input
               ref={inputRef}
@@ -472,11 +490,11 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
               placeholder="Type a command..."
               variant="unstyled"
               size="md"
-              fontSize="15px"
+              fontSize={isMobile ? '14px' : '15px'}
               color={textColor}
               bg={inputBg}
-              px={3}
-              py={1.5}
+              px={isMobile ? 2 : 3}
+              py={isMobile ? 1 : 1.5}
               pr={query.trim() ? '34px' : '12px'}
               borderRadius="md"
               _placeholder={{ color: secondaryColor }}
@@ -501,14 +519,16 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
               </InputRightElement>
             )}
           </InputGroup>
-          <Kbd
-            fontSize="xs"
-            color={secondaryColor}
-            bg={isDark ? 'gray.700' : 'gray.100'}
-            borderColor={borderColor}
-          >
-            ESC
-          </Kbd>
+          {!isMobile && (
+            <Kbd
+              fontSize="xs"
+              color={secondaryColor}
+              bg={isDark ? 'gray.700' : 'gray.100'}
+              borderColor={borderColor}
+            >
+              ESC
+            </Kbd>
+          )}
         </HStack>
 
         {/* Category filter chips */}
@@ -528,10 +548,12 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
               const count = categoryCounts.get(category) ?? 0;
               const isActive = activeCategories.has(category);
               // Library sub-chips only visible when there's a query typed
-              if (isLib && !query.trim()) return null;
+              if (isLib && !hasQuery) return null;
+              // When searching, only show categories that have results
+              if (hasQuery && count === 0) return null;
               const isEmpty = count === 0;
               // Separator before first lib sub-chip
-              const isFirstLib = isLib && category === LIBRARY_CHIP_ITEMS[0].category;
+              const isFirstLib = isLib && category === firstVisibleLibraryCategory;
               return (
                 <React.Fragment key={category}>
                   {isFirstLib && (

@@ -9,7 +9,7 @@
  */
 
 import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react';
-import { Box, HStack, Tooltip, VStack, Text, Portal } from '@chakra-ui/react';
+import { Box, HStack, Tooltip, VStack, Text, Portal, useColorModeValue } from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';
 import { useContextActions, type QuickAction, type ActionGroup } from './useContextActions';
 import { useResponsive, useThemeColors, useSidebarLayout, useToolbarPositionStyles } from '../../hooks';
@@ -49,6 +49,9 @@ const QuickActionButton: React.FC<{
 }> = React.memo(({ action, isMobile }) => {
   const { toolbar } = useThemeColors();
   const isDanger = action.variant === 'danger';
+  const buttonSize = isMobile ? '26px' : '30px';
+  const contrastBg = useColorModeValue('black', 'white');
+  const contrastIconColor = useColorModeValue('white', 'black');
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -66,15 +69,15 @@ const QuickActionButton: React.FC<{
       display="flex"
       alignItems="center"
       justifyContent="center"
-      w={isMobile ? '26px' : '30px'}
-      h={isMobile ? '26px' : '30px'}
-      borderRadius="md"
+      w={buttonSize}
+      h={buttonSize}
+      borderRadius="full"
       cursor="pointer"
       color={isDanger ? 'red.400' : toolbar.color}
       bg="transparent"
-      _hover={{ bg: 'whiteAlpha.200' }}
-      _active={{ bg: 'whiteAlpha.300' }}
-      transition="all 0.15s"
+      _hover={{ bg: contrastBg, color: contrastIconColor }}
+      _active={{ bg: contrastBg, color: contrastIconColor }}
+      transition="background-color 0.15s, color 0.15s"
       flexShrink={0}
       aria-label={action.label}
     >
@@ -115,6 +118,9 @@ const GroupActionButton: React.FC<{
   const theme = useThemeColors();
   const { toolbar } = theme;
   const [isOpen, setIsOpen] = useState(false);
+  const iconBubbleSize = isMobile ? '26px' : '30px';
+  const contrastBg = useColorModeValue('black', 'white');
+  const contrastIconColor = useColorModeValue('white', 'black');
   const childKeys = useMemo(() => buildStableKeys(group.children), [group.children]);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -192,25 +198,47 @@ const GroupActionButton: React.FC<{
       onClick={handleToggle}
       onMouseEnter={isMobile ? undefined : handleMouseEnter}
       onMouseLeave={isMobile ? undefined : handleMouseLeave}
+      role="group"
       display="flex"
       alignItems="center"
       justifyContent="center"
-      gap="1px"
+      gap="2px"
       h={isMobile ? '26px' : '30px'}
-      px={1}
-      borderRadius="md"
+      px={0.5}
+      borderRadius="full"
       cursor="pointer"
-      color={isOpen ? 'blue.300' : toolbar.color}
-      bg={isOpen ? 'whiteAlpha.200' : 'transparent'}
-      _hover={{ bg: 'whiteAlpha.200' }}
-      _active={{ bg: 'whiteAlpha.300' }}
-      transition="all 0.15s"
+      color={toolbar.color}
+      bg="transparent"
+      transition="color 0.15s"
       flexShrink={0}
       aria-label={group.label}
       aria-expanded={isOpen}
     >
-      <group.icon size={isMobile ? 13 : 16} />
-      <ChevronDown size={10} style={{ opacity: 0.6 }} />
+      <Box
+        data-role="group-icon-bubble"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        w={iconBubbleSize}
+        h={iconBubbleSize}
+        borderRadius="full"
+        bg={isOpen ? contrastBg : 'transparent'}
+        color={isOpen ? contrastIconColor : toolbar.color}
+        _groupHover={{ bg: contrastBg, color: contrastIconColor }}
+        _groupActive={{ bg: contrastBg, color: contrastIconColor }}
+        transition="background-color 0.15s, color 0.15s"
+      >
+        <group.icon size={isMobile ? 13 : 16} />
+      </Box>
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        color={toolbar.color}
+        opacity={0.6}
+      >
+        <ChevronDown size={10} />
+      </Box>
     </Box>
   );
 
@@ -404,7 +432,7 @@ const MobileContextBar: React.FC<{
       borderRadius="full"
       borderWidth={toolbar.borderWidth}
       borderColor={toolbar.borderColor}
-      boxShadow={toolbar.shadow}
+      boxShadow="none"
       px={1}
       py={0.5}
       spacing={0}

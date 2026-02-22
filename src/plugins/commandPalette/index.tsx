@@ -9,6 +9,7 @@ import React, { useState, useCallback } from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { CommandPaletteOverlay } from './CommandPaletteOverlay';
+import { OPEN_COMMAND_PALETTE_EVENT } from './events';
 
 /**
  * Global overlay component that manages command palette open/close state.
@@ -29,9 +30,16 @@ const CommandPaletteGlobalOverlay: React.FC = () => {
         setIsOpen((prev) => !prev);
       }
     };
+    const handleOpenPalette = () => {
+      setIsOpen(true);
+    };
 
     window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
+    window.addEventListener(OPEN_COMMAND_PALETTE_EVENT, handleOpenPalette);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener(OPEN_COMMAND_PALETTE_EVENT, handleOpenPalette);
+    };
   }, []);
 
   return <CommandPaletteOverlay isOpen={isOpen} onClose={handleClose} />;

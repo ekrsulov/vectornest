@@ -1,10 +1,11 @@
 import React from 'react';
 import { IconButton, VStack, useColorModeValue, Tooltip, Box } from '@chakra-ui/react';
-import { Undo2, Redo2, PanelRightOpen, PanelRightClose, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import { Undo2, Redo2, Search, PanelRightOpen, PanelRightClose, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import { useTemporalState, useSidebarLayout, useThemeColors } from '../hooks';
 import { useIsGlobalUndoRedoDisabled } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
+import { OPEN_COMMAND_PALETTE_EVENT } from '../plugins/commandPalette/events';
 
 export const UndoRedoControls: React.FC = () => {
     const { undo, redo, pastStates, futureStates } = useTemporalState();
@@ -20,6 +21,9 @@ export const UndoRedoControls: React.FC = () => {
 
     const canUndo = pastStates.length > 0;
     const canRedo = futureStates.length > 0;
+    const openCommandPalette = () => {
+        window.dispatchEvent(new CustomEvent(OPEN_COMMAND_PALETTE_EVENT));
+    };
 
     // Use unified theme colors to match VirtualShiftButton
     const { toggle } = useThemeColors();
@@ -87,6 +91,15 @@ export const UndoRedoControls: React.FC = () => {
                             />
                         </Tooltip>
                     )}
+
+                    <Tooltip label="Command Bar (Cmd+K / Ctrl+K)" placement="left" hasArrow>
+                        <IconButton
+                            {...buttonProps}
+                            aria-label="Open Command Bar"
+                            icon={<Search size={18} />}
+                            onClick={openCommandPalette}
+                        />
+                    </Tooltip>
 
                     <Tooltip label="Undo (Cmd+Z)" placement="left" hasArrow>
                         <IconButton

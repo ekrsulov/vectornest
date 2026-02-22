@@ -52,10 +52,10 @@ export const VirtualShiftButton: React.FC = () => {
         borderColor="transparent"
         _dark={{ bg: isVirtualShiftActive ? activeBg : inactiveBgDark, borderWidth: '0px', borderColor: 'transparent' }}
         sx={{
-          width: '36px',
-          height: '36px',
-          minWidth: '36px',
-          minHeight: '36px',
+          width: '32px',
+          height: '32px',
+          minWidth: '32px',
+          minHeight: '32px',
           backdropFilter: 'blur(10px)',
           backgroundColor: isVirtualShiftActive ? activeBg : inactiveBg,
           _hover: {

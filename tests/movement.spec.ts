@@ -347,6 +347,133 @@ test.describe('Path Movement Tests', () => {
     await expect(finalPath).toBeVisible();
   });
 
+  test('should move all selected edit points when dragging one of them', async ({ page }) => {
+    await page.goto('/');
+    await waitForLoad(page);
+
+    await selectTool(page, 'Shape');
+    await page.locator('[aria-label="Square"]').click();
+
+    const canvas = getCanvas(page);
+    const canvasBox = await canvas.boundingBox();
+    if (!canvasBox) throw new Error('SVG canvas not found');
+
+    const startX = canvasBox.x + canvasBox.width * 0.25;
+    const startY = canvasBox.y + canvasBox.height * 0.25;
+    const endX = canvasBox.x + canvasBox.width * 0.45;
+    const endY = canvasBox.y + canvasBox.height * 0.45;
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(endX, endY, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForTimeout(120);
+
+    await selectTool(page, 'Select');
+    await page.mouse.click((startX + endX) / 2, (startY + endY) / 2);
+    await page.waitForTimeout(100);
+
+    await expectToolEnabled(page, 'Edit');
+    await selectTool(page, 'Edit');
+    await page.waitForTimeout(180);
+
+    const editPoints = page.locator('[data-edit-point-hit="true"]');
+    const pointCount = await editPoints.count();
+    expect(pointCount).toBeGreaterThanOrEqual(2);
+
+    await editPoints.nth(0).click();
+    await page.keyboard.down('Shift');
+    await editPoints.nth(1).click();
+    await page.keyboard.up('Shift');
+    await page.waitForTimeout(120);
+
+    const selectedRefs = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore;
+      const state = store?.getState?.();
+      if (!state) return null;
+
+      const selected = state.selectedCommands ?? [];
+      if (selected.length < 2) return null;
+
+      return selected.slice(0, 2).map((cmd: any) => ({
+        elementId: cmd.elementId,
+        commandIndex: cmd.commandIndex,
+        pointIndex: cmd.pointIndex,
+      }));
+    });
+    expect(selectedRefs).toBeTruthy();
+
+    const readPoints = async (refs: Array<{ elementId: string; commandIndex: number; pointIndex: number }>) =>
+      page.evaluate((pointRefs) => {
+        const store = (window as any).useCanvasStore;
+        const state = store?.getState?.();
+        if (!state) return null;
+
+        const getPointFromCommand = (command: any, pointIndex: number) => {
+          if (!command) return null;
+          if ((command.type === 'M' || command.type === 'L') && pointIndex === 0) {
+            return { x: command.position.x, y: command.position.y };
+          }
+          if (command.type === 'C') {
+            if (pointIndex === 0) return { x: command.controlPoint1.x, y: command.controlPoint1.y };
+            if (pointIndex === 1) return { x: command.controlPoint2.x, y: command.controlPoint2.y };
+            if (pointIndex === 2) return { x: command.position.x, y: command.position.y };
+          }
+          return null;
+        };
+
+        const output = pointRefs.map((ref) => {
+          const element = state.elements.find((el: any) => el.id === ref.elementId);
+          if (!element || element.type !== 'path') return null;
+
+          const commands = element.data.subPaths.flat();
+          const point = getPointFromCommand(commands[ref.commandIndex], ref.pointIndex);
+          if (!point) return null;
+
+          return { ...ref, point };
+        });
+
+        return output.every(Boolean) ? output : null;
+      }, refs);
+
+    const initialPoints = await readPoints(selectedRefs as Array<{ elementId: string; commandIndex: number; pointIndex: number }>);
+    expect(initialPoints).toBeTruthy();
+
+    const dragHandleBox = await editPoints.nth(0).boundingBox();
+    if (!dragHandleBox) throw new Error('Edit point bounding box not found');
+
+    const dragStartX = dragHandleBox.x + dragHandleBox.width / 2;
+    const dragStartY = dragHandleBox.y + dragHandleBox.height / 2;
+    const dragDelta = { x: 42, y: 28 };
+
+    await page.mouse.move(dragStartX, dragStartY);
+    await page.mouse.down();
+    await page.mouse.move(dragStartX + dragDelta.x, dragStartY + dragDelta.y, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForTimeout(150);
+
+    const finalPoints = await readPoints(selectedRefs as Array<{ elementId: string; commandIndex: number; pointIndex: number }>);
+    expect(finalPoints).toBeTruthy();
+
+    const initial = initialPoints as Array<{ point: { x: number; y: number } }>;
+    const final = finalPoints as Array<{ point: { x: number; y: number } }>;
+
+    const delta1 = {
+      x: final[0].point.x - initial[0].point.x,
+      y: final[0].point.y - initial[0].point.y,
+    };
+    const delta2 = {
+      x: final[1].point.x - initial[1].point.x,
+      y: final[1].point.y - initial[1].point.y,
+    };
+
+    const movedDistance = Math.hypot(delta1.x, delta1.y);
+    expect(movedDistance).toBeGreaterThan(0.5);
+
+    expect(Math.abs(delta1.x - delta2.x)).toBeLessThan(0.5);
+    expect(Math.abs(delta1.y - delta2.y)).toBeLessThan(0.5);
+  });
+
   test('should handle multiple path movement', async ({ page }) => {
     await page.goto('/');
     await waitForLoad(page);

@@ -229,22 +229,24 @@ export const useCanvasDrag = ({
                     if (now - lastUpdateTime >= ANIMATION_FRAME_MS) {
                         lastUpdateTime = now;
 
-                        if (dragPoint?.isDragging) {
-                            updateSinglePointPath(
-                                dragPoint,
-                                canvasX,
-                                canvasY,
-                                elementsRef.current,
-                                callbacksRef.current,
-                                elementMapRef.current
-                            );
-                        } else if (draggingSelection?.isDragging) {
+                        // Group drag must win over dragPointInfo because edit multi-selection
+                        // also carries a representative dragPoint for snapping metadata.
+                        if (draggingSelection?.isDragging) {
                             updateGroupDragPaths(
                                 draggingSelection,
                                 canvasX,
                                 canvasY,
                                 elementsRef.current,
                                 originalPathDataMapRef.current,
+                                callbacksRef.current,
+                                elementMapRef.current
+                            );
+                        } else if (dragPoint?.isDragging) {
+                            updateSinglePointPath(
+                                dragPoint,
+                                canvasX,
+                                canvasY,
+                                elementsRef.current,
                                 callbacksRef.current,
                                 elementMapRef.current
                             );

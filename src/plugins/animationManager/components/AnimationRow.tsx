@@ -22,6 +22,7 @@ interface AnimationRowProps {
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
   onActivateGizmo?: (id: string) => void;
+  isGizmoActive?: boolean;
 }
 
 export const AnimationRow: React.FC<AnimationRowProps> = ({
@@ -31,6 +32,7 @@ export const AnimationRow: React.FC<AnimationRowProps> = ({
   onDelete,
   onDuplicate,
   onActivateGizmo,
+  isGizmoActive = false,
 }) => {
   const description = generateAnimationDescription(animation);
   const typeLabel = getAnimationTypeLabel(animation);
@@ -143,9 +145,10 @@ export const AnimationRow: React.FC<AnimationRowProps> = ({
           <PanelActionButton
             icon={Crosshair}
             iconSize={10}
-            label="Gizmo"
+            label={isGizmoActive ? 'Exit Gizmo' : 'Edit with Gizmo'}
             onClick={handleGizmo}
             height="16px"
+            variant={isGizmoActive ? 'solid' : 'ghost'}
           />
         )}
         <PanelActionButton

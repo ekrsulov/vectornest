@@ -15,12 +15,14 @@
 	import { registerCoreGizmos } from '../gizmos';
 	import { getViewBoxString } from '../../../canvas/viewport/ViewportController';
 	import { useDoubleTap } from '../../../canvas/hooks/useDoubleTap';
+	import { zIndices } from '../../../theme/spacing';
 	import type { AnimationPluginSlice } from '../types';
 	import type { CanvasElement } from '../../../types';
 		import type { SVGAnimation } from '../types';
 
 // Track if gizmos have been registered
 let gizmosRegistered = false;
+const GIZMO_OVERLAY_Z_INDEX = zIndices.docked;
 
 /**
  * Initialize the gizmo system.
@@ -185,7 +187,8 @@ interface AnimationGizmoOverlayProps {
         width: '100%',
         height: '100%',
         pointerEvents: 'auto', // Capture all events when in gizmo mode
-        zIndex: 1000,
+        // Keep gizmo interactions above canvas content, but below floating UI (context bar, minimap, undo/redo).
+        zIndex: GIZMO_OVERLAY_Z_INDEX,
       }}
     >
 	      <svg
@@ -232,5 +235,4 @@ export const AnimationGizmoOverlay: React.FC<AnimationGizmoOverlayProps> = (prop
   // GizmoProvider is now at App level, so we just render the inner component directly
   return <AnimationGizmoOverlayInner {...props} />;
 };
-
 

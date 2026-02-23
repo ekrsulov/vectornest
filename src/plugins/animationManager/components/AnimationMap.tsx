@@ -20,6 +20,8 @@ import { MiniTimeline } from './MiniTimeline';
 import { useAnimationDiscovery } from '../hooks/useAnimationDiscovery';
 import { ensureChainDelays } from '../../animationSystem/chainUtils';
 import { getItemThumbnailData, buildNativeShapeThumbnailCommands, getGroupThumbnailCommands } from '../../../utils/selectPanelHelpers';
+import { useGizmoContextOptional } from '../../animationSystem/gizmos/GizmoContext';
+import { animationGizmoRegistry } from '../../animationSystem/gizmos/registry/GizmoRegistry';
 import { useShallow } from 'zustand/react/shallow';
 
 const EMPTY_CHAIN_DELAYS = new Map<string, number>();
@@ -39,6 +41,7 @@ interface AnimationMapStoreSlice {
   setAnimationTime: AnimationPluginSlice['setAnimationTime'];
   selectedIds: string[];
   elements: CanvasElement[];
+  selectElements: CanvasStore['selectElements'];
 }
 
 const selectMapState = (state: CanvasStore): AnimationMapStoreSlice => {
@@ -59,6 +62,7 @@ const selectMapState = (state: CanvasStore): AnimationMapStoreSlice => {
     setAnimationTime: aSlice.setAnimationTime,
     selectedIds: state.selectedIds,
     elements: state.elements,
+    selectElements: state.selectElements,
   };
 };
 
@@ -82,7 +86,41 @@ export const AnimationMap: React.FC = () => {
     setAnimationTime,
     selectedIds,
     elements,
+    selectElements,
   } = useCanvasStore(useShallow(selectMapState));
+  const gizmoContext = useGizmoContextOptional();
+
+  const elementMap = useMemo(() => {
+    const map = new Map<string, CanvasElement>();
+    for (const element of elements) {
+      map.set(element.id, element);
+    }
+    return map;
+  }, [elements]);
+
+  const hasGizmoForAnimation = useCallback(
+    (animation: SVGAnimation): boolean => {
+      const targetElement = elementMap.get(animation.targetElementId);
+      if (!targetElement) return false;
+
+      const gizmos = animationGizmoRegistry.getAll();
+      return gizmos.some((gizmo) => {
+        try {
+          return gizmo.canHandle?.(animation) || gizmo.appliesTo?.(animation, targetElement);
+        } catch {
+          return false;
+        }
+      });
+    },
+    [elementMap]
+  );
+
+  const activeGizmoAnimationId = useMemo(() => {
+    if (!gizmoContext || !gizmoContext.gizmoEditMode || gizmoContext.activeGizmos.size === 0) {
+      return null;
+    }
+    return Array.from(gizmoContext.activeGizmos.keys())[0] ?? null;
+  }, [gizmoContext]);
 
   const chainDelays = useMemo(() => {
     const runtimeDelays = ensureChainDelays(runtimeChainDelays);
@@ -139,6 +177,12 @@ export const AnimationMap: React.FC = () => {
 
   const handleDeleteAnimation = useCallback(
     (id: string) => {
+      if (gizmoContext?.activeGizmos.has(id)) {
+        gizmoContext.deactivateGizmo(id);
+        if (gizmoContext.activeGizmos.size <= 1) {
+          gizmoContext.setGizmoEditMode(false);
+        }
+      }
       removeAnimation?.(id);
       if (selectedAnimationId === id) {
         updateAnimationManagerState?.({
@@ -147,7 +191,7 @@ export const AnimationMap: React.FC = () => {
         });
       }
     },
-    [removeAnimation, selectedAnimationId, updateAnimationManagerState],
+    [gizmoContext, removeAnimation, selectedAnimationId, updateAnimationManagerState],
   );
 
   const handleDuplicateAnimation = useCallback(
@@ -176,6 +220,51 @@ export const AnimationMap: React.FC = () => {
       selectedAnimationId: null,
     });
   }, [updateAnimationManagerState]);
+
+  const handleToggleGizmo = useCallback(
+    (animationId: string) => {
+      if (!gizmoContext) return;
+
+      const animation = animations.find((a) => a.id === animationId);
+      if (!animation || !hasGizmoForAnimation(animation)) return;
+
+      const targetElement = elementMap.get(animation.targetElementId);
+      if (!targetElement) return;
+
+      const isCurrentlyActive =
+        gizmoContext.gizmoEditMode && gizmoContext.activeGizmos.has(animationId);
+
+      if (isCurrentlyActive) {
+        gizmoContext.deactivateGizmo(animationId);
+        if (gizmoContext.activeGizmos.size <= 1) {
+          gizmoContext.setGizmoEditMode(false);
+        }
+        return;
+      }
+
+      // Gizmo overlay requires a single selected target element to stay active.
+      if (selectedIds.length !== 1 || selectedIds[0] !== targetElement.id) {
+        selectElements?.([targetElement.id]);
+      }
+
+      gizmoContext.deactivateAllGizmos();
+      gizmoContext.activateGizmo(animationId);
+      gizmoContext.setGizmoEditMode(true);
+      updateAnimationManagerState?.({
+        selectedAnimationId: animationId,
+        editorMode: 'editing',
+      });
+    },
+    [
+      animations,
+      elementMap,
+      gizmoContext,
+      hasGizmoForAnimation,
+      selectedIds,
+      selectElements,
+      updateAnimationManagerState,
+    ],
+  );
 
   const handleScrub = useCallback(
     (time: number) => {
@@ -229,9 +318,12 @@ export const AnimationMap: React.FC = () => {
             multiElement={multiElement}
             expandedGroups={expandedGroups}
             selectedAnimationId={selectedAnimationId}
+            activeGizmoAnimationId={activeGizmoAnimationId}
             onSelectAnimation={handleSelectAnimation}
             onDeleteAnimation={handleDeleteAnimation}
             onDuplicateAnimation={handleDuplicateAnimation}
+            onToggleGizmo={handleToggleGizmo}
+            canUseGizmo={hasGizmoForAnimation}
             onToggleGroup={handleToggleGroup}
             elements={elements}
           />
@@ -262,9 +354,12 @@ interface ElementAnimationSectionProps {
   multiElement: boolean;
   expandedGroups: string[];
   selectedAnimationId: string | null;
+  activeGizmoAnimationId: string | null;
   onSelectAnimation: (id: string) => void;
   onDeleteAnimation: (id: string) => void;
   onDuplicateAnimation: (id: string) => void;
+  onToggleGizmo: (id: string) => void;
+  canUseGizmo: (animation: SVGAnimation) => boolean;
   onToggleGroup: (key: string) => void;
   elements: CanvasElement[];
 }
@@ -290,9 +385,12 @@ const ElementAnimationSection: React.FC<ElementAnimationSectionProps> = ({
   multiElement,
   expandedGroups,
   selectedAnimationId,
+  activeGizmoAnimationId,
   onSelectAnimation,
   onDeleteAnimation,
   onDuplicateAnimation,
+  onToggleGizmo,
+  canUseGizmo,
   onToggleGroup,
   elements,
 }) => {
@@ -379,9 +477,11 @@ const ElementAnimationSection: React.FC<ElementAnimationSectionProps> = ({
                     key={anim.id}
                     animation={anim}
                     isSelected={anim.id === selectedAnimationId}
+                    isGizmoActive={anim.id === activeGizmoAnimationId}
                     onSelect={onSelectAnimation}
                     onDelete={onDeleteAnimation}
                     onDuplicate={onDuplicateAnimation}
+                    onActivateGizmo={canUseGizmo(anim) ? onToggleGizmo : undefined}
                   />
                 ))}
               </VStack>

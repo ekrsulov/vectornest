@@ -19,6 +19,10 @@ import { TimelineTrack } from './TimelineTrack';
 import { PanelTextInput } from './PanelTextInput';
 import type { SVGAnimation } from '../plugins/animationSystem/types';
 
+const ADVANCED_INPUT_MAX_WIDTH = '200px';
+const ADVANCED_INPUT_HEIGHT = '18px';
+const SEGMENT_VALUE_CONTROL_WIDTH = 'calc(50% - 6px)';
+
 interface KeyframeEditorProps {
     animation: SVGAnimation;
     onUpdate: (updates: Partial<SVGAnimation>) => void;
@@ -135,30 +139,39 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
 
             {/* Advanced Raw Inputs */}
             <Collapse in={showAdvanced} animateOpacity>
-                <VStack spacing={2} pb={2} mb={2} borderBottom="1px dashed" borderColor="border.subtle" align="stretch" w="100%">
-                    <VStack spacing={0} align="stretch">
+                <VStack spacing={2} pb={2} mb={2} align="stretch" w="100%">
+                    <VStack spacing={0} align="start">
                         <Text fontSize="2xs" color="text.muted">Values</Text>
-                        <PanelTextInput
-                            value={animation.values || ''}
-                            onChange={(val) => onUpdate({ values: val })}
-                            width="100%"
-                        />
+                        <Box w="100%" maxW={ADVANCED_INPUT_MAX_WIDTH}>
+                            <PanelTextInput
+                                value={animation.values || ''}
+                                onChange={(val) => onUpdate({ values: val })}
+                                width="100%"
+                                height={ADVANCED_INPUT_HEIGHT}
+                            />
+                        </Box>
                     </VStack>
-                    <VStack spacing={0} align="stretch">
+                    <VStack spacing={0} align="start">
                         <Text fontSize="2xs" color="text.muted">KeyTimes</Text>
-                        <PanelTextInput
-                            value={animation.keyTimes || ''}
-                            onChange={(val) => onUpdate({ keyTimes: val })}
-                            width="100%"
-                        />
+                        <Box w="100%" maxW={ADVANCED_INPUT_MAX_WIDTH}>
+                            <PanelTextInput
+                                value={animation.keyTimes || ''}
+                                onChange={(val) => onUpdate({ keyTimes: val })}
+                                width="100%"
+                                height={ADVANCED_INPUT_HEIGHT}
+                            />
+                        </Box>
                     </VStack>
-                    <VStack spacing={0} align="stretch">
+                    <VStack spacing={0} align="start">
                         <Text fontSize="2xs" color="text.muted">KeySplines</Text>
-                        <PanelTextInput
-                            value={animation.keySplines || ''}
-                            onChange={(val) => onUpdate({ keySplines: val })}
-                            width="100%"
-                        />
+                        <Box w="100%" maxW={ADVANCED_INPUT_MAX_WIDTH}>
+                            <PanelTextInput
+                                value={animation.keySplines || ''}
+                                onChange={(val) => onUpdate({ keySplines: val })}
+                                width="100%"
+                                height={ADVANCED_INPUT_HEIGHT}
+                            />
+                        </Box>
                     </VStack>
                 </VStack>
             </Collapse>
@@ -188,7 +201,7 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
                         </Text>
 
                         <HStack spacing={2} mb={2}>
-                            <VStack spacing={0} align="start" w="50%">
+                            <VStack spacing={0} align="start" w={SEGMENT_VALUE_CONTROL_WIDTH}>
                                 <Text fontSize="2xs" color="text.muted">Start Value</Text>
                                 <PanelTextInput
                                     value={track.values[selectedSegmentIdx] || ''}
@@ -203,7 +216,7 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
                                     width="100%"
                                 />
                             </VStack>
-                            <VStack spacing={0} align="start" w="50%">
+                            <VStack spacing={0} align="start" w={SEGMENT_VALUE_CONTROL_WIDTH}>
                                 <Text fontSize="2xs" color="text.muted">End Value</Text>
                                 <PanelTextInput
                                     value={track.values[selectedSegmentIdx + 1] || ''}

@@ -26,8 +26,9 @@ import { useCanvasStore } from '../../store/canvasStore';
 import type { CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 
-import type { AnimationPluginSlice } from '../animationSystem/types';
+import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
 import type { AnimationManagerSlice } from './types';
+import { GizmoToolbarCompact } from '../animationSystem/gizmos/ui/GizmoToolbar';
 
 import { AnimationMap } from './components/AnimationMap';
 import { AnimationEditor } from './components/AnimationEditor';
@@ -40,6 +41,8 @@ import { BatchActions } from './components/BatchActions';
 
 interface PanelStoreSlice {
   selectedIds: string[];
+  selectedAnimationId: string | null;
+  animations: SVGAnimation[];
   // Playback
   isPlaying: boolean;
   currentTime: number;
@@ -62,6 +65,8 @@ const selectPanelState = (state: CanvasStore): PanelStoreSlice => {
   const mgr = mSlice.animationManager;
   return {
     selectedIds: state.selectedIds,
+    selectedAnimationId: mgr?.selectedAnimationId ?? null,
+    animations: aSlice.animations ?? [],
     isPlaying: aSlice.animationState?.isPlaying ?? false,
     currentTime: aSlice.animationState?.currentTime ?? 0,
     autoPlayOnEdit: mgr?.autoPlayOnEdit ?? false,
@@ -159,6 +164,8 @@ const PlaybackControls: React.FC<{
 export const AnimationManagerPanel: React.FC = () => {
   const {
     selectedIds,
+    selectedAnimationId,
+    animations,
     isPlaying,
     currentTime,
     autoPlayOnEdit,
@@ -180,12 +187,20 @@ export const AnimationManagerPanel: React.FC = () => {
       prev.length !== selectedIds.length ||
       prev.some((id, i) => id !== selectedIds[i])
     ) {
+      // Keep current editor selection if it still belongs to the new canvas selection.
+      const selectedAnimation = selectedAnimationId
+        ? animations.find((anim) => anim.id === selectedAnimationId)
+        : null;
+      if (selectedAnimation && selectedIds.includes(selectedAnimation.targetElementId)) {
+        return;
+      }
+
       updateAnimationManagerState?.({
         selectedAnimationId: null,
         editorMode: 'idle',
       });
     }
-  }, [selectedIds, updateAnimationManagerState]);
+  }, [selectedIds, selectedAnimationId, animations, updateAnimationManagerState]);
 
   const handlePlayPause = useCallback(() => {
     if (isPlaying) {
@@ -243,6 +258,9 @@ export const AnimationManagerPanel: React.FC = () => {
           defaultDuration={defaultDuration}
           updateState={updateAnimationManagerState}
         />
+        <Box px={1} pb={1}>
+          <GizmoToolbarCompact />
+        </Box>
       </Panel>
 
       {/* Zone 1: Animation Map */}

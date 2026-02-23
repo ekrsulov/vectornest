@@ -141,6 +141,8 @@ export const SidebarToolGrid: React.FC = () => {
           <Box
             overflowX={shouldUseHorizontalScroll ? 'auto' : 'visible'}
             overflowY="hidden"
+            w={shouldUseHorizontalScroll ? 'auto' : 'full'}
+            flex={shouldUseHorizontalScroll ? undefined : 1}
             css={shouldUseHorizontalScroll ? {
               scrollbarWidth: 'none',
               '&::-webkit-scrollbar': {

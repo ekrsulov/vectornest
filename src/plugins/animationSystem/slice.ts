@@ -3,6 +3,7 @@ import type { TransformDeltaEntry } from '../../utils/animationTransformDelta';
 import type { Matrix } from '../../utils/matrixUtils';
 import { applyToPoint, IDENTITY_MATRIX, inverseMatrix, multiplyMatrices } from '../../utils/matrixUtils';
 import { parsePath, absolutize, normalize, serialize } from 'path-data-parser';
+import { ensureChainDelays } from './chainUtils';
 
 const generateAnimationId = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -889,7 +890,14 @@ export const createAnimationSlice: AnimationSliceCreator = (set, get) => {
 
     playAnimations: () => {
       const state = get();
-      const delays = state.calculateChainDelays();
+      const persistedDelays = ensureChainDelays(state.animationState.chainDelays);
+      const computedChainDelays = state.calculateChainDelays();
+      // Keep chain-derived delays as a baseline, but let manually assigned delays
+      // (Batch Actions / timeline edits) override matching animation IDs.
+      const delays = new Map<string, number>([
+        ...computedChainDelays,
+        ...persistedDelays,
+      ]);
 
       // Auto-restart logic: if at the end, start from 0
       let currentTime = state.animationState.currentTime;

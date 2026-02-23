@@ -1,6 +1,13 @@
+/**
+ * TimelineTrack — Horizontal timeline bar with draggable keyframe nodes.
+ *
+ * Colored segments (blue selected, gray not), pointer capture drag,
+ * double-tap to add/delete, hover time labels, clamped between adjacent keyframes.
+ */
+
 import React, { useRef, useState } from 'react';
 import { Box, Text } from '@chakra-ui/react';
-import type { KeyframeTrack } from '../utils/splineUtils';
+import type { KeyframeTrack } from './splineUtils';
 
 interface TimelineTrackProps {
     track: KeyframeTrack;
@@ -62,7 +69,6 @@ export const TimelineTrack: React.FC<TimelineTrackProps> = ({
         newX = Math.max(0, Math.min(1, newX));
 
         // Constrain between prev and next keyframes for order validity
-        // "estrictamente crecientes"
         const prevT = track.keyTimes[draggingIdx - 1];
         const nextT = track.keyTimes[draggingIdx + 1];
         const epsilon = 0.01;

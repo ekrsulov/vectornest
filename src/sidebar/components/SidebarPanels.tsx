@@ -114,7 +114,7 @@ export const SidebarPanels: React.FC = () => {
 
   // Gen/Audit panels also hide the footer but are NOT treated as special panel mode
   // (so their own tool panels still render via createToolPanel's !isInSpecialPanelMode check)
-  const isFooterHidingPlugin = activePlugin === 'generatorLibrary' || activePlugin === 'auditLibrary' || activePlugin === 'svgStructure';
+  const isFooterHidingPlugin = activePlugin === 'generatorLibrary' || activePlugin === 'animLibrary' || activePlugin === 'auditLibrary' || activePlugin === 'svgStructure';
 
   const {
     canPerformOpticalAlignment,

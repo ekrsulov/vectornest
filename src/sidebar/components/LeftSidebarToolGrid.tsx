@@ -35,7 +35,7 @@ export const LeftSidebarToolGrid: React.FC = () => {
     }))
   );
 
-  const switchPanel = (nextPanel: 'structure' | 'library' | 'generatorLibrary') => {
+  const switchPanel = (nextPanel: 'structure' | 'library' | 'generatorLibrary' | 'animLibrary') => {
     if (leftSidebarActivePanel === 'library' && nextPanel !== 'library') {
       saveCurrentLeftLibraryState();
     }
@@ -95,6 +95,23 @@ export const LeftSidebarToolGrid: React.FC = () => {
           iconOnly={false}
           onClick={() => switchPanel('generatorLibrary')}
           isActive={leftSidebarActivePanel === 'generatorLibrary'}
+          flex={0}
+          fullWidth
+          fontSize="sm"
+          borderWidth="1px"
+          inactiveBorderColor={toolGridBorderColor}
+        />
+      ),
+    },
+    {
+      key: 'animLibrary',
+      element: (
+        <SidebarUtilityButton
+          label="Anim"
+          icon={undefined}
+          iconOnly={false}
+          onClick={() => switchPanel('animLibrary')}
+          isActive={leftSidebarActivePanel === 'animLibrary'}
           flex={0}
           fullWidth
           fontSize="sm"

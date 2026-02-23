@@ -50,7 +50,7 @@ export const SidebarToolGrid: React.FC = () => {
     : UTILITY_TOOLS;
   const effectiveSidebarToolbarButtons = showLeftSidebar
     ? sidebarToolbarButtons.filter(
-      (button) => button.pluginId !== 'svgStructure' && button.pluginId !== 'generatorLibrary'
+      (button) => button.pluginId !== 'svgStructure' && button.pluginId !== 'generatorLibrary' && button.pluginId !== 'animLibrary'
     )
     : sidebarToolbarButtons;
   const shouldUseHorizontalScroll = !showLeftSidebar;

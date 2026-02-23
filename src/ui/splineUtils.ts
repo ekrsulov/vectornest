@@ -1,3 +1,8 @@
+/**
+ * splineUtils — Parse/serialize SMIL animation keyframe data.
+ *
+ * Shared utility for KeyframeEditor and AnimationCard.
+ */
 
 export type CubicBezier = [number, number, number, number];
 
@@ -76,9 +81,3 @@ export const serializeAnimationData = (track: KeyframeTrack) => {
         keySplines: track.keySplines.map(s => s.map(n => Number(n.toFixed(3))).join(' ')).join('; ')
     };
 };
-
-/**
- * Extract a numeric value for visualization from a value string.
- * E.g. "360 50 50" -> 360
- * "0.5" -> 0.5
- */

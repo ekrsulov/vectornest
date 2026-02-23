@@ -8,7 +8,7 @@ import { useSidebarContext } from '../../contexts/SidebarContext';
 import { useCanvasStore } from '../../store/canvasStore';
 
 // Plugins whose panel replaces the footer (Editor + Arrange), similar to File/Settings/Library
-const FOOTER_HIDING_PLUGINS = new Set(['generatorLibrary', 'auditLibrary', 'svgStructure']);
+const FOOTER_HIDING_PLUGINS = new Set(['generatorLibrary', 'animLibrary', 'auditLibrary', 'svgStructure']);
 
 export const SidebarContent: React.FC = () => {
   const { activePlugin, showFilePanel, showSettingsPanel, showLibraryPanel } = useSidebarContext();

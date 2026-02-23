@@ -140,6 +140,8 @@ import { bridgeToolPlugin } from './bridgeTool';
 import { smoothPaintPlugin } from './smoothPaint';
 import { commandPalettePlugin } from './commandPalette';
 import { contextActionsPlugin } from './contextActions';
+import { animationManagerPlugin } from './animationManager';
+import { animLibraryPlugin } from './animLibrary';
 
 export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectPlugin,
@@ -152,6 +154,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   settingsPlugin,
   libraryPlugin,
   generatorLibraryPlugin,
+  animLibraryPlugin,
   auditLibraryPlugin,
   librarySearchPlugin,
   pencilPlugin,
@@ -287,6 +290,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   smoothPaintPlugin,
   commandPalettePlugin,
   contextActionsPlugin,
+  animationManagerPlugin,
   // pluginSelectorPlugin must be last so its init() runs after all other plugins are registered
   pluginSelectorPlugin,
 ];

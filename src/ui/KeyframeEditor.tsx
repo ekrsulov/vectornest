@@ -1,15 +1,23 @@
+/**
+ * KeyframeEditor — Spline-mode keyframe editor.
+ *
+ * Combines a TimelineTrack for visual keyframe placement with
+ * an EasingCurveEditor for per-segment bezier editing.
+ * Includes an "Advanced" toggle for raw text input.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Box, VStack, HStack, Text, IconButton, Collapse } from '@chakra-ui/react';
 import { Settings } from 'lucide-react';
 import {
     parseAnimationData,
     serializeAnimationData,
-} from '../utils/splineUtils';
-import type { KeyframeTrack, CubicBezier } from '../utils/splineUtils';
-import { EasingEditor } from './EasingEditor';
+} from './splineUtils';
+import type { KeyframeTrack, CubicBezier } from './splineUtils';
+import { EasingCurveEditor } from './EasingCurveEditor';
 import { TimelineTrack } from './TimelineTrack';
-import { PanelTextInput } from '../../../ui/PanelTextInput';
-import type { SVGAnimation } from '../../animationSystem/types';
+import { PanelTextInput } from './PanelTextInput';
+import type { SVGAnimation } from '../plugins/animationSystem/types';
 
 interface KeyframeEditorProps {
     animation: SVGAnimation;
@@ -30,11 +38,7 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
             animation.keySplines || ''
         );
         setTrack(newTrack);
-    }, [animation.values, animation.keyTimes, animation.keySplines]); // Re-parse if external props change substantially? 
-    // Note: this might cause loops if we update on every drag. 
-    // Ideally we should sync local state -> parent, but only re-init if parent changes from outside.
-    // simple approach: just parse on mount or if ID changes, but here animation prop changes on update.
-    // user typing in inputs elsewhere might update it.
+    }, [animation.values, animation.keyTimes, animation.keySplines]);
 
     const handleUpdateKeyTime = (index: number, newTime: number) => {
         if (!track) return;
@@ -43,10 +47,6 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
 
         const newTrack = { ...track, keyTimes: newKeyTimes };
         setTrack(newTrack);
-
-        // Propagate immediately or on blur/up? 
-        // For smooth UI, maybe debounce or just up?
-        // Let's propagate immediately for graph updates (if we had one).
         onUpdate(serializeAnimationData(newTrack));
     };
 
@@ -82,11 +82,8 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
         const newValues = [...track.values];
         newValues.splice(index, 0, prevValue);
 
-        // Insert Spline (Duplicate previous or default)
+        // Insert Spline
         const newKeySplines = [...track.keySplines];
-        // We need to add one spline segment. 
-        // If we insert at index i (time), we split segment i-1.
-        // So we add a spline at i-1.
         const prevSpline = newKeySplines[index - 1] || [0.5, 0, 0.5, 1];
         newKeySplines.splice(index - 1, 0, [...prevSpline] as CubicBezier);
 
@@ -107,13 +104,11 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
         newValues.splice(index, 1);
 
         const newKeySplines = [...track.keySplines];
-        // Remove a segment. Removing point i merges segment i-1 and i.
-        // We remove spline at i-1.
         newKeySplines.splice(index - 1, 1);
 
         const newTrack = { values: newValues, keyTimes: newKeyTimes, keySplines: newKeySplines };
         setTrack(newTrack);
-        setSelectedSegmentIdx(null); // Clear selection
+        setSelectedSegmentIdx(null);
         onUpdate(serializeAnimationData(newTrack));
     };
 
@@ -225,9 +220,10 @@ export const KeyframeEditor: React.FC<KeyframeEditorProps> = ({ animation, onUpd
                             </VStack>
                         </HStack>
 
-                        <EasingEditor
+                        <EasingCurveEditor
                             value={activeSegmentSpline}
                             onChange={handleUpdateSpline}
+                            allowOvershoot={false}
                         />
                     </Box>
                 )}

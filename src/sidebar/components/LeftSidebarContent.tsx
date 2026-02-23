@@ -50,6 +50,11 @@ export const LeftSidebarContent: React.FC = () => {
           <SvgStructurePanel panelKey="svgStructure:svg-structure-panel" />
         ) : leftSidebarActivePanel === 'library' ? (
           <LibraryRelatedPanels />
+        ) : leftSidebarActivePanel === 'animLibrary' ? (
+          <LibraryRelatedPanels
+            targetPluginId="animLibrary"
+            badgeComponentName="AnimLibraryPanelRelated"
+          />
         ) : (
           <LibraryRelatedPanels
             targetPluginId="generatorLibrary"

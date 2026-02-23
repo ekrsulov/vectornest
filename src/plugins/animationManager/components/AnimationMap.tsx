@@ -1,0 +1,394 @@
+/**
+ * AnimationMap — Zone 1: Discovery view showing all animations
+ * affecting the current selection, organized by relationship type.
+ */
+
+import React, { useCallback, useMemo } from 'react';
+import { Box, VStack, Text, Flex, useColorModeValue } from '@chakra-ui/react';
+import { Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { Panel } from '../../../ui/Panel';
+import { PanelActionButton } from '../../../ui/PanelActionButton';
+import { PathThumbnail } from '../../../ui/PathThumbnail';
+import { useCanvasStore } from '../../../store/canvasStore';
+import type { CanvasStore } from '../../../store/canvasStore';
+import type { CanvasElement, Command } from '../../../types';
+import type { AnimationPluginSlice, SVGAnimation } from '../../animationSystem/types';
+import type { AnimationManagerSlice } from '../types';
+import type { DiscoveredElementAnimations, DiscoveredAnimationGroup } from '../types';
+import { AnimationRow } from './AnimationRow';
+import { MiniTimeline } from './MiniTimeline';
+import { useAnimationDiscovery } from '../hooks/useAnimationDiscovery';
+import { ensureChainDelays } from '../../animationSystem/chainUtils';
+import { getItemThumbnailData, buildNativeShapeThumbnailCommands, getGroupThumbnailCommands } from '../../../utils/selectPanelHelpers';
+import { useShallow } from 'zustand/react/shallow';
+
+const EMPTY_CHAIN_DELAYS = new Map<string, number>();
+
+interface AnimationMapStoreSlice {
+  selectedAnimationId: string | null;
+  expandedGroups: string[];
+  editorMode: string;
+  updateAnimationManagerState: AnimationManagerSlice['updateAnimationManagerState'];
+  animations: SVGAnimation[];
+  removeAnimation: AnimationPluginSlice['removeAnimation'];
+  addAnimation: AnimationPluginSlice['addAnimation'];
+  updateAnimation: AnimationPluginSlice['updateAnimation'];
+  calculateChainDelays: AnimationPluginSlice['calculateChainDelays'];
+  currentTime: number;
+  runtimeChainDelays: AnimationPluginSlice['animationState']['chainDelays'];
+  setAnimationTime: AnimationPluginSlice['setAnimationTime'];
+  selectedIds: string[];
+  elements: CanvasElement[];
+}
+
+const selectMapState = (state: CanvasStore): AnimationMapStoreSlice => {
+  const aSlice = state as unknown as AnimationPluginSlice;
+  const mSlice = state as unknown as AnimationManagerSlice;
+  return {
+    selectedAnimationId: mSlice.animationManager?.selectedAnimationId ?? null,
+    expandedGroups: mSlice.animationManager?.expandedGroups ?? [],
+    editorMode: mSlice.animationManager?.editorMode ?? 'idle',
+    updateAnimationManagerState: mSlice.updateAnimationManagerState,
+    animations: aSlice.animations ?? [],
+    removeAnimation: aSlice.removeAnimation,
+    addAnimation: aSlice.addAnimation,
+    updateAnimation: aSlice.updateAnimation,
+    calculateChainDelays: aSlice.calculateChainDelays,
+    currentTime: aSlice.animationState?.currentTime ?? 0,
+    runtimeChainDelays: aSlice.animationState?.chainDelays ?? EMPTY_CHAIN_DELAYS,
+    setAnimationTime: aSlice.setAnimationTime,
+    selectedIds: state.selectedIds,
+    elements: state.elements,
+  };
+};
+
+/** Group label to a stable key */
+function groupKey(elementId: string, group: DiscoveredAnimationGroup): string {
+  return `${elementId}:${group.groupType}:${group.defId ?? 'direct'}`;
+}
+
+export const AnimationMap: React.FC = () => {
+  const {
+    selectedAnimationId,
+    expandedGroups,
+    updateAnimationManagerState,
+    animations,
+    removeAnimation,
+    addAnimation,
+    updateAnimation,
+    calculateChainDelays,
+    currentTime,
+    runtimeChainDelays,
+    setAnimationTime,
+    selectedIds,
+    elements,
+  } = useCanvasStore(useShallow(selectMapState));
+
+  const chainDelays = useMemo(() => {
+    const runtimeDelays = ensureChainDelays(runtimeChainDelays);
+    const computedDelays = calculateChainDelays
+      ? calculateChainDelays()
+      : new Map<string, number>();
+    return new Map<string, number>([
+      ...computedDelays,
+      ...runtimeDelays,
+    ]);
+  }, [runtimeChainDelays, calculateChainDelays]);
+
+  const discovered = useAnimationDiscovery();
+
+  // All animations flat for the mini timeline
+  const allDiscoveredAnimations = useMemo(() => {
+    const result: SVGAnimation[] = [];
+    for (const el of discovered) {
+      for (const group of el.groups) {
+        for (const anim of group.animations) {
+          if (!result.some((a) => a.id === anim.id)) {
+            result.push(anim);
+          }
+        }
+      }
+    }
+    return result;
+  }, [discovered]);
+
+  const handleSelectAnimation = useCallback(
+    (id: string) => {
+      updateAnimationManagerState?.({
+        selectedAnimationId: id,
+        editorMode: 'editing',
+      });
+    },
+    [updateAnimationManagerState],
+  );
+
+  /** Select from timeline: also ensure calcMode is 'spline' with default keySplines */
+  const handleTimelineSelectAnimation = useCallback(
+    (id: string) => {
+      handleSelectAnimation(id);
+      const anim = animations.find((a) => a.id === id);
+      if (anim && anim.calcMode !== 'spline' && !anim.keySplines) {
+        updateAnimation?.(id, {
+          calcMode: 'spline',
+          keySplines: '0.250 0.100 0.250 1.000',
+        });
+      }
+    },
+    [handleSelectAnimation, animations, updateAnimation],
+  );
+
+  const handleDeleteAnimation = useCallback(
+    (id: string) => {
+      removeAnimation?.(id);
+      if (selectedAnimationId === id) {
+        updateAnimationManagerState?.({
+          selectedAnimationId: null,
+          editorMode: 'idle',
+        });
+      }
+    },
+    [removeAnimation, selectedAnimationId, updateAnimationManagerState],
+  );
+
+  const handleDuplicateAnimation = useCallback(
+    (id: string) => {
+      const anim = animations.find((a) => a.id === id);
+      if (!anim || !addAnimation) return;
+      const { id: _id, ...rest } = anim;
+      addAnimation(rest);
+    },
+    [animations, addAnimation],
+  );
+
+  const handleToggleGroup = useCallback(
+    (key: string) => {
+      const next = expandedGroups.includes(key)
+        ? expandedGroups.filter((k) => k !== key)
+        : [...expandedGroups, key];
+      updateAnimationManagerState?.({ expandedGroups: next });
+    },
+    [expandedGroups, updateAnimationManagerState],
+  );
+
+  const handleAddAnimation = useCallback(() => {
+    updateAnimationManagerState?.({
+      editorMode: 'creating',
+      selectedAnimationId: null,
+    });
+  }, [updateAnimationManagerState]);
+
+  const handleScrub = useCallback(
+    (time: number) => {
+      setAnimationTime?.(time);
+    },
+    [setAnimationTime],
+  );
+
+  const totalAnimCount = discovered.reduce((sum, el) => sum + el.totalCount, 0);
+  const multiElement = discovered.length > 1;
+
+  if (selectedIds.length === 0) {
+    return (
+      <Panel
+        title="Animation Map"
+        isCollapsible
+        defaultOpen
+      >
+        <Text fontSize="11px" color="gray.500" px={2} py={3} textAlign="center">
+          Select elements to see their animations
+        </Text>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel
+      title={`Animation Map${totalAnimCount > 0 ? ` (${totalAnimCount})` : ''}`}
+      isCollapsible
+      defaultOpen
+      headerActions={
+        <PanelActionButton
+          icon={Plus}
+          iconSize={12}
+          label="Add Animation"
+          onClick={handleAddAnimation}
+        />
+      }
+    >
+      <VStack spacing={1} align="stretch">
+        {discovered.length === 0 && (
+          <Text fontSize="11px" color="gray.500" px={2} py={2} textAlign="center">
+            No animations found for selection
+          </Text>
+        )}
+
+        {discovered.map((elementAnims) => (
+          <ElementAnimationSection
+            key={elementAnims.elementId}
+            elementAnims={elementAnims}
+            multiElement={multiElement}
+            expandedGroups={expandedGroups}
+            selectedAnimationId={selectedAnimationId}
+            onSelectAnimation={handleSelectAnimation}
+            onDeleteAnimation={handleDeleteAnimation}
+            onDuplicateAnimation={handleDuplicateAnimation}
+            onToggleGroup={handleToggleGroup}
+            elements={elements}
+          />
+        ))}
+
+        {/* Mini Timeline */}
+        {allDiscoveredAnimations.length > 0 && (
+          <Box mt={1}>
+            <MiniTimeline
+              animations={allDiscoveredAnimations}
+              currentTime={currentTime}
+              selectedAnimationId={selectedAnimationId}
+              onSelectAnimation={handleTimelineSelectAnimation}
+              onScrub={handleScrub}
+              chainDelays={chainDelays}
+            />
+          </Box>
+        )}
+      </VStack>
+    </Panel>
+  );
+};
+
+// ─── Per-Element Section ─────────────────────────────────────────────────────
+
+interface ElementAnimationSectionProps {
+  elementAnims: DiscoveredElementAnimations;
+  multiElement: boolean;
+  expandedGroups: string[];
+  selectedAnimationId: string | null;
+  onSelectAnimation: (id: string) => void;
+  onDeleteAnimation: (id: string) => void;
+  onDuplicateAnimation: (id: string) => void;
+  onToggleGroup: (key: string) => void;
+  elements: CanvasElement[];
+}
+
+/** Compute thumbnail commands for any element type */
+function getElementThumbnailCommands(element: CanvasElement, elements: CanvasElement[]): Command[] {
+  if (element.type === 'path') {
+    return getItemThumbnailData('element', element.data).commands;
+  }
+  if (element.type === 'group') {
+    const groupEl = element as CanvasElement & { childIds?: string[] };
+    return getGroupThumbnailCommands(groupEl.childIds, elements);
+  }
+  if (element.type === 'nativeShape') {
+    const nativeEl = element as CanvasElement & { data: { kind: string } };
+    return buildNativeShapeThumbnailCommands(nativeEl.data as Parameters<typeof buildNativeShapeThumbnailCommands>[0]);
+  }
+  return [];
+}
+
+const ElementAnimationSection: React.FC<ElementAnimationSectionProps> = ({
+  elementAnims,
+  multiElement,
+  expandedGroups,
+  selectedAnimationId,
+  onSelectAnimation,
+  onDeleteAnimation,
+  onDuplicateAnimation,
+  onToggleGroup,
+  elements,
+}) => {
+  const sectionBg = useColorModeValue('gray.100', 'whiteAlpha.50');
+  const sectionHoverBg = useColorModeValue('gray.100', 'whiteAlpha.50');
+  const thumbnailCommands = useMemo(() => {
+    if (!multiElement) return [];
+    const element = elements.find((el) => el.id === elementAnims.elementId);
+    if (!element) return [];
+    return getElementThumbnailCommands(element, elements);
+  }, [multiElement, elements, elementAnims.elementId]);
+  return (
+    <Box>
+      {/* Element header (only for multi-element) */}
+      {multiElement && (
+        <Flex
+          align="center"
+          gap={1}
+          px={2}
+          py={1}
+          bg={sectionBg}
+          borderRadius="sm"
+          mb={1}
+        >
+          {thumbnailCommands.length > 0 && (
+            <Box w="18px" h="18px" flexShrink={0}>
+              <PathThumbnail commands={thumbnailCommands} />
+            </Box>
+          )}
+          <Text fontSize="10px" fontWeight="bold" isTruncated>
+            {elementAnims.elementName}
+          </Text>
+          <Text fontSize="9px" color="gray.500">
+            ({elementAnims.totalCount})
+          </Text>
+        </Flex>
+      )}
+
+      {/* Animation groups */}
+      {elementAnims.groups.map((group) => {
+        const key = groupKey(elementAnims.elementId, group);
+        const isExpanded = expandedGroups.includes(key) || !multiElement;
+
+        return (
+          <Box key={key} mb={1}>
+            {/* Group header */}
+            <Flex
+              align="center"
+              gap={1}
+              px={2}
+              py={0.5}
+              cursor={multiElement ? 'pointer' : 'default'}
+              onClick={multiElement ? () => onToggleGroup(key) : undefined}
+              _hover={multiElement ? { bg: sectionHoverBg } : {}}
+              borderRadius="sm"
+            >
+              {multiElement && (
+                <Box flexShrink={0}>
+                  {isExpanded ? (
+                    <ChevronDown size={10} />
+                  ) : (
+                    <ChevronRight size={10} />
+                  )}
+                </Box>
+              )}
+              <Text
+                fontSize="9px"
+                fontWeight="semibold"
+                textTransform="uppercase"
+                letterSpacing="0.5px"
+              >
+                {group.groupLabel}
+              </Text>
+              <Text fontSize="9px" color="gray.500">
+                ({group.animations.length})
+              </Text>
+            </Flex>
+
+            {/* Animation rows */}
+            {isExpanded && (
+              <VStack spacing={0} align="stretch" pl={multiElement ? 3 : 0}>
+                {group.animations.map((anim) => (
+                  <AnimationRow
+                    key={anim.id}
+                    animation={anim}
+                    isSelected={anim.id === selectedAnimationId}
+                    onSelect={onSelectAnimation}
+                    onDelete={onDeleteAnimation}
+                    onDuplicate={onDuplicateAnimation}
+                  />
+                ))}
+              </VStack>
+            )}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+};

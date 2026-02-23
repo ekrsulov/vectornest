@@ -64,6 +64,7 @@ export function usePluginPanels(targetPluginId: string): PluginPanel[] {
             });
         } else if (
             targetPluginId === 'generatorLibrary' ||
+            targetPluginId === 'animLibrary' ||
             targetPluginId === 'auditLibrary'
         ) {
             panels.sort((a, b) =>

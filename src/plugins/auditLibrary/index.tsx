@@ -19,7 +19,7 @@ export const auditLibraryPlugin: PluginDefinition<CanvasStore> = {
       id: 'audit-library-panel-toggle',
       icon: ShieldCheck,
       label: 'Audit',
-      order: 2,
+      order: 3,
     },
   ],
   sidebarPanels: [createToolPanel('auditLibrary', AuditLibraryPanel)],

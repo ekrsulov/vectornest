@@ -20,6 +20,7 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  Portal,
 } from '@chakra-ui/react';
 import { Search, CircleX } from 'lucide-react';
 import { useColorMode } from '@chakra-ui/react';
@@ -701,7 +702,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
                   {isFirstLib && (
                     <Box w="1px" h="14px" bg={isDark ? 'gray.600' : 'gray.200'} mx={0.5} flexShrink={0} />
                   )}
-                  <Menu autoSelect={false} isLazy placement="bottom-start">
+                  <Menu autoSelect={false} isLazy placement="bottom-start" strategy="fixed" gutter={6}>
                     <MenuButton
                       type="button"
                       display="inline-flex"
@@ -764,22 +765,24 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
                         )}
                       </Box>
                     </MenuButton>
-                    <MenuList minW="180px" py={1}>
-                      <MenuItem
-                        isDisabled={!canToggle}
-                        onClick={() => toggleCategory(category)}
-                        fontSize="sm"
-                      >
-                        {isActiveChip ? 'Hide in results' : 'Show in results'}
-                      </MenuItem>
-                      <MenuItem
-                        isDisabled={isEmpty}
-                        onClick={() => scrollToCategoryResults(category)}
-                        fontSize="sm"
-                      >
-                        Scroll to results
-                      </MenuItem>
-                    </MenuList>
+                    <Portal>
+                      <MenuList minW="180px" py={1} zIndex={2200}>
+                        <MenuItem
+                          isDisabled={!canToggle}
+                          onClick={() => toggleCategory(category)}
+                          fontSize="sm"
+                        >
+                          {isActiveChip ? 'Hide in results' : 'Show in results'}
+                        </MenuItem>
+                        <MenuItem
+                          isDisabled={isEmpty}
+                          onClick={() => scrollToCategoryResults(category)}
+                          fontSize="sm"
+                        >
+                          Scroll to results
+                        </MenuItem>
+                      </MenuList>
+                    </Portal>
                   </Menu>
                 </React.Fragment>
               );

@@ -15,6 +15,7 @@ import { renderFilterNode } from './renderer';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { generateShortId } from '../../utils/idGenerator';
 import { buildElementMap } from '../../utils';
+import { FILTER_PRESETS } from './presets';
 
 registerStateKeys('libraryFilters', ['libraryFilters'], 'persist');
 
@@ -208,6 +209,21 @@ export const libraryFiltersPlugin: PluginDefinition<CanvasStore> = {
   },
   slices: [libraryFiltersSliceFactory],
   importDefs: importFilterDefs,
+  init: (context) => {
+    const filterState = context.store.getState() as CanvasStore & LibraryFiltersSlice;
+    const addLibraryFilter = filterState.addLibraryFilter;
+    if (!addLibraryFilter) {
+      return;
+    }
+
+    if ((filterState.libraryFilters ?? []).length > 0) {
+      return;
+    }
+
+    FILTER_PRESETS.forEach((preset) => {
+      addLibraryFilter(preset.createFilter());
+    });
+  },
   relatedPluginPanels: [
     {
       id: 'filters',

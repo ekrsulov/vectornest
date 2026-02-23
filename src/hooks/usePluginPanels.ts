@@ -17,7 +17,8 @@ interface PluginPanel {
  * Only includes panels from enabled plugins.
  * 
  * @param targetPluginId - The plugin ID to get contributed panels for (e.g., 'edit')
- * @returns Sorted array of panel contributions, ordered by the order field (lower = first)
+ * @returns Sorted array of panel contributions. Some containers use alphabetical order,
+ *          while others preserve the explicit numeric order field (lower = first).
  * 
  * @example
  * const panels = usePluginPanels('edit');
@@ -47,9 +48,24 @@ export function usePluginPanels(targetPluginId: string): PluginPanel[] {
             });
         });
 
+        // Library panels keep "Library Search" pinned first, then sort alphabetically.
         // Gen/Audit panels are sorted alphabetically by plugin title.
         // Other panel containers preserve explicit "order" semantics.
-        if (targetPluginId === 'generatorLibrary' || targetPluginId === 'auditLibrary') {
+        if (targetPluginId === 'library') {
+            panels.sort((a, b) => {
+                const aIsLibrarySearch = a.id === 'library-search-panel';
+                const bIsLibrarySearch = b.id === 'library-search-panel';
+                if (aIsLibrarySearch && !bIsLibrarySearch) return -1;
+                if (!aIsLibrarySearch && bIsLibrarySearch) return 1;
+                return a.pluginLabel.localeCompare(b.pluginLabel, undefined, {
+                    sensitivity: 'base',
+                    numeric: true,
+                });
+            });
+        } else if (
+            targetPluginId === 'generatorLibrary' ||
+            targetPluginId === 'auditLibrary'
+        ) {
             panels.sort((a, b) =>
                 a.pluginLabel.localeCompare(b.pluginLabel, undefined, {
                     sensitivity: 'base',

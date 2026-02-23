@@ -26,14 +26,14 @@ import type { AnimationPreset } from '../animationLibrary/types';
 // ─── Library type chip configuration ────────────────────────────────────────
 
 export const LIBRARY_CHIP_ITEMS = [
-  { key: 'symbols',    label: 'SYM',  category: 'LibSymbols' },
-  { key: 'gradients',  label: 'GRAD', category: 'LibGradients' },
   { key: 'animations', label: 'ANIM', category: 'LibAnimations' },
   { key: 'clips',      label: 'CLIP', category: 'LibClips' },
-  { key: 'markers',    label: 'MARK', category: 'LibMarkers' },
   { key: 'filters',    label: 'FILT', category: 'LibFilters' },
-  { key: 'patterns',   label: 'PAT',  category: 'LibPatterns' },
+  { key: 'gradients',  label: 'GRAD', category: 'LibGradients' },
+  { key: 'markers',    label: 'MARK', category: 'LibMarkers' },
   { key: 'masks',      label: 'MASK', category: 'LibMasks' },
+  { key: 'patterns',   label: 'PAT',  category: 'LibPatterns' },
+  { key: 'symbols',    label: 'SYM',  category: 'LibSymbols' },
 ] as const;
 
 export type LibraryItemType = (typeof LIBRARY_CHIP_ITEMS)[number]['key'];
@@ -46,39 +46,39 @@ export const CATEGORY_TO_LIB_KEY: Record<string, LibraryItemType> = Object.fromE
 
 /** Map from lib type key → sidebar panel key */
 export const LIB_PANEL_KEYS: Record<LibraryItemType, string> = {
-  symbols:    'sidebar:library:symbols',
-  gradients:  'sidebar:library:gradients',
   animations: 'sidebar:library:animations',
   clips:      'sidebar:library:clipping',
-  markers:    'sidebar:library:markers',
   filters:    'sidebar:library:filters',
-  patterns:   'sidebar:library:patterns',
+  gradients:  'sidebar:library:gradients',
+  markers:    'sidebar:library:markers',
   masks:      'sidebar:library:masks',
+  patterns:   'sidebar:library:patterns',
+  symbols:    'sidebar:library:symbols',
 };
 
 /** Type label for display in section headers */
 export const LIB_TYPE_LABELS: Record<LibraryItemType, string> = {
-  symbols:    'Symbols',
-  gradients:  'Gradients',
   animations: 'Animations',
   clips:      'Clips',
-  markers:    'Markers',
   filters:    'Filters',
-  patterns:   'Patterns',
+  gradients:  'Gradients',
+  markers:    'Markers',
   masks:      'Masks',
+  patterns:   'Patterns',
+  symbols:    'Symbols',
 };
 
 // ─── Item type unions ────────────────────────────────────────────────────────
 
 export type LibraryItem =
-  | { libType: 'symbols';    data: SymbolDefinition }
-  | { libType: 'gradients';  data: GradientDef }
   | { libType: 'animations'; data: AnimationPreset }
   | { libType: 'clips';      data: ClipDefinition }
-  | { libType: 'markers';    data: MarkerDefinition }
   | { libType: 'filters';    data: FilterDefinition }
+  | { libType: 'gradients';  data: GradientDef }
+  | { libType: 'markers';    data: MarkerDefinition }
+  | { libType: 'masks';      data: MaskDefinition & { name: string } }
   | { libType: 'patterns';   data: PatternDef }
-  | { libType: 'masks';      data: MaskDefinition & { name: string } };
+  | { libType: 'symbols';    data: SymbolDefinition };
 
 export type LibraryResults = Record<LibraryItemType, LibraryItem[]>;
 
@@ -128,17 +128,17 @@ export function useLibrarySearchResults(query: string): LibraryResults | null {
     const match = (name: string) => name.toLowerCase().includes(q);
 
     return {
-      symbols:    raw.symbols.filter(i => match(i.name)).map(data => ({ libType: 'symbols' as const, data })),
-      gradients:  raw.gradients.filter(i => match(i.name)).map(data => ({ libType: 'gradients' as const, data })),
       animations: raw.animations.filter(i => match(i.name)).map(data => ({ libType: 'animations' as const, data })),
       clips:      raw.clips.filter(i => match(i.name)).map(data => ({ libType: 'clips' as const, data })),
-      markers:    raw.markers.filter(i => match(i.name)).map(data => ({ libType: 'markers' as const, data })),
       filters:    raw.filters.filter(i => match(i.name)).map(data => ({ libType: 'filters' as const, data })),
-      patterns:   raw.patterns.filter(i => match(i.name)).map(data => ({ libType: 'patterns' as const, data })),
+      gradients:  raw.gradients.filter(i => match(i.name)).map(data => ({ libType: 'gradients' as const, data })),
+      markers:    raw.markers.filter(i => match(i.name)).map(data => ({ libType: 'markers' as const, data })),
       masks:      normalizedMasks.filter(i => match(i.name)).map(data => ({
         libType: 'masks' as const,
         data: data as MaskDefinition & { name: string },
       })),
+      patterns:   raw.patterns.filter(i => match(i.name)).map(data => ({ libType: 'patterns' as const, data })),
+      symbols:    raw.symbols.filter(i => match(i.name)).map(data => ({ libType: 'symbols' as const, data })),
     };
   }, [query, raw]);
 }

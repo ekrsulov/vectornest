@@ -14,6 +14,7 @@ import {
   VStack,
   HStack,
   Text,
+  Badge,
   Kbd,
   SimpleGrid,
   Menu,
@@ -35,6 +36,7 @@ import { LibraryCardRenderer } from './LibraryCardRenderer';
 
 /** Category chips for filtering — label shown in UI, category matches PaletteCommand.category */
 const CATEGORY_CHIPS = [
+  { label: 'FREQ',   category: 'Frequent',   isLib: false },
   { label: 'TOOL',   category: 'Tool',       isLib: false },
   { label: 'FILE',   category: 'File',       isLib: false },
   { label: 'EDIT',   category: 'Edit',       isLib: false },
@@ -48,6 +50,10 @@ const CATEGORY_CHIPS = [
   // Library sub-type chips — produce card results, not command rows
   ...LIBRARY_CHIP_ITEMS.map((c) => ({ label: c.label, category: c.category, isLib: true as const })),
 ] as const;
+type CategoryChip = (typeof CATEGORY_CHIPS)[number];
+const CHIP_BY_CATEGORY = new Map<string, CategoryChip>(
+  CATEGORY_CHIPS.map((chip) => [chip.category, chip])
+);
 
 const FILTERABLE_CATEGORIES = new Set<string>(CATEGORY_CHIPS.map((c) => c.category));
 const ALL_CHIP_CATEGORIES = new Set<string>(CATEGORY_CHIPS.map((c) => c.category));
@@ -201,12 +207,27 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
 
   // Commands matching the text query (before category filter)
   const queryFiltered = useMemo(() => filterAndSort(allCommands, query), [allCommands, query]);
+  const hasQuery = query.trim().length > 0;
 
   // Per-category counts from query-filtered results + library results (used for chip badges)
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const cmd of queryFiltered) {
       counts.set(cmd.category, (counts.get(cmd.category) ?? 0) + 1);
+    }
+    if (!hasQuery) {
+      const seen = new Set<string>();
+      let frequentCount = 0;
+      allCommands.forEach((cmd) => {
+        if (seen.has(cmd.id)) return;
+        seen.add(cmd.id);
+        if ((commandUsage[cmd.id] ?? 0) > 0) {
+          frequentCount += 1;
+        }
+      });
+      if (frequentCount > 0) {
+        counts.set('Frequent', Math.min(frequentCount, MAX_FREQUENT_COMMANDS));
+      }
     }
     // Merge library item counts
     if (libraryResults) {
@@ -218,8 +239,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
       }
     }
     return counts;
-  }, [queryFiltered, libraryResults]);
-  const hasQuery = query.trim().length > 0;
+  }, [queryFiltered, libraryResults, hasQuery, allCommands, commandUsage]);
   const firstVisibleLibraryCategory = useMemo(() => {
     if (!hasQuery) {
       return LIBRARY_CHIP_ITEMS[0]?.category ?? null;
@@ -276,13 +296,14 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
   }, [allCommands, commandUsage, query]);
 
   const commandsForDisplay = useMemo(() => {
-    if (frequentCommands.length === 0) {
+    const showFrequent = activeCategories.has('Frequent');
+    if (frequentCommands.length === 0 || !showFrequent) {
       return filtered;
     }
     const frequentIds = new Set(frequentCommands.map((cmd) => cmd.id));
     const remaining = filtered.filter((cmd) => !frequentIds.has(cmd.id));
     return [...frequentCommands, ...remaining];
-  }, [filtered, frequentCommands]);
+  }, [filtered, frequentCommands, activeCategories]);
 
   // On open: focus input and reset cursor — keep query and active chips as-is (persisted between opens)
   useEffect(() => {
@@ -396,6 +417,54 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
     }
     return groups;
   }, [commandsForDisplay]);
+
+  const orderedChipCategories = useMemo(() => {
+    const ordered: string[] = [];
+    const seen = new Set<string>();
+    const addCategory = (category: string) => {
+      if (!ALL_CHIP_CATEGORIES.has(category) || seen.has(category)) return;
+      seen.add(category);
+      ordered.push(category);
+    };
+
+    // Keep FREQ as leading chip.
+    addCategory('Frequent');
+
+    // Keep command chips in the same order sections are currently rendered.
+    for (const category of groupedCommands.keys()) {
+      addCategory(category);
+    }
+
+    // Keep library chips aligned to their rendered section order.
+    if (libraryResults) {
+      for (const chip of LIBRARY_CHIP_ITEMS) {
+        if (!activeCategories.has(chip.category)) continue;
+        if (libraryResults[chip.key].length === 0) continue;
+        addCategory(chip.category);
+      }
+    }
+
+    // Add the rest as fallback so all chips remain discoverable.
+    CATEGORY_CHIPS.forEach((chip) => addCategory(chip.category));
+    return ordered;
+  }, [groupedCommands, libraryResults, activeCategories]);
+
+  const resultTotals = useMemo(() => {
+    const commandSections = groupedCommands.size;
+    const librarySections = libraryResults
+      ? LIBRARY_CHIP_ITEMS.reduce((total, chip) => {
+          if (!activeCategories.has(chip.category)) {
+            return total;
+          }
+          return total + (libraryResults[chip.key].length > 0 ? 1 : 0);
+        }, 0)
+      : 0;
+
+    return {
+      sections: commandSections + librarySections,
+      commands: commandsForDisplay.length,
+    };
+  }, [groupedCommands, libraryResults, activeCategories, commandsForDisplay.length]);
 
   const handleClearQuery = useCallback(() => {
     setQuery('');
@@ -531,6 +600,10 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
   const textColor = isDark ? 'gray.100' : 'gray.800';
   const secondaryColor = isDark ? 'gray.400' : 'gray.500';
   const inputBg = isDark ? 'gray.900' : 'gray.50';
+  const chipBgColor = isDark ? 'gray.400' : 'gray.600';
+  const chipTextColor = isDark ? 'gray.900' : 'gray.100';
+  const chipBadgeBgColor = isDark ? 'gray.600' : 'gray.200';
+  const chipBadgeTextColor = isDark ? 'gray.100' : 'gray.700';
 
   // Build flat list with group headers for rendering
   const renderItems = useMemo(() => {
@@ -680,7 +753,10 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
           }}
         >
           <HStack spacing={1} flexWrap="nowrap" width="fit-content" mx="auto">
-            {CATEGORY_CHIPS.map(({ label, category, isLib }) => {
+            {orderedChipCategories.map((category) => {
+              const chip = CHIP_BY_CATEGORY.get(category);
+              if (!chip) return null;
+              const { label, isLib } = chip;
               const count = categoryCounts.get(category) ?? 0;
               const isActive = activeCategories.has(category);
               // Library sub-chips only visible when there's a query typed
@@ -689,11 +765,10 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
               if (hasQuery && count === 0) return null;
               const isEmpty = count === 0;
               const isActiveChip = isActive && !isEmpty;
-              const chipBg = isDark ? 'gray.100' : 'gray.900';
-              const chipTextColor = isDark ? 'gray.900' : 'gray.100';
-              const countBadgeBg = isDark ? 'gray.900' : 'gray.100';
-              const countBadgeColor = isDark ? 'gray.100' : 'gray.900';
-              const chipOpacity = isEmpty ? 0.25 : isActiveChip ? 1 : 0.65;
+              const chipBg = chipBgColor;
+              const countBadgeBg = chipBadgeBgColor;
+              const countBadgeColor = chipBadgeTextColor;
+              const chipOpacity = isEmpty ? 0.2 : isActiveChip ? 0.88 : 0.58;
               const canToggle = !isEmpty && !(isActiveChip && activeCategories.size === 1);
               // Separator before first lib sub-chip
               const isFirstLib = isLib && category === firstVisibleLibraryCategory;
@@ -720,7 +795,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
                       backgroundColor={chipBg}
                       color={chipTextColor}
                       border="none"
-                      _hover={isEmpty ? { bg: chipBg } : { bg: chipBg, opacity: 0.8 }}
+                      _hover={isEmpty ? { bg: chipBg } : { bg: chipBg, opacity: 0.74 }}
                       _active={{ bg: chipBg, opacity: chipOpacity }}
                       _expanded={{ bg: chipBg, opacity: chipOpacity }}
                       _focus={{ bg: chipBg, boxShadow: 'none' }}
@@ -729,6 +804,11 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
                       flexShrink={0}
                       whiteSpace="nowrap"
                       sx={{ WebkitAppearance: 'none', appearance: 'none' }}
+                      onDoubleClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        scrollToCategoryResults(category);
+                      }}
                     >
                       <Box
                         as="span"
@@ -792,27 +872,57 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
 
         {/* Command list */}
         <Box ref={listRef} overflowY="auto" maxH={{ base: '50vh', md: '360px' }} py={1}>
-          {commandsForDisplay.length === 0 && (!libraryResults || Object.values(libraryResults).every(arr => arr.length === 0)) ? (
-            <Box px={4} py={6} textAlign="center">
-              <Text color={secondaryColor} fontSize="sm">
-                {query.trim() ? 'No results found' : 'No matching commands'}
-              </Text>
+          <VStack spacing={0} align="stretch">
+            <Box px={4} pt={1} pb={1.5}>
+              <Badge
+                borderRadius="full"
+                px={2.5}
+                py={0.5}
+                fontSize="10px"
+                fontWeight="semibold"
+                textTransform="none"
+                bg={chipBgColor}
+                color={chipTextColor}
+              >
+                {resultTotals.sections} sections · {resultTotals.commands} commands
+              </Badge>
             </Box>
-          ) : (
-            <VStack spacing={0} align="stretch">
+            {commandsForDisplay.length === 0 && (!libraryResults || Object.values(libraryResults).every(arr => arr.length === 0)) ? (
+              <Box px={4} py={6} textAlign="center">
+                <Text color={secondaryColor} fontSize="sm">
+                  {query.trim() ? 'No results found' : 'No matching commands'}
+                </Text>
+              </Box>
+            ) : (
+              <>
               {renderItems.map((item, position) => {
                 if (item.type === 'header') {
+                  const sectionCount = groupedCommands.get(item.category)?.length ?? 0;
                   return (
                     <Box key={`header-${item.category}`} px={4} pt={2} pb={1} data-palette-category={item.category}>
-                      <Text
-                        fontSize="xs"
-                        fontWeight="semibold"
-                        color={secondaryColor}
-                        textTransform="uppercase"
-                        letterSpacing="wide"
-                      >
-                        {item.category}
-                      </Text>
+                      <HStack justify="space-between" align="center" spacing={2}>
+                        <Text
+                          fontSize="xs"
+                          fontWeight="semibold"
+                          color={secondaryColor}
+                          textTransform="uppercase"
+                          letterSpacing="wide"
+                        >
+                          {item.category}
+                        </Text>
+                        <Badge
+                          borderRadius="full"
+                          px={1.5}
+                          py={0.5}
+                          fontSize="9px"
+                          fontWeight="semibold"
+                          textTransform="none"
+                          bg={isDark ? 'gray.700' : 'gray.100'}
+                          color={isDark ? 'gray.200' : 'gray.700'}
+                        >
+                          {sectionCount}
+                        </Badge>
+                      </HStack>
                     </Box>
                   );
                 }
@@ -879,15 +989,29 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
                   <Box key={chip.category} px={3} pb={2} data-palette-category={chip.category}>
                     {/* Section header */}
                     <Box px={1} pt={2} pb={1}>
-                      <Text
-                        fontSize="xs"
-                        fontWeight="semibold"
-                        color={secondaryColor}
-                        textTransform="uppercase"
-                        letterSpacing="wide"
-                      >
-                        {LIB_TYPE_LABELS[chip.key]}
-                      </Text>
+                      <HStack justify="space-between" align="center" spacing={2}>
+                        <Text
+                          fontSize="xs"
+                          fontWeight="semibold"
+                          color={secondaryColor}
+                          textTransform="uppercase"
+                          letterSpacing="wide"
+                        >
+                          {LIB_TYPE_LABELS[chip.key]}
+                        </Text>
+                        <Badge
+                          borderRadius="full"
+                          px={1.5}
+                          py={0.5}
+                          fontSize="9px"
+                          fontWeight="semibold"
+                          textTransform="none"
+                          bg={isDark ? 'gray.700' : 'gray.100'}
+                          color={isDark ? 'gray.200' : 'gray.700'}
+                        >
+                          {items.length}
+                        </Badge>
+                      </HStack>
                     </Box>
                     {/* 2-column card grid */}
                     <SimpleGrid columns={2} spacing={1}>
@@ -907,8 +1031,9 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
                   </Box>
                 );
               })}
-            </VStack>
-          )}
+              </>
+            )}
+          </VStack>
         </Box>
       </Box>
         </>

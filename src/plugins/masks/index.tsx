@@ -10,6 +10,7 @@ import type { SVGAnimation, AnimationPluginSlice } from '../animationSystem/type
 import './persistence';
 import './importContribution';
 import { generateShortId } from '../../utils/idGenerator';
+import { MASK_PRESETS, generateMaskFromPreset } from './presets';
 
 const masksSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -491,6 +492,32 @@ export const masksPlugin: PluginDefinition<CanvasStore> = {
   slices: [masksSliceFactory],
   svgDefsEditors: [maskDefsEditor],
   importDefs: importMaskDefs,
+  init: (context) => {
+    const maskState = context.store.getState() as CanvasStore & MasksSlice;
+    const existingPresetIds = new Set(
+      (maskState.masks ?? [])
+        .map((mask) => mask.presetId)
+        .filter((presetId): presetId is string => Boolean(presetId))
+    );
+
+    const presetsToAdd = MASK_PRESETS
+      .filter((preset) => !existingPresetIds.has(preset.id))
+      .map((preset) => ({
+        ...generateMaskFromPreset(preset),
+        presetId: preset.id,
+      }));
+
+    if (presetsToAdd.length === 0) {
+      return;
+    }
+
+    context.store.setState((state) => {
+      const currentMasks = ((state as unknown as MasksSlice).masks ?? []);
+      return {
+        masks: [...currentMasks, ...presetsToAdd],
+      } as Partial<CanvasStore>;
+    });
+  },
   styleAttributeExtractor: (element) => {
     const maskAttr = element.getAttribute('mask');
     if (maskAttr) {
@@ -508,4 +535,3 @@ export const masksPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
 };
-

@@ -9,7 +9,7 @@ import { isMonoColor, transformMonoColor } from '../../utils/colorModeSyncUtils'
 import { createSymbolsSlice, type SymbolDefinition, type SymbolPluginSlice } from './slice';
 import { SymbolsPanel } from './SymbolsPanel';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
-import type { CanvasElement } from '../../types';
+import type { CanvasElement, PathData } from '../../types';
 import type { CanvasElementRenderer, CanvasRenderContext } from '../../canvas/renderers/CanvasRendererRegistry';
 import type { ElementContribution } from '../../utils/elementContributionRegistry';
 import type { SymbolInstanceElement, SymbolInstanceData, Matrix } from './types';
@@ -32,6 +32,7 @@ import { getInitialAnimationAttributes } from '../animationSystem/renderAnimatio
 import { serializeAnimation } from '../animationSystem';
 import type { AnimationPluginSlice } from '../animationSystem/types';
 import { ensureChainDelays } from '../animationSystem/chainUtils';
+import { createCircleCommands, createDiamondCommands, createHeartCommands, createTriangleCommands } from '../../utils/ShapeFactory';
 import './importContribution';
 
 const symbolsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
@@ -973,6 +974,69 @@ export const symbolsPlugin: PluginDefinition<CanvasStore> = {
     (element, transform) => importUse(element, transform),
   ],
   importDefs: importSymbolDefs,
+  init: (context) => {
+    const symbolsState = context.store.getState() as CanvasStore & SymbolPluginSlice & {
+      createSymbolFromPath?: (pathData: PathData, name?: string) => string | undefined;
+    };
+
+    if ((symbolsState.symbols ?? []).length > 0) {
+      return;
+    }
+
+    const createSymbolFromPath = symbolsState.createSymbolFromPath;
+    if (!createSymbolFromPath) {
+      return;
+    }
+
+    const addPreset = (creator: () => PathData, name: string) => {
+      createSymbolFromPath(creator(), name);
+    };
+
+    addPreset(
+      () => ({
+        subPaths: [createCircleCommands(50, 50, 40)],
+        strokeWidth: 1,
+        strokeColor: '#000',
+        strokeOpacity: 1,
+        fillColor: '#000',
+        fillOpacity: 1,
+      }),
+      'Circle'
+    );
+    addPreset(
+      () => ({
+        subPaths: [createHeartCommands(105, 105, 200, 200)],
+        strokeWidth: 1,
+        strokeColor: '#000',
+        strokeOpacity: 1,
+        fillColor: '#000',
+        fillOpacity: 1,
+      }),
+      'Heart'
+    );
+    addPreset(
+      () => ({
+        subPaths: [createDiamondCommands(50, 50, 40, 40)],
+        strokeWidth: 1,
+        strokeColor: '#000',
+        strokeOpacity: 1,
+        fillColor: '#000',
+        fillOpacity: 1,
+      }),
+      'Diamond'
+    );
+    addPreset(
+      () => ({
+        subPaths: [createTriangleCommands(50, 10, 90, 90, 10)],
+        strokeWidth: 1,
+        strokeColor: '#000',
+        strokeOpacity: 1,
+        fillColor: '#000',
+        fillOpacity: 1,
+      }),
+      'Triangle'
+    );
+  },
   relatedPluginPanels: [
     {
       id: 'symbols-panel',

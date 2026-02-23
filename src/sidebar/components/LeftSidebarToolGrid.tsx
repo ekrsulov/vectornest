@@ -110,6 +110,7 @@ export const LeftSidebarToolGrid: React.FC = () => {
       bg="surface.panel"
       position="relative"
       pr="6px"
+      pt="4px"
     >
       <HStack w="full" spacing={0} alignItems="stretch">
         <Box

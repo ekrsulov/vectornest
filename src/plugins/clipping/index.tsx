@@ -14,6 +14,7 @@ import { measurePath, measureNativeTextBounds } from '../../utils/measurementUti
 import { shapeToPath } from '../../utils/import/shapeToPath';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
 import { generateShortId } from '../../utils/idGenerator';
+import { CLIPPATH_PRESETS } from './presets';
 import './persistence';
 import './importContribution';
 
@@ -1321,6 +1322,24 @@ export const clippingPlugin: PluginDefinition<CanvasStore> = {
   },
   slices: [clippingSliceFactory],
   importDefs: importClipDefs,
+  init: (context) => {
+    const clippingState = context.store.getState() as CanvasStore & ClippingPluginSlice;
+    const addClipFromRawContent = clippingState.addClipFromRawContent;
+    if (!addClipFromRawContent) {
+      return;
+    }
+
+    const existingNames = new Set((clippingState.clips ?? []).map((clip) => clip.name));
+    const bbox = { x: 0, y: 0, width: 100, height: 100 };
+    const bounds = { minX: 0, minY: 0, width: 100, height: 100 };
+
+    CLIPPATH_PRESETS.forEach((preset) => {
+      if (existingNames.has(preset.name)) {
+        return;
+      }
+      addClipFromRawContent(preset.generateContent(bbox), preset.name, bounds);
+    });
+  },
   svgDefsEditors: [clipDefsEditor],
   styleAttributeExtractor: (element) => {
     const clipPathAttr = element.getAttribute('clip-path');

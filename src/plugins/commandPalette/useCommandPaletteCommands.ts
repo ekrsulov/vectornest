@@ -74,6 +74,12 @@ function collectRelatedPanels(
   pluginManager.getRegisteredTools().forEach((plugin) => {
     plugin.relatedPluginPanels?.forEach((panelContrib: PluginPanelContribution) => {
       if (panelContrib.targetPlugin === targetPluginId) {
+        if (
+          targetPluginId === 'library' &&
+          (plugin.id === 'library-search' || panelContrib.id === 'library-search-panel')
+        ) {
+          return;
+        }
         panels.push({
           id: panelContrib.id,
           label: plugin.metadata.label ?? panelContrib.id,
@@ -542,7 +548,7 @@ export function useCommandPaletteCommands(): PaletteCommand[] {
 
     // --- Library panels (Lib tab) ---
     commands.push(
-      ...collectRelatedPanels('library', 'Library', Library, false)
+      ...collectRelatedPanels('library', 'Library', Library, true)
     );
 
     // --- File panel commands ---

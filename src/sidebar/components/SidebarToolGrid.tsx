@@ -130,8 +130,14 @@ export const SidebarToolGrid: React.FC = () => {
       pt="4px"
     >
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
-      <HStack w="full" spacing={0} alignItems="stretch">
-        <Box flex={1} minW={0} overflow={shouldUseHorizontalScroll ? 'hidden' : 'visible'}>
+      <HStack w="full" spacing={0} alignItems="center">
+        <Box
+          flex={1}
+          minW={0}
+          overflow={shouldUseHorizontalScroll ? 'hidden' : 'visible'}
+          display="flex"
+          alignItems="center"
+        >
           <Box
             overflowX={shouldUseHorizontalScroll ? 'auto' : 'visible'}
             overflowY="hidden"
@@ -163,27 +169,29 @@ export const SidebarToolGrid: React.FC = () => {
             </HStack>
           </Box>
         </Box>
-        <Box
-          flexShrink={0}
-          display="flex"
-          alignItems="center"
-          pl={0}
-        >
-          <ConditionalTooltip label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}>
-            <SidebarUtilityButton
-              label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
-              icon={isPinned ? PinOff : Pin}
-              iconOnly
-              fontSize="xs"
-              fullWidth={false}
-              flex={0}
-              onClick={onTogglePin}
-              isActive={false}
-              isDisabled={!canPinSidebar}
-              borderless
-            />
-          </ConditionalTooltip>
-        </Box>
+        {canPinSidebar && (
+          <Box
+            flexShrink={0}
+            display="flex"
+            alignItems="center"
+            pl={0}
+          >
+            <ConditionalTooltip label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}>
+              <SidebarUtilityButton
+                label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
+                icon={isPinned ? PinOff : Pin}
+                iconOnly
+                fontSize="xs"
+                fullWidth={false}
+                flex={0}
+                onClick={onTogglePin}
+                isActive={false}
+                isDisabled={!canPinSidebar}
+                borderless
+              />
+            </ConditionalTooltip>
+          </Box>
+        )}
       </HStack>
     </Box>
   );

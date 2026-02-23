@@ -5,7 +5,22 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { ComponentType } from 'react';
-import { Box, Input, InputGroup, InputRightElement, IconButton, VStack, HStack, Text, Kbd, SimpleGrid } from '@chakra-ui/react';
+import {
+  Box,
+  Input,
+  InputGroup,
+  InputRightElement,
+  IconButton,
+  VStack,
+  HStack,
+  Text,
+  Kbd,
+  SimpleGrid,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+} from '@chakra-ui/react';
 import { Search, CircleX } from 'lucide-react';
 import { useColorMode } from '@chakra-ui/react';
 import { useCommandPaletteCommands } from './useCommandPaletteCommands';
@@ -149,6 +164,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
   const [query, setQuery] = useState('');
   const [commandUsage, setCommandUsage] = useState<CommandUsageMap>(() => loadCommandUsage());
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [pendingScrollCategory, setPendingScrollCategory] = useState<string | null>(null);
   const [activeCategories, setActiveCategories] = useState<Set<string>>(
     () => new Set(ALL_CHIP_CATEGORIES)
   );
@@ -388,6 +404,125 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
     });
   }, []);
 
+  const scrollToCategoryNode = useCallback((category: string): { found: boolean; aligned: boolean } => {
+    const container = listRef.current;
+    if (!container) {
+      return { found: false, aligned: false };
+    }
+    const target = container.querySelector(`[data-palette-category="${category}"]`) as HTMLElement | null;
+    if (!target) {
+      return { found: false, aligned: false };
+    }
+
+    // Scroll only inside the results container for deterministic positioning.
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const offsetTop = 6;
+    const deltaToDesiredTop = targetRect.top - containerRect.top - offsetTop;
+    const desiredTop = container.scrollTop + deltaToDesiredTop;
+    const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
+    const nextTop = Math.min(Math.max(0, desiredTop), maxTop);
+    const isAtDesiredTop = Math.abs(deltaToDesiredTop) <= 1;
+    const isTargetVisible =
+      targetRect.bottom > containerRect.top && targetRect.top < containerRect.bottom;
+    const isBoundary = nextTop <= 1 || nextTop >= maxTop - 1;
+    const aligned = isAtDesiredTop || (isBoundary && isTargetVisible);
+
+    if (!isAtDesiredTop) {
+      container.scrollTo({ top: nextTop, behavior: 'auto' });
+    }
+
+    return { found: true, aligned };
+  }, []);
+
+  const scrollToCategoryResults = useCallback((category: string) => {
+    const hasResults = (categoryCounts.get(category) ?? 0) > 0;
+    if (!hasResults) {
+      return;
+    }
+
+    setPendingScrollCategory(category);
+
+    // Ensure the category is enabled before attempting to scroll to it.
+    setActiveCategories((prev) => {
+      if (prev.has(category)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.add(category);
+      return next;
+    });
+  }, [categoryCounts]);
+
+  useEffect(() => {
+    if (!pendingScrollCategory) {
+      return;
+    }
+
+    let rafId = 0;
+    let alignedSince: number | null = null;
+    let startedAt: number | null = null;
+    let lastLayoutMutationAt = performance.now();
+    let mutationObserver: MutationObserver | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    const isLibraryCategory = pendingScrollCategory.startsWith('Lib');
+    const holdAlignedMs = isLibraryCategory ? 700 : 220;
+    const maxDurationMs = isLibraryCategory ? 5000 : 1800;
+    const settleLayoutMs = isLibraryCategory ? 260 : 120;
+
+    const container = listRef.current;
+    if (container) {
+      mutationObserver = new MutationObserver(() => {
+        lastLayoutMutationAt = performance.now();
+      });
+      mutationObserver.observe(container, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+      });
+
+      if (typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver(() => {
+          lastLayoutMutationAt = performance.now();
+        });
+        resizeObserver.observe(container);
+      }
+    }
+
+    const run = (ts: number) => {
+      if (startedAt === null) {
+        startedAt = ts;
+      }
+      const { found, aligned } = scrollToCategoryNode(pendingScrollCategory);
+
+      if (found && aligned) {
+        alignedSince = alignedSince ?? ts;
+      } else {
+        alignedSince = null;
+      }
+
+      const layoutSettled = ts - lastLayoutMutationAt >= settleLayoutMs;
+      const alignedLongEnough =
+        alignedSince !== null && ts - alignedSince >= holdAlignedMs && layoutSettled;
+      const timedOut =
+        startedAt !== null && ts - startedAt >= maxDurationMs;
+
+      if (alignedLongEnough || timedOut) {
+        setPendingScrollCategory(null);
+        return;
+      }
+
+      rafId = requestAnimationFrame(run);
+    };
+
+    rafId = requestAnimationFrame(run);
+    return () => {
+      cancelAnimationFrame(rafId);
+      mutationObserver?.disconnect();
+      resizeObserver?.disconnect();
+    };
+  }, [pendingScrollCategory, scrollToCategoryNode]);
+
   const bgColor = isDark ? 'gray.800' : 'white';
   const borderColor = isDark ? 'gray.600' : 'gray.200';
   const hoverBg = isDark ? 'gray.700' : 'gray.50';
@@ -552,6 +687,13 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
               // When searching, only show categories that have results
               if (hasQuery && count === 0) return null;
               const isEmpty = count === 0;
+              const isActiveChip = isActive && !isEmpty;
+              const chipBg = isDark ? 'gray.100' : 'gray.900';
+              const chipTextColor = isDark ? 'gray.900' : 'gray.100';
+              const countBadgeBg = isDark ? 'gray.900' : 'gray.100';
+              const countBadgeColor = isDark ? 'gray.100' : 'gray.900';
+              const chipOpacity = isEmpty ? 0.25 : isActiveChip ? 1 : 0.65;
+              const canToggle = !isEmpty && !(isActiveChip && activeCategories.size === 1);
               // Separator before first lib sub-chip
               const isFirstLib = isLib && category === firstVisibleLibraryCategory;
               return (
@@ -559,48 +701,86 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
                   {isFirstLib && (
                     <Box w="1px" h="14px" bg={isDark ? 'gray.600' : 'gray.200'} mx={0.5} flexShrink={0} />
                   )}
-                  <Box
-                    as="button"
-                    onClick={() => !isEmpty && toggleCategory(category)}
-                    display="inline-flex"
-                    alignItems="center"
-                    h="20px"
-                    px={1.5}
-                    gap={1}
-                    borderRadius="full"
-                    fontSize="10px"
-                    fontWeight="bold"
-                    letterSpacing="0.04em"
-                    cursor={isEmpty ? 'default' : 'pointer'}
-                    opacity={isEmpty ? 0.25 : 1}
-                    bg={
-                      isActive && !isEmpty
-                        ? isDark ? 'gray.500' : 'gray.300'
-                        : isDark ? 'gray.700' : 'gray.100'
-                    }
-                    color={
-                      isActive && !isEmpty
-                        ? isDark ? 'gray.100' : 'gray.700'
-                        : isDark ? 'gray.400' : 'gray.500'
-                    }
-                    border="1px solid"
-                    borderColor={
-                      isActive && !isEmpty
-                        ? isDark ? 'gray.400' : 'gray.400'
-                        : 'transparent'
-                    }
-                    _hover={isEmpty ? {} : { opacity: 0.8 }}
-                    transition="all 0.1s"
-                    flexShrink={0}
-                    whiteSpace="nowrap"
-                  >
-                    <Box as="span">{label}</Box>
-                    {count > 0 && (
-                      <Box as="span" fontSize="9px" fontWeight="normal" opacity={0.75}>
-                        {count}
+                  <Menu autoSelect={false} isLazy placement="bottom-start">
+                    <MenuButton
+                      type="button"
+                      display="inline-flex"
+                      alignItems="center"
+                      minH="22px"
+                      px={1.5}
+                      py={1}
+                      borderRadius="full"
+                      fontSize="10px"
+                      fontWeight="bold"
+                      letterSpacing="0.04em"
+                      cursor={isEmpty ? 'default' : 'pointer'}
+                      opacity={chipOpacity}
+                      bg={chipBg}
+                      backgroundColor={chipBg}
+                      color={chipTextColor}
+                      border="none"
+                      _hover={isEmpty ? { bg: chipBg } : { bg: chipBg, opacity: 0.8 }}
+                      _active={{ bg: chipBg, opacity: chipOpacity }}
+                      _expanded={{ bg: chipBg, opacity: chipOpacity }}
+                      _focus={{ bg: chipBg, boxShadow: 'none' }}
+                      _focusVisible={{ bg: chipBg, boxShadow: 'none' }}
+                      transition="all 0.1s"
+                      flexShrink={0}
+                      whiteSpace="nowrap"
+                      sx={{ WebkitAppearance: 'none', appearance: 'none' }}
+                    >
+                      <Box
+                        as="span"
+                        position="relative"
+                        display="inline-flex"
+                        alignItems="center"
+                        pr={count > 0 ? 1.5 : 0}
+                      >
+                        <Box as="span" color={chipTextColor} lineHeight={1}>
+                          {label}
+                        </Box>
+                        {count > 0 && (
+                          <Box
+                            as="span"
+                            position="absolute"
+                            top={0}
+                            right={-0.5}
+                            transform="translate(36%, -50%)"
+                            minW={3.5}
+                            h={3.5}
+                            px={0.5}
+                            borderRadius="full"
+                            display="inline-flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            fontSize="8px"
+                            lineHeight={1}
+                            fontWeight="semibold"
+                            bg={countBadgeBg}
+                            color={countBadgeColor}
+                          >
+                            {count}
+                          </Box>
+                        )}
                       </Box>
-                    )}
-                  </Box>
+                    </MenuButton>
+                    <MenuList minW="180px" py={1}>
+                      <MenuItem
+                        isDisabled={!canToggle}
+                        onClick={() => toggleCategory(category)}
+                        fontSize="sm"
+                      >
+                        {isActiveChip ? 'Hide in results' : 'Show in results'}
+                      </MenuItem>
+                      <MenuItem
+                        isDisabled={isEmpty}
+                        onClick={() => scrollToCategoryResults(category)}
+                        fontSize="sm"
+                      >
+                        Scroll to results
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
                 </React.Fragment>
               );
             })}
@@ -620,7 +800,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
               {renderItems.map((item, position) => {
                 if (item.type === 'header') {
                   return (
-                    <Box key={`header-${item.category}`} px={4} pt={2} pb={1}>
+                    <Box key={`header-${item.category}`} px={4} pt={2} pb={1} data-palette-category={item.category}>
                       <Text
                         fontSize="xs"
                         fontWeight="semibold"
@@ -693,7 +873,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
                 const items = libraryResults[chip.key];
                 if (items.length === 0) return null;
                 return (
-                  <Box key={chip.category} px={3} pb={2}>
+                  <Box key={chip.category} px={3} pb={2} data-palette-category={chip.category}>
                     {/* Section header */}
                     <Box px={1} pt={2} pb={1}>
                       <Text

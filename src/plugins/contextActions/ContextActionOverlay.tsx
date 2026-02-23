@@ -30,6 +30,12 @@ const MOBILE_ITEM_SLOT = 28;
 const MOBILE_PEEK = 14;
 /** Max visible width on mobile: 8 full slots + 1 peek */
 const MOBILE_MAX_W = `${MOBILE_ITEM_SLOT * 8 + MOBILE_PEEK}px`;
+/** Time for click lock to avoid accidental double actions */
+const ACTION_LOCK_MS = 2000;
+/** Visual feedback duration for successful click */
+const ACTION_FEEDBACK_MS = 260;
+/** Delay before closing dropdown to let feedback flash be visible */
+const MENU_ACTION_CLOSE_DELAY_MS = 120;
 
 /**
  * Build stable keys per item occurrence so duplicate ids don't collide in React lists.
@@ -43,6 +49,52 @@ const buildStableKeys = <T extends { id: string }>(items: T[]): string[] => {
   });
 };
 
+/**
+ * Returns short visual feedback + a temporary click lock.
+ * Useful to avoid accidental double execution for one-shot actions.
+ */
+const useActionClickGuard = () => {
+  const [isLocked, setIsLocked] = useState(false);
+  const [isFeedbackActive, setIsFeedbackActive] = useState(false);
+  const lockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const trigger = useCallback(() => {
+    setIsLocked(true);
+    setIsFeedbackActive(true);
+
+    if (lockTimeoutRef.current) {
+      clearTimeout(lockTimeoutRef.current);
+    }
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
+
+    feedbackTimeoutRef.current = setTimeout(() => {
+      setIsFeedbackActive(false);
+      feedbackTimeoutRef.current = null;
+    }, ACTION_FEEDBACK_MS);
+
+    lockTimeoutRef.current = setTimeout(() => {
+      setIsLocked(false);
+      lockTimeoutRef.current = null;
+    }, ACTION_LOCK_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (lockTimeoutRef.current) {
+        clearTimeout(lockTimeoutRef.current);
+      }
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  return { isLocked, isFeedbackActive, trigger };
+};
+
 /** Single quick action button */
 const QuickActionButton: React.FC<{
   action: QuickAction;
@@ -50,37 +102,45 @@ const QuickActionButton: React.FC<{
 }> = React.memo(({ action, isMobile }) => {
   const { toolbar } = useThemeColors();
   const isDanger = action.variant === 'danger';
+  const defaultColor = isDanger ? 'red.400' : toolbar.color;
   const buttonSize = isMobile ? '26px' : '30px';
   const contrastBg = useColorModeValue('black', 'white');
   const contrastIconColor = useColorModeValue('white', 'black');
+  const { isLocked, isFeedbackActive, trigger } = useActionClickGuard();
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
+      if (isLocked) return;
+      trigger();
       action.onClick();
     },
-    [action]
+    [action, isLocked, trigger]
   );
 
   const button = (
     <Box
       as="button"
       onClick={handleClick}
+      disabled={isLocked}
       display="flex"
       alignItems="center"
       justifyContent="center"
       w={buttonSize}
       h={buttonSize}
       borderRadius="full"
-      cursor="pointer"
-      color={isDanger ? 'red.400' : toolbar.color}
-      bg="transparent"
-      _hover={{ bg: contrastBg, color: contrastIconColor }}
-      _active={{ bg: contrastBg, color: contrastIconColor }}
-      transition="background-color 0.15s, color 0.15s"
+      cursor={isLocked ? 'not-allowed' : 'pointer'}
+      color={isFeedbackActive ? contrastIconColor : defaultColor}
+      bg={isFeedbackActive ? contrastBg : 'transparent'}
+      _hover={isLocked ? { bg: isFeedbackActive ? contrastBg : 'transparent' } : { bg: contrastBg, color: contrastIconColor }}
+      _active={isLocked ? { bg: isFeedbackActive ? contrastBg : 'transparent' } : { bg: contrastBg, color: contrastIconColor }}
+      transition="background-color 0.15s, color 0.15s, transform 0.2s ease, opacity 0.2s ease"
+      transform={isFeedbackActive ? 'scale(0.9)' : 'scale(1)'}
+      opacity={isLocked ? 0.68 : 1}
       flexShrink={0}
       aria-label={action.label}
+      aria-disabled={isLocked}
     >
       <action.icon size={isMobile ? 13 : 16} />
     </Box>
@@ -126,6 +186,11 @@ const GroupActionButton: React.FC<{
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const menuCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const childLockTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const childFeedbackTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const [lockedChildIds, setLockedChildIds] = useState<Set<string>>(() => new Set());
+  const [feedbackChildIds, setFeedbackChildIds] = useState<Set<string>>(() => new Set());
 
   // Close on outside click
   useEffect(() => {
@@ -178,6 +243,66 @@ const GroupActionButton: React.FC<{
 
   const handleDropdownMouseLeave = useCallback(() => {
     timeoutRef.current = setTimeout(() => setIsOpen(false), 200);
+  }, []);
+
+  const triggerChildClickGuard = useCallback((childId: string) => {
+    const existingLockTimeout = childLockTimeoutsRef.current.get(childId);
+    if (existingLockTimeout) {
+      clearTimeout(existingLockTimeout);
+    }
+    const existingFeedbackTimeout = childFeedbackTimeoutsRef.current.get(childId);
+    if (existingFeedbackTimeout) {
+      clearTimeout(existingFeedbackTimeout);
+    }
+
+    setLockedChildIds((prev) => {
+      const next = new Set(prev);
+      next.add(childId);
+      return next;
+    });
+    setFeedbackChildIds((prev) => {
+      const next = new Set(prev);
+      next.add(childId);
+      return next;
+    });
+
+    const feedbackTimeout = setTimeout(() => {
+      setFeedbackChildIds((prev) => {
+        const next = new Set(prev);
+        next.delete(childId);
+        return next;
+      });
+      childFeedbackTimeoutsRef.current.delete(childId);
+    }, ACTION_FEEDBACK_MS);
+    childFeedbackTimeoutsRef.current.set(childId, feedbackTimeout);
+
+    const lockTimeout = setTimeout(() => {
+      setLockedChildIds((prev) => {
+        const next = new Set(prev);
+        next.delete(childId);
+        return next;
+      });
+      childLockTimeoutsRef.current.delete(childId);
+    }, ACTION_LOCK_MS);
+    childLockTimeoutsRef.current.set(childId, lockTimeout);
+  }, []);
+
+  useEffect(() => {
+    const childLockTimeouts = childLockTimeoutsRef.current;
+    const childFeedbackTimeouts = childFeedbackTimeoutsRef.current;
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (menuCloseTimeoutRef.current) {
+        clearTimeout(menuCloseTimeoutRef.current);
+      }
+      childLockTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      childFeedbackTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      childLockTimeouts.clear();
+      childFeedbackTimeouts.clear();
+    };
   }, []);
 
   // Compute dropdown position based on container — opens downward
@@ -303,39 +428,58 @@ const GroupActionButton: React.FC<{
             >
               {group.label}
             </Text>
-            {group.children.map((child, index) => (
-              <Box
-                key={childKeys[index]}
-                as="button"
-                w="full"
-                px={3}
-                py={1.5}
-                display="flex"
-                alignItems="center"
-                gap={2}
-                borderRadius="md"
-                cursor="pointer"
-                color={child.variant === 'danger' ? theme.menu.dangerColor : theme.menu.iconColor}
-                bg="transparent"
-                _hover={{ bg: child.variant === 'danger' ? theme.menu.dangerHoverBg : theme.menu.hoverBg }}
-                _active={{ bg: 'transparent' }}
-                transition="background 0.1s"
-                fontSize="14px"
-                fontWeight="medium"
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  child.onClick();
-                  setIsOpen(false);
-                }}
-              >
-                <Box flexShrink={0} display="flex" alignItems="center">
-                  <child.icon size={14} />
+            {group.children.map((child, index) => {
+              const isLocked = lockedChildIds.has(child.id);
+              const isFeedbackActive = feedbackChildIds.has(child.id);
+              const childDefaultColor = child.variant === 'danger' ? theme.menu.dangerColor : theme.menu.iconColor;
+              const childHoverBg = child.variant === 'danger' ? theme.menu.dangerHoverBg : theme.menu.hoverBg;
+
+              return (
+                <Box
+                  key={childKeys[index]}
+                  as="button"
+                  disabled={isLocked}
+                  aria-disabled={isLocked}
+                  w="full"
+                  px={3}
+                  py={1.5}
+                  display="flex"
+                  alignItems="center"
+                  gap={2}
+                  borderRadius="md"
+                  cursor={isLocked ? 'not-allowed' : 'pointer'}
+                  color={childDefaultColor}
+                  bg={isFeedbackActive ? childHoverBg : 'transparent'}
+                  _hover={isLocked ? { bg: isFeedbackActive ? childHoverBg : 'transparent' } : { bg: childHoverBg }}
+                  _active={isLocked ? { bg: isFeedbackActive ? childHoverBg : 'transparent' } : { bg: childHoverBg }}
+                  transform={isFeedbackActive ? 'scale(0.98)' : 'scale(1)'}
+                  opacity={isLocked ? 0.68 : 1}
+                  transition="background 0.1s, transform 0.18s ease, opacity 0.18s ease"
+                  fontSize="14px"
+                  fontWeight="medium"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (isLocked) return;
+                    triggerChildClickGuard(child.id);
+                    child.onClick();
+                    if (menuCloseTimeoutRef.current) {
+                      clearTimeout(menuCloseTimeoutRef.current);
+                    }
+                    menuCloseTimeoutRef.current = setTimeout(() => {
+                      setIsOpen(false);
+                      menuCloseTimeoutRef.current = null;
+                    }, MENU_ACTION_CLOSE_DELAY_MS);
+                  }}
+                >
+                  <Box flexShrink={0} display="flex" alignItems="center">
+                    <child.icon size={14} />
+                  </Box>
+                  <Text fontSize="14px" fontWeight="medium" isTruncated flex={1} textAlign="left">
+                    {child.label}
+                  </Text>
                 </Box>
-                <Text fontSize="14px" fontWeight="medium" isTruncated flex={1} textAlign="left">
-                  {child.label}
-                </Text>
-              </Box>
-            ))}
+              );
+            })}
           </VStack>
         </Portal>
       )}

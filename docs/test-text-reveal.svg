@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Text Reveal Gizmo Test</title>
+  <desc>Text with an animated text-reveal effect.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Text Reveal Gizmo Test</text>
+
+  <text x="200" y="155" text-anchor="middle" font-size="32" fill="#2b6cb0" font-weight="bold">
+    REVEAL
+    <animate
+      attributeName="text-reveal"
+      from="0"
+      to="1"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </text>
+
+  <text x="200" y="260" text-anchor="middle" font-size="12" fill="#718096">Characters reveal one by one</text>
+</svg>

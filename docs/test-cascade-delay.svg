@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Cascade Delay Gizmo Test</title>
+  <desc>Elements with animated cascade-delay for staggered animations.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Cascade Delay Gizmo Test</text>
+
+  <rect x="80" y="80" width="40" height="40" rx="4" fill="#3182ce">
+    <animate attributeName="cascade-delay" from="0" to="0.5" dur="2s" repeatCount="indefinite" />
+  </rect>
+  <rect x="140" y="80" width="40" height="40" rx="4" fill="#38a169">
+    <animate attributeName="cascade-delay" from="0.1" to="0.6" dur="2s" repeatCount="indefinite" />
+  </rect>
+  <rect x="200" y="80" width="40" height="40" rx="4" fill="#d69e2e">
+    <animate attributeName="cascade-delay" from="0.2" to="0.7" dur="2s" repeatCount="indefinite" />
+  </rect>
+  <rect x="260" y="80" width="40" height="40" rx="4" fill="#e53e3e">
+    <animate attributeName="cascade-delay" from="0.3" to="0.8" dur="2s" repeatCount="indefinite" />
+  </rect>
+</svg>

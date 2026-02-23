@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Scale Gizmo Test — 2 keyframes (values)</title>
+  <desc>A circle scaling from 1x to 2x using the values attribute with 2 keyframes.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Scale Gizmo Test (2 keyframes)</text>
+
+  <circle cx="200" cy="150" r="40" fill="#dd6b20" stroke="#c05621" stroke-width="2">
+    <animateTransform
+      attributeName="transform"
+      type="scale"
+      values="1 1; 2 2"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </circle>
+</svg>

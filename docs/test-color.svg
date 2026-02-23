@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Color Gizmo Test — 2 keyframes (fill)</title>
+  <desc>A rectangle with animated fill color from blue to red.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Color Gizmo Test (2 keyframes — fill)</text>
+
+  <rect x="120" y="80" width="160" height="120" rx="12" stroke="#4a5568" stroke-width="2">
+    <animate
+      attributeName="fill"
+      values="#3182ce; #e53e3e"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </rect>
+</svg>

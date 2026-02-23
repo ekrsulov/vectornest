@@ -14,36 +14,7 @@ import type {
 } from '../types';
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
-
-// =============================================================================
-// Helper functions for SMIL values attribute support
-// =============================================================================
-
-function parseStyleValuesKeyframes(values: string): string[] {
-  return values.split(';').map(v => v.trim());
-}
-
-function formatStyleValuesKeyframes(keyframes: string[]): string {
-  return keyframes.join(';');
-}
-
-function extractStyleAnimationValues(animation: SVGAnimation): { from: string; to: string; hasValues: boolean; keyframes: string[] } {
-  if (animation.values) {
-    const keyframes = parseStyleValuesKeyframes(animation.values);
-    return {
-      from: keyframes[0] ?? '',
-      to: keyframes[keyframes.length - 1] ?? '',
-      hasValues: true,
-      keyframes,
-    };
-  }
-  return {
-    from: String(animation.from ?? ''),
-    to: String(animation.to ?? ''),
-    hasValues: false,
-    keyframes: [],
-  };
-}
+import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 
 // =============================================================================
 // Text Path Gizmo (31)
@@ -159,7 +130,7 @@ const textPathGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#F472B6' : '#EC4899';
     
     return (
-      <g className="text-path-gizmo">
+      <g className="text-path-gizmo" style={{ pointerEvents: 'none' }}>
         <path
           d={`M ${minX} ${minY - 10 / viewport.zoom} Q ${minX + width / 2} ${minY - 30 / viewport.zoom} ${maxX} ${minY - 10 / viewport.zoom}`}
           fill="none"
@@ -301,7 +272,7 @@ const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
     const baseSpacing = (maxX - minX) / 4;
     
     return (
-      <g className="letter-spacing-gizmo">
+      <g className="letter-spacing-gizmo" style={{ pointerEvents: 'none' }}>
         {letters.map((letter, i) => (
           <text
             key={letter}
@@ -491,7 +462,7 @@ const textRevealGizmoDefinition: AnimationGizmoDefinition = {
     const charWidth = width / numChars;
     
     return (
-      <g className="text-reveal-gizmo">
+      <g className="text-reveal-gizmo" style={{ pointerEvents: 'none' }}>
         {Array.from({ length: numChars }).map((_, i) => {
           const charProgress = Math.max(0, Math.min(1, (progress * numChars - i)));
           return (
@@ -691,7 +662,7 @@ const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
     const widthNorm = (width - 50) / 150;
     
     return (
-      <g className="font-variation-gizmo">
+      <g className="font-variation-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Weight track */}
         <rect
           x={maxX + 17 / viewport.zoom}

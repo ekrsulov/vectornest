@@ -8,7 +8,7 @@
  * - Updating on animation playback progress
  */
 
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { useGizmoContextOptional } from './GizmoContext';
 import { animationGizmoRegistry } from './registry/GizmoRegistry';
 import type {
@@ -68,6 +68,15 @@ function HandleVisual({
   isHovered,
   hasLabel,
 }: HandleVisualProps): React.ReactElement {
+  // Scale up slightly on hover/active for visual feedback
+  const scale = isActive ? 1.25 : isHovered ? 1.15 : 1;
+  const adjustedSize = size * scale;
+  const adjustedStrokeWidth = strokeWidth * (isActive ? 1.4 : isHovered ? 1.2 : 1);
+
+  // Resolve fill/stroke for hover & active states
+  const fillColor = isActive ? colors.active : isHovered ? colors.stroke : colors.fill;
+  const strokeColor = isActive ? colors.active : isHovered ? colors.active : colors.stroke;
+
   switch (type) {
     case 'position':
     case 'point':
@@ -75,10 +84,10 @@ function HandleVisual({
         <circle
           cx={position.x}
           cy={position.y}
-          r={size}
-          fill={isActive ? colors.active : colors.fill}
-          stroke={isHovered ? colors.active : colors.stroke}
-          strokeWidth={strokeWidth}
+          r={adjustedSize}
+          fill={fillColor}
+          stroke={strokeColor}
+          strokeWidth={adjustedStrokeWidth}
         />
       );
 
@@ -89,20 +98,21 @@ function HandleVisual({
           <circle
             cx={position.x}
             cy={position.y}
-            r={size}
-            fill={isActive ? colors.active : colors.fill}
+            r={adjustedSize}
+            fill={isActive ? colors.active : isHovered ? colors.accent : colors.fill}
             stroke={colors.accent}
-            strokeWidth={strokeWidth}
+            strokeWidth={adjustedStrokeWidth}
           />
           {!hasLabel && (
             <path
-              d={`M ${position.x} ${position.y - size * 1.5} 
-                  A ${size * 1.5} ${size * 1.5} 0 0 1 
-                  ${position.x + size * 1.5} ${position.y}`}
+              d={`M ${position.x} ${position.y - adjustedSize * 1.5} 
+                  A ${adjustedSize * 1.5} ${adjustedSize * 1.5} 0 0 1 
+                  ${position.x + adjustedSize * 1.5} ${position.y}`}
               fill="none"
               stroke={colors.accent}
-              strokeWidth={strokeWidth}
+              strokeWidth={adjustedStrokeWidth}
               strokeLinecap="round"
+              style={{ pointerEvents: 'none' }}
             />
           )}
         </g>
@@ -111,70 +121,100 @@ function HandleVisual({
     case 'scale':
       return (
         <rect
-          x={position.x - size}
-          y={position.y - size}
-          width={size * 2}
-          height={size * 2}
-          fill={isActive ? colors.active : colors.fill}
-          stroke={colors.stroke}
-          strokeWidth={strokeWidth}
+          x={position.x - adjustedSize}
+          y={position.y - adjustedSize}
+          width={adjustedSize * 2}
+          height={adjustedSize * 2}
+          fill={fillColor}
+          stroke={strokeColor}
+          strokeWidth={adjustedStrokeWidth}
         />
       );
 
     case 'path':
       return (
         <path
-          d={`M ${position.x} ${position.y - size}
-              L ${position.x + size} ${position.y}
-              L ${position.x} ${position.y + size}
-              L ${position.x - size} ${position.y}
+          d={`M ${position.x} ${position.y - adjustedSize}
+              L ${position.x + adjustedSize} ${position.y}
+              L ${position.x} ${position.y + adjustedSize}
+              L ${position.x - adjustedSize} ${position.y}
               Z`}
-          fill={isActive ? colors.active : colors.fill}
-          stroke={colors.primary}
-          strokeWidth={strokeWidth}
+          fill={fillColor}
+          stroke={isActive ? colors.active : colors.primary}
+          strokeWidth={adjustedStrokeWidth}
         />
       );
 
     case 'tangent':
       return (
-        <g>
-          <circle
-            cx={position.x}
-            cy={position.y}
-            r={size * 0.6}
-            fill={colors.secondary}
-            stroke={colors.stroke}
-            strokeWidth={strokeWidth}
-          />
-        </g>
+        <circle
+          cx={position.x}
+          cy={position.y}
+          r={adjustedSize * 0.6}
+          fill={isHovered ? colors.primary : colors.secondary}
+          stroke={strokeColor}
+          strokeWidth={adjustedStrokeWidth}
+        />
       );
 
     case 'timing':
       return (
         <rect
-          x={position.x - size * 1.5}
-          y={position.y - size * 0.4}
-          width={size * 3}
-          height={size * 0.8}
-          rx={size * 0.4}
-          fill={colors.accent}
-          stroke={colors.stroke}
-          strokeWidth={strokeWidth}
+          x={position.x - adjustedSize * 1.5}
+          y={position.y - adjustedSize * 0.4}
+          width={adjustedSize * 3}
+          height={adjustedSize * 0.8}
+          rx={adjustedSize * 0.4}
+          fill={isHovered ? colors.primary : colors.accent}
+          stroke={strokeColor}
+          strokeWidth={adjustedStrokeWidth}
         />
       );
 
     case 'value':
       return (
         <rect
-          x={position.x - size * 0.4}
-          y={position.y - size * 1.5}
-          width={size * 0.8}
-          height={size * 3}
-          rx={size * 0.4}
-          fill={colors.secondary}
-          stroke={colors.stroke}
-          strokeWidth={strokeWidth}
+          x={position.x - adjustedSize * 0.4}
+          y={position.y - adjustedSize * 1.5}
+          width={adjustedSize * 0.8}
+          height={adjustedSize * 3}
+          rx={adjustedSize * 0.4}
+          fill={isHovered ? colors.primary : colors.secondary}
+          stroke={strokeColor}
+          strokeWidth={adjustedStrokeWidth}
         />
+      );
+
+    case 'origin':
+      return (
+        <g>
+          <circle
+            cx={position.x}
+            cy={position.y}
+            r={adjustedSize}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth={adjustedStrokeWidth}
+          />
+          <line
+            x1={position.x - adjustedSize * 1.4}
+            y1={position.y}
+            x2={position.x + adjustedSize * 1.4}
+            y2={position.y}
+            stroke={strokeColor}
+            strokeWidth={adjustedStrokeWidth * 0.7}
+            style={{ pointerEvents: 'none' }}
+          />
+          <line
+            x1={position.x}
+            y1={position.y - adjustedSize * 1.4}
+            x2={position.x}
+            y2={position.y + adjustedSize * 1.4}
+            stroke={strokeColor}
+            strokeWidth={adjustedStrokeWidth * 0.7}
+            style={{ pointerEvents: 'none' }}
+          />
+        </g>
       );
 
     case 'custom':
@@ -183,10 +223,10 @@ function HandleVisual({
         <circle
           cx={position.x}
           cy={position.y}
-          r={size * 0.8}
-          fill={colors.fill}
-          stroke={colors.stroke}
-          strokeWidth={strokeWidth}
+          r={adjustedSize * 0.8}
+          fill={fillColor}
+          stroke={strokeColor}
+          strokeWidth={adjustedStrokeWidth}
         />
       );
   }
@@ -200,7 +240,7 @@ interface GizmoHandleRendererProps {
 }
 
 /**
- * Renders a single gizmo handle
+ * Renders a single gizmo handle with hover tracking and tooltip
  */
 const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
   handle,
@@ -211,24 +251,22 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
   const position = getHandlePosition(handle, context);
   const isActive = context.state.interaction?.activeHandle === handle.id;
   const isHovered = context.state.interaction?.hoveredHandle === handle.id;
+  const [localHover, setLocalHover] = useState(false);
+  const hovered = isHovered || localHover;
   
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
       e.stopPropagation();
       
-      console.log('[GizmoHandle] pointerDown', {
-        handleId: handle.id,
-        animationId,
-        clientX: e.clientX,
-        clientY: e.clientY,
-      });
-      
       const point: Point = { x: e.clientX, y: e.clientY };
       onDragStart(animationId, handle.id, point);
     },
     [animationId, handle.id, onDragStart]
   );
+
+  const handlePointerEnter = useCallback(() => setLocalHover(true), []);
+  const handlePointerLeave = useCallback(() => setLocalHover(false), []);
 
   // Determine handle appearance based on type
   const getHandleStyle = () => {
@@ -258,7 +296,7 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
       strokeWidth,
       colors,
       isActive,
-      isHovered,
+      isHovered: hovered,
     };
   };
 
@@ -273,6 +311,11 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
   const labelFontSize =
     labelDigitCount >= 3 ? style.size * 0.75 : style.size * 0.9;
 
+  // Tooltip text: use handle's tooltip prop, then fall back to label
+  const tooltipText = handle.tooltip ?? normalizedLabel;
+  const tooltipFontSize = 10 / context.viewport.zoom;
+  const tooltipOffsetY = style.size * 2.5;
+
   return (
     <g
       className="gizmo-handle"
@@ -280,6 +323,8 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
       data-animation-id={animationId}
       style={{ cursor, pointerEvents: 'auto' }}
       onPointerDown={handlePointerDown}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
     >
       {/* Hit area (larger than visual) */}
       <circle
@@ -313,6 +358,33 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
         >
           {normalizedLabel}
         </text>
+      )}
+      {/* Tooltip on hover (only when not dragging and not already showing label) */}
+      {hovered && !isActive && tooltipText && !normalizedLabel && (
+        <g style={{ pointerEvents: 'none' }}>
+          <rect
+            x={position.x - tooltipText.length * tooltipFontSize * 0.3}
+            y={position.y - tooltipOffsetY - tooltipFontSize * 1.4}
+            width={tooltipText.length * tooltipFontSize * 0.6}
+            height={tooltipFontSize * 1.4}
+            rx={3 / context.viewport.zoom}
+            fill={context.colorMode === 'dark' ? '#1F2937' : '#F9FAFB'}
+            stroke={context.colorMode === 'dark' ? '#4B5563' : '#D1D5DB'}
+            strokeWidth={1 / context.viewport.zoom}
+            opacity={0.95}
+          />
+          <text
+            x={position.x}
+            y={position.y - tooltipOffsetY - tooltipFontSize * 0.35}
+            fontSize={tooltipFontSize}
+            fill={context.colorMode === 'dark' ? '#E5E7EB' : '#374151'}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
+            {tooltipText}
+          </text>
+        </g>
       )}
     </g>
   );
@@ -408,13 +480,6 @@ export const GizmoOverlay = memo(function GizmoOverlay({
   // Handle drag start - use provided callback or fallback to context
   const handleDragStart = useCallback(
     (animationId: string, handleId: string, point: Point) => {
-      console.log('[GizmoOverlay] handleDragStart', {
-        animationId,
-        handleId,
-        point,
-        hasOnDragStartProp: !!onDragStartProp,
-      });
-      
       if (onDragStartProp) {
         // Use the interaction handler's drag start (properly tracks isDragging)
         onDragStartProp(animationId, handleId, point);
@@ -459,6 +524,44 @@ export const GizmoOverlay = memo(function GizmoOverlay({
 
   return (
     <g className={`gizmo-overlay ${className}`}>
+      {/* Shared SVG marker definitions for gizmo visuals */}
+      <defs>
+        {/* Arrow marker used by trajectory lines */}
+        <marker
+          id="gizmo-arrow"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 Z" fill="currentColor" />
+        </marker>
+        {/* Generic arrowhead (used by scene/typography gizmos) */}
+        <marker
+          id="arrowhead"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="5"
+          markerHeight="5"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 Z" fill="currentColor" />
+        </marker>
+        <marker
+          id="arrow"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="5"
+          markerHeight="5"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 Z" fill="currentColor" />
+        </marker>
+      </defs>
       {gizmosToRender.map(({ animationId, definition, context }) => (
         <SingleGizmoRenderer
           key={animationId}

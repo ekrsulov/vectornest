@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Scroll Trigger Gizmo Test</title>
+  <desc>An element that animates based on scroll position.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Scroll Trigger Gizmo Test</text>
+
+  <rect x="140" y="80" width="120" height="120" rx="12" fill="#805ad5" stroke="#6b46c1" stroke-width="2">
+    <animate
+      attributeName="opacity"
+      from="0"
+      to="1"
+      dur="1s"
+      begin="scroll"
+      fill="freeze"
+    />
+  </rect>
+
+  <text x="200" y="260" text-anchor="middle" font-size="12" fill="#718096">Scroll to trigger the animation</text>
+</svg>

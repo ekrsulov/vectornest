@@ -130,6 +130,7 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
         };
       },
       cursor: 'move',
+      tooltip: 'Drag to set destination',
       onDrag: (delta, ctx) => {
         const currentToX = (ctx.state.props.toX as number) ?? 0;
         const currentToY = (ctx.state.props.toY as number) ?? 0;
@@ -191,6 +192,7 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
 	        };
 	      },
 	      cursor: 'move',
+	      tooltip: 'Drag to move keyframe',
 	      onDrag: (delta, ctx) => {
 	        const keyframes = (ctx.state.props.keyframes as number[][]) ?? [];
 	        const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, keyframes.length);
@@ -241,6 +243,7 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
         };
       },
       cursor: 'move',
+      tooltip: 'Drag to set origin',
       onDrag: (delta, ctx) => {
         const currentFromX = (ctx.state.props.fromX as number) ?? 0;
         const currentFromY = (ctx.state.props.fromY as number) ?? 0;
@@ -305,8 +308,8 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
 	              x2={x}
 	              y2={y}
 	              stroke={colorMode === 'dark' ? '#63b3ed' : '#3182ce'}
-	              strokeWidth={2}
-	              strokeDasharray="6 4"
+	              strokeWidth={2 / viewport.zoom}
+	              strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
 	              markerEnd="url(#gizmo-arrow)"
 	              style={{ pointerEvents: 'none' }}
 	            />
@@ -332,7 +335,7 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
       const strokeColor = colorMode === 'dark' ? '#63b3ed' : '#3182ce';
       const ghostColor = colorMode === 'dark' ? '#4299e1' : '#2b6cb0';
       const intermediateColor = colorMode === 'dark' ? '#F59E0B' : '#D97706';
-
+      const sw = 2 / viewport.zoom; // zoom-adjusted stroke width
       // Calculate intermediate keyframe positions
       const intermediatePoints = hasValues && keyframes.length > 2
         ? keyframes.slice(1, -1).map((kf) => ({
@@ -353,8 +356,8 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
               }).join(' ')}
               fill="none"
               stroke={strokeColor}
-              strokeWidth={2}
-              strokeDasharray="6 4"
+              strokeWidth={sw}
+              strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
               opacity={0.6}
             />
           )}
@@ -367,8 +370,8 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
               x2={endX}
               y2={endY}
               stroke={strokeColor}
-              strokeWidth={2}
-              strokeDasharray="6 4"
+              strokeWidth={sw}
+              strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
               markerEnd="url(#gizmo-arrow)"
             />
           )}
@@ -402,21 +405,22 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
           <circle
             cx={startX}
             cy={startY}
-            r={6}
+            r={6 / viewport.zoom}
             fill="white"
             stroke={strokeColor}
-            strokeWidth={2}
+            strokeWidth={2 / viewport.zoom}
             data-handle="origin"
             style={{ cursor: 'move' }}
           />
           {hasValues && keyframes.length > 2 && (
             <text
               x={startX}
-              y={startY + 3}
-              fontSize={8}
+              y={startY + 3 / viewport.zoom}
+              fontSize={8 / viewport.zoom}
               fill={strokeColor}
               textAnchor="middle"
               fontWeight="bold"
+              style={{ pointerEvents: 'none' }}
             >
               1
             </text>
@@ -425,30 +429,31 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
           {/* Destination marker (last keyframe) */}
           <g data-handle="destination" style={{ cursor: 'move' }}>
             <rect
-              x={endX - 12}
-              y={endY - 12}
-              width={24}
-              height={24}
+              x={endX - 12 / viewport.zoom}
+              y={endY - 12 / viewport.zoom}
+              width={24 / viewport.zoom}
+              height={24 / viewport.zoom}
               fill={ghostColor}
               fillOpacity={0.3}
               stroke={ghostColor}
-              strokeWidth={2}
-              rx={4}
+              strokeWidth={2 / viewport.zoom}
+              rx={4 / viewport.zoom}
             />
             <circle
               cx={endX}
               cy={endY}
-              r={4}
+              r={4 / viewport.zoom}
               fill={ghostColor}
             />
             {hasValues && keyframes.length > 2 && (
               <text
                 x={endX}
-                y={endY + 3}
-                fontSize={8}
+                y={endY + 3 / viewport.zoom}
+                fontSize={8 / viewport.zoom}
                 fill="white"
                 textAnchor="middle"
                 fontWeight="bold"
+                style={{ pointerEvents: 'none' }}
               >
                 {keyframes.length}
               </text>
@@ -486,7 +491,7 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
 	        toY: to[1] ?? 0,
 	        hasValues,
 	        keyframes,
-	        ...(hasValues && keyframes.length > 2
+	        ...(hasValues && keyframes.length >= 2
 	          ? { activeKeyframeIndex: keyframes.length - 1 }
 	          : {}),
 	      },
@@ -565,6 +570,7 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
         y: (ctx.state.props.pivotY as number) ?? ctx.elementCenter.y,
       }),
       cursor: 'move',
+      tooltip: 'Drag to move pivot point',
       onDrag: (delta, ctx) => {
         const currentX = (ctx.state.props.pivotX as number) ?? ctx.elementCenter.x;
         const currentY = (ctx.state.props.pivotY as number) ?? ctx.elementCenter.y;
@@ -609,13 +615,12 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	        const pivotY = (ctx.state.props.pivotY as number) ?? ctx.elementCenter.y;
 	        const hasValues = (ctx.state.props.hasValues as boolean) ?? false;
 	        const keyframes = (ctx.state.props.keyframes as number[][]) ?? [];
-	        const isMultiKeyframeValues = hasValues && keyframes.length > 2;
 	        const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, keyframes.length);
-	        const toDegrees = isMultiKeyframeValues
+	        const activeDegrees = (hasValues && keyframes.length >= 2)
 	          ? (keyframes[activeIndex]?.[0] ?? 0)
 	          : ((ctx.state.props.toDegrees as number) ?? 0);
 	        const radius = 60;
-	        const angle = (toDegrees - 90) * (Math.PI / 180);
+	        const angle = (activeDegrees - 90) * (Math.PI / 180);
 	        return {
 	          x: pivotX + radius * Math.cos(angle),
 	          y: pivotY + radius * Math.sin(angle),
@@ -624,24 +629,24 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	      label: (ctx) => {
 	        const hasValues = (ctx.state.props.hasValues as boolean) ?? false;
 	        const keyframes = (ctx.state.props.keyframes as number[][]) ?? [];
-	        const isMultiKeyframeValues = hasValues && keyframes.length > 2;
 	        const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, keyframes.length);
-	        const toDegrees = isMultiKeyframeValues
+	        const activeDegrees = (hasValues && keyframes.length >= 2)
 	          ? (keyframes[activeIndex]?.[0] ?? 0)
 	          : ((ctx.state.props.toDegrees as number) ?? 0);
-	        return `${formatTransformValue([toDegrees], ctx.precision)}°`;
+	        return `${formatTransformValue([activeDegrees], ctx.precision)}°`;
 	      },
       constraints: {
         axis: 'circular',
         snap: 1, // Will be 15 with shift
       },
+      tooltip: 'Drag to set rotation angle',
 	      onDrag: (_delta, ctx) => {
 	        const pivotX = (ctx.state.props.pivotX as number) ?? ctx.elementCenter.x;
 	        const pivotY = (ctx.state.props.pivotY as number) ?? ctx.elementCenter.y;
 	        const hasValues = (ctx.state.props.hasValues as boolean) ?? false;
 	        const keyframes = (ctx.state.props.keyframes as number[][]) ?? [];
-	        const isMultiKeyframeValues = hasValues && keyframes.length > 2;
-	        const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, keyframes.length);
+	        const fromDegrees = (ctx.state.props.fromDegrees as number) ?? 0;
+	        const toDegrees = (ctx.state.props.toDegrees as number) ?? 0;
 
 	        const prevAngle = Math.atan2(ctx.dragStart.y - pivotY, ctx.dragStart.x - pivotX);
 	        const currentAngle = Math.atan2(ctx.currentPoint.y - pivotY, ctx.currentPoint.x - pivotX);
@@ -650,20 +655,16 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
         if (deltaDegrees > 180) deltaDegrees -= 360;
 	        if (deltaDegrees < -180) deltaDegrees += 360;
 
-	        const currentDegrees = isMultiKeyframeValues
-	          ? (keyframes[activeIndex]?.[0] ?? 0)
-	          : ((ctx.state.props.toDegrees as number) ?? 0);
-	        let nextDegrees = currentDegrees + deltaDegrees;
-
-	        if (ctx.modifiers.shift) {
-	          nextDegrees = Math.round(nextDegrees / 15) * 15;
-	        }
-
-	        if (isMultiKeyframeValues) {
-	          const px = (ctx.state.props.pivotX as number) ?? ctx.elementCenter.x;
-	          const py = (ctx.state.props.pivotY as number) ?? ctx.elementCenter.y;
-	          const updatedKeyframes = [...keyframes];
-	          updatedKeyframes[activeIndex] = [roundNumber(nextDegrees, ctx.precision), px, py];
+	        if (hasValues) {
+	          const kfs = keyframes.length > 0 ? keyframes : [[fromDegrees, pivotX, pivotY], [toDegrees, pivotX, pivotY]];
+	          const updatedKeyframes = [...kfs];
+	          const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, kfs.length);
+	          const currentDeg = updatedKeyframes[activeIndex]?.[0] ?? 0;
+	          let nextDeg = currentDeg + deltaDegrees;
+	          if (ctx.modifiers.shift) {
+	            nextDeg = Math.round(nextDeg / 15) * 15;
+	          }
+	          updatedKeyframes[activeIndex] = [roundNumber(nextDeg, ctx.precision), pivotX, pivotY];
 
 	          const first = updatedKeyframes[0] ?? [0];
 	          const last = updatedKeyframes[updatedKeyframes.length - 1] ?? first;
@@ -676,6 +677,11 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	          return;
 	        }
 
+	        const currentDegrees = (ctx.state.props.toDegrees as number) ?? 0;
+	        let nextDegrees = currentDegrees + deltaDegrees;
+	        if (ctx.modifiers.shift) {
+	          nextDegrees = Math.round(nextDegrees / 15) * 15;
+	        }
 	        ctx.updateState({ toDegrees: nextDegrees });
 	      },
 	      onDragEnd: (ctx) => {
@@ -720,17 +726,17 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	  visual: {
 	    zIndex: 100,
 	    render: (ctx: GizmoRenderContext) => {
-	      const { elementCenter, state, colorMode } = ctx;
+	      const { elementCenter, state, colorMode, viewport } = ctx;
 	      const pivotX = (state.props.pivotX as number) ?? elementCenter.x;
 	      const pivotY = (state.props.pivotY as number) ?? elementCenter.y;
 	      const fromDegrees = (state.props.fromDegrees as number) ?? 0;
 	      const toDegrees = (state.props.toDegrees as number) ?? 360;
 	      const hasValues = state.props.hasValues as boolean;
 	      const keyframes = (state.props.keyframes as number[][]) ?? [];
-	      const isMultiKeyframeValues = hasValues && keyframes.length > 2;
+	      const isMultiKeyframeValues = hasValues && keyframes.length >= 2;
 
 	      const strokeColor = colorMode === 'dark' ? '#68d391' : '#38a169';
-	      const radius = 60;
+	      const radius = 60 / viewport.zoom;
 
 	      // Calculate arc path
 	      const startAngle = (fromDegrees - 90) * (Math.PI / 180);
@@ -752,26 +758,26 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
             <circle
               cx={pivotX}
               cy={pivotY}
-              r={8}
+              r={8 / viewport.zoom}
               fill="none"
               stroke={strokeColor}
-              strokeWidth={2}
+              strokeWidth={2 / viewport.zoom}
             />
             <line
-              x1={pivotX - 12}
+              x1={pivotX - 12 / viewport.zoom}
               y1={pivotY}
-              x2={pivotX + 12}
+              x2={pivotX + 12 / viewport.zoom}
               y2={pivotY}
               stroke={strokeColor}
-              strokeWidth={1.5}
+              strokeWidth={1.5 / viewport.zoom}
             />
             <line
               x1={pivotX}
-              y1={pivotY - 12}
+              y1={pivotY - 12 / viewport.zoom}
               x2={pivotX}
-              y2={pivotY + 12}
+              y2={pivotY + 12 / viewport.zoom}
               stroke={strokeColor}
-              strokeWidth={1.5}
+              strokeWidth={1.5 / viewport.zoom}
             />
 		          </g>
 
@@ -783,8 +789,8 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 		              r={radius}
 		              fill="none"
 		              stroke={strokeColor}
-		              strokeWidth={2}
-		              strokeDasharray="4 2"
+		              strokeWidth={2 / viewport.zoom}
+		              strokeDasharray={`${4 / viewport.zoom} ${2 / viewport.zoom}`}
 		              style={{ pointerEvents: 'none' }}
 		            />
 		          ) : (
@@ -792,8 +798,8 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 		              d={`M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArc} ${sweep} ${endX} ${endY}`}
 		              fill="none"
 		              stroke={strokeColor}
-		              strokeWidth={2}
-		              strokeDasharray="4 2"
+		              strokeWidth={2 / viewport.zoom}
+		              strokeDasharray={`${4 / viewport.zoom} ${2 / viewport.zoom}`}
 		              style={{ pointerEvents: 'none' }}
 		            />
 		          )}
@@ -833,7 +839,7 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	          pivotY: toKf[2] ?? fromKf[2],
 	          hasValues: true,
 	          keyframes,
-	          ...(keyframes.length > 2 ? { activeKeyframeIndex: keyframes.length - 1 } : {}),
+	          ...(keyframes.length >= 2 ? { activeKeyframeIndex: keyframes.length - 1 } : {}),
 	        },
         interaction: {
           activeHandle: null,
@@ -940,13 +946,12 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
 	      position: (ctx) => {
 	        const hasValues = ctx.state.props.hasValues as boolean;
 	        const keyframes = (ctx.state.props.keyframes as number[][]) ?? [];
-	        const isMultiKeyframeValues = hasValues && keyframes.length > 2;
 	        const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, keyframes.length);
 	        const activeKf = keyframes[activeIndex] ?? [];
 	        const activeScaleX = activeKf[0] ?? 1;
 	        const activeScaleY = activeKf[1] ?? activeScaleX;
-	        const scaleX = isMultiKeyframeValues ? activeScaleX : ((ctx.state.props.toScaleX as number) ?? 1);
-	        const scaleY = isMultiKeyframeValues ? activeScaleY : ((ctx.state.props.toScaleY as number) ?? 1);
+	        const scaleX = (hasValues && keyframes.length >= 2) ? activeScaleX : ((ctx.state.props.toScaleX as number) ?? 1);
+	        const scaleY = (hasValues && keyframes.length >= 2) ? activeScaleY : ((ctx.state.props.toScaleY as number) ?? 1);
 	        const bounds = ctx.elementBounds;
 	        const width = bounds.maxX - bounds.minX;
 	        const height = bounds.maxY - bounds.minY;
@@ -956,84 +961,72 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
 	        };
 	      },
 	      cursor: 'nwse-resize',
+	      tooltip: 'Drag to scale',
 	      onDrag: (delta, ctx) => {
 	        const bounds = ctx.elementBounds;
 	        const width = bounds.maxX - bounds.minX;
 	        const height = bounds.maxY - bounds.minY;
 	        const hasValues = ctx.state.props.hasValues as boolean;
 	        const keyframes = (ctx.state.props.keyframes as number[][]) ?? [];
-	        const isMultiKeyframeValues = hasValues && keyframes.length > 2;
-	        const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, keyframes.length);
-	        const activeKf = keyframes[activeIndex] ?? [];
-	        const activeScaleX = activeKf[0] ?? 1;
-	        const activeScaleY = activeKf[1] ?? activeScaleX;
-	        const currentScaleX = isMultiKeyframeValues ? activeScaleX : ((ctx.state.props.toScaleX as number) ?? 1);
-	        const currentScaleY = isMultiKeyframeValues ? activeScaleY : ((ctx.state.props.toScaleY as number) ?? 1);
+	        const fromScaleX = (ctx.state.props.fromScaleX as number) ?? 1;
+	        const fromScaleY = (ctx.state.props.fromScaleY as number) ?? 1;
+	        const toScaleX = (ctx.state.props.toScaleX as number) ?? 1;
+	        const toScaleY = (ctx.state.props.toScaleY as number) ?? 1;
 
-        const newScaleX = currentScaleX + (delta.x / (width / 2));
-        const newScaleY = currentScaleY + (delta.y / (height / 2));
+	        if (hasValues) {
+	          const kfs = keyframes.length > 0 ? keyframes : [[fromScaleX, fromScaleY], [toScaleX, toScaleY]];
+	          const updatedKeyframes = [...kfs];
+	          const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, kfs.length);
+	          const currentKf = updatedKeyframes[activeIndex] ?? [1];
+	          const curSX = currentKf[0] ?? 1;
+	          const curSY = currentKf[1] ?? curSX;
+
+	          const newSX = curSX + (delta.x / (width / 2));
+	          const newSY = curSY + (delta.y / (height / 2));
+
+	          if (ctx.modifiers.shift) {
+	            const scale = Math.max(newSX, newSY);
+	            const rounded = roundNumber(scale, ctx.precision);
+	            updatedKeyframes[activeIndex] = [rounded, rounded];
+	          } else {
+	            updatedKeyframes[activeIndex] = [roundNumber(newSX, ctx.precision), roundNumber(newSY, ctx.precision)];
+	          }
+
+	          const first = updatedKeyframes[0] ?? [1, 1];
+	          const last = updatedKeyframes[updatedKeyframes.length - 1] ?? first;
+	          ctx.updateState({
+	            keyframes: updatedKeyframes,
+	            fromScaleX: first[0] ?? 1,
+	            fromScaleY: first[1] ?? first[0] ?? 1,
+	            toScaleX: last[0] ?? 1,
+	            toScaleY: last[1] ?? last[0] ?? 1,
+	          });
+	          return;
+	        }
+
+	        const currentScaleX = (ctx.state.props.toScaleX as number) ?? 1;
+	        const currentScaleY = (ctx.state.props.toScaleY as number) ?? 1;
+	        const newScaleX = currentScaleX + (delta.x / (width / 2));
+	        const newScaleY = currentScaleY + (delta.y / (height / 2));
 
 	        if (ctx.modifiers.shift) {
-	          // Uniform scaling
 	          const scale = Math.max(newScaleX, newScaleY);
-	          if (isMultiKeyframeValues) {
-	            const rounded = roundNumber(scale, ctx.precision);
-	            const updatedKeyframes = [...keyframes];
-	            updatedKeyframes[activeIndex] = [rounded, rounded];
-
-	            const first = updatedKeyframes[0] ?? [1, 1];
-	            const last = updatedKeyframes[updatedKeyframes.length - 1] ?? first;
-	            ctx.updateState({
-	              keyframes: updatedKeyframes,
-	              fromScaleX: first[0] ?? 1,
-	              fromScaleY: first[1] ?? first[0] ?? 1,
-	              toScaleX: last[0] ?? 1,
-	              toScaleY: last[1] ?? last[0] ?? 1,
-	            });
-	          } else {
-	            ctx.updateState({ toScaleX: scale, toScaleY: scale });
-	          }
+	          ctx.updateState({ toScaleX: scale, toScaleY: scale });
 	        } else {
-	          if (isMultiKeyframeValues) {
-	            const roundedX = roundNumber(newScaleX, ctx.precision);
-	            const roundedY = roundNumber(newScaleY, ctx.precision);
-	            const updatedKeyframes = [...keyframes];
-	            updatedKeyframes[activeIndex] = [roundedX, roundedY];
-
-	            const first = updatedKeyframes[0] ?? [1, 1];
-	            const last = updatedKeyframes[updatedKeyframes.length - 1] ?? first;
-	            ctx.updateState({
-	              keyframes: updatedKeyframes,
-	              fromScaleX: first[0] ?? 1,
-	              fromScaleY: first[1] ?? first[0] ?? 1,
-	              toScaleX: last[0] ?? 1,
-	              toScaleY: last[1] ?? last[0] ?? 1,
-	            });
-	          } else {
-	            ctx.updateState({ toScaleX: newScaleX, toScaleY: newScaleY });
-	          }
+	          ctx.updateState({ toScaleX: newScaleX, toScaleY: newScaleY });
 	        }
 	      },
 	      onDragEnd: (ctx) => {
 	        const { fromScaleX, fromScaleY, toScaleX, toScaleY, hasValues, keyframes } = ctx.state.props;
 	        
 		        if (hasValues) {
-		          // Update keyframes preserving the original structure
 		          const kfs = (keyframes as number[][]) ?? [[fromScaleX ?? 1, fromScaleY ?? 1], [toScaleX ?? 1, toScaleY ?? 1]];
 		          const updatedKeyframes = [...kfs];
-		          const isMultiKeyframeValues = updatedKeyframes.length > 2;
-		          const activeIndex = isMultiKeyframeValues
-		            ? clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, updatedKeyframes.length)
-		            : Math.max(0, updatedKeyframes.length - 1);
-
-		          if (isMultiKeyframeValues) {
-		            const current = updatedKeyframes[activeIndex] ?? [];
-		            const sx = current[0] ?? 1;
-		            const sy = current[1] ?? sx;
-		            updatedKeyframes[activeIndex] = [sx, sy];
-		          } else {
-		            updatedKeyframes[updatedKeyframes.length - 1] = [(toScaleX as number) ?? 1, (toScaleY as number) ?? 1];
-		          }
+		          const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, updatedKeyframes.length);
+		          const current = updatedKeyframes[activeIndex] ?? [];
+		          const sx = current[0] ?? 1;
+		          const sy = current[1] ?? sx;
+		          updatedKeyframes[activeIndex] = [sx, sy];
 
 		          ctx.updateState({ keyframes: updatedKeyframes });
 		          ctx.updateAnimation({
@@ -1056,12 +1049,12 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
   visual: {
 	    zIndex: 100,
 	    render: (ctx: GizmoRenderContext) => {
-	      const { elementCenter, elementBounds, state, colorMode } = ctx;
+	      const { elementCenter, elementBounds, state, colorMode, viewport } = ctx;
 	      const toScaleX = (state.props.toScaleX as number) ?? 1;
 	      const toScaleY = (state.props.toScaleY as number) ?? 1;
 	      const hasValues = state.props.hasValues as boolean;
 	      const keyframes = (state.props.keyframes as number[][]) ?? [];
-	      const isMultiKeyframeValues = hasValues && keyframes.length > 2;
+	      const isMultiKeyframeValues = hasValues && keyframes.length >= 2;
 	      const activeIndex = clampKeyframeIndex(state.props.activeKeyframeIndex, keyframes.length);
 	      const activeKf = keyframes[activeIndex] ?? [];
 	      const activeScaleX = activeKf[0] ?? toScaleX;
@@ -1090,8 +1083,8 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
             height={targetHeight}
             fill="none"
             stroke={strokeColor}
-            strokeWidth={2}
-            strokeDasharray="6 4"
+            strokeWidth={2 / viewport.zoom}
+            strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
           />
 
           {/* Corner handles */}
@@ -1103,13 +1096,13 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
           ].map(({ x, y, handle, cursor }) => (
             <rect
               key={handle}
-              x={x - 5}
-              y={y - 5}
-              width={10}
-              height={10}
+              x={x - 5 / viewport.zoom}
+              y={y - 5 / viewport.zoom}
+              width={10 / viewport.zoom}
+              height={10 / viewport.zoom}
               fill="white"
               stroke={strokeColor}
-              strokeWidth={2}
+              strokeWidth={2 / viewport.zoom}
               data-handle={handle}
               style={{ cursor }}
             />
@@ -1117,10 +1110,11 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
 
           {/* Scale label */}
 	          <text
-	            x={targetX + targetWidth + 10}
-	            y={targetY - 5}
-	            fontSize={11}
+	            x={targetX + targetWidth + 10 / viewport.zoom}
+	            y={targetY - 5 / viewport.zoom}
+	            fontSize={11 / viewport.zoom}
 	            fill={strokeColor}
+	            style={{ pointerEvents: 'none' }}
 	          >
 	            {isMultiKeyframeValues
 	              ? `kf ${activeIndex + 1}/${keyframes.length} → ${displayScaleX.toFixed(2)}x${displayScaleY.toFixed(2)}`
@@ -1149,7 +1143,7 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
           toScaleY: toKf[1] ?? toKf[0] ?? 1,
           hasValues: true,
           keyframes,
-          ...(keyframes.length > 2 ? { activeKeyframeIndex: keyframes.length - 1 } : {}),
+          ...(keyframes.length >= 2 ? { activeKeyframeIndex: keyframes.length - 1 } : {}),
         },
         interaction: {
           activeHandle: null,
@@ -1251,10 +1245,9 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
         const hasValues = (ctx.state.props.hasValues as boolean) ?? false;
         const keyframes = (ctx.state.props.keyframes as number[][]) ?? [];
         const activeAxis = (ctx.state.props.activeAxis as 'x' | 'y') ?? 'x';
-        const isMultiKeyframeValues = hasValues && keyframes.length > 2;
         const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, keyframes.length);
         const activeValue = keyframes[activeIndex]?.[0] ?? 0;
-        const displaySkewX = isMultiKeyframeValues && activeAxis === 'x' ? activeValue : toSkewX;
+        const displaySkewX = (hasValues && keyframes.length >= 2) && activeAxis === 'x' ? activeValue : toSkewX;
 
         return {
           x: ctx.elementCenter.x + displaySkewX,
@@ -1262,6 +1255,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
         };
       },
       cursor: 'ew-resize',
+      tooltip: 'Drag to skew horizontally',
       constraints: {
         axis: 'x',
       },
@@ -1274,10 +1268,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
         if (hasValues) {
           const kfs = keyframes.length > 0 ? keyframes : [[fromSkewX], [toSkewX]];
           const updatedKeyframes = [...kfs];
-          const isMultiKeyframeValues = updatedKeyframes.length > 2;
-          const activeIndex = isMultiKeyframeValues
-            ? clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, updatedKeyframes.length)
-            : Math.max(0, updatedKeyframes.length - 1);
+          const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, updatedKeyframes.length);
 
           const current = updatedKeyframes[activeIndex]?.[0] ?? 0;
           const next = roundNumber(current + delta.x, ctx.precision);
@@ -1333,10 +1324,9 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
         const hasValues = (ctx.state.props.hasValues as boolean) ?? false;
         const keyframes = (ctx.state.props.keyframes as number[][]) ?? [];
         const activeAxis = (ctx.state.props.activeAxis as 'x' | 'y') ?? 'x';
-        const isMultiKeyframeValues = hasValues && keyframes.length > 2;
         const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, keyframes.length);
         const activeValue = keyframes[activeIndex]?.[0] ?? 0;
-        const displaySkewY = isMultiKeyframeValues && activeAxis === 'y' ? activeValue : toSkewY;
+        const displaySkewY = (hasValues && keyframes.length >= 2) && activeAxis === 'y' ? activeValue : toSkewY;
 
         return {
           x: ctx.elementBounds.maxX + 20,
@@ -1344,6 +1334,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
         };
       },
       cursor: 'ns-resize',
+      tooltip: 'Drag to skew vertically',
       constraints: {
         axis: 'y',
       },
@@ -1356,10 +1347,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
         if (hasValues) {
           const kfs = keyframes.length > 0 ? keyframes : [[fromSkewY], [toSkewY]];
           const updatedKeyframes = [...kfs];
-          const isMultiKeyframeValues = updatedKeyframes.length > 2;
-          const activeIndex = isMultiKeyframeValues
-            ? clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, updatedKeyframes.length)
-            : Math.max(0, updatedKeyframes.length - 1);
+          const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, updatedKeyframes.length);
 
           const current = updatedKeyframes[activeIndex]?.[0] ?? 0;
           const next = roundNumber(current + delta.y, ctx.precision);
@@ -1412,13 +1400,13 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
   visual: {
     zIndex: 100,
     render: (ctx: GizmoRenderContext) => {
-      const { elementCenter, elementBounds, state, colorMode } = ctx;
+      const { elementCenter, elementBounds, state, colorMode, viewport } = ctx;
       const toSkewX = (state.props.toSkewX as number) ?? 0;
       const toSkewY = (state.props.toSkewY as number) ?? 0;
       const hasValues = state.props.hasValues as boolean;
       const keyframes = (state.props.keyframes as number[][]) ?? [];
       const activeAxis = (state.props.activeAxis as 'x' | 'y') ?? 'x';
-      const isMultiKeyframeValues = hasValues && keyframes.length > 2;
+      const isMultiKeyframeValues = hasValues && keyframes.length >= 2;
       const activeIndex = clampKeyframeIndex(state.props.activeKeyframeIndex, keyframes.length);
       const activeKf = keyframes[activeIndex] ?? [];
       const activeValue = activeKf[0] ?? 0;
@@ -1455,28 +1443,29 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
             d={pathD}
             fill="none"
             stroke={strokeColor}
-            strokeWidth={2}
-            strokeDasharray="6 4"
+            strokeWidth={2 / viewport.zoom}
+            strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
           />
 
           {/* Horizontal skew handle */}
           <g data-handle="skew-horizontal" style={{ cursor: 'ew-resize' }}>
             <rect
-              x={elementCenter.x + displaySkewX - 15}
-              y={elementBounds.minY - 28}
-              width={30}
-              height={16}
+              x={elementCenter.x + displaySkewX - 15 / viewport.zoom}
+              y={elementBounds.minY - 28 / viewport.zoom}
+              width={30 / viewport.zoom}
+              height={16 / viewport.zoom}
               fill="white"
               stroke={strokeColor}
-              strokeWidth={2}
-              rx={4}
+              strokeWidth={2 / viewport.zoom}
+              rx={4 / viewport.zoom}
             />
             <text
               x={elementCenter.x + displaySkewX}
-              y={elementBounds.minY - 16}
-              fontSize={10}
+              y={elementBounds.minY - 16 / viewport.zoom}
+              fontSize={10 / viewport.zoom}
               fill={strokeColor}
               textAnchor="middle"
+              style={{ pointerEvents: 'none' }}
             >
               {Math.round(displaySkewX)}°X
             </text>
@@ -1485,8 +1474,8 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           {isMultiKeyframeValues && activeAxis === 'x' && (
             <text
               x={elementCenter.x + displaySkewX}
-              y={elementBounds.minY - 36}
-              fontSize={8}
+              y={elementBounds.minY - 36 / viewport.zoom}
+              fontSize={8 / viewport.zoom}
               fill={intermediateColor}
               textAnchor="middle"
               style={{ pointerEvents: 'none' }}
@@ -1498,21 +1487,22 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           {/* Vertical skew handle */}
           <g data-handle="skew-vertical" style={{ cursor: 'ns-resize' }}>
             <rect
-              x={elementBounds.maxX + 12}
-              y={elementCenter.y + displaySkewY - 8}
-              width={30}
-              height={16}
+              x={elementBounds.maxX + 12 / viewport.zoom}
+              y={elementCenter.y + displaySkewY - 8 / viewport.zoom}
+              width={30 / viewport.zoom}
+              height={16 / viewport.zoom}
               fill="white"
               stroke={strokeColor}
-              strokeWidth={2}
-              rx={4}
+              strokeWidth={2 / viewport.zoom}
+              rx={4 / viewport.zoom}
             />
             <text
-              x={elementBounds.maxX + 27}
-              y={elementCenter.y + displaySkewY + 4}
-              fontSize={10}
+              x={elementBounds.maxX + 27 / viewport.zoom}
+              y={elementCenter.y + displaySkewY + 4 / viewport.zoom}
+              fontSize={10 / viewport.zoom}
               fill={strokeColor}
               textAnchor="middle"
+              style={{ pointerEvents: 'none' }}
             >
               {Math.round(displaySkewY)}°Y
             </text>
@@ -1520,9 +1510,9 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           
           {isMultiKeyframeValues && activeAxis === 'y' && (
             <text
-              x={elementBounds.maxX + 27}
-              y={elementCenter.y + displaySkewY - 16}
-              fontSize={8}
+              x={elementBounds.maxX + 27 / viewport.zoom}
+              y={elementCenter.y + displaySkewY - 16 / viewport.zoom}
+              fontSize={8 / viewport.zoom}
               fill={intermediateColor}
               textAnchor="middle"
               style={{ pointerEvents: 'none' }}
@@ -1556,7 +1546,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           activeAxis: isSkewX ? 'x' : 'y',
           hasValues: true,
           keyframes,
-          ...(keyframes.length > 2 ? { activeKeyframeIndex: keyframes.length - 1 } : {}),
+          ...(keyframes.length >= 2 ? { activeKeyframeIndex: keyframes.length - 1 } : {}),
         },
         interaction: {
           activeHandle: null,

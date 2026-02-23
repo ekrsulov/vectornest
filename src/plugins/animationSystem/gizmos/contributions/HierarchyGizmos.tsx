@@ -17,51 +17,7 @@ import type {
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
 import type { Point } from '../../../../types';
-
-// =============================================================================
-// SMIL Values Helpers
-// =============================================================================
-
-/**
- * Parse SMIL values attribute into array of keyframes (as strings)
- */
-function parseStyleValuesKeyframes(values: string | undefined): string[] {
-  if (!values) return [];
-  return values.split(';').map(v => v.trim());
-}
-
-/**
- * Format keyframes array back to SMIL values string
- */
-function formatStyleValuesKeyframes(keyframes: string[]): string {
-  return keyframes.join(';');
-}
-
-/**
- * Extract from/to values from animation, supporting both from/to and values attributes
- */
-function extractStyleAnimationValues(animation: SVGAnimation): {
-  from: string;
-  to: string;
-  hasValues: boolean;
-  keyframes: string[];
-} {
-  if (animation.values) {
-    const keyframes = parseStyleValuesKeyframes(animation.values);
-    return { 
-      from: keyframes[0] ?? '', 
-      to: keyframes[keyframes.length - 1] ?? '', 
-      hasValues: true, 
-      keyframes 
-    };
-  }
-  return {
-    from: String(animation.from ?? ''),
-    to: String(animation.to ?? ''),
-    hasValues: false,
-    keyframes: [],
-  };
-}
+import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 
 // =============================================================================
 // Transform Origin Gizmo (21)
@@ -172,7 +128,7 @@ const transformOriginGizmoDefinition: AnimationGizmoDefinition = {
     const size = 12 / viewport.zoom;
     
     return (
-      <g className="transform-origin-gizmo">
+      <g className="transform-origin-gizmo" style={{ pointerEvents: 'none' }}>
         <line
           x1={origin.x - size}
           y1={origin.y}
@@ -311,7 +267,7 @@ const zOrderGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#A78BFA' : '#7C3AED';
     
     return (
-      <g className="z-order-gizmo">
+      <g className="z-order-gizmo" style={{ pointerEvents: 'none' }}>
         {[0, 1, 2].map(level => (
           <rect
             key={`z-layer-${level}`}
@@ -449,7 +405,7 @@ const parentInheritGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#34D399' : '#059669';
     
     return (
-      <g className="parent-inherit-gizmo">
+      <g className="parent-inherit-gizmo" style={{ pointerEvents: 'none' }}>
         <path
           d={`M ${minX} ${minY - 30 / viewport.zoom} L ${(minX + maxX) / 2} ${minY - 15 / viewport.zoom} L ${maxX} ${minY - 30 / viewport.zoom}`}
           fill="none"
@@ -581,7 +537,7 @@ const cascadeDelayGizmoDefinition: AnimationGizmoDefinition = {
     const width = maxX - minX;
     
     return (
-      <g className="cascade-delay-gizmo">
+      <g className="cascade-delay-gizmo" style={{ pointerEvents: 'none' }}>
         {[0, 1, 2, 3].map(step => (
           <rect
             key={`cascade-${step}`}
@@ -674,17 +630,17 @@ const groupTransformGizmoDefinition: AnimationGizmoDefinition = {
         ctx.updateState({ groupScale: Math.max(0.1, current + (delta.x + delta.y) / 100) });
       },
       onDragEnd: (ctx) => {
-        const groupRotation = ctx.state.props.groupRotation as number;
+        const groupScale = ctx.state.props.groupScale as number;
         const hasValues = ctx.state.props.hasValues as boolean;
         const keyframes = ctx.state.props.keyframes as string[];
         
         if (hasValues && keyframes.length > 0) {
           const updatedKeyframes = [...keyframes];
-          updatedKeyframes[updatedKeyframes.length - 1] = `${groupRotation}`;
+          updatedKeyframes[updatedKeyframes.length - 1] = `${groupScale}`;
           ctx.updateAnimation({
             type: 'animateTransform',
             attributeName: 'transform',
-            attrType: 'rotate',
+            attrType: 'scale',
             values: formatStyleValuesKeyframes(updatedKeyframes),
             from: undefined,
             to: undefined,
@@ -693,8 +649,8 @@ const groupTransformGizmoDefinition: AnimationGizmoDefinition = {
           ctx.updateAnimation({
             type: 'animateTransform',
             attributeName: 'transform',
-            attrType: 'rotate',
-            to: `${groupRotation}`,
+            attrType: 'scale',
+            to: `${groupScale}`,
           });
         }
         ctx.commitChanges();
@@ -759,7 +715,7 @@ const groupTransformGizmoDefinition: AnimationGizmoDefinition = {
     const pad = 5 / viewport.zoom;
     
     return (
-      <g className="group-transform-gizmo">
+      <g className="group-transform-gizmo" style={{ pointerEvents: 'none' }}>
         <rect
           x={minX - pad}
           y={minY - pad}
@@ -892,7 +848,7 @@ const anchorPointGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#F87171' : '#DC2626';
     
     return (
-      <g className="anchor-point-gizmo">
+      <g className="anchor-point-gizmo" style={{ pointerEvents: 'none' }}>
         <circle
           cx={anchor.x}
           cy={anchor.y}

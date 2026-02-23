@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Opacity Gizmo Test — 2 keyframes</title>
+  <desc>A circle with animated opacity from 1 to 0.2.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Opacity Gizmo Test (2 keyframes)</text>
+
+  <!-- Checkerboard background for opacity visibility -->
+  <pattern id="checker" width="20" height="20" patternUnits="userSpaceOnUse">
+    <rect width="10" height="10" fill="#e2e8f0" />
+    <rect x="10" y="10" width="10" height="10" fill="#e2e8f0" />
+  </pattern>
+  <rect x="120" y="65" width="160" height="160" fill="url(#checker)" />
+
+  <circle cx="200" cy="145" r="60" fill="#9b2c2c" stroke="#742a2a" stroke-width="2">
+    <animate
+      attributeName="opacity"
+      values="1; 0.2"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </circle>
+</svg>

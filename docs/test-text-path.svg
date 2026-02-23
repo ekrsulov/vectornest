@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Text Path Gizmo Test</title>
+  <desc>Text following a curved path with animated startOffset.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Text Path Gizmo Test</text>
+
+  <defs>
+    <path id="text-curve" d="M 30,200 C 100,50 300,50 370,200" fill="none" />
+  </defs>
+
+  <!-- Visual guide -->
+  <use href="#text-curve" stroke="#cbd5e0" stroke-width="1" stroke-dasharray="4 4" fill="none" />
+
+  <text font-size="18" fill="#2b6cb0" font-weight="bold">
+    <textPath href="#text-curve" startOffset="0%">
+      Hello VectorNest Animation!
+      <animate
+        attributeName="startOffset"
+        from="0%"
+        to="60%"
+        dur="4s"
+        repeatCount="indefinite"
+        fill="freeze"
+      />
+    </textPath>
+  </text>
+</svg>

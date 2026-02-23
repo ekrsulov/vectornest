@@ -20,51 +20,7 @@ import type { SVGAnimation } from '../../types';
 import type { Command, Point } from '../../../../types';
 import { formatToPrecision } from '../../../../utils';
 import { parsePathD } from '../../../../utils/path';
-
-// =============================================================================
-// SMIL Values Helpers
-// =============================================================================
-
-/**
- * Parse SMIL values attribute into array of keyframes (as strings)
- */
-function parseStyleValuesKeyframes(values: string | undefined): string[] {
-  if (!values) return [];
-  return values.split(';').map(v => v.trim());
-}
-
-/**
- * Format keyframes array back to SMIL values string
- */
-function formatStyleValuesKeyframes(keyframes: string[]): string {
-  return keyframes.join(';');
-}
-
-/**
- * Extract from/to values from animation, supporting both from/to and values attributes
- */
-function extractStyleAnimationValues(animation: SVGAnimation): {
-  from: string;
-  to: string;
-  hasValues: boolean;
-  keyframes: string[];
-} {
-  if (animation.values) {
-    const keyframes = parseStyleValuesKeyframes(animation.values);
-    return { 
-      from: keyframes[0] ?? '', 
-      to: keyframes[keyframes.length - 1] ?? '', 
-      hasValues: true, 
-      keyframes 
-    };
-  }
-  return {
-    from: String(animation.from ?? ''),
-    to: String(animation.to ?? ''),
-    hasValues: false,
-    keyframes: [],
-  };
-}
+import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 
 // =============================================================================
 // Motion Path Gizmo (05)
@@ -703,7 +659,7 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
     const keyframes = (ctx.state.props.keyframes as string[]) ?? [];
     
     return (
-      <g className="stroke-draw-gizmo">
+      <g className="stroke-draw-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Progress track */}
         <rect
           x={minX}
@@ -725,7 +681,7 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
         />
         
         {/* Intermediate keyframes (if multi-keyframe) */}
-        {hasValues && keyframes.length > 2 && keyframes.slice(1, -1).map((_, i) => {
+        {hasValues && keyframes.length >= 2 && keyframes.slice(1, -1).map((_, i) => {
           const kfIndex = i + 1;
           const kfProgress = kfIndex / (keyframes.length - 1);
           return (
@@ -1134,7 +1090,7 @@ const morphingGizmoDefinition: AnimationGizmoDefinition = {
     const activePath = getActiveMorphPath(ctx);
     if (!activePath || hasUnsupportedPathCommands(activePath)) {
       return (
-        <g className="morphing-gizmo">
+        <g className="morphing-gizmo" style={{ pointerEvents: 'none' }}>
           <text
             x={(elementBounds.minX + elementBounds.maxX) / 2}
             y={(elementBounds.minY + elementBounds.maxY) / 2}
@@ -1219,7 +1175,7 @@ const morphingGizmoDefinition: AnimationGizmoDefinition = {
     });
     
     return (
-      <g className="morphing-gizmo">
+      <g className="morphing-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Draw the path itself with absolute coordinates */}
         <path
           d={absolutePath.trim()}

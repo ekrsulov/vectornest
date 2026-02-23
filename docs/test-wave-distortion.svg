@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Wave Distortion Gizmo Test</title>
+  <desc>A path showing wave distortion effect.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Wave Distortion Gizmo Test</text>
+
+  <!-- Baseline -->
+  <line x1="30" y1="150" x2="370" y2="150" stroke="#cbd5e0" stroke-width="1" stroke-dasharray="4 4" />
+
+  <!-- Animated wave -->
+  <path d="M 30,150 Q 80,100 130,150 Q 180,200 230,150 Q 280,100 330,150 Q 355,175 370,150"
+        fill="none" stroke="#805ad5" stroke-width="3" stroke-linecap="round">
+    <animate
+      attributeName="d"
+      values="M 30,150 Q 80,100 130,150 Q 180,200 230,150 Q 280,100 330,150 Q 355,175 370,150;
+              M 30,150 Q 80,200 130,150 Q 180,100 230,150 Q 280,200 330,150 Q 355,125 370,150"
+      dur="1.5s"
+      repeatCount="indefinite"
+    />
+  </path>
+</svg>

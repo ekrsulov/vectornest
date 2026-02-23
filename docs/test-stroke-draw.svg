@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Stroke Draw Gizmo Test</title>
+  <desc>A path with stroke-dashoffset animation creating a drawing effect.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Stroke Draw Gizmo Test</text>
+
+  <path d="M 50,200 C 100,50 200,250 250,100 C 300,0 350,200 380,150"
+        fill="none" stroke="#2b6cb0" stroke-width="4" stroke-linecap="round"
+        stroke-dasharray="600" stroke-dashoffset="600">
+    <animate
+      attributeName="stroke-dashoffset"
+      from="600"
+      to="0"
+      dur="3s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </path>
+</svg>

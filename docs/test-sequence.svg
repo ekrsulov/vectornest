@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Sequence Gizmo Test</title>
+  <desc>Two chained animations: first translates, then the second starts after the first ends.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Sequence Gizmo Test</text>
+
+  <!-- First animation -->
+  <rect x="50" y="100" width="50" height="50" rx="6" fill="#3182ce" stroke="#2b6cb0" stroke-width="2">
+    <animateTransform id="step1"
+      attributeName="transform"
+      type="translate"
+      from="0 0"
+      to="120 0"
+      dur="1s"
+      fill="freeze"
+    />
+  </rect>
+
+  <!-- Second animation (chained) -->
+  <rect x="50" y="170" width="50" height="50" rx="6" fill="#e53e3e" stroke="#c53030" stroke-width="2">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      from="0 0"
+      to="240 0"
+      dur="1.5s"
+      begin="step1.end+0.5s"
+      fill="freeze"
+    />
+  </rect>
+
+  <text x="200" y="270" text-anchor="middle" font-size="12" fill="#718096">Red starts 0.5s after blue finishes</text>
+</svg>

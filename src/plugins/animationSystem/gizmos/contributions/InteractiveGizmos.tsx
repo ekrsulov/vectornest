@@ -90,7 +90,7 @@ const hoverStateGizmoDefinition: AnimationGizmoDefinition = {
     const hh = (maxY - minY) / 2 * scale;
     
     return (
-      <g className="hover-state-gizmo">
+      <g className="hover-state-gizmo" style={{ pointerEvents: 'none' }}>
         <rect
           x={cx - hw}
           y={cy - hh}
@@ -182,7 +182,7 @@ const clickTriggerGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#F472B6' : '#EC4899';
     
     return (
-      <g className="click-trigger-gizmo">
+      <g className="click-trigger-gizmo" style={{ pointerEvents: 'none' }}>
         <circle
           cx={cx}
           cy={maxY + 30 / viewport.zoom}
@@ -308,7 +308,7 @@ const scrollTriggerGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#60A5FA' : '#2563EB';
     
     return (
-      <g className="scroll-trigger-gizmo">
+      <g className="scroll-trigger-gizmo" style={{ pointerEvents: 'none' }}>
         <rect
           x={minX - 25 / viewport.zoom}
           y={minY}
@@ -411,7 +411,7 @@ const focusStateGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#A78BFA' : '#7C3AED';
     
     return (
-      <g className="focus-state-gizmo">
+      <g className="focus-state-gizmo" style={{ pointerEvents: 'none' }}>
         <rect
           x={minX - ringSize}
           y={minY - ringSize}

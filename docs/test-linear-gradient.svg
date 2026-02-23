@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Linear Gradient Gizmo Test</title>
+  <desc>A rectangle with animated linear gradient direction.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Linear Gradient Gizmo Test</text>
+
+  <defs>
+    <linearGradient id="lin-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3182ce" />
+      <stop offset="100%" stop-color="#38a169" />
+      <animate
+        attributeName="x2"
+        from="100%"
+        to="0%"
+        dur="3s"
+        repeatCount="indefinite"
+        fill="freeze"
+      />
+    </linearGradient>
+  </defs>
+
+  <rect x="100" y="60" width="200" height="160" rx="12" fill="url(#lin-grad)" stroke="#4a5568" stroke-width="2" />
+</svg>

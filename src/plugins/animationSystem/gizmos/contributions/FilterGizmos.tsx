@@ -13,51 +13,7 @@ import type {
 } from '../types';
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
-
-// =============================================================================
-// SMIL Values Helpers
-// =============================================================================
-
-/**
- * Parse SMIL values attribute into array of keyframes (as strings)
- */
-function parseStyleValuesKeyframes(values: string | undefined): string[] {
-  if (!values) return [];
-  return values.split(';').map(v => v.trim());
-}
-
-/**
- * Format keyframes array back to SMIL values string
- */
-function formatStyleValuesKeyframes(keyframes: string[]): string {
-  return keyframes.join(';');
-}
-
-/**
- * Extract from/to values from animation, supporting both from/to and values attributes
- */
-function extractStyleAnimationValues(animation: SVGAnimation): {
-  from: string;
-  to: string;
-  hasValues: boolean;
-  keyframes: string[];
-} {
-  if (animation.values) {
-    const keyframes = parseStyleValuesKeyframes(animation.values);
-    return { 
-      from: keyframes[0] ?? '', 
-      to: keyframes[keyframes.length - 1] ?? '', 
-      hasValues: true, 
-      keyframes 
-    };
-  }
-  return {
-    from: String(animation.from ?? ''),
-    to: String(animation.to ?? ''),
-    hasValues: false,
-    keyframes: [],
-  };
-}
+import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 
 // =============================================================================
 // Blur Gizmo (18)
@@ -168,7 +124,7 @@ const blurGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#60A5FA' : '#2563EB';
     
     return (
-      <g className="blur-gizmo">
+      <g className="blur-gizmo" style={{ pointerEvents: 'none' }}>
         <rect
           x={minX - blur}
           y={minY - blur}
@@ -349,7 +305,7 @@ const dropShadowGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#9CA3AF' : '#6B7280';
     
     return (
-      <g className="drop-shadow-gizmo">
+      <g className="drop-shadow-gizmo" style={{ pointerEvents: 'none' }}>
         <rect
           x={minX + offsetX}
           y={minY + offsetY}
@@ -446,13 +402,13 @@ const colorMatrixGizmoDefinition: AnimationGizmoDefinition = {
         ctx.updateState({ saturate: Math.max(0, Math.min(2, current - delta.y / (height / 2))) });
       },
       onDragEnd: (ctx) => {
-        const hueRotate = ctx.state.props.hueRotate as number;
+        const saturate = ctx.state.props.saturate as number;
         const hasValues = ctx.state.props.hasValues as boolean;
         const keyframes = ctx.state.props.keyframes as string[];
         
         if (hasValues && keyframes.length > 0) {
           const updatedKeyframes = [...keyframes];
-          updatedKeyframes[updatedKeyframes.length - 1] = `${hueRotate}`;
+          updatedKeyframes[updatedKeyframes.length - 1] = `${saturate}`;
           ctx.updateAnimation({
             type: 'animate',
             attributeName: 'values',
@@ -464,7 +420,7 @@ const colorMatrixGizmoDefinition: AnimationGizmoDefinition = {
           ctx.updateAnimation({
             type: 'animate',
             attributeName: 'values',
-            to: `${hueRotate}`,
+            to: `${saturate}`,
           });
         }
         ctx.commitChanges();
@@ -487,13 +443,13 @@ const colorMatrixGizmoDefinition: AnimationGizmoDefinition = {
         ctx.updateState({ brightness: Math.max(0, Math.min(2, current - delta.y / (height / 2))) });
       },
       onDragEnd: (ctx) => {
-        const hueRotate = ctx.state.props.hueRotate as number;
+        const brightness = ctx.state.props.brightness as number;
         const hasValues = ctx.state.props.hasValues as boolean;
         const keyframes = ctx.state.props.keyframes as string[];
         
         if (hasValues && keyframes.length > 0) {
           const updatedKeyframes = [...keyframes];
-          updatedKeyframes[updatedKeyframes.length - 1] = `${hueRotate}`;
+          updatedKeyframes[updatedKeyframes.length - 1] = `${brightness}`;
           ctx.updateAnimation({
             type: 'animate',
             attributeName: 'values',
@@ -505,7 +461,7 @@ const colorMatrixGizmoDefinition: AnimationGizmoDefinition = {
           ctx.updateAnimation({
             type: 'animate',
             attributeName: 'values',
-            to: `${hueRotate}`,
+            to: `${brightness}`,
           });
         }
         ctx.commitChanges();
@@ -575,7 +531,7 @@ const colorMatrixGizmoDefinition: AnimationGizmoDefinition = {
     const trackBg = colorMode === 'dark' ? '#374151' : '#E5E7EB';
     
     return (
-      <g className="color-matrix-gizmo">
+      <g className="color-matrix-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Hue wheel indicator */}
         <circle
           cx={maxX + 30 / viewport.zoom}

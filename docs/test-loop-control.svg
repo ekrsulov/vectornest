@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Loop Control Gizmo Test</title>
+  <desc>A rectangle with a looping animation and repeatCount.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Loop Control Gizmo Test</text>
+
+  <rect x="50" y="120" width="60" height="60" rx="8" fill="#dd6b20" stroke="#c05621" stroke-width="2">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      from="0 0"
+      to="240 0"
+      dur="2s"
+      repeatCount="3"
+      fill="freeze"
+    />
+  </rect>
+
+  <!-- Loop indicator -->
+  <text x="200" y="260" text-anchor="middle" font-size="12" fill="#718096">repeatCount="3" — Loop start/end handles</text>
+</svg>

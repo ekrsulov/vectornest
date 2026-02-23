@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Hover State Gizmo Test</title>
+  <desc>A rectangle that scales on hover.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Hover State Gizmo Test</text>
+
+  <rect x="140" y="80" width="120" height="120" rx="12" fill="#3182ce" stroke="#2b6cb0" stroke-width="2"
+        style="cursor: pointer;">
+    <animateTransform
+      attributeName="transform"
+      type="scale"
+      from="1"
+      to="1.2"
+      dur="0.3s"
+      begin="mouseover"
+      fill="freeze"
+    />
+    <animateTransform
+      attributeName="transform"
+      type="scale"
+      from="1.2"
+      to="1"
+      dur="0.3s"
+      begin="mouseout"
+      fill="freeze"
+    />
+  </rect>
+
+  <text x="200" y="260" text-anchor="middle" font-size="12" fill="#718096">Hover over the rectangle to test</text>
+</svg>

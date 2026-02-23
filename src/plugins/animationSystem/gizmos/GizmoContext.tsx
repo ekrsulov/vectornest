@@ -269,8 +269,6 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
   // Start drag interaction
   const startDrag = useCallback(
     (animationId: string, handleId: string, point: Point) => {
-      console.log('[GizmoContext] startDrag', { animationId, handleId, point });
-      
       dragStartRef.current = point;
       dragCurrentRef.current = point;
       setDraggingHandle({ animationId, handleId });
@@ -278,7 +276,6 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
       // Update gizmo interaction state
       setActiveGizmos((prev) => {
         const gizmo = prev.get(animationId);
-        console.log('[GizmoContext] startDrag - found gizmo?', { found: !!gizmo, animationId });
         if (!gizmo) return prev;
 
         const next = new Map(prev);
@@ -300,10 +297,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
   // Update drag
   const updateDrag = useCallback(
     (point: Point, modifiers: GizmoInteractionContext['modifiers']) => {
-      console.log('[GizmoContext] updateDrag', { point, draggingHandle, hasDragStart: !!dragStartRef.current });
-      
       if (!draggingHandle || !dragStartRef.current) {
-        console.log('[GizmoContext] updateDrag - BLOCKED: no draggingHandle or dragStart');
         return;
       }
 
@@ -312,31 +306,26 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 
       const gizmo = activeGizmos.get(animationId);
       if (!gizmo) {
-        console.log('[GizmoContext] updateDrag - BLOCKED: no gizmo for', animationId);
         return;
       }
 
       const animation = animationMap.get(animationId);
       if (!animation) {
-        console.log('[GizmoContext] updateDrag - BLOCKED: no animation for', animationId);
         return;
       }
 
       const element = elementMap.get(animation.targetElementId);
       if (!element) {
-        console.log('[GizmoContext] updateDrag - BLOCKED: no element for', animation.targetElementId);
         return;
       }
 
       const definition = animationGizmoRegistry.get(gizmo.gizmoId);
       if (!definition) {
-        console.log('[GizmoContext] updateDrag - BLOCKED: no definition for', gizmo.gizmoId);
         return;
       }
 
       const bounds = getElementBounds(element.id);
       if (!bounds) {
-        console.log('[GizmoContext] updateDrag - BLOCKED: no bounds for', element.id);
         return;
       }
 
@@ -344,8 +333,6 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
         x: point.x - dragStartRef.current.x,
         y: point.y - dragStartRef.current.y,
       };
-      
-      console.log('[GizmoContext] updateDrag - calling handle.onDrag', { delta, handleId });
 
       // Create interaction context
       const interactionContext: GizmoInteractionContext = {
@@ -402,7 +389,6 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 
       const handle = handles.find((h) => h.id === handleId);
       if (!handle) {
-        console.log('[GizmoContext] updateDrag - BLOCKED: no handle', handleId);
         return;
       }
 

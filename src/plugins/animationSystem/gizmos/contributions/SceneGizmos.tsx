@@ -122,7 +122,7 @@ const cameraPanGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#60A5FA' : '#2563EB';
     
     return (
-      <g className="camera-pan-gizmo">
+      <g className="camera-pan-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Pan path */}
         <line
           x1={sx}
@@ -277,7 +277,7 @@ const cameraZoomGizmoDefinition: AnimationGizmoDefinition = {
     const size = 30 * zoom / viewport.zoom;
     
     return (
-      <g className="camera-zoom-gizmo">
+      <g className="camera-zoom-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Zoom frame */}
         <rect
           x={cx - size}
@@ -400,7 +400,7 @@ const sceneTransitionGizmoDefinition: AnimationGizmoDefinition = {
     const y = maxY + 35 / viewport.zoom;
     
     return (
-      <g className="scene-transition-gizmo">
+      <g className="scene-transition-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Scene A (fading out) */}
         <rect
           x={minX + width * 0.3 - sceneWidth / 2}
@@ -543,7 +543,7 @@ const timelineMarkerGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#FB923C' : '#EA580C';
     
     return (
-      <g className="timeline-marker-gizmo">
+      <g className="timeline-marker-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Timeline bar */}
         <rect
           x={minX}
@@ -679,7 +679,7 @@ const loopControlGizmoDefinition: AnimationGizmoDefinition = {
     const y = maxY + 18 / viewport.zoom;
     
     return (
-      <g className="loop-control-gizmo">
+      <g className="loop-control-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Full track */}
         <rect
           x={minX}
@@ -830,7 +830,7 @@ const sequenceGizmoDefinition: AnimationGizmoDefinition = {
     const gap = 8 / viewport.zoom;
     
     return (
-      <g className="sequence-gizmo">
+      <g className="sequence-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Delay visualization */}
         {delay > 0 && (
           <>

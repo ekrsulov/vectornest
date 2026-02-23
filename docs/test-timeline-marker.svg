@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Timeline Marker Gizmo Test</title>
+  <desc>A timeline bar with a positioned marker.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Timeline Marker Gizmo Test</text>
+
+  <!-- Timeline bar -->
+  <rect x="40" y="140" width="320" height="8" rx="4" fill="#cbd5e0" />
+
+  <!-- Animated marker -->
+  <g>
+    <line x1="40" y1="120" x2="40" y2="168" stroke="#e53e3e" stroke-width="2" />
+    <polygon points="35,120 45,120 40,112" fill="#e53e3e" />
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      from="0 0"
+      to="320 0"
+      dur="3s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </g>
+
+  <!-- Time labels -->
+  <text x="40" y="190" text-anchor="middle" font-size="10" fill="#718096">0s</text>
+  <text x="200" y="190" text-anchor="middle" font-size="10" fill="#718096">1.5s</text>
+  <text x="360" y="190" text-anchor="middle" font-size="10" fill="#718096">3s</text>
+</svg>

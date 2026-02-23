@@ -14,51 +14,7 @@ import type {
 } from '../types';
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
-
-// =============================================================================
-// SMIL Values Helpers
-// =============================================================================
-
-/**
- * Parse SMIL values attribute into array of keyframes (as strings)
- */
-function parseStyleValuesKeyframes(values: string | undefined): string[] {
-  if (!values) return [];
-  return values.split(';').map(v => v.trim());
-}
-
-/**
- * Format keyframes array back to SMIL values string
- */
-function formatStyleValuesKeyframes(keyframes: string[]): string {
-  return keyframes.join(';');
-}
-
-/**
- * Extract from/to values from animation, supporting both from/to and values attributes
- */
-function extractStyleAnimationValues(animation: SVGAnimation): {
-  from: string;
-  to: string;
-  hasValues: boolean;
-  keyframes: string[];
-} {
-  if (animation.values) {
-    const keyframes = parseStyleValuesKeyframes(animation.values);
-    return { 
-      from: keyframes[0] ?? '', 
-      to: keyframes[keyframes.length - 1] ?? '', 
-      hasValues: true, 
-      keyframes 
-    };
-  }
-  return {
-    from: String(animation.from ?? ''),
-    to: String(animation.to ?? ''),
-    hasValues: false,
-    keyframes: [],
-  };
-}
+import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 
 // =============================================================================
 // Clip Path Gizmo (11)
@@ -296,7 +252,7 @@ const clipPathGizmoDefinition: AnimationGizmoDefinition = {
     const insetLeft = (ctx.state.props.insetLeft as number) ?? 0;
     
     return (
-      <g className="clip-path-gizmo">
+      <g className="clip-path-gizmo" style={{ pointerEvents: 'none' }}>
         <rect
           x={minX + insetLeft}
           y={minY + insetTop}
@@ -428,7 +384,7 @@ const maskRevealGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#A78BFA' : '#7C3AED';
     
     return (
-      <g className="mask-reveal-gizmo">
+      <g className="mask-reveal-gizmo" style={{ pointerEvents: 'none' }}>
         <rect
           x={minX}
           y={maxY + 15 / viewport.zoom}
@@ -579,7 +535,7 @@ const maskWipeGizmoDefinition: AnimationGizmoDefinition = {
     const width = maxX - minX;
     
     return (
-      <g className="mask-wipe-gizmo">
+      <g className="mask-wipe-gizmo" style={{ pointerEvents: 'none' }}>
         <line
           x1={minX + width * progress}
           y1={minY}

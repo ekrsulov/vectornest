@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Noise Gizmo Test</title>
+  <desc>Elements with noise-based visual variation.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Noise Gizmo Test</text>
+
+  <defs>
+    <filter id="noise-filter">
+      <feTurbulence baseFrequency="0.05" numOctaves="2" seed="1">
+        <animate attributeName="baseFrequency" values="0.02; 0.08" dur="3s" repeatCount="indefinite" />
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" scale="10" />
+    </filter>
+  </defs>
+
+  <rect x="120" y="70" width="160" height="140" rx="12" fill="#38a169" stroke="#2f855a" stroke-width="2"
+        filter="url(#noise-filter)" />
+</svg>

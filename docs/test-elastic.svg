@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Elastic Gizmo Test</title>
+  <desc>A circle with elastic easing movement.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Elastic Gizmo Test</text>
+
+  <circle cx="80" cy="150" r="25" fill="#d69e2e" stroke="#b7791f" stroke-width="2">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      from="0 0"
+      to="240 0"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+      calcMode="spline"
+      keySplines="0.5 2 0.3 1"
+    />
+  </circle>
+
+  <text x="200" y="260" text-anchor="middle" font-size="12" fill="#718096">Elastic easing with overshoot</text>
+</svg>

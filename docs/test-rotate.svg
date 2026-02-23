@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Rotate Gizmo Test — 2 keyframes (values)</title>
+  <desc>A star rotating from 0° to 270° around its center using the values attribute with 2 keyframes.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Rotate Gizmo Test (2 keyframes)</text>
+
+  <!-- Star shape -->
+  <polygon points="200,80 215,140 280,140 225,175 245,235 200,200 155,235 175,175 120,140 185,140"
+           fill="#38a169" stroke="#2f855a" stroke-width="2">
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      values="0 200 155; 270 200 155"
+      dur="3s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </polygon>
+
+  <!-- Pivot marker -->
+  <circle cx="200" cy="155" r="3" fill="none" stroke="#a0aec0" stroke-width="1" stroke-dasharray="2 2" />
+</svg>

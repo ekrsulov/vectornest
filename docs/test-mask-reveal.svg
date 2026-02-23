@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Mask Reveal Gizmo Test</title>
+  <desc>A rectangle with animated mask opacity.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Mask Reveal Gizmo Test</text>
+
+  <defs>
+    <mask id="mask-reveal">
+      <rect x="120" y="60" width="160" height="160" fill="white">
+        <animate
+          attributeName="opacity"
+          from="0"
+          to="1"
+          dur="2s"
+          repeatCount="indefinite"
+          fill="freeze"
+        />
+      </rect>
+    </mask>
+  </defs>
+
+  <rect x="120" y="60" width="160" height="160" fill="#805ad5" stroke="#6b46c1" stroke-width="2"
+        mask="url(#mask-reveal)" />
+</svg>

@@ -15,51 +15,7 @@ import type {
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
 import type { Point } from '../../../../types';
-
-// =============================================================================
-// SMIL Values Helpers
-// =============================================================================
-
-/**
- * Parse SMIL values attribute into array of keyframes (as strings)
- */
-function parseStyleValuesKeyframes(values: string | undefined): string[] {
-  if (!values) return [];
-  return values.split(';').map(v => v.trim());
-}
-
-/**
- * Format keyframes array back to SMIL values string
- */
-function formatStyleValuesKeyframes(keyframes: string[]): string {
-  return keyframes.join(';');
-}
-
-/**
- * Extract from/to values from animation, supporting both from/to and values attributes
- */
-function extractStyleAnimationValues(animation: SVGAnimation): {
-  from: string;
-  to: string;
-  hasValues: boolean;
-  keyframes: string[];
-} {
-  if (animation.values) {
-    const keyframes = parseStyleValuesKeyframes(animation.values);
-    return { 
-      from: keyframes[0] ?? '', 
-      to: keyframes[keyframes.length - 1] ?? '', 
-      hasValues: true, 
-      keyframes 
-    };
-  }
-  return {
-    from: String(animation.from ?? ''),
-    to: String(animation.to ?? ''),
-    hasValues: false,
-    keyframes: [],
-  };
-}
+import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 
 // =============================================================================
 // Linear Gradient Gizmo (14)
@@ -233,7 +189,7 @@ const linearGradientGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#FBBF24' : '#D97706';
     
     return (
-      <g className="linear-gradient-gizmo">
+      <g className="linear-gradient-gizmo" style={{ pointerEvents: 'none' }}>
         <line
           x1={cx - Math.cos(rad) * dist}
           y1={cy - Math.sin(rad) * dist}
@@ -403,7 +359,7 @@ const radialGradientGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#C084FC' : '#9333EA';
     
     return (
-      <g className="radial-gradient-gizmo">
+      <g className="radial-gradient-gizmo" style={{ pointerEvents: 'none' }}>
         <circle
           cx={center.x}
           cy={center.y}
@@ -581,7 +537,7 @@ const patternTransformGizmoDefinition: AnimationGizmoDefinition = {
     const gridSize = 20 * scale;
     
     return (
-      <g className="pattern-transform-gizmo" opacity={0.5}>
+      <g className="pattern-transform-gizmo" opacity={0.5} style={{ pointerEvents: 'none' }}>
         {Array.from({ length: Math.ceil((maxX - minX) / gridSize) }).map((_, i) => (
           <line
             key={`v-${i}`}
@@ -765,7 +721,7 @@ const gradientStopsGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#FB923C' : '#EA580C';
     
     return (
-      <g className="gradient-stops-gizmo">
+      <g className="gradient-stops-gizmo" style={{ pointerEvents: 'none' }}>
         <rect
           x={minX}
           y={maxY + 10 / viewport.zoom}

@@ -15,51 +15,7 @@ import type {
 } from '../types';
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
-
-// =============================================================================
-// SMIL Values Helpers
-// =============================================================================
-
-/**
- * Parse SMIL values attribute into array of keyframes (as strings for style values)
- * Example: "2;14;2" -> ["2", "14", "2"]
- * Example: "#ef4444;#22c55e;#3b82f6" -> ["#ef4444", "#22c55e", "#3b82f6"]
- */
-function parseStyleValuesKeyframes(values: string | undefined): string[] {
-  if (!values) return [];
-  return values.split(';').map(v => v.trim());
-}
-
-/**
- * Format keyframes array back to SMIL values string
- */
-function formatStyleValuesKeyframes(keyframes: string[]): string {
-  return keyframes.join(';');
-}
-
-/**
- * Extract from/to values from style animation, supporting both from/to and values attributes
- */
-function extractStyleAnimationValues(animation: SVGAnimation): {
-  from: string;
-  to: string;
-  hasValues: boolean;
-  keyframes: string[];
-} {
-  if (animation.values) {
-    const keyframes = parseStyleValuesKeyframes(animation.values);
-    const from = keyframes[0] ?? '';
-    const to = keyframes[keyframes.length - 1] ?? '';
-    return { from, to, hasValues: true, keyframes };
-  }
-  
-  return {
-    from: String(animation.from ?? ''),
-    to: String(animation.to ?? ''),
-    hasValues: false,
-    keyframes: [],
-  };
-}
+import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 
 // =============================================================================
 // Stroke Width Gizmo (08)
@@ -261,7 +217,7 @@ const strokeWidthGizmoDefinition: AnimationGizmoDefinition = {
     }
     
     return (
-      <g className="stroke-width-gizmo">
+      <g className="stroke-width-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Active keyframe indicator line */}
         <line
           x1={xPos}
@@ -489,7 +445,7 @@ const opacityGizmoDefinition: AnimationGizmoDefinition = {
     const xPos = minX + (width * activeKeyframeIndex) / (numKeyframes - 1);
     
     return (
-      <g className="opacity-gizmo">
+      <g className="opacity-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Track background */}
         <rect
           x={minX}
@@ -670,7 +626,7 @@ const colorGizmoDefinition: AnimationGizmoDefinition = {
     // Calculate gradient stops for visual reference
     const fromColor = (ctx.state.props.fromColor as string) ?? '#000000';
     const toColor = (ctx.state.props.toColor as string) ?? '#FFFFFF';
-    const gradientStops = hasValues && keyframes.length > 2
+    const gradientStops = hasValues && keyframes.length >= 2
       ? keyframes.map((color, i) => ({
           offset: `${(i / (keyframes.length - 1)) * 100}%`,
           color,
@@ -687,7 +643,7 @@ const colorGizmoDefinition: AnimationGizmoDefinition = {
     const xPos = minX + (width * activeKeyframeIndex) / (numKeyframes - 1);
     
     return (
-      <g className="color-gizmo">
+      <g className="color-gizmo" style={{ pointerEvents: 'none' }}>
         {/* Color gradient track for reference */}
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">

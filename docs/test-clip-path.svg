@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Clip Path Gizmo Test</title>
+  <desc>A rectangle with animated clip-path inset.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Clip Path Gizmo Test</text>
+
+  <defs>
+    <clipPath id="clip-anim">
+      <rect x="120" y="60" width="160" height="160" />
+    </clipPath>
+  </defs>
+
+  <rect x="120" y="60" width="160" height="160" fill="#38a169" stroke="#2f855a" stroke-width="2"
+        clip-path="url(#clip-anim)">
+    <animate
+      attributeName="clip-path"
+      from="inset(0px 0px 0px 0px)"
+      to="inset(30px 30px 30px 30px)"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </rect>
+</svg>

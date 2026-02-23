@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Scene Transition Gizmo Test</title>
+  <desc>A fade transition between two scenes.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Scene Transition Gizmo Test</text>
+
+  <!-- Scene A -->
+  <g>
+    <rect x="80" y="60" width="240" height="180" rx="12" fill="#3182ce" />
+    <text x="200" y="160" text-anchor="middle" font-size="24" fill="white" font-weight="bold">Scene A</text>
+    <animate attributeName="opacity" values="1; 0; 0; 1" keyTimes="0; 0.45; 0.55; 1" dur="4s" repeatCount="indefinite" />
+  </g>
+
+  <!-- Scene B -->
+  <g opacity="0">
+    <rect x="80" y="60" width="240" height="180" rx="12" fill="#38a169" />
+    <text x="200" y="160" text-anchor="middle" font-size="24" fill="white" font-weight="bold">Scene B</text>
+    <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.45; 0.55; 1" dur="4s" repeatCount="indefinite" />
+  </g>
+</svg>

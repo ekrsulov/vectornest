@@ -182,7 +182,7 @@ export function GizmoToolbarCompact(): React.ReactElement | null {
             .filter(Boolean).length
         : 0;
 
-    if (keyframeCount <= 2) return null;
+    if (keyframeCount < 2) return null;
 
     const parsedKeyTimes =
       animation?.keyTimes

@@ -85,21 +85,12 @@ class GizmoInteractionHandler {
    * Handle drag start from a gizmo handle
    */
   handleDragStart(animationId: string, handleId: string, clientPoint: Point): void {
-    console.log('[GizmoInteractionHandler] handleDragStart', {
-      animationId,
-      handleId,
-      clientPoint,
-      enabled: this.config.enabled,
-    });
-    
     if (!this.config.enabled) {
-      console.log('[GizmoInteractionHandler] BLOCKED - not enabled');
       return;
     }
 
     this.isDragging = true;
     const canvasPoint = this.clientToCanvas(clientPoint);
-    console.log('[GizmoInteractionHandler] starting drag', { canvasPoint, isDragging: this.isDragging });
     this.config.gizmoContext.startDrag(animationId, handleId, canvasPoint);
   }
 
@@ -111,8 +102,6 @@ class GizmoInteractionHandler {
       return;
     }
 
-    console.log('[GizmoInteractionHandler] handlePointerMove', { x: e.clientX, y: e.clientY });
-    
     this.updateModifiers(e);
     const clientPoint: Point = { x: e.clientX, y: e.clientY };
     const canvasPoint = this.clientToCanvas(clientPoint);
@@ -126,7 +115,6 @@ class GizmoInteractionHandler {
   private handlePointerUp(_e: PointerEvent): void {
     if (!this.isDragging) return;
 
-    console.log('[GizmoInteractionHandler] handlePointerUp - ending drag');
     this.isDragging = false;
     this.config.gizmoContext.endDrag();
   }
@@ -297,10 +285,6 @@ export function useGizmoInteraction({
   // Handle drag start callback
   const handleDragStart = useCallback(
     (animationId: string, handleId: string, point: Point) => {
-      console.log('[useGizmoInteraction] handleDragStart called', { 
-        hasHandler: !!handlerRef.current,
-        animationId 
-      });
       handlerRef.current?.handleDragStart(animationId, handleId, point);
     },
     []

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Spiral Gizmo Test</title>
+  <desc>An element following a spiral motion path.</desc>
+
+  <rect width="400" height="300" fill="#1a202c" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#e2e8f0">Spiral Gizmo Test</text>
+
+  <!-- Spiral guide -->
+  <path d="M 200,150 
+           C 210,130 230,120 240,130 
+           C 260,150 250,180 230,190 
+           C 200,210 170,200 160,175 
+           C 145,140 160,105 195,95 
+           C 240,80 280,100 290,145 
+           C 305,200 275,245 220,255"
+        fill="none" stroke="#4a5568" stroke-width="1" stroke-dasharray="3 3" />
+
+  <!-- Center -->
+  <circle cx="200" cy="150" r="3" fill="#f6e05e" />
+
+  <!-- Spiraling element -->
+  <circle r="6" fill="#fc8181" stroke="#e53e3e" stroke-width="1.5">
+    <animateMotion
+      path="M 200,150 C 210,130 230,120 240,130 C 260,150 250,180 230,190 C 200,210 170,200 160,175 C 145,140 160,105 195,95 C 240,80 280,100 290,145 C 305,200 275,245 220,255"
+      dur="4s"
+      repeatCount="indefinite"
+    />
+  </circle>
+</svg>

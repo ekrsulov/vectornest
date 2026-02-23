@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Bounce Gizmo Test</title>
+  <desc>A ball with bounce easing — falls and bounces.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Bounce Gizmo Test</text>
+
+  <!-- Ground line -->
+  <line x1="50" y1="250" x2="350" y2="250" stroke="#a0aec0" stroke-width="2" />
+
+  <circle cx="200" cy="60" r="20" fill="#e53e3e" stroke="#c53030" stroke-width="2">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      values="0 0; 0 170; 0 130; 0 170; 0 155; 0 170"
+      keyTimes="0; 0.4; 0.55; 0.7; 0.85; 1"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </circle>
+</svg>

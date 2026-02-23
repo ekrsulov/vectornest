@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Stroke Width Gizmo Test — 2 keyframes</title>
+  <desc>A line with animated stroke-width from 2 to 12 using values.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Stroke Width Gizmo Test (2 keyframes)</text>
+
+  <line x1="60" y1="150" x2="340" y2="150" stroke="#2b6cb0" stroke-width="2" stroke-linecap="round">
+    <animate
+      attributeName="stroke-width"
+      values="2; 12"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </line>
+</svg>

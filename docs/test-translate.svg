@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Translate Gizmo Test — 2 keyframes (values)</title>
+  <desc>A rectangle translating from (0,0) to (150,100) using the values attribute with 2 keyframes.</desc>
+
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Translate Gizmo Test (2 keyframes)</text>
+
+  <!-- Animated element -->
+  <rect x="50" y="80" width="60" height="60" rx="8" fill="#3182ce" stroke="#2b6cb0" stroke-width="2">
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      values="0 0; 150 100"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+  </rect>
+
+  <!-- Guide markers -->
+  <circle cx="80" cy="110" r="4" fill="none" stroke="#a0aec0" stroke-width="1" stroke-dasharray="2 2" />
+  <circle cx="230" cy="210" r="4" fill="none" stroke="#a0aec0" stroke-width="1" stroke-dasharray="2 2" />
+  <line x1="80" y1="110" x2="230" y2="210" stroke="#a0aec0" stroke-width="1" stroke-dasharray="4 4" />
+</svg>

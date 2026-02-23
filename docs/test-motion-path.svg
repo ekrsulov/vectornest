@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Motion Path Gizmo Test</title>
+  <desc>A circle following a cubic bezier motion path.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Motion Path Gizmo Test</text>
+
+  <!-- Visual guide path -->
+  <path d="M 50,150 C 100,50 300,250 350,150" fill="none" stroke="#cbd5e0" stroke-width="1" stroke-dasharray="4 4" />
+
+  <!-- Animated element -->
+  <circle r="12" fill="#e53e3e" stroke="#c53030" stroke-width="2">
+    <animateMotion
+      path="M 50,150 C 100,50 300,250 350,150"
+      dur="3s"
+      repeatCount="indefinite"
+      rotate="auto"
+      fill="freeze"
+    />
+  </circle>
+</svg>

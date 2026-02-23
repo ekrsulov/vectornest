@@ -20,36 +20,7 @@ import type {
 } from '../types';
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
-
-// =============================================================================
-// Helper functions for SMIL values attribute support
-// =============================================================================
-
-function parseStyleValuesKeyframes(values: string): string[] {
-  return values.split(';').map(v => v.trim());
-}
-
-function formatStyleValuesKeyframes(keyframes: string[]): string {
-  return keyframes.join(';');
-}
-
-function extractStyleAnimationValues(animation: SVGAnimation): { from: string; to: string; hasValues: boolean; keyframes: string[] } {
-  if (animation.values) {
-    const keyframes = parseStyleValuesKeyframes(animation.values);
-    return {
-      from: keyframes[0] ?? '',
-      to: keyframes[keyframes.length - 1] ?? '',
-      hasValues: true,
-      keyframes,
-    };
-  }
-  return {
-    from: String(animation.from ?? ''),
-    to: String(animation.to ?? ''),
-    hasValues: false,
-    keyframes: [],
-  };
-}
+import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 
 // =============================================================================
 // Spring Physics Gizmo (35)
@@ -149,7 +120,7 @@ const springPhysicsGizmoDefinition: AnimationGizmoDefinition = {
     }).join(' ');
     
     return (
-      <g className="spring-physics-gizmo">
+      <g className="spring-physics-gizmo" style={{ pointerEvents: 'none' }}>
         <path
           d={coilPath}
           fill="none"
@@ -391,7 +362,7 @@ const particleEmitGizmoDefinition: AnimationGizmoDefinition = {
     const endAngle = -90 + halfSpread;
     
     return (
-      <g className="particle-emit-gizmo">
+      <g className="particle-emit-gizmo" style={{ pointerEvents: 'none' }}>
         <path
           d={`M ${cx} ${cy} L ${cx + r * Math.cos(startAngle * Math.PI / 180)} ${cy + r * Math.sin(startAngle * Math.PI / 180)} A ${r} ${r} 0 0 1 ${cx + r * Math.cos(endAngle * Math.PI / 180)} ${cy + r * Math.sin(endAngle * Math.PI / 180)} Z`}
           fill={color}
@@ -527,7 +498,7 @@ const waveDistortionGizmoDefinition: AnimationGizmoDefinition = {
     }).join(' ');
     
     return (
-      <g className="wave-distortion-gizmo">
+      <g className="wave-distortion-gizmo" style={{ pointerEvents: 'none' }}>
         <path
           d={wavePath}
           fill="none"
@@ -662,7 +633,7 @@ const noiseGizmoDefinition: AnimationGizmoDefinition = {
     });
     
     return (
-      <g className="noise-gizmo">
+      <g className="noise-gizmo" style={{ pointerEvents: 'none' }}>
         {dots.map((dot, i) => (
           <circle
             key={`dot-${dot.x}-${dot.y}`}
@@ -760,7 +731,7 @@ const parallaxGizmoDefinition: AnimationGizmoDefinition = {
     const layers = 3;
     
     return (
-      <g className="parallax-gizmo">
+      <g className="parallax-gizmo" style={{ pointerEvents: 'none' }}>
         {Array.from({ length: layers }).map((_, i) => {
           const layerDepth = (i + 1) / layers;
           const offset = (depth - 0.5) * 20 * layerDepth / viewport.zoom;
@@ -865,7 +836,7 @@ const elasticGizmoDefinition: AnimationGizmoDefinition = {
     }).join(' ');
     
     return (
-      <g className="elastic-gizmo">
+      <g className="elastic-gizmo" style={{ pointerEvents: 'none' }}>
         <path d={elasticPath} fill="none" stroke={color} strokeWidth={2 / viewport.zoom} />
         <line
           x1={minX}
@@ -963,7 +934,7 @@ const bounceGizmoDefinition: AnimationGizmoDefinition = {
     }
     
     return (
-      <g className="bounce-gizmo">
+      <g className="bounce-gizmo" style={{ pointerEvents: 'none' }}>
         <path d={path} fill="none" stroke={color} strokeWidth={2 / viewport.zoom} />
         <circle cx={cx} cy={minY} r={4 / viewport.zoom} fill={color} />
         <line
@@ -1055,7 +1026,7 @@ const jiggleGizmoDefinition: AnimationGizmoDefinition = {
     ];
     
     return (
-      <g className="jiggle-gizmo">
+      <g className="jiggle-gizmo" style={{ pointerEvents: 'none' }}>
         {jiggleOffsets.map((offset, i) => (
           <rect
             key={`jiggle-${offset.x}-${offset.y}`}
@@ -1183,7 +1154,7 @@ const orbitGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#38BDF8' : '#0284C7';
     
     return (
-      <g className="orbit-gizmo">
+      <g className="orbit-gizmo" style={{ pointerEvents: 'none' }}>
         <circle
           cx={cx}
           cy={cy}
@@ -1320,7 +1291,7 @@ const spiralGizmoDefinition: AnimationGizmoDefinition = {
     }).join(' ');
     
     return (
-      <g className="spiral-gizmo">
+      <g className="spiral-gizmo" style={{ pointerEvents: 'none' }}>
         <path d={spiralPath} fill="none" stroke={color} strokeWidth={1.5 / viewport.zoom} />
         <circle cx={cx} cy={cy} r={3 / viewport.zoom} fill={color} />
       </g>

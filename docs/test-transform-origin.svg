@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Transform Origin Gizmo Test</title>
+  <desc>A rectangle with animated transform-origin.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Transform Origin Gizmo Test</text>
+
+  <rect x="140" y="80" width="120" height="120" rx="8" fill="#38a169" stroke="#2f855a" stroke-width="2"
+        transform-origin="200 140">
+    <animate
+      attributeName="transform-origin"
+      from="200 140"
+      to="260 200"
+      dur="2s"
+      repeatCount="indefinite"
+      fill="freeze"
+    />
+    <animateTransform attributeName="transform" type="rotate" from="0" to="45" dur="2s" repeatCount="indefinite" />
+  </rect>
+</svg>

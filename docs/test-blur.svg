@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <title>Blur Gizmo Test</title>
+  <desc>A rectangle with animated Gaussian blur.</desc>
+
+  <rect width="400" height="300" fill="#f0f4f8" />
+  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Blur Gizmo Test</text>
+
+  <defs>
+    <filter id="blur-filter" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0">
+        <animate
+          attributeName="stdDeviation"
+          from="0"
+          to="10"
+          dur="2s"
+          repeatCount="indefinite"
+          fill="freeze"
+        />
+      </feGaussianBlur>
+    </filter>
+  </defs>
+
+  <rect x="120" y="70" width="160" height="140" rx="12" fill="#e53e3e" stroke="#c53030" stroke-width="2"
+        filter="url(#blur-filter)" />
+</svg>

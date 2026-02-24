@@ -1451,7 +1451,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           <g data-handle="skew-horizontal" style={{ cursor: 'ew-resize' }}>
             <rect
               x={elementCenter.x + displaySkewX - 15 / viewport.zoom}
-              y={elementBounds.minY - 28 / viewport.zoom}
+              y={elementBounds.minY - 48 / viewport.zoom}
               width={30 / viewport.zoom}
               height={16 / viewport.zoom}
               fill="white"
@@ -1461,7 +1461,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
             />
             <text
               x={elementCenter.x + displaySkewX}
-              y={elementBounds.minY - 16 / viewport.zoom}
+              y={elementBounds.minY - 36 / viewport.zoom}
               fontSize={10 / viewport.zoom}
               fill={strokeColor}
               textAnchor="middle"
@@ -1474,7 +1474,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           {isMultiKeyframeValues && activeAxis === 'x' && (
             <text
               x={elementCenter.x + displaySkewX}
-              y={elementBounds.minY - 36 / viewport.zoom}
+              y={elementBounds.minY - 56 / viewport.zoom}
               fontSize={8 / viewport.zoom}
               fill={intermediateColor}
               textAnchor="middle"
@@ -1487,7 +1487,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           {/* Vertical skew handle */}
           <g data-handle="skew-vertical" style={{ cursor: 'ns-resize' }}>
             <rect
-              x={elementBounds.maxX + 12 / viewport.zoom}
+              x={elementBounds.maxX + 32 / viewport.zoom}
               y={elementCenter.y + displaySkewY - 8 / viewport.zoom}
               width={30 / viewport.zoom}
               height={16 / viewport.zoom}
@@ -1497,7 +1497,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
               rx={4 / viewport.zoom}
             />
             <text
-              x={elementBounds.maxX + 27 / viewport.zoom}
+              x={elementBounds.maxX + 47 / viewport.zoom}
               y={elementCenter.y + displaySkewY + 4 / viewport.zoom}
               fontSize={10 / viewport.zoom}
               fill={strokeColor}
@@ -1510,7 +1510,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           
           {isMultiKeyframeValues && activeAxis === 'y' && (
             <text
-              x={elementBounds.maxX + 27 / viewport.zoom}
+              x={elementBounds.maxX + 47 / viewport.zoom}
               y={elementCenter.y + displaySkewY - 16 / viewport.zoom}
               fontSize={8 / viewport.zoom}
               fill={intermediateColor}

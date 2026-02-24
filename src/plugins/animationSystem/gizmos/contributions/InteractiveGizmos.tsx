@@ -377,8 +377,10 @@ const focusStateGizmoDefinition: AnimationGizmoDefinition = {
         ctx.updateState({ focusRingSize: Math.max(1, current + delta.x / 5) });
       },
       onDragEnd: (ctx) => {
+        const ringSize = ctx.state.props.focusRingSize as number;
         ctx.updateAnimation({
           begin: 'focus',
+          to: `${ringSize}`,
         });
         ctx.commitChanges();
       },
@@ -391,18 +393,34 @@ const focusStateGizmoDefinition: AnimationGizmoDefinition = {
     return animation.begin === 'focus' || animation.begin === 'focusin';
   },
   
-  fromAnimation: (animation, element): GizmoState => ({
-    gizmoId: 'focus-state',
-    animationId: animation.id,
-    elementId: element.id,
-    isFocused: false,
-    props: { focusRingSize: 4 },
-    interaction: createDefaultInteraction(),
-  }),
+  fromAnimation: (animation, element): GizmoState => {
+    const fromValue = parseFloat(String(animation.from ?? '0'));
+    const toValue = parseFloat(String(animation.to ?? '4'));
+    
+    return {
+      gizmoId: 'focus-state',
+      animationId: animation.id,
+      elementId: element.id,
+      isFocused: false,
+      props: { 
+        focusRingSize: toValue,
+        fromRingSize: fromValue,
+        toRingSize: toValue,
+        activeKeyframeIndex: 0,
+      },
+      interaction: createDefaultInteraction(),
+    };
+  },
   
-  toAnimation: (_state): Partial<SVGAnimation> => ({
-    begin: 'focus',
-  }),
+  toAnimation: (state): Partial<SVGAnimation> => {
+    const fromRingSize = (state.props.fromRingSize as number) ?? 0;
+    const toRingSize = (state.props.toRingSize as number) ?? 4;
+    return {
+      begin: 'focus',
+      from: String(fromRingSize),
+      to: String(toRingSize),
+    };
+  },
   
   render: (ctx) => {
     const { elementBounds, viewport, colorMode } = ctx;

@@ -528,12 +528,62 @@ function createColorHandles(ctx: GizmoContext): GizmoHandle[] {
           y: maxY + 26 / ctx.viewport.zoom,
         };
       },
-      onDrag: (_delta, _ctx) => {
-        // Color editing not implemented in drag - would need color picker
-        // For now, handle is just a visual indicator
+      onDrag: (delta, ctx) => {
+        // Shift hue based on horizontal drag
+        const activeColor = getActiveColor(ctx);
+        const activeKeyframeIndex = (ctx.state.props.activeKeyframeIndex as number) ?? 0;
+        const hasValues = ctx.state.props.hasValues as boolean;
+        const keyframes = (ctx.state.props.keyframes as string[]) ?? [];
+        
+        // Parse hex to RGB, shift hue
+        const r = parseInt(activeColor.slice(1, 3), 16) || 0;
+        const g = parseInt(activeColor.slice(3, 5), 16) || 0;
+        const b = parseInt(activeColor.slice(5, 7), 16) || 0;
+        
+        // Simple hue shift via channel rotation
+        const shift = Math.round(delta.x * 2);
+        const nr = Math.max(0, Math.min(255, r + shift));
+        const ng = Math.max(0, Math.min(255, g - shift));
+        const nb = Math.max(0, Math.min(255, b + Math.round(delta.y * 2)));
+        const newColor = `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`;
+        
+        if (hasValues && keyframes.length > 0) {
+          const updatedKeyframes = [...keyframes];
+          updatedKeyframes[activeKeyframeIndex] = newColor;
+          const updates: Record<string, unknown> = { keyframes: updatedKeyframes };
+          if (activeKeyframeIndex === 0) updates.fromColor = newColor;
+          if (activeKeyframeIndex === keyframes.length - 1) updates.toColor = newColor;
+          ctx.updateState(updates);
+        } else {
+          if (activeKeyframeIndex === 0) {
+            ctx.updateState({ fromColor: newColor });
+          } else {
+            ctx.updateState({ toColor: newColor });
+          }
+        }
       },
-      onDragEnd: (_ctx) => {
-        // Could open color picker here in the future
+      onDragEnd: (ctx) => {
+        const hasValues = ctx.state.props.hasValues as boolean;
+        const keyframes = ctx.state.props.keyframes as string[];
+        const fromColor = ctx.state.props.fromColor as string;
+        const toColor = ctx.state.props.toColor as string;
+        const attributeName = (ctx.state.props.attributeName as string) ?? 'fill';
+        
+        if (hasValues && keyframes.length > 0) {
+          ctx.updateAnimation({
+            attributeName,
+            values: formatStyleValuesKeyframes(keyframes),
+            from: undefined,
+            to: undefined,
+          });
+        } else {
+          ctx.updateAnimation({
+            attributeName,
+            from: fromColor,
+            to: toColor,
+          });
+        }
+        ctx.commitChanges();
       },
       cursor: 'pointer',
       tooltip: `Color: ${getActiveColor(ctx)}`,

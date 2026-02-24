@@ -1,20 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Letter Spacing Gizmo Test</title>
-  <desc>Text with animated letter-spacing.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Letter Spacing Gizmo Test</text>
-
-  <text x="200" y="160" text-anchor="middle" font-size="28" fill="#805ad5" font-weight="bold"
-        letter-spacing="0">
-    ANIMATE
-    <animate
-      attributeName="letter-spacing"
-      from="0"
-      to="20"
-      dur="2s"
-      repeatCount="indefinite"
-      fill="freeze"
-    />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Letter Spacing Gizmo (32) — canHandle: attributeName="letter-spacing" -->
+  <text x="30" y="110" font-size="28" fill="#D97706" font-family="Arial" letter-spacing="0">
+    ABCD
+    <animate attributeName="letter-spacing" from="0px" to="15px" dur="3s" repeatCount="indefinite" fill="freeze" />
   </text>
 </svg>

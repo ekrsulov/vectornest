@@ -1,23 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Spring Physics Gizmo Test</title>
-  <desc>A rectangle with spring easing animation.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Spring Physics Gizmo Test</text>
-
-  <rect x="50" y="120" width="60" height="60" rx="8" fill="#e53e3e" stroke="#c53030" stroke-width="2">
-    <animateTransform
-      attributeName="transform"
-      type="translate"
-      from="0 0"
-      to="240 0"
-      dur="1.5s"
-      repeatCount="indefinite"
-      fill="freeze"
-      calcMode="spline"
-      keySplines="0.5 1.8 0.6 0.8"
-    />
-  </rect>
-
-  <text x="200" y="260" text-anchor="middle" font-size="12" fill="#718096">Spring easing: stiffness and damping controls</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Spring Physics Gizmo (35) — canHandle: easing starts with "spring" -->
+  <!-- Note: Spring easing is VN-specific. Animation uses spline approximation for browser preview. -->
+  <!-- In VectorNest, add easing="spring(100,10,1)" via the animation editor. -->
+  <circle cx="100" cy="100" r="30" fill="#DB2777">
+    <animate attributeName="cy" from="40" to="160" dur="1s" repeatCount="indefinite" fill="freeze"
+             calcMode="spline" keyTimes="0;1" keySplines="0.5 0 0.5 1" />
+  </circle>
 </svg>

@@ -306,7 +306,9 @@ const radialGradientGizmoDefinition: AnimationGizmoDefinition = {
   ],
   
   canHandle: (animation) => {
-    return animation.type === 'animate' && 
+    // Exclude interactive triggers (click, hover, focus, scroll) — those belong to interactive gizmos
+    const interactiveBegin = animation.begin && /click|mouse|focus|scroll/.test(animation.begin);
+    return animation.type === 'animate' && !interactiveBegin &&
       (animation.attributeName === 'cx' || animation.attributeName === 'cy' ||
        animation.attributeName === 'r' || animation.attributeName === 'fr');
   },

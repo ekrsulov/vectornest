@@ -1,24 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Particle Emit Gizmo Test</title>
-  <desc>A particle emission point with spread angle.</desc>
-
-  <rect width="400" height="300" fill="#1a202c" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#e2e8f0">Particle Emit Gizmo Test</text>
-
-  <!-- Simulated particles -->
-  <circle cx="200" cy="150" r="3" fill="#f6e05e" opacity="0.8">
-    <animateTransform attributeName="transform" type="translate" from="0 0" to="80 -60" dur="1.5s" repeatCount="indefinite" />
-    <animate attributeName="opacity" from="1" to="0" dur="1.5s" repeatCount="indefinite" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Particle Emit Gizmo (36) — canHandle: type="custom" attributeName="particle-emit" -->
+  <!-- Note: Particle emit is VN-specific custom type. Cannot be triggered from SVG import. -->
+  <!-- Use VectorNest's animation editor to configure particle settings. -->
+  <circle cx="100" cy="100" r="30" fill="#F59E0B">
+    <animate attributeName="opacity" from="1" to="0.3" dur="1s" repeatCount="indefinite" fill="freeze" />
   </circle>
-  <circle cx="200" cy="150" r="2" fill="#fc8181" opacity="0.8">
-    <animateTransform attributeName="transform" type="translate" from="0 0" to="-40 -90" dur="1.2s" repeatCount="indefinite" />
-    <animate attributeName="opacity" from="1" to="0" dur="1.2s" repeatCount="indefinite" />
-  </circle>
-  <circle cx="200" cy="150" r="2.5" fill="#68d391" opacity="0.8">
-    <animateTransform attributeName="transform" type="translate" from="0 0" to="20 -100" dur="1s" repeatCount="indefinite" />
-    <animate attributeName="opacity" from="1" to="0" dur="1s" repeatCount="indefinite" />
-  </circle>
-
-  <!-- Emission origin marker -->
-  <circle cx="200" cy="150" r="6" fill="none" stroke="#f6e05e" stroke-width="2" />
 </svg>

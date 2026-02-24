@@ -1,19 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Drop Shadow Gizmo Test</title>
-  <desc>A rectangle with animated drop shadow offset.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Drop Shadow Gizmo Test</text>
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Drop Shadow Gizmo (19) — canHandle: attributeName in [dx, dy, flood-opacity] -->
   <defs>
-    <filter id="shadow-filter" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#000" flood-opacity="0.5">
-        <animate attributeName="dx" from="0" to="15" dur="2s" repeatCount="indefinite" fill="freeze" />
-        <animate attributeName="dy" from="0" to="10" dur="2s" repeatCount="indefinite" fill="freeze" />
+    <filter id="ds1">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.5">
+        <animate attributeName="dx" from="0" to="10" dur="2s" repeatCount="indefinite" fill="freeze" />
       </feDropShadow>
     </filter>
   </defs>
-
-  <rect x="130" y="80" width="140" height="120" rx="12" fill="#3182ce" stroke="#2b6cb0" stroke-width="2"
-        filter="url(#shadow-filter)" />
+  <rect x="40" y="40" width="120" height="120" fill="#F59E0B" rx="8" filter="url(#ds1)" />
 </svg>

@@ -1,21 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Parent Inherit Gizmo Test</title>
-  <desc>Nested elements with animated inherit-transform factor.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Parent Inherit Gizmo Test</text>
-
-  <g transform="translate(200,150)">
-    <rect x="-80" y="-60" width="160" height="120" fill="none" stroke="#a0aec0" stroke-width="1" stroke-dasharray="4 4" />
-    <rect x="-40" y="-30" width="80" height="60" rx="6" fill="#805ad5" stroke="#6b46c1" stroke-width="2">
-      <animate
-        attributeName="inherit-transform"
-        from="0"
-        to="1"
-        dur="2s"
-        repeatCount="indefinite"
-        fill="freeze"
-      />
-    </rect>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Parent Inherit Gizmo (23) — canHandle: attributeName="inherit-transform" -->
+  <!-- Note: inherit-transform is VN-specific. Opacity animation provides visual in browser. -->
+  <rect x="50" y="50" width="100" height="100" fill="#059669" rx="8">
+    <animate attributeName="inherit-transform" from="1" to="0.5" dur="2s" repeatCount="indefinite" fill="freeze" />
+    <animate attributeName="opacity" from="1" to="0.5" dur="2s" repeatCount="indefinite" fill="freeze" />
+  </rect>
 </svg>

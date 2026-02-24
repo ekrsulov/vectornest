@@ -1,23 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Orbit Gizmo Test</title>
-  <desc>A small circle orbiting around a center point.</desc>
-
-  <rect width="400" height="300" fill="#1a202c" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#e2e8f0">Orbit Gizmo Test</text>
-
-  <!-- Orbit path guide -->
-  <circle cx="200" cy="150" r="80" fill="none" stroke="#4a5568" stroke-width="1" stroke-dasharray="4 4" />
-
-  <!-- Center point -->
-  <circle cx="200" cy="150" r="4" fill="#f6e05e" />
-
-  <!-- Orbiting element -->
-  <circle r="10" fill="#63b3ed" stroke="#3182ce" stroke-width="2">
-    <animateMotion
-      path="M 280,150 A 80 80 0 1 1 120,150 A 80 80 0 1 1 280,150"
-      dur="3s"
-      repeatCount="indefinite"
-      rotate="auto"
-    />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Orbit Gizmo (43) — canHandle: type="animateMotion" && path includes "A" (arc) -->
+  <circle cx="0" cy="0" r="15" fill="#F472B6">
+    <animateMotion dur="4s" repeatCount="indefinite" fill="freeze"
+                   path="M 100 50 A 50 50 0 1 1 99.9 50" />
   </circle>
 </svg>

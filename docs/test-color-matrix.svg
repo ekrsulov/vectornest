@@ -1,32 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Color Matrix Gizmo Test</title>
-  <desc>A colorful image with animated feColorMatrix hue rotation.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Color Matrix Gizmo Test</text>
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Color Matrix Gizmo (20) — canHandle: attributeName="values" + targetElementId includes "feColorMatrix" -->
   <defs>
-    <filter id="cm-filter">
-      <feColorMatrix id="feColorMatrix-test" type="hueRotate" values="0">
-        <animate
-          attributeName="values"
-          from="0"
-          to="360"
-          dur="4s"
-          repeatCount="indefinite"
-          fill="freeze"
-        />
+    <filter id="cm1">
+      <feColorMatrix id="feColorMatrix1" type="hueRotate" values="0">
+        <animate attributeName="values" from="0" to="360" dur="4s" repeatCount="indefinite" fill="freeze" />
       </feColorMatrix>
     </filter>
   </defs>
-
-  <!-- Colorful element group -->
-  <g filter="url(#cm-filter)">
-    <rect x="120" y="60" width="60" height="80" fill="#e53e3e" />
-    <rect x="180" y="60" width="60" height="80" fill="#38a169" />
-    <rect x="240" y="60" width="60" height="80" fill="#3182ce" />
-    <rect x="120" y="140" width="60" height="80" fill="#d69e2e" />
-    <rect x="180" y="140" width="60" height="80" fill="#805ad5" />
-    <rect x="240" y="140" width="60" height="80" fill="#dd6b20" />
-  </g>
+  <rect x="20" y="20" width="160" height="160" fill="#EC4899" rx="8" filter="url(#cm1)" />
 </svg>

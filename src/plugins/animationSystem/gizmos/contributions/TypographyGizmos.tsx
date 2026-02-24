@@ -177,27 +177,64 @@ const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
       id: 'spacing',
       type: 'value',
       getPosition: (ctx) => {
-        const spacing = (ctx.state.props.letterSpacing as number) ?? 0;
+        const activeKeyframeIndex = (ctx.state.props.activeKeyframeIndex as number) ?? 0;
+        const hasValues = ctx.state.props.hasValues as boolean;
+        const keyframes = (ctx.state.props.keyframes as string[]) ?? [];
+        const fromSpacing = (ctx.state.props.fromSpacing as number) ?? 0;
+        const toSpacing = (ctx.state.props.toSpacing as number) ?? 0;
+        
+        let spacing: number;
+        if (hasValues && keyframes.length > 0) {
+          spacing = parseFloat(keyframes[activeKeyframeIndex] || '0');
+        } else {
+          spacing = activeKeyframeIndex === 0 ? fromSpacing : toSpacing;
+        }
+        
         const { maxX, minY, maxY } = ctx.elementBounds;
         return { x: maxX + 15 / ctx.viewport.zoom + spacing * 5, y: (minY + maxY) / 2 };
       },
       onDrag: (delta, ctx) => {
-        const current = (ctx.state.props.letterSpacing as number) ?? 0;
-        ctx.updateState({ letterSpacing: Math.max(-5, current + delta.x / 5) });
-      },
-      onDragEnd: (ctx) => {
-        const letterSpacing = ctx.state.props.letterSpacing as number;
+        const activeKeyframeIndex = (ctx.state.props.activeKeyframeIndex as number) ?? 0;
         const hasValues = ctx.state.props.hasValues as boolean;
-        const keyframes = ctx.state.props.keyframes as string[];
-        const value = `${letterSpacing}px`;
+        const keyframes = (ctx.state.props.keyframes as string[]) ?? [];
+        const fromSpacing = (ctx.state.props.fromSpacing as number) ?? 0;
+        const toSpacing = (ctx.state.props.toSpacing as number) ?? 0;
+        
+        let current: number;
+        if (hasValues && keyframes.length > 0) {
+          current = parseFloat(keyframes[activeKeyframeIndex] || '0');
+        } else {
+          current = activeKeyframeIndex === 0 ? fromSpacing : toSpacing;
+        }
+        
+        const newSpacing = Math.max(-5, current + delta.x / 5);
         
         if (hasValues && keyframes.length > 0) {
           const updatedKeyframes = [...keyframes];
-          updatedKeyframes[updatedKeyframes.length - 1] = value;
+          updatedKeyframes[activeKeyframeIndex] = `${newSpacing}px`;
+          const updates: Record<string, unknown> = { keyframes: updatedKeyframes };
+          if (activeKeyframeIndex === 0) updates.fromSpacing = newSpacing;
+          if (activeKeyframeIndex === keyframes.length - 1) updates.toSpacing = newSpacing;
+          ctx.updateState(updates);
+        } else {
+          if (activeKeyframeIndex === 0) {
+            ctx.updateState({ fromSpacing: newSpacing });
+          } else {
+            ctx.updateState({ toSpacing: newSpacing });
+          }
+        }
+      },
+      onDragEnd: (ctx) => {
+        const hasValues = ctx.state.props.hasValues as boolean;
+        const keyframes = ctx.state.props.keyframes as string[];
+        const fromSpacing = ctx.state.props.fromSpacing as number;
+        const toSpacing = ctx.state.props.toSpacing as number;
+        
+        if (hasValues && keyframes.length > 0) {
           ctx.updateAnimation({
             type: 'animate',
             attributeName: 'letter-spacing',
-            values: formatStyleValuesKeyframes(updatedKeyframes),
+            values: formatStyleValuesKeyframes(keyframes),
             from: undefined,
             to: undefined,
           });
@@ -205,7 +242,8 @@ const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
           ctx.updateAnimation({
             type: 'animate',
             attributeName: 'letter-spacing',
-            to: value,
+            from: `${fromSpacing}px`,
+            to: `${toSpacing}px`,
           });
         }
         ctx.commitChanges();
@@ -220,7 +258,9 @@ const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
   },
   
   fromAnimation: (animation, element): GizmoState => {
-    const { to, hasValues, keyframes } = extractStyleAnimationValues(animation);
+    const { from, to, hasValues, keyframes } = extractStyleAnimationValues(animation);
+    const fromSpacing = parseFloat(from || '0');
+    const toSpacing = parseFloat(to || '0');
     
     return {
       gizmoId: 'letter-spacing',
@@ -228,23 +268,26 @@ const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
       elementId: element.id,
       isFocused: false,
       props: { 
-        letterSpacing: parseFloat(to || '0'),
+        fromSpacing,
+        toSpacing,
         hasValues,
         keyframes,
+        activeKeyframeIndex: 0,
       },
       interaction: createDefaultInteraction(),
     };
   },
   
   toAnimation: (state): Partial<SVGAnimation> => {
-    const letterSpacing = state.props.letterSpacing as number;
+    const fromSpacing = state.props.fromSpacing as number;
+    const toSpacing = state.props.toSpacing as number;
     const hasValues = state.props.hasValues as boolean;
     const keyframes = state.props.keyframes as string[];
-    const value = `${letterSpacing}px`;
     
     if (hasValues && keyframes.length > 0) {
       const updatedKeyframes = [...keyframes];
-      updatedKeyframes[updatedKeyframes.length - 1] = value;
+      updatedKeyframes[0] = `${fromSpacing}px`;
+      updatedKeyframes[updatedKeyframes.length - 1] = `${toSpacing}px`;
       return {
         type: 'animate',
         attributeName: 'letter-spacing',
@@ -257,14 +300,28 @@ const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
     return {
       type: 'animate',
       attributeName: 'letter-spacing',
-      to: value,
+      from: `${fromSpacing}px`,
+      to: `${toSpacing}px`,
     };
   },
   
   render: (ctx) => {
     const { elementBounds, viewport, colorMode } = ctx;
     const { minX, maxX, minY: _minY, maxY } = elementBounds;
-    const spacing = (ctx.state.props.letterSpacing as number) ?? 0;
+    const activeKeyframeIndex = (ctx.state.props.activeKeyframeIndex as number) ?? 0;
+    const hasValues = ctx.state.props.hasValues as boolean;
+    const keyframes = (ctx.state.props.keyframes as string[]) ?? [];
+    const fromSpacing = (ctx.state.props.fromSpacing as number) ?? 0;
+    const toSpacing = (ctx.state.props.toSpacing as number) ?? 0;
+    
+    let spacing: number;
+    if (hasValues && keyframes.length > 0) {
+      spacing = parseFloat(keyframes[activeKeyframeIndex] || '0');
+    } else {
+      spacing = activeKeyframeIndex === 0 ? fromSpacing : toSpacing;
+    }
+    const numKeyframes = hasValues ? keyframes.length : 2;
+    
     const color = colorMode === 'dark' ? '#FBBF24' : '#D97706';
     
     // Visualize letters spreading
@@ -296,6 +353,15 @@ const letterSpacingGizmoDefinition: AnimationGizmoDefinition = {
           markerEnd="url(#arrow)"
           markerStart="url(#arrow)"
         />
+        <text
+          x={minX + baseSpacing * 1.5}
+          y={maxY + 48 / viewport.zoom}
+          fontSize={9 / viewport.zoom}
+          fill={color}
+          textAnchor="middle"
+        >
+          {spacing.toFixed(1)}px (frame {activeKeyframeIndex + 1}/{numKeyframes})
+        </text>
       </g>
     );
   },
@@ -528,14 +594,26 @@ const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
         const fontWidth = ctx.state.props.fontWidth as number;
         const hasValues = ctx.state.props.hasValues as boolean;
         const keyframes = ctx.state.props.keyframes as string[];
-        const value = `"wght" ${fontWeight}, "wdth" ${fontWidth}`;
+        const attrName = (ctx.state.props.originalAttributeName as string) ?? 'font-variation-settings';
+        const activeKeyframeIndex = (ctx.state.props.activeKeyframeIndex as number) ?? 0;
+        
+        // Update corresponding from/to prop
+        if (activeKeyframeIndex === 0) {
+          ctx.updateState({ fromWeight: fontWeight });
+        } else {
+          ctx.updateState({ toWeight: fontWeight });
+        }
+        
+        const value = attrName === 'font-weight' 
+          ? String(fontWeight) 
+          : `"wght" ${fontWeight}, "wdth" ${fontWidth}`;
         
         if (hasValues && keyframes.length > 0) {
           const updatedKeyframes = [...keyframes];
           updatedKeyframes[updatedKeyframes.length - 1] = value;
           ctx.updateAnimation({
             type: 'animate',
-            attributeName: 'font-variation-settings',
+            attributeName: attrName,
             values: formatStyleValuesKeyframes(updatedKeyframes),
             from: undefined,
             to: undefined,
@@ -543,7 +621,7 @@ const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
         } else {
           ctx.updateAnimation({
             type: 'animate',
-            attributeName: 'font-variation-settings',
+            attributeName: attrName,
             to: value,
           });
         }
@@ -573,14 +651,26 @@ const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
         const fontWidth = ctx.state.props.fontWidth as number;
         const hasValues = ctx.state.props.hasValues as boolean;
         const keyframes = ctx.state.props.keyframes as string[];
-        const value = `"wght" ${fontWeight}, "wdth" ${fontWidth}`;
+        const attrName = (ctx.state.props.originalAttributeName as string) ?? 'font-variation-settings';
+        const activeKeyframeIndex = (ctx.state.props.activeKeyframeIndex as number) ?? 0;
+        
+        // Update corresponding from/to prop
+        if (activeKeyframeIndex === 0) {
+          ctx.updateState({ fromWidth: fontWidth });
+        } else {
+          ctx.updateState({ toWidth: fontWidth });
+        }
+        
+        const value = attrName === 'font-weight'
+          ? String(fontWeight)
+          : `"wght" ${fontWeight}, "wdth" ${fontWidth}`;
         
         if (hasValues && keyframes.length > 0) {
           const updatedKeyframes = [...keyframes];
           updatedKeyframes[updatedKeyframes.length - 1] = value;
           ctx.updateAnimation({
             type: 'animate',
-            attributeName: 'font-variation-settings',
+            attributeName: attrName,
             values: formatStyleValuesKeyframes(updatedKeyframes),
             from: undefined,
             to: undefined,
@@ -588,7 +678,7 @@ const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
         } else {
           ctx.updateAnimation({
             type: 'animate',
-            attributeName: 'font-variation-settings',
+            attributeName: attrName,
             to: value,
           });
         }
@@ -606,7 +696,38 @@ const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
   },
   
   fromAnimation: (animation, element): GizmoState => {
-    const { hasValues, keyframes } = extractStyleAnimationValues(animation);
+    const { from, to, hasValues, keyframes } = extractStyleAnimationValues(animation);
+    
+    // Parse font weight from animation values
+    let fromWeight = 400;
+    let toWeight = 400;
+    let fromWidth = 100;
+    let toWidth = 100;
+    
+    if (animation.attributeName === 'font-weight') {
+      fromWeight = parseFloat(from || '400');
+      toWeight = parseFloat(to || '400');
+    } else {
+      // Parse font-variation-settings format: "wght" 400, "wdth" 100
+      const parseVariation = (val: string) => {
+        const wMatch = val.match(/wght["']?\s*([\d.]+)/i);
+        const dMatch = val.match(/wdth["']?\s*([\d.]+)/i);
+        return {
+          weight: wMatch ? parseFloat(wMatch[1]) : 400,
+          width: dMatch ? parseFloat(dMatch[1]) : 100,
+        };
+      };
+      if (from) {
+        const parsed = parseVariation(from);
+        fromWeight = parsed.weight;
+        fromWidth = parsed.width;
+      }
+      if (to) {
+        const parsed = parseVariation(to);
+        toWeight = parsed.weight;
+        toWidth = parsed.width;
+      }
+    }
     
     return {
       gizmoId: 'font-variation',
@@ -614,25 +735,60 @@ const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
       elementId: element.id,
       isFocused: false,
       props: { 
-        fontWeight: 400, 
-        fontWidth: 100,
+        fontWeight: toWeight,
+        fontWidth: toWidth,
+        fromWeight,
+        toWeight,
+        fromWidth,
+        toWidth,
+        originalAttributeName: animation.attributeName,
         hasValues,
         keyframes,
+        activeKeyframeIndex: 0,
       },
       interaction: createDefaultInteraction(),
     };
   },
   
   toAnimation: (state): Partial<SVGAnimation> => {
-    const fontWeight = state.props.fontWeight as number;
-    const fontWidth = state.props.fontWidth as number;
+    const fromWeight = state.props.fromWeight as number;
+    const toWeight = state.props.toWeight as number;
     const hasValues = state.props.hasValues as boolean;
     const keyframes = state.props.keyframes as string[];
-    const value = `"wght" ${fontWeight}, "wdth" ${fontWidth}`;
+    const attrName = (state.props.originalAttributeName as string) ?? 'font-variation-settings';
+    
+    // For plain font-weight, output simple numeric values
+    if (attrName === 'font-weight') {
+      if (hasValues && keyframes.length > 0) {
+        const updatedKeyframes = [...keyframes];
+        updatedKeyframes[0] = String(fromWeight);
+        updatedKeyframes[updatedKeyframes.length - 1] = String(toWeight);
+        return {
+          type: 'animate',
+          attributeName: 'font-weight',
+          values: formatStyleValuesKeyframes(updatedKeyframes),
+          from: undefined,
+          to: undefined,
+        };
+      }
+      return {
+        type: 'animate',
+        attributeName: 'font-weight',
+        from: String(fromWeight),
+        to: String(toWeight),
+      };
+    }
+    
+    // For font-variation-settings, use full format
+    const fromWidth = state.props.fromWidth as number;
+    const toWidth = state.props.toWidth as number;
+    const fromValue = `"wght" ${fromWeight}, "wdth" ${fromWidth}`;
+    const toValue = `"wght" ${toWeight}, "wdth" ${toWidth}`;
     
     if (hasValues && keyframes.length > 0) {
       const updatedKeyframes = [...keyframes];
-      updatedKeyframes[updatedKeyframes.length - 1] = value;
+      updatedKeyframes[0] = fromValue;
+      updatedKeyframes[updatedKeyframes.length - 1] = toValue;
       return {
         type: 'animate',
         attributeName: 'font-variation-settings',
@@ -645,7 +801,8 @@ const fontVariationGizmoDefinition: AnimationGizmoDefinition = {
     return {
       type: 'animate',
       attributeName: 'font-variation-settings',
-      to: value,
+      from: fromValue,
+      to: toValue,
     };
   },
   

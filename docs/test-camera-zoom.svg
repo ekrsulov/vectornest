@@ -1,27 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Camera Zoom Gizmo Test</title>
-  <desc>A viewport zooming into the center of a scene.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Camera Zoom Gizmo Test</text>
-
-  <g transform-origin="200 150">
-    <circle cx="200" cy="150" r="40" fill="#e53e3e" />
-    <circle cx="200" cy="150" r="70" fill="none" stroke="#e53e3e" stroke-width="1" opacity="0.3" />
-    <circle cx="200" cy="150" r="100" fill="none" stroke="#e53e3e" stroke-width="1" opacity="0.15" />
-
-    <animateTransform
-      attributeName="transform"
-      type="scale"
-      from="1"
-      to="2"
-      dur="3s"
-      repeatCount="indefinite"
-      fill="freeze"
-    />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Camera Zoom Gizmo (46) — canHandle: type="custom" attributeName="camera-zoom" -->
+  <!-- Note: Camera zoom is VN-specific custom type. SVG uses scale transform for browser preview. -->
+  <g transform="translate(100,100)">
+    <rect x="-40" y="-40" width="80" height="80" fill="#2563EB" rx="4">
+      <animateTransform attributeName="transform" type="scale" from="1" to="2" dur="3s" repeatCount="indefinite" fill="freeze" additive="sum" />
+    </rect>
   </g>
-
-  <!-- Zoom crosshair -->
-  <line x1="195" y1="150" x2="205" y2="150" stroke="#4a5568" stroke-width="1" />
-  <line x1="200" y1="145" x2="200" y2="155" stroke="#4a5568" stroke-width="1" />
 </svg>

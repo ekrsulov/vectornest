@@ -172,18 +172,50 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
     [elementMap, viewport.zoom]
   );
 
+  /**
+   * Find an element that uses a def (filter, gradient, pattern, mask, clipPath, marker).
+   * For def-based animations, the targetElementId is the def ID, not the using element.
+   * This resolves to the canvas element that references the def.
+   */
+  const findElementForDefAnimation = useCallback(
+    (animation: SVGAnimation): CanvasElement | undefined => {
+      const anim = animation as unknown as Record<string, unknown>;
+      const defId = anim.filterTargetId ?? anim.gradientTargetId ?? anim.patternTargetId ??
+        anim.maskTargetId ?? anim.clipPathTargetId ?? anim.markerTargetId;
+      if (typeof defId !== 'string') return undefined;
+
+      // Search for an element that references this def ID
+      for (const el of elements) {
+        const data = el.data as Record<string, unknown> | undefined;
+        if (!data) continue;
+        if (data.filterId === defId) return el;
+        if (data.maskId === defId) return el;
+        if (data.clipPathId === defId || data.clipPathTemplateId === defId) return el;
+        if (data.markerStart === defId || data.markerMid === defId || data.markerEnd === defId) return el;
+        // Check fill/stroke url() references for gradients/patterns
+        for (const key of ['fillColor', 'strokeColor']) {
+          const val = data[key];
+          if (typeof val === 'string' && val === `url(#${defId})`) return el;
+        }
+      }
+      return undefined;
+    },
+    [elements]
+  );
+
   // Get gizmo definition for an animation
   const getGizmoDefinition = useCallback(
     (animationId: string): AnimationGizmoDefinition | undefined => {
       const animation = animationMap.get(animationId);
       if (!animation) return undefined;
 
-      const element = elementMap.get(animation.targetElementId);
+      const element = elementMap.get(animation.targetElementId)
+        ?? findElementForDefAnimation(animation);
       if (!element) return undefined;
 
       return animationGizmoRegistry.findForAnimation(animation, element);
     },
-    [animationMap, elementMap]
+    [animationMap, elementMap, findElementForDefAnimation]
   );
 
   // Activate a gizmo for an animation
@@ -195,7 +227,8 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
         return;
       }
 
-      const element = elementMap.get(animation.targetElementId);
+      const element = elementMap.get(animation.targetElementId)
+        ?? findElementForDefAnimation(animation);
       if (!element) {
         console.warn(`[GizmoContext] Element not found: ${animation.targetElementId}`);
         return;
@@ -217,7 +250,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 
       setFocusedGizmoAnimationId(animationId);
     },
-    [animationMap, elementMap]
+    [animationMap, elementMap, findElementForDefAnimation]
   );
 
   // Deactivate a gizmo
@@ -314,7 +347,8 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
         return;
       }
 
-      const element = elementMap.get(animation.targetElementId);
+      const element = elementMap.get(animation.targetElementId)
+        ?? findElementForDefAnimation(animation);
       if (!element) {
         return;
       }
@@ -403,6 +437,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
       activeGizmos,
       animationMap,
       elementMap,
+      findElementForDefAnimation,
       viewport,
       colorMode,
       animationState,
@@ -422,7 +457,9 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 
 	    if (gizmo) {
 	      const animation = animationMap.get(animationId);
-	      const element = animation ? elementMap.get(animation.targetElementId) : undefined;
+	      const element = animation
+	        ? (elementMap.get(animation.targetElementId) ?? findElementForDefAnimation(animation))
+	        : undefined;
 	      const definition = animationGizmoRegistry.get(gizmo.gizmoId);
 
 	      if (definition && animation && element) {
@@ -515,6 +552,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 	    activeGizmos,
 	    animationMap,
 	    elementMap,
+	    findElementForDefAnimation,
 	    viewport,
 	    colorMode,
 	    precision,
@@ -533,7 +571,8 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
       const animation = animationMap.get(animationId);
       if (!animation) return null;
 
-      const element = elementMap.get(animation.targetElementId);
+      const element = elementMap.get(animation.targetElementId)
+        ?? findElementForDefAnimation(animation);
       if (!element) return null;
 
       const bounds = getElementBounds(element.id);
@@ -560,7 +599,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
         progress: duration > 0 ? currentTime / duration : 0,
       };
     },
-    [activeGizmos, animationMap, elementMap, viewport, colorMode, precision, animationState, getElementBounds]
+    [activeGizmos, animationMap, elementMap, findElementForDefAnimation, viewport, colorMode, precision, animationState, getElementBounds]
   );
 
   // Get animation by ID

@@ -3,7 +3,6 @@
  * 
  * Gizmos for hierarchical/structural animations:
  * - Transform Origin (21): Animate transform origin point
- * - Z-Order (22): Animate stacking order
  * - Parent Inherit (23): Inherit transforms from parent
  * - Cascade Delay (24): Sequential child animations
  * - Group Transform (25): Apply transform to group
@@ -50,7 +49,12 @@ const transformOriginGizmoDefinition: AnimationGizmoDefinition = {
         const origin = ctx.state.props.origin as Point;
         const hasValues = ctx.state.props.hasValues as boolean;
         const keyframes = ctx.state.props.keyframes as string[];
-        const toValue = origin ? `${origin.x}px ${origin.y}px` : 'center';
+        
+        // Convert canvas coordinates to element-relative coordinates
+        const { minX, minY, maxX, maxY } = ctx.elementBounds;
+        const relX = origin ? origin.x - minX : (maxX - minX) / 2;
+        const relY = origin ? origin.y - minY : (maxY - minY) / 2;
+        const toValue = `${relX.toFixed(1)}px ${relY.toFixed(1)}px`;
         
         if (hasValues && keyframes.length > 0) {
           const updatedKeyframes = [...keyframes];
@@ -81,7 +85,17 @@ const transformOriginGizmoDefinition: AnimationGizmoDefinition = {
   },
   
   fromAnimation: (animation, element): GizmoState => {
-    const { hasValues, keyframes } = extractStyleAnimationValues(animation);
+    const { from, to, hasValues, keyframes } = extractStyleAnimationValues(animation);
+    
+    // Parse initial origin from the 'from' value if available
+    let parsedOrigin: Point | undefined;
+    const originStr = from || to;
+    if (originStr && originStr !== 'center') {
+      const parts = originStr.replace(/px/g, '').trim().split(/\s+/);
+      if (parts.length >= 2) {
+        parsedOrigin = { x: parseFloat(parts[0]) || 0, y: parseFloat(parts[1]) || 0 };
+      }
+    }
     
     return {
       gizmoId: 'transform-origin',
@@ -89,8 +103,10 @@ const transformOriginGizmoDefinition: AnimationGizmoDefinition = {
       elementId: element.id,
       isFocused: false,
       props: {
+        originOffset: parsedOrigin,
         hasValues,
         keyframes,
+        activeKeyframeIndex: 0,
       },
       interaction: createDefaultInteraction(),
     };
@@ -153,142 +169,6 @@ const transformOriginGizmoDefinition: AnimationGizmoDefinition = {
           stroke={color}
           strokeWidth={2 / viewport.zoom}
         />
-      </g>
-    );
-  },
-};
-
-// =============================================================================
-// Z-Order Gizmo (22)
-// =============================================================================
-
-const zOrderGizmoDefinition: AnimationGizmoDefinition = {
-  id: 'z-order',
-  category: 'hierarchy',
-  priority: 48,
-  
-  metadata: {
-    name: 'Z-Order',
-    description: 'Animate stacking order',
-    icon: 'layers',
-  },
-  
-  handles: [
-    {
-      id: 'z-index',
-      type: 'value',
-      getPosition: (ctx) => {
-        const zIndex = (ctx.state.props.zIndex as number) ?? 0;
-        const { maxX, minY } = ctx.elementBounds;
-        return { x: maxX + 15 / ctx.viewport.zoom, y: minY - zIndex * 3 };
-      },
-      onDrag: (delta, ctx) => {
-        const current = (ctx.state.props.zIndex as number) ?? 0;
-        ctx.updateState({ zIndex: Math.round(current - delta.y / 3) });
-      },
-      onDragEnd: (ctx) => {
-        const zIndex = ctx.state.props.zIndex as number;
-        const hasValues = ctx.state.props.hasValues as boolean;
-        const keyframes = ctx.state.props.keyframes as string[];
-        
-        if (hasValues && keyframes.length > 0) {
-          const updatedKeyframes = [...keyframes];
-          updatedKeyframes[updatedKeyframes.length - 1] = String(zIndex);
-          ctx.updateAnimation({
-            type: 'animate',
-            attributeName: 'z-index',
-            values: formatStyleValuesKeyframes(updatedKeyframes),
-            from: undefined,
-            to: undefined,
-          });
-        } else {
-          ctx.updateAnimation({
-            type: 'animate',
-            attributeName: 'z-index',
-            to: String(zIndex),
-          });
-        }
-        ctx.commitChanges();
-      },
-      cursor: 'ns-resize',
-      tooltip: 'Z-Index',
-    },
-  ],
-  
-  canHandle: (animation) => {
-    return animation.type === 'animate' && animation.attributeName === 'z-index';
-  },
-  
-  fromAnimation: (animation, element): GizmoState => {
-    const { to, hasValues, keyframes } = extractStyleAnimationValues(animation);
-    
-    return {
-      gizmoId: 'z-order',
-      animationId: animation.id,
-      elementId: element.id,
-      isFocused: false,
-      props: { 
-        zIndex: parseInt(to || '0'),
-        hasValues,
-        keyframes,
-      },
-      interaction: createDefaultInteraction(),
-    };
-  },
-  
-  toAnimation: (state): Partial<SVGAnimation> => {
-    const zIndex = state.props.zIndex as number;
-    const hasValues = state.props.hasValues as boolean;
-    const keyframes = state.props.keyframes as string[];
-    
-    if (hasValues && keyframes.length > 0) {
-      const updatedKeyframes = [...keyframes];
-      updatedKeyframes[updatedKeyframes.length - 1] = String(zIndex);
-      return {
-        type: 'animate',
-        attributeName: 'z-index',
-        values: formatStyleValuesKeyframes(updatedKeyframes),
-        from: undefined,
-        to: undefined,
-      };
-    }
-    
-    return {
-      type: 'animate',
-      attributeName: 'z-index',
-      to: String(zIndex),
-    };
-  },
-  
-  render: (ctx) => {
-    const { elementBounds, viewport, colorMode } = ctx;
-    const { maxX, minY } = elementBounds;
-    const zIndex = (ctx.state.props.zIndex as number) ?? 0;
-    const color = colorMode === 'dark' ? '#A78BFA' : '#7C3AED';
-    
-    return (
-      <g className="z-order-gizmo" style={{ pointerEvents: 'none' }}>
-        {[0, 1, 2].map(level => (
-          <rect
-            key={`z-layer-${level}`}
-            x={maxX + 10 / viewport.zoom - level * 3 / viewport.zoom}
-            y={minY - 20 / viewport.zoom + level * 3 / viewport.zoom}
-            width={15 / viewport.zoom}
-            height={15 / viewport.zoom}
-            fill={level === 0 ? color : 'none'}
-            stroke={color}
-            strokeWidth={1 / viewport.zoom}
-            opacity={level === 0 ? 1 : 0.4}
-          />
-        ))}
-        <text
-          x={maxX + 30 / viewport.zoom}
-          y={minY - 10 / viewport.zoom}
-          fontSize={10 / viewport.zoom}
-          fill={color}
-        >
-          z: {zIndex}
-        </text>
       </g>
     );
   },
@@ -771,11 +651,17 @@ const anchorPointGizmoDefinition: AnimationGizmoDefinition = {
         const anchor = ctx.state.props.anchor as Point;
         const hasValues = ctx.state.props.hasValues as boolean;
         const keyframes = ctx.state.props.keyframes as string[];
-        const value = anchor ? `${anchor.x} ${anchor.y}` : 'center';
+        const activeKeyframeIndex = (ctx.state.props.activeKeyframeIndex as number) ?? 0;
+        const { minX, minY } = ctx.elementBounds;
+        
+        // Convert to element-relative coordinates
+        const relX = anchor ? anchor.x - minX : 0;
+        const relY = anchor ? anchor.y - minY : 0;
+        const value = `${relX.toFixed(1)} ${relY.toFixed(1)}`;
         
         if (hasValues && keyframes.length > 0) {
           const updatedKeyframes = [...keyframes];
-          updatedKeyframes[updatedKeyframes.length - 1] = value;
+          updatedKeyframes[activeKeyframeIndex] = value;
           ctx.updateAnimation({
             type: 'animate',
             attributeName: 'anchor-point',
@@ -784,11 +670,19 @@ const anchorPointGizmoDefinition: AnimationGizmoDefinition = {
             to: undefined,
           });
         } else {
-          ctx.updateAnimation({
-            type: 'animate',
-            attributeName: 'anchor-point',
-            to: value,
-          });
+          if (activeKeyframeIndex === 0) {
+            ctx.updateAnimation({
+              type: 'animate',
+              attributeName: 'anchor-point',
+              from: value,
+            });
+          } else {
+            ctx.updateAnimation({
+              type: 'animate',
+              attributeName: 'anchor-point',
+              to: value,
+            });
+          }
         }
         ctx.commitChanges();
       },
@@ -802,7 +696,22 @@ const anchorPointGizmoDefinition: AnimationGizmoDefinition = {
   },
   
   fromAnimation: (animation, element): GizmoState => {
-    const { hasValues, keyframes } = extractStyleAnimationValues(animation);
+    const { from, to, hasValues, keyframes } = extractStyleAnimationValues(animation);
+    
+    // Parse anchor position from animation values
+    const parseAnchorValue = (val: string): Point | null => {
+      if (!val || val === 'center') return null;
+      const parts = val.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        const x = parseFloat(parts[0]);
+        const y = parseFloat(parts[1]);
+        if (!isNaN(x) && !isNaN(y)) return { x, y };
+      }
+      return null;
+    };
+    
+    const activeValue = from || to || (keyframes.length > 0 ? keyframes[0] : '');
+    const parsedAnchor = parseAnchorValue(activeValue);
     
     return {
       gizmoId: 'anchor-point',
@@ -812,24 +721,26 @@ const anchorPointGizmoDefinition: AnimationGizmoDefinition = {
       props: {
         hasValues,
         keyframes,
+        fromValue: from,
+        toValue: to,
+        activeKeyframeIndex: 0,
+        ...(parsedAnchor ? { anchor: parsedAnchor } : {}),
       },
       interaction: createDefaultInteraction(),
     };
   },
   
   toAnimation: (state): Partial<SVGAnimation> => {
-    const anchor = state.props.anchor as Point;
     const hasValues = state.props.hasValues as boolean;
     const keyframes = state.props.keyframes as string[];
-    const value = anchor ? `${anchor.x} ${anchor.y}` : 'center';
+    const fromValue = state.props.fromValue as string;
+    const toValue = state.props.toValue as string;
     
     if (hasValues && keyframes.length > 0) {
-      const updatedKeyframes = [...keyframes];
-      updatedKeyframes[updatedKeyframes.length - 1] = value;
       return {
         type: 'animate',
         attributeName: 'anchor-point',
-        values: formatStyleValuesKeyframes(updatedKeyframes),
+        values: formatStyleValuesKeyframes(keyframes),
         from: undefined,
         to: undefined,
       };
@@ -838,7 +749,8 @@ const anchorPointGizmoDefinition: AnimationGizmoDefinition = {
     return {
       type: 'animate',
       attributeName: 'anchor-point',
-      to: value,
+      from: fromValue || undefined,
+      to: toValue || undefined,
     };
   },
   
@@ -883,7 +795,6 @@ const anchorPointGizmoDefinition: AnimationGizmoDefinition = {
 
 export const hierarchyGizmos = [
   transformOriginGizmoDefinition,
-  zOrderGizmoDefinition,
   parentInheritGizmoDefinition,
   cascadeDelayGizmoDefinition,
   groupTransformGizmoDefinition,

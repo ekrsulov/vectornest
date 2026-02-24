@@ -1,18 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Anchor Point Gizmo Test</title>
-  <desc>A rectangle with animated anchor point.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Anchor Point Gizmo Test</text>
-
-  <rect x="140" y="80" width="120" height="120" rx="8" fill="#dd6b20" stroke="#c05621" stroke-width="2">
-    <animate
-      attributeName="anchor-point"
-      from="200 140"
-      to="260 200"
-      dur="2s"
-      repeatCount="indefinite"
-      fill="freeze"
-    />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Anchor Point Gizmo (26) — canHandle: attributeName="anchor-point" -->
+  <!-- Note: anchor-point is VN-specific. Scale animation provides visual in browser. -->
+  <rect x="50" y="50" width="100" height="100" fill="#DC2626" rx="8">
+    <animate attributeName="anchor-point" from="100 100" to="50 50" dur="2s" repeatCount="indefinite" fill="freeze" />
+    <animateTransform attributeName="transform" type="scale" from="1" to="1.2" dur="2s" repeatCount="indefinite" fill="freeze" />
   </rect>
 </svg>

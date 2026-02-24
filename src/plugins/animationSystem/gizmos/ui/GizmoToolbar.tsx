@@ -28,6 +28,56 @@ import { GizmoKeyframeTrack } from './GizmoKeyframeTrack';
 import ConditionalTooltip from '../../../../ui/ConditionalTooltip';
 
 // =============================================================================
+// Utilities
+// =============================================================================
+
+/**
+ * Collect all def IDs referenced by an element (filter, gradient, pattern, mask, clip, marker).
+ * Used to match def-based animations to the element that uses the def.
+ */
+function collectElementDefIds(element: CanvasElement): Set<string> {
+  const defIds = new Set<string>();
+  const data = element.data as Record<string, unknown> | undefined;
+  if (!data) return defIds;
+
+  // Filter
+  if (typeof data.filterId === 'string' && data.filterId) defIds.add(data.filterId);
+  // Mask
+  if (typeof data.maskId === 'string' && data.maskId) defIds.add(data.maskId);
+  // ClipPath
+  if (typeof data.clipPathId === 'string' && data.clipPathId) defIds.add(data.clipPathId);
+  if (typeof data.clipPathTemplateId === 'string' && data.clipPathTemplateId) defIds.add(data.clipPathTemplateId);
+  // Markers
+  if (typeof data.markerStart === 'string' && data.markerStart) defIds.add(data.markerStart);
+  if (typeof data.markerMid === 'string' && data.markerMid) defIds.add(data.markerMid);
+  if (typeof data.markerEnd === 'string' && data.markerEnd) defIds.add(data.markerEnd);
+
+  // Gradient/pattern via fill/stroke url() references
+  for (const key of ['fillColor', 'strokeColor'] as const) {
+    const val = data[key];
+    if (typeof val === 'string') {
+      const match = val.match(/^url\(#([^)]+)\)$/);
+      if (match) defIds.add(match[1]);
+    }
+  }
+
+  return defIds;
+}
+
+/**
+ * Check if an animation targets a def referenced by the element.
+ */
+function animationTargetsElementDef(animation: SVGAnimation, defIds: Set<string>): boolean {
+  if (defIds.size === 0) return false;
+  const anim = animation as unknown as Record<string, unknown>;
+  for (const field of ['filterTargetId', 'gradientTargetId', 'patternTargetId', 'maskTargetId', 'clipPathTargetId', 'markerTargetId']) {
+    const val = anim[field];
+    if (typeof val === 'string' && defIds.has(val)) return true;
+  }
+  return false;
+}
+
+// =============================================================================
 // Compact Version
 // =============================================================================
 
@@ -113,17 +163,26 @@ export function GizmoToolbarCompact(): React.ReactElement | null {
   }, [selectedElementId, elements]);
 
   // Filter animations for selected element AND its ancestors (for groups)
+  // AND def-based animations (filter, gradient, pattern, etc.) used by the element
   // AND that have a gizmo definition available
   const elementAnimations = useMemo(() => {
     if (!selectedElementId) return [];
     const relevantIds = new Set([selectedElementId, ...ancestorIds]);
     
+    // Collect def IDs from the selected element for def-based animation discovery
+    const selectedElement = elements.find(el => el.id === selectedElementId);
+    const defIds = selectedElement ? collectElementDefIds(selectedElement) : new Set<string>();
+    
     return animations.filter((a) => {
-      // Must be for a relevant element
-      if (!relevantIds.has(a.targetElementId)) return false;
+      // Must be for a relevant element OR target a def used by the selected element
+      const directMatch = relevantIds.has(a.targetElementId);
+      const defMatch = animationTargetsElementDef(a, defIds);
+      if (!directMatch && !defMatch) return false;
       
-      // Must have a gizmo that can handle it
-      const element = elements.find(el => el.id === a.targetElementId);
+      // For direct matches, use the target element; for def matches, use the selected element
+      const element = directMatch
+        ? elements.find(el => el.id === a.targetElementId)
+        : selectedElement;
       if (!element) return false;
       
       // Check if any registered gizmo can handle this animation
@@ -173,14 +232,14 @@ export function GizmoToolbarCompact(): React.ReactElement | null {
     const animation = animations.find((a) => a.id === activeAnimationId);
 
     const keyframes = gizmoState?.props.keyframes as unknown;
-    const keyframeCount = Array.isArray(keyframes)
+    const keyframeCount = Array.isArray(keyframes) && keyframes.length > 0
       ? keyframes.length
       : animation?.values
         ? animation.values
             .split(';')
             .map((v) => v.trim())
             .filter(Boolean).length
-        : 0;
+        : (animation?.from !== undefined && animation?.to !== undefined) ? 2 : 0;
 
     if (keyframeCount < 2) return null;
 

@@ -1,20 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Gradient Stops Gizmo Test</title>
-  <desc>A rectangle with animated gradient stop offsets.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Gradient Stops Gizmo Test</text>
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Gradient Stops Gizmo — canHandle: attributeName="offset" -->
   <defs>
-    <linearGradient id="stop-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#e53e3e">
-        <animate attributeName="offset" from="0" to="0.4" dur="2s" repeatCount="indefinite" />
+    <linearGradient id="gs1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B">
+        <animate attributeName="offset" from="0" to="0.5" dur="3s" repeatCount="indefinite" fill="freeze" />
       </stop>
-      <stop offset="100%" stop-color="#3182ce">
-        <animate attributeName="offset" from="1" to="0.6" dur="2s" repeatCount="indefinite" />
-      </stop>
+      <stop offset="100%" stop-color="#7C3AED" />
     </linearGradient>
   </defs>
-
-  <rect x="80" y="70" width="240" height="140" rx="12" fill="url(#stop-grad)" stroke="#4a5568" stroke-width="2" />
+  <rect x="20" y="20" width="160" height="160" fill="url(#gs1)" rx="8" />
 </svg>

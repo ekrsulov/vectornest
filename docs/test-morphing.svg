@@ -1,18 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Morphing Gizmo Test — 2 keyframes</title>
-  <desc>A path morphing between a square and a circle using the values attribute.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Morphing Gizmo Test (2 keyframes)</text>
-
-  <path fill="#d69e2e" stroke="#b7791f" stroke-width="2">
-    <animate
-      attributeName="d"
-      values="M 150,100 L 250,100 L 250,200 L 150,200 Z;
-              M 200,80 C 250,80 270,130 270,150 C 270,190 240,220 200,220 C 160,220 130,190 130,150 C 130,130 150,80 200,80 Z"
-      dur="2s"
-      repeatCount="indefinite"
-      fill="freeze"
-    />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Morphing Gizmo — canHandle: attributeName="d" -->
+  <path fill="#8B5CF6" d="M 50 150 L 100 50 L 150 150 Z">
+    <animate attributeName="d" 
+             from="M 50 150 L 100 50 L 150 150 Z" 
+             to="M 50 50 L 150 50 L 150 150 Z" 
+             dur="3s" repeatCount="indefinite" fill="freeze" />
   </path>
 </svg>

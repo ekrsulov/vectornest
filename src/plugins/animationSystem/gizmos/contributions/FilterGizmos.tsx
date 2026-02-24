@@ -254,7 +254,11 @@ const dropShadowGizmoDefinition: AnimationGizmoDefinition = {
   },
   
   fromAnimation: (animation, element): GizmoState => {
-    const { hasValues, keyframes } = extractStyleAnimationValues(animation);
+    const { from, to, hasValues, keyframes } = extractStyleAnimationValues(animation);
+    
+    // Parse initial values from animation
+    const fromVal = parseFloat(from || '0');
+    const toVal = parseFloat(to || '5');
     
     return {
       gizmoId: 'drop-shadow',
@@ -262,9 +266,12 @@ const dropShadowGizmoDefinition: AnimationGizmoDefinition = {
       elementId: element.id,
       isFocused: false,
       props: { 
-        shadowX: 5, 
-        shadowY: 5, 
+        shadowX: toVal, 
+        shadowY: toVal, 
         shadowBlur: 4,
+        fromValue: fromVal,
+        toValue: toVal,
+        activeKeyframeIndex: 0,
         hasValues,
         keyframes,
       },

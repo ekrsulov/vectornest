@@ -1,29 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-  <title>Focus State Gizmo Test</title>
-  <desc>A rect that shows a focus ring on focus.</desc>
-
-  <rect width="400" height="300" fill="#f0f4f8" />
-  <text x="200" y="25" text-anchor="middle" font-size="14" fill="#4a5568">Focus State Gizmo Test</text>
-
-  <rect x="140" y="80" width="120" height="120" rx="12" fill="#38a169" stroke="#2f855a" stroke-width="2"
-        tabindex="0" style="cursor: pointer; outline: none;">
-    <animate
-      attributeName="stroke-width"
-      from="2"
-      to="6"
-      dur="0.2s"
-      begin="focusin"
-      fill="freeze"
-    />
-    <animate
-      attributeName="stroke-width"
-      from="6"
-      to="2"
-      dur="0.2s"
-      begin="focusout"
-      fill="freeze"
-    />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Test: Focus State Gizmo (30) — canHandle: begin="focus" or "focusin" -->
+  <rect x="40" y="40" width="120" height="120" fill="#7C3AED" rx="8" tabindex="0">
+    <animate attributeName="stroke-width" from="0" to="4" dur="0.3s" begin="focus" fill="freeze" />
+    <animate attributeName="stroke" from="#7C3AED" to="#A78BFA" dur="0.3s" begin="focus" fill="freeze" />
   </rect>
-
-  <text x="200" y="260" text-anchor="middle" font-size="12" fill="#718096">Tab to focus the rectangle</text>
 </svg>

@@ -11,7 +11,15 @@ import { buildElementMap } from '../../../utils';
 import { elementContributionRegistry } from '../../../utils/elementContributionRegistry';
 import { getAllElementsShareSameParentGroup } from '../../basePluginDefinitions';
 import { getParentCumulativeTransformMatrix } from '../../../utils/elementTransformUtils';
-import { applyToPoint, inverseMatrix } from '../../../utils/matrixUtils';
+import {
+  IDENTITY_MATRIX,
+  applyToPoint,
+  createRotateMatrix,
+  createScaleMatrix,
+  inverseMatrix,
+  multiplyMatrices,
+  type Matrix,
+} from '../../../utils/matrixUtils';
 import type { Point, PathData, CanvasElement, GroupElement } from '../../../types';
 import type { TransformationPluginSlice } from '../slice';
 import type { GuidelinesPluginSlice } from '../../guidelines/slice';
@@ -189,6 +197,17 @@ export const useCanvasTransformControls = () => {
     return { originX: local.x, originY: local.y };
   }, []);
 
+  const worldToLocalAffineForElement = useCallback((
+    element: CanvasElement,
+    worldMatrix: Matrix,
+    elementsForMatrix: CanvasElement[] | Map<string, CanvasElement>
+  ): Matrix => {
+    const parentMatrix = getParentCumulativeTransformMatrix(element, elementsForMatrix);
+    const invParent = inverseMatrix(parentMatrix);
+    if (!invParent) return worldMatrix;
+    return multiplyMatrices(multiplyMatrices(invParent, worldMatrix), parentMatrix);
+  }, []);
+
   const collectAnimationTargetIds = useCallback((state: CanvasStore): Set<string> => {
     const ids = new Set<string>();
     state.selectedIds.forEach((id) => {
@@ -346,15 +365,9 @@ export const useCanvasTransformControls = () => {
         const element = elementMap.get(id);
         if (!element) return;
 
-        let bounds = null;
-        if (element.type === 'group') {
-          bounds = getGroupBounds(element as GroupElement, elementMap, viewport);
-        } else if (element.type === 'path') {
-          const pathData = element.data as PathData;
-          bounds = measurePath(pathData.subPaths, pathData.strokeWidth ?? 1, 1);
-        } else {
-          bounds = elementContributionRegistry.getBounds(element, { viewport, elementMap });
-        }
+        const bounds = element.type === 'group'
+          ? getGroupBounds(element as GroupElement, elementMap, viewport)
+          : elementContributionRegistry.getBounds(element, { viewport, elementMap });
 
         if (bounds && isFinite(bounds.minX)) {
           minX = Math.min(minX, bounds.minX);
@@ -439,17 +452,12 @@ export const useCanvasTransformControls = () => {
     const element = elements.find(el => el.id === elementId);
     if (!element) return;
 
-    let bounds;
-    if (element.type === 'group') {
-      bounds = getGroupBounds(element as GroupElement, elementMap, viewport);
-    } else if (element.type === 'path') {
-      bounds = measurePath((element.data as PathData).subPaths, (element.data as PathData).strokeWidth ?? 1, 1);
-    } else {
-      bounds = elementContributionRegistry.getBounds(element, {
-        viewport,
-        elementMap,
-      });
-    }
+    const bounds = element.type === 'group'
+      ? getGroupBounds(element as GroupElement, elementMap, viewport)
+      : elementContributionRegistry.getBounds(element, {
+          viewport,
+          elementMap,
+        });
 
     if (bounds) {
       const rotationCenter = isRotateHandler ? getRotationCenter(bounds, `element:${elementId}`) : null;
@@ -484,6 +492,9 @@ export const useCanvasTransformControls = () => {
     const group = elementMap.get(groupId);
 
     if (!group || group.type !== 'group') return;
+    const worldScale = createScaleMatrix(scaleX, scaleY, originX, originY);
+    const worldRotate = _rotation ? createRotateMatrix(_rotation, originX, originY) : IDENTITY_MATRIX;
+    const worldMatrix = multiplyMatrices(worldRotate, worldScale);
 
     // Get original elements data from transform state
     const originalElementsData = transformStateRef.current.originalElementsData;
@@ -517,22 +528,9 @@ export const useCanvasTransformControls = () => {
       if (element.type === 'group' && hasLocalTransform(element)) {
         const originalElement = originalElementsData?.get(descendantId) ?? element;
         const baseElement: CanvasElement = { ...element, data: originalElement.data };
-        const scaled = elementContributionRegistry.scaleElement(
-          baseElement,
-          scaleX,
-          scaleY,
-          localOrigin.originX,
-          localOrigin.originY,
-          3
-        ) ?? baseElement;
-        const rotated = elementContributionRegistry.rotateElement(
-          scaled,
-          _rotation,
-          localOrigin.originX,
-          localOrigin.originY,
-          3
-        ) ?? scaled;
-        updateElement(descendantId, { ...element, data: rotated.data });
+        const localMatrix = worldToLocalAffineForElement(baseElement, worldMatrix, elements);
+        const transformed = elementContributionRegistry.applyAffineTransform(baseElement, localMatrix, 3) ?? baseElement;
+        updateElement(descendantId, { ...element, data: transformed.data });
         return;
       }
 
@@ -566,25 +564,12 @@ export const useCanvasTransformControls = () => {
       } else {
         const originalElement = originalElementsData?.get(descendantId) ?? element;
         const baseElement: CanvasElement = { ...element, data: originalElement.data };
-        const scaled = elementContributionRegistry.scaleElement(
-          baseElement,
-          scaleX,
-          scaleY,
-          localOrigin.originX,
-          localOrigin.originY,
-          3
-        ) ?? baseElement;
-        const rotated = elementContributionRegistry.rotateElement(
-          scaled,
-          _rotation,
-          localOrigin.originX,
-          localOrigin.originY,
-          3
-        ) ?? scaled;
-        updateElement(descendantId, { ...element, data: rotated.data });
+        const localMatrix = worldToLocalAffineForElement(baseElement, worldMatrix, elements);
+        const transformed = elementContributionRegistry.applyAffineTransform(baseElement, localMatrix, 3) ?? baseElement;
+        updateElement(descendantId, { ...element, data: transformed.data });
       }
     });
-  }, [toLocalOrigin]);
+  }, [toLocalOrigin, worldToLocalAffineForElement]);
 
   // Helper function to update guidelines during transformation
   const updateGuidelinesDuringTransform = useCallback((
@@ -642,6 +627,9 @@ export const useCanvasTransformControls = () => {
       originX: number,
       originY: number
     ) => {
+      const worldScale = createScaleMatrix(scaleX, scaleY, originX, originY);
+      const worldRotate = rotation ? createRotateMatrix(rotation, originX, originY) : IDENTITY_MATRIX;
+      const worldMatrix = multiplyMatrices(worldRotate, worldScale);
       targetIds.forEach((id) => {
         const element = elementMap.get(id);
         if (!element) {
@@ -654,22 +642,9 @@ export const useCanvasTransformControls = () => {
         if (element.type === 'group') {
           if (hasLocalTransform(element)) {
             const baseElement: CanvasElement = { ...element, data: originalElement?.data ?? element.data };
-            const scaled = elementContributionRegistry.scaleElement(
-              baseElement,
-              scaleX,
-              scaleY,
-              localOrigin.originX,
-              localOrigin.originY,
-              3
-            ) ?? baseElement;
-            const rotated = elementContributionRegistry.rotateElement(
-              scaled,
-              rotation,
-              localOrigin.originX,
-              localOrigin.originY,
-              3
-            ) ?? scaled;
-            updateElement(id, { ...element, data: rotated.data });
+            const localMatrix = worldToLocalAffineForElement(baseElement, worldMatrix, elements);
+            const transformed = elementContributionRegistry.applyAffineTransform(baseElement, localMatrix, 3) ?? baseElement;
+            updateElement(id, { ...element, data: transformed.data });
             return;
           }
           scaleGroupDescendants(id, scaleX, scaleY, originX, originY, rotation);
@@ -679,22 +654,9 @@ export const useCanvasTransformControls = () => {
         if (element.type === 'path') {
           if (hasLocalTransform(element)) {
             const baseElement: CanvasElement = { ...element, data: originalElement?.data ?? element.data };
-            const scaled = elementContributionRegistry.scaleElement(
-              baseElement,
-              scaleX,
-              scaleY,
-              localOrigin.originX,
-              localOrigin.originY,
-              3
-            ) ?? baseElement;
-            const rotated = elementContributionRegistry.rotateElement(
-              scaled,
-              rotation,
-              localOrigin.originX,
-              localOrigin.originY,
-              3
-            ) ?? scaled;
-            updateElement(id, { ...element, data: rotated.data });
+            const localMatrix = worldToLocalAffineForElement(baseElement, worldMatrix, elements);
+            const transformed = elementContributionRegistry.applyAffineTransform(baseElement, localMatrix, 3) ?? baseElement;
+            updateElement(id, { ...element, data: transformed.data });
             return;
           }
 
@@ -725,22 +687,9 @@ export const useCanvasTransformControls = () => {
         }
 
         const baseElement: CanvasElement = { ...element, data: originalElement?.data ?? element.data };
-        const scaled = elementContributionRegistry.scaleElement(
-          baseElement,
-          scaleX,
-          scaleY,
-          localOrigin.originX,
-          localOrigin.originY,
-          3
-        ) ?? baseElement;
-        const rotated = elementContributionRegistry.rotateElement(
-          scaled,
-          rotation,
-          localOrigin.originX,
-          localOrigin.originY,
-          3
-        ) ?? scaled;
-        updateElement(id, { ...element, data: rotated.data });
+        const localMatrix = worldToLocalAffineForElement(baseElement, worldMatrix, elements);
+        const transformed = elementContributionRegistry.applyAffineTransform(baseElement, localMatrix, 3) ?? baseElement;
+        updateElement(id, { ...element, data: transformed.data });
       });
     };
 
@@ -935,6 +884,7 @@ export const useCanvasTransformControls = () => {
     updateGuidelinesDuringTransform,
     getRotationCenter,
     toLocalOrigin,
+    worldToLocalAffineForElement,
   ]);
 
   const endTransformation = useCallback(() => {

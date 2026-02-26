@@ -20,6 +20,7 @@ import type { Point, Viewport } from '../../types';
 import { normalizeMarkerId } from '../../utils/markerUtils';
 
 import { shapeToNativeShape } from './importer';
+import { NativeShapeGizmoOverlay } from './gizmos/NativeShapeGizmoOverlay';
 
 type AffineMatrix = [number, number, number, number, number, number];
 const identityMatrix = (): AffineMatrix => [1, 0, 0, 1, 0, 0];
@@ -441,10 +442,18 @@ const nativeShapeContribution: ElementContribution<NativeShapeElement> = {
     const rotated = multiplyMatrix(rotateMatrix(deg, cx, cy), mat);
     return { ...el, data: { ...el.data, transformMatrix: rotated.map((v) => parseFloat(v.toFixed(p))) as AffineMatrix } };
   },
-  applyAffine: (el, m, p) => ({
-    ...el,
-    data: { ...el.data, transformMatrix: m.map((v) => parseFloat(v.toFixed(p))) as AffineMatrix },
-  }),
+  applyAffine: (el, m, p) => {
+    const precision = Number.isFinite(p) ? p : 3;
+    const current = el.data.transformMatrix ?? deriveMatrixFromTransform(el.data) ?? identityMatrix();
+    const composed = multiplyMatrix(m as AffineMatrix, current);
+    return {
+      ...el,
+      data: {
+        ...el.data,
+        transformMatrix: composed.map((v) => parseFloat(v.toFixed(precision))) as AffineMatrix,
+      },
+    };
+  },
   clone: (el) => ({ ...el, data: JSON.parse(JSON.stringify(el.data)) }),
   serialize: (el) => {
     const d = el.data;
@@ -722,6 +731,10 @@ export const nativeShapesPlugin: PluginDefinition<CanvasStore> = {
       placement: 'foreground',
       render: ({ viewport, canvasSize }) => <NativeShapeFeedbackWrapper viewport={viewport} canvasSize={canvasSize} />,
     },
+    {
+      id: 'native-shape-gizmo',
+      placement: 'foreground',
+      render: ({ viewport, activePlugin }) => <NativeShapeGizmoOverlay viewport={viewport} activePlugin={activePlugin} />,
+    },
   ],
 };
-

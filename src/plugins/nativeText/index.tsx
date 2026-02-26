@@ -209,22 +209,35 @@ const nativeTextContribution: ElementContribution<NativeTextElement> = {
     })(),
   }),
   scale: (el, sx, sy, cx, cy, p) => {
-    const mat = el.data.transformMatrix ?? identityMatrix();
+    const precision = Number.isFinite(p) ? p : 3;
+    const mat = el.data.transformMatrix ?? deriveMatrixFromTransform(el.data) ?? identityMatrix();
     const scaled = multiplyMatrix(scaleMatrix(sx, sy, cx, cy), mat);
-    return { ...el, data: { ...el.data, transformMatrix: scaled.map((v) => parseFloat(v.toFixed(p))) as AffineMatrix } };
+    return {
+      ...el,
+      data: { ...el.data, transformMatrix: scaled.map((v) => parseFloat(v.toFixed(precision))) as AffineMatrix },
+    };
   },
   rotate: (el, deg, cx, cy, p) => {
-    const mat = el.data.transformMatrix ?? identityMatrix();
+    const precision = Number.isFinite(p) ? p : 3;
+    const mat = el.data.transformMatrix ?? deriveMatrixFromTransform(el.data) ?? identityMatrix();
     const rotated = multiplyMatrix(rotateMatrix(deg, cx, cy), mat);
-    return { ...el, data: { ...el.data, transformMatrix: rotated.map((v) => parseFloat(v.toFixed(p))) as AffineMatrix } };
+    return {
+      ...el,
+      data: { ...el.data, transformMatrix: rotated.map((v) => parseFloat(v.toFixed(precision))) as AffineMatrix },
+    };
   },
-  applyAffine: (el, m, p) => ({
-    ...el,
-    data: {
-      ...el.data,
-      transformMatrix: m.map((v) => parseFloat(v.toFixed(p))) as AffineMatrix,
-    },
-  }),
+  applyAffine: (el, m, p) => {
+    const precision = Number.isFinite(p) ? p : 3;
+    const current = el.data.transformMatrix ?? deriveMatrixFromTransform(el.data) ?? identityMatrix();
+    const composed = multiplyMatrix(m as AffineMatrix, current);
+    return {
+      ...el,
+      data: {
+        ...el.data,
+        transformMatrix: composed.map((v) => parseFloat(v.toFixed(precision))) as AffineMatrix,
+      },
+    };
+  },
   clone: (el) => ({ ...el, data: JSON.parse(JSON.stringify(el.data)) }),
   serialize: (el) => {
     const { x, y, text, richText, spans, fontSize, fontFamily, fontWeight, fontStyle, textDecoration, fillColor, fillOpacity, strokeColor, strokeWidth, strokeOpacity, strokeLinecap, strokeLinejoin, strokeDasharray, textAnchor, dominantBaseline, lineHeight, letterSpacing, textTransform, writingMode, transformMatrix, transform, filterId, clipPathId, clipPathTemplateId } = el.data;
@@ -511,4 +524,3 @@ export const nativeTextPlugin: PluginDefinition<CanvasStore> = {
   expandablePanel: () => React.createElement(NativeTextPanel, { hideTitle: true }),
   sidebarPanels: [createToolPanel('nativeText', NativeTextPanel)],
 };
-

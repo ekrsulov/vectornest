@@ -374,7 +374,14 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
             </Tag>
           )}
           {selectedElementsHaveTransformation && (
-            <PanelStyledButton onClick={handleResetTransformation} size="xs">
+            <PanelStyledButton
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleResetTransformation();
+              }}
+              size="xs"
+            >
               Reset
             </PanelStyledButton>
           )}

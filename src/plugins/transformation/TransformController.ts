@@ -4,6 +4,8 @@ import { elementContributionRegistry } from '../../utils/elementContributionRegi
 import type { Point, PathData, CanvasElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { GuidelinesPluginSlice } from '../guidelines/slice';
+import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
+import { applyToPoint, inverseMatrix } from '../../utils/matrixUtils';
 
 export interface TransformState {
   isTransforming: boolean;
@@ -269,7 +271,8 @@ export class TransformController {
       },
       { x: transformOriginX, y: transformOriginY },
       subpathIndex,
-      newRotation - (state.initialTransform.rotation ?? 0)
+      newRotation - (state.initialTransform.rotation ?? 0),
+      elements
     );
 
     return { updatedElement, feedback };
@@ -284,8 +287,17 @@ export class TransformController {
     transform: { scaleX: number; scaleY: number; rotation: number; translateX: number; translateY: number },
     origin: Point,
     subpathIndex: number | null = null,
-    deltaRotation?: number
+    deltaRotation?: number,
+    elementsForMatrix?: CanvasElement[]
   ): CanvasElement {
+    const localOrigin = (() => {
+      if (!elementsForMatrix) return origin;
+      const parentMatrix = getParentCumulativeTransformMatrix(element, elementsForMatrix);
+      const invParent = inverseMatrix(parentMatrix);
+      if (!invParent) return origin;
+      return applyToPoint(invParent, origin);
+    })();
+
     if (element.type === 'path') {
       const pathOriginal = originalData as PathData;
       // Create a copy of the original data
@@ -300,11 +312,11 @@ export class TransformController {
           return transformCommands(subPath, {
             scaleX: transform.scaleX,
             scaleY: transform.scaleY,
-            originX: origin.x,
-            originY: origin.y,
+            originX: localOrigin.x,
+            originY: localOrigin.y,
             rotation: transform.rotation,
-            rotationCenterX: origin.x,
-            rotationCenterY: origin.y
+            rotationCenterX: localOrigin.x,
+            rotationCenterY: localOrigin.y
           });
         }),
         // Update stroke width using shared utility
@@ -333,8 +345,8 @@ export class TransformController {
       baseElement,
       transform.scaleX,
       transform.scaleY,
-      origin.x,
-      origin.y,
+      localOrigin.x,
+      localOrigin.y,
       3
     ) ?? baseElement;
 
@@ -343,8 +355,8 @@ export class TransformController {
     const rotated = elementContributionRegistry.rotateElement(
       scaled,
       rotationDelta,
-      origin.x,
-      origin.y,
+      localOrigin.x,
+      localOrigin.y,
       3
     ) ?? scaled;
 

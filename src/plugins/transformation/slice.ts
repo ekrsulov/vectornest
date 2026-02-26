@@ -7,9 +7,19 @@ import { getGroupBounds } from '../../canvas/geometry/CanvasGeometryService';
 import { buildElementMap } from '../../utils';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
 import { getAllElementsShareSameParentGroup } from '../basePluginDefinitions';
+import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
 import type { GroupElement, PathData, CanvasElement, Point } from '../../types';
 import type { Bounds } from '../../utils/boundsUtils';
 import { computeTransformDeltas } from '../../utils/animationTransformDelta';
+import {
+  IDENTITY_MATRIX,
+  applyToPoint,
+  createRotateMatrix,
+  createScaleMatrix,
+  inverseMatrix,
+  multiplyMatrices,
+  type Matrix,
+} from '../../utils/matrixUtils';
 
 type FullStore = CanvasStore & TransformationPluginSlice;
 
@@ -44,6 +54,28 @@ const computeAffineFromRect = (
   const f = (v1 * (x2 * y3 - x3 * y2) + v2 * (x3 * y1 - x1 * y3) + v3 * (x1 * y2 - x2 * y1)) / det;
 
   return [a, b, c, d, e, f];
+};
+
+const toLocalPoint = (
+  element: CanvasElement,
+  worldPoint: Point,
+  elements: CanvasElement[] | Map<string, CanvasElement>
+): Point => {
+  const parentMatrix = getParentCumulativeTransformMatrix(element, elements);
+  const invParent = inverseMatrix(parentMatrix);
+  if (!invParent) return worldPoint;
+  return applyToPoint(invParent, worldPoint);
+};
+
+const worldToLocalAffineForElement = (
+  element: CanvasElement,
+  worldMatrix: Matrix,
+  elements: CanvasElement[] | Map<string, CanvasElement>
+): Matrix => {
+  const parentMatrix = getParentCumulativeTransformMatrix(element, elements);
+  const invParent = inverseMatrix(parentMatrix);
+  if (!invParent) return worldMatrix;
+  return multiplyMatrices(multiplyMatrices(invParent, worldMatrix), parentMatrix);
 };
 
 // Import transformation types
@@ -114,9 +146,21 @@ function transformGroupDescendants(
     } else if (child.type === 'path') {
       // Transform path element
       const pathData = child.data as PathData;
+      const localOrigin = toLocalPoint(child, { x: transform.originX, y: transform.originY }, elementMap);
+      const localRotationCenter = toLocalPoint(
+        child,
+        { x: transform.rotationCenterX, y: transform.rotationCenterY },
+        elementMap,
+      );
 
       const newSubPaths = pathData.subPaths.map((subPath) =>
-        transformCommands(subPath, transform)
+        transformCommands(subPath, {
+          ...transform,
+          originX: localOrigin.x,
+          originY: localOrigin.y,
+          rotationCenterX: localRotationCenter.x,
+          rotationCenterY: localRotationCenter.y,
+        })
       );
 
       const newStrokeWidth = calculateScaledStrokeWidth(
@@ -133,9 +177,16 @@ function transformGroupDescendants(
       }
     });
     } else {
-      let updated = elementContributionRegistry.scaleElement(child, transform.scaleX, transform.scaleY, transform.originX, transform.originY, 3) ?? child;
-      updated = elementContributionRegistry.rotateElement(updated, transform.rotation, transform.rotationCenterX, transform.rotationCenterY, 3) ?? updated;
-      updateElement(updated.id, { data: updated.data });
+      const worldScale = createScaleMatrix(transform.scaleX, transform.scaleY, transform.originX, transform.originY);
+      const worldRotate = transform.rotation
+        ? createRotateMatrix(transform.rotation, transform.rotationCenterX, transform.rotationCenterY)
+        : IDENTITY_MATRIX;
+      const worldMatrix = multiplyMatrices(worldRotate, worldScale);
+      const localMatrix = worldToLocalAffineForElement(child, worldMatrix, elementMap);
+      const transformed = elementContributionRegistry.applyAffineTransform(child, localMatrix, 3);
+      if (transformed) {
+        updateElement(child.id, { data: transformed.data });
+      }
     }
   });
 
@@ -292,21 +343,12 @@ export const createTransformationPluginSlice: StateCreator<
           const element = state.elements.find((el) => el.id === id);
           if (!element) return;
 
-          let bounds: { minX: number; minY: number; maxX: number; maxY: number } | null = null;
-
-          if (element.type === 'path') {
-            // For paths, accumulate bounds from subpaths
-            const pathData = element.data as import('../../types').PathData;
-            bounds = accumulateBounds(pathData.subPaths, pathData.strokeWidth, state.viewport.zoom);
-          } else if (element.type === 'group') {
-            // For groups, use getGroupBounds
-            bounds = getGroupBounds(element as GroupElement, elementMap, state.viewport);
-          } else {
-            bounds = elementContributionRegistry.getBounds(element, {
-              viewport: state.viewport,
-              elementMap,
-            });
-          }
+          const bounds = element.type === 'group'
+            ? getGroupBounds(element as GroupElement, elementMap, state.viewport)
+            : elementContributionRegistry.getBounds(element, {
+                viewport: state.viewport,
+                elementMap,
+              });
 
           if (bounds) {
             minX = Math.min(minX, bounds.minX);
@@ -389,9 +431,16 @@ export const createTransformationPluginSlice: StateCreator<
           } else if (element.type === 'path') {
             // Transform path element
             const pathData = element.data as import('../../types').PathData;
+            const localOrigin = toLocalPoint(element, { x: originX, y: originY }, state.elements);
 
             const newSubPaths = pathData.subPaths.map((subPath) =>
-              transformCommands(subPath, transform)
+              transformCommands(subPath, {
+                ...transform,
+                originX: localOrigin.x,
+                originY: localOrigin.y,
+                rotationCenterX: localOrigin.x,
+                rotationCenterY: localOrigin.y,
+              })
             );
 
             const newStrokeWidth = calculateScaledStrokeWidth(pathData.strokeWidth, scaleX, scaleY);
@@ -404,9 +453,11 @@ export const createTransformationPluginSlice: StateCreator<
               }
             });
           } else {
-            const scaled = elementContributionRegistry.scaleElement(element, scaleX, scaleY, originX, originY, 3);
-            if (scaled) {
-              state.updateElement(id, { data: scaled.data });
+            const worldMatrix = createScaleMatrix(scaleX, scaleY, originX, originY);
+            const localMatrix = worldToLocalAffineForElement(element, worldMatrix, state.elements);
+            const transformed = elementContributionRegistry.applyAffineTransform(element, localMatrix, 3);
+            if (transformed) {
+              state.updateElement(id, { data: transformed.data });
             }
           }
         });
@@ -514,9 +565,20 @@ export const createTransformationPluginSlice: StateCreator<
           } else if (element.type === 'path') {
             // Transform path element
             const pathData = element.data as import('../../types').PathData;
+            const localRotationCenter = toLocalPoint(
+              element,
+              { x: rotationCenterX, y: rotationCenterY },
+              state.elements,
+            );
 
             const newSubPaths = pathData.subPaths.map((subPath) =>
-              transformCommands(subPath, transform)
+              transformCommands(subPath, {
+                ...transform,
+                originX: localRotationCenter.x,
+                originY: localRotationCenter.y,
+                rotationCenterX: localRotationCenter.x,
+                rotationCenterY: localRotationCenter.y,
+              })
             );
 
             state.updateElement(id, {
@@ -526,9 +588,11 @@ export const createTransformationPluginSlice: StateCreator<
               }
             });
           } else {
-            const rotated = elementContributionRegistry.rotateElement(element, degrees, rotationCenterX, rotationCenterY, 3);
-            if (rotated) {
-              state.updateElement(id, { data: rotated.data });
+            const worldMatrix = createRotateMatrix(degrees, rotationCenterX, rotationCenterY);
+            const localMatrix = worldToLocalAffineForElement(element, worldMatrix, state.elements);
+            const transformed = elementContributionRegistry.applyAffineTransform(element, localMatrix, 3);
+            if (transformed) {
+              state.updateElement(id, { data: transformed.data });
             }
           }
         });
@@ -636,8 +700,9 @@ export const createTransformationPluginSlice: StateCreator<
                   });
                   if (childBounds) {
                     const targetCorners = getTargetCornersForElement(childBounds as Bounds);
-                    const matrix = computeAffineFromRect(childBounds as Bounds, targetCorners);
-                    const transformed = elementContributionRegistry.applyAffineTransform(child, matrix, 3);
+                    const worldMatrix = computeAffineFromRect(childBounds as Bounds, targetCorners);
+                    const localMatrix = worldToLocalAffineForElement(child, worldMatrix as Matrix, elementMap);
+                    const transformed = elementContributionRegistry.applyAffineTransform(child, localMatrix, 3);
                     if (transformed) {
                       state.updateElement(child.id, { data: transformed.data });
                     }
@@ -668,8 +733,9 @@ export const createTransformationPluginSlice: StateCreator<
             });
             if (elementBounds) {
               const targetCorners = getTargetCornersForElement(elementBounds as Bounds);
-              const matrix = computeAffineFromRect(elementBounds as Bounds, targetCorners);
-              const transformed = elementContributionRegistry.applyAffineTransform(element, matrix, 3);
+              const worldMatrix = computeAffineFromRect(elementBounds as Bounds, targetCorners);
+              const localMatrix = worldToLocalAffineForElement(element, worldMatrix as Matrix, elementMap);
+              const transformed = elementContributionRegistry.applyAffineTransform(element, localMatrix, 3);
               if (transformed) {
                 state.updateElement(id, { data: transformed.data });
               }
@@ -778,8 +844,9 @@ export const createTransformationPluginSlice: StateCreator<
                             tr: { x: childBounds.maxX, y: childBounds.minY + Math.tan((angle * Math.PI) / 180) * (childBounds.maxX - originX) },
                             bl: { x: childBounds.minX, y: childBounds.maxY + Math.tan((angle * Math.PI) / 180) * (childBounds.minX - originX) },
                           };
-                    const matrix = computeAffineFromRect(childBounds as Bounds, skewedCorners);
-                    const transformed = elementContributionRegistry.applyAffineTransform(child, matrix, 3);
+                    const worldMatrix = computeAffineFromRect(childBounds as Bounds, skewedCorners);
+                    const localMatrix = worldToLocalAffineForElement(child, worldMatrix as Matrix, elementMap);
+                    const transformed = elementContributionRegistry.applyAffineTransform(child, localMatrix, 3);
                     if (transformed) {
                       state.updateElement(child.id, { data: transformed.data });
                     }
@@ -824,8 +891,9 @@ export const createTransformationPluginSlice: StateCreator<
                       bl: { x: elementBounds.minX, y: elementBounds.maxY + Math.tan((angle * Math.PI) / 180) * (elementBounds.minX - originX) },
                     };
 
-              const matrix = computeAffineFromRect(elementBounds as Bounds, skewedCorners);
-              const transformed = elementContributionRegistry.applyAffineTransform(element, matrix, 3);
+              const worldMatrix = computeAffineFromRect(elementBounds as Bounds, skewedCorners);
+              const localMatrix = worldToLocalAffineForElement(element, worldMatrix as Matrix, elementMap);
+              const transformed = elementContributionRegistry.applyAffineTransform(element, localMatrix, 3);
               if (transformed) {
                 state.updateElement(id, { data: transformed.data });
               }

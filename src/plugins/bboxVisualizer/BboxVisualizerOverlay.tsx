@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { BboxVisualizerPluginSlice } from './slice';
 import { computeBBoxes, computeOverlaps, formatArea } from './bboxUtils';
 import type { CanvasElement } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type BboxStore = CanvasStore & BboxVisualizerPluginSlice;
 
@@ -35,10 +36,11 @@ export const BboxVisualizerOverlay: React.FC = () => {
 
   const { bboxes, overlaps } = useMemo(() => {
     if (!enabled) return { bboxes: [], overlaps: [] };
+    const elementMap = buildElementMap(elements);
     const targetEls = showAllElements
       ? elements
       : elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
-    const boxes = computeBBoxes(targetEls);
+    const boxes = computeBBoxes(targetEls, elementMap);
     const ov = showOverlaps ? computeOverlaps(boxes) : [];
     return { bboxes: boxes, overlaps: ov };
   }, [enabled, showAllElements, elements, selectedIds, showOverlaps]);

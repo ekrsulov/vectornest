@@ -1,10 +1,14 @@
-import type { CanvasElement, SubPath, Command } from '../../types';
+import type { CanvasElement, Command } from '../../types';
 import type { HeatmapCell } from './slice';
+import { getPathSubPathsInWorld } from '../../utils/pathWorldUtils';
 
-function getCenter(el: CanvasElement): { x: number; y: number } | null {
+type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
+
+function getCenter(el: CanvasElement, elementsSource: ElementsSource): { x: number; y: number } | null {
   if (el.type !== 'path') return null;
   const pts: { x: number; y: number }[] = [];
-  for (const sp of el.data.subPaths as SubPath[]) {
+  const worldSubPaths = getPathSubPathsInWorld(el, elementsSource);
+  for (const sp of worldSubPaths) {
     for (const cmd of sp as Command[]) {
       if (cmd.type !== 'Z') pts.push(cmd.position);
     }
@@ -15,10 +19,15 @@ function getCenter(el: CanvasElement): { x: number; y: number } | null {
   return { x: cx, y: cy };
 }
 
-export function computeHeatmap(elements: CanvasElement[], gridSize: number): HeatmapCell[] {
+export function computeHeatmap(
+  elements: CanvasElement[],
+  gridSize: number,
+  elementsSource?: ElementsSource
+): HeatmapCell[] {
+  const worldSource = elementsSource ?? elements;
   const centers: { x: number; y: number }[] = [];
   for (const el of elements) {
-    const c = getCenter(el);
+    const c = getCenter(el, worldSource);
     if (c) centers.push(c);
   }
 

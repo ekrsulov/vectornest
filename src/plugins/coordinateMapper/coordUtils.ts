@@ -1,21 +1,27 @@
-import type { CanvasElement, SubPath, Command, Point } from '../../types';
+import type { CanvasElement, Command, Point } from '../../types';
 import type { CoordLabel } from './slice';
+import { getPathSubPathsInWorld } from '../../utils/pathWorldUtils';
+
+type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
 
 export function extractCoordinates(
   elements: CanvasElement[],
   showAnchors: boolean,
   showControls: boolean,
   showCenters: boolean,
-  precision: number
+  precision: number,
+  elementsSource?: ElementsSource
 ): CoordLabel[] {
   const labels: CoordLabel[] = [];
   const fmt = (v: number) => Number(v.toFixed(precision));
+  const worldSource = elementsSource ?? elements;
 
   for (const el of elements) {
     if (el.type !== 'path') continue;
+    const worldSubPaths = getPathSubPathsInWorld(el, worldSource);
 
     if (showCenters) {
-      const allPts = (el.data.subPaths as SubPath[]).flatMap((sp: SubPath) =>
+      const allPts = worldSubPaths.flatMap((sp) =>
         (sp as Command[]).filter((c: Command) => c.type !== 'Z').map((c: Command) => (c as { position: Point }).position)
       );
       if (allPts.length > 0) {
@@ -31,7 +37,7 @@ export function extractCoordinates(
       }
     }
 
-    for (const sp of el.data.subPaths as SubPath[]) {
+    for (const sp of worldSubPaths) {
       for (const cmd of sp as Command[]) {
         if (cmd.type === 'Z') continue;
 

@@ -10,6 +10,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { BboxVisualizerPluginSlice } from './slice';
 import { computeBBoxes, computeOverlaps, formatArea } from './bboxUtils';
 import type { CanvasElement } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type BboxStore = CanvasStore & BboxVisualizerPluginSlice;
 
@@ -28,10 +29,11 @@ export const BboxVisualizerPanel: React.FC = () => {
 
   const handleAnalyze = useCallback(() => {
     if (!state || !update) return;
+    const elementMap = buildElementMap(elements);
     const targetEls = state.showAllElements
       ? elements
       : elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
-    const bboxes = computeBBoxes(targetEls);
+    const bboxes = computeBBoxes(targetEls, elementMap);
     const overlaps = computeOverlaps(bboxes);
     const totalArea = bboxes.reduce((s, b) => s + b.area, 0);
     const totalOverlapArea = overlaps.reduce((s, o) => s + o.overlapArea, 0);

@@ -1,13 +1,20 @@
 import type { CanvasElement, SubPath, Command } from '../../types';
 import type { TangentLine } from './slice';
+import { getPathSubPathsInWorld } from '../../utils/pathWorldUtils';
 
-export function computeTangents(elements: CanvasElement[]): TangentLine[] {
+type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
+
+export function computeTangents(
+  elements: CanvasElement[],
+  elementsSource?: ElementsSource
+): TangentLine[] {
   const tangents: TangentLine[] = [];
+  const worldSource = elementsSource ?? elements;
 
   for (const el of elements) {
     if (el.type !== 'path') continue;
 
-    for (const sp of el.data.subPaths as SubPath[]) {
+    for (const sp of getPathSubPathsInWorld(el, worldSource) as SubPath[]) {
       const cmds = sp as Command[];
       for (let i = 0; i < cmds.length; i++) {
         const cmd = cmds[i];

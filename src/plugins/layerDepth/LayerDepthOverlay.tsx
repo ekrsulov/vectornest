@@ -3,6 +3,8 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { LayerDepthPluginSlice } from './slice';
 import { analyzeLayerDepth } from './depthUtils';
+import { buildElementMap } from '../../utils/elementMapUtils';
+import { getPathSubPathsInWorld, getSubPathsBounds } from '../../utils/pathWorldUtils';
 
 type DepthStore = CanvasStore & LayerDepthPluginSlice;
 
@@ -25,29 +27,19 @@ export const LayerDepthOverlay: React.FC = () => {
 
   const layers = useMemo(() => {
     if (!enabled) return [];
-    return analyzeLayerDepth(elements);
+    return analyzeLayerDepth(elements, buildElementMap(elements));
   }, [enabled, elements]);
 
   // Build a map from element id to bounding box for label placement
   const elementBounds = useMemo(() => {
     if (!enabled) return new Map<string, { cx: number; cy: number; minX: number; minY: number; width: number; height: number }>();
+    const elementMap = buildElementMap(elements);
     const map = new Map<string, { cx: number; cy: number; minX: number; minY: number; width: number; height: number }>();
     for (const el of elements) {
       if (el.type !== 'path') continue;
-      let mnX = Infinity, mnY = Infinity, mxX = -Infinity, mxY = -Infinity;
-      let has = false;
-      for (const sp of el.data.subPaths) {
-        for (const cmd of sp) {
-          if (cmd.type === 'Z') continue;
-          has = true;
-          const p = cmd.position;
-          if (p.x < mnX) mnX = p.x;
-          if (p.y < mnY) mnY = p.y;
-          if (p.x > mxX) mxX = p.x;
-          if (p.y > mxY) mxY = p.y;
-        }
-      }
-      if (has) {
+      const bounds = getSubPathsBounds(getPathSubPathsInWorld(el, elementMap));
+      if (bounds) {
+        const { minX: mnX, minY: mnY, maxX: mxX, maxY: mxY } = bounds;
         map.set(el.id, {
           cx: (mnX + mxX) / 2,
           cy: (mnY + mxY) / 2,

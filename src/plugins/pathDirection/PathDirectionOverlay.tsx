@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import { computeDirectionArrows, getEndpoints } from './directionUtils';
 import type { PathDirectionPluginSlice } from './slice';
 import type { CanvasElement, SubPath } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
+import { getPathSubPathsInWorld } from '../../utils/pathWorldUtils';
 
 type DirStore = CanvasStore & PathDirectionPluginSlice;
 
@@ -25,6 +27,7 @@ export const PathDirectionOverlay: React.FC = () => {
       };
     })
   );
+  const elementMap = useMemo(() => buildElementMap(elements), [elements]);
 
   if (!enabled || selectedIds.length === 0) return null;
 
@@ -42,7 +45,7 @@ export const PathDirectionOverlay: React.FC = () => {
       {selectedPaths.map((el: CanvasElement) => {
         if (el.type !== 'path') return null;
 
-        return el.data.subPaths.map((sp: SubPath, si: number) => {
+        return getPathSubPathsInWorld(el, elementMap).map((sp: SubPath, si: number) => {
           const arrows = showArrows ? computeDirectionArrows(sp, arrowDensity) : [];
           const endpoints = showEndpoints ? getEndpoints(sp) : { start: null, end: null };
 

@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { ElementRulerPluginSlice } from './slice';
 import { computeMeasurements, type Measurement } from './rulerUtils';
 import type { CanvasElement } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type RulerStore = CanvasStore & ElementRulerPluginSlice;
 
@@ -87,10 +88,11 @@ export const ElementRulerOverlay: React.FC = () => {
 
   const measurements = useMemo(() => {
     if (!enabled || selectedIds.length === 0) return [];
+    const elementMap = buildElementMap(elements);
     const selected = elements.filter(
       (el: CanvasElement) => selectedIds.includes(el.id) && el.type === 'path'
     );
-    return computeMeasurements(selected, {
+    return computeMeasurements(selected, elementMap, {
       showDistances,
       showAngles,
       showGaps,

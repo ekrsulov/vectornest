@@ -1,5 +1,8 @@
-import type { CanvasElement, SubPath, Command } from '../../types';
+import type { CanvasElement } from '../../types';
 import type { SpacingGap } from './slice';
+import { getPathSubPathsInWorld } from '../../utils/pathWorldUtils';
+
+type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
 
 interface Bounds {
   id: string;
@@ -7,12 +10,12 @@ interface Bounds {
   cx: number; cy: number;
 }
 
-function getBounds(el: CanvasElement): Bounds | null {
+function getBounds(el: CanvasElement, elementsSource: ElementsSource): Bounds | null {
   if (el.type !== 'path') return null;
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   let has = false;
-  for (const sp of el.data.subPaths as SubPath[]) {
-    for (const cmd of sp as Command[]) {
+  for (const sp of getPathSubPathsInWorld(el, elementsSource)) {
+    for (const cmd of sp) {
       if (cmd.type === 'Z') continue;
       has = true;
       const p = cmd.position;
@@ -28,11 +31,12 @@ function getBounds(el: CanvasElement): Bounds | null {
 
 export function analyzeSpacing(
   elements: CanvasElement[],
+  elementsSource: ElementsSource,
   options: { showHorizontal: boolean; showVertical: boolean; inconsistencyThreshold: number }
 ): { gaps: SpacingGap[]; avgHGap: number; avgVGap: number } {
   const boundsList: Bounds[] = [];
   for (const el of elements) {
-    const b = getBounds(el);
+    const b = getBounds(el, elementsSource);
     if (b) boundsList.push(b);
   }
 

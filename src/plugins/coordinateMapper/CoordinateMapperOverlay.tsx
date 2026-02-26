@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { CoordinateMapperPluginSlice } from './slice';
 import { extractCoordinates } from './coordUtils';
 import type { CanvasElement } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type CMStore = CanvasStore & CoordinateMapperPluginSlice;
 
@@ -34,10 +35,11 @@ export const CoordinateMapperOverlay: React.FC = () => {
 
   const labels = useMemo(() => {
     if (!enabled) return [];
+    const elementMap = buildElementMap(elements);
     const target = selectedOnly
       ? elements.filter((el: CanvasElement) => selectedIds.includes(el.id))
       : elements;
-    return extractCoordinates(target as CanvasElement[], showAnchors, showControls, showCenters, precision);
+    return extractCoordinates(target as CanvasElement[], showAnchors, showControls, showCenters, precision, elementMap);
   }, [enabled, selectedOnly, selectedIds, elements, showAnchors, showControls, showCenters, precision]);
 
   if (!enabled || labels.length === 0) return null;

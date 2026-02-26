@@ -1,5 +1,8 @@
 import type { CanvasElement, SubPath, Command } from '../../types';
 import type { IntersectionPoint } from './slice';
+import { getPathSubPathsInWorld } from '../../utils/pathWorldUtils';
+
+type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
 
 interface Segment {
   x1: number;
@@ -13,12 +16,17 @@ interface Segment {
 /**
  * Flatten path element into line segments by linearizing curves.
  */
-function flattenPathToSegments(el: CanvasElement, steps = 8): Segment[] {
+function flattenPathToSegments(
+  el: CanvasElement,
+  elementsSource: ElementsSource,
+  steps = 8
+): Segment[] {
   if (el.type !== 'path') return [];
   const segments: Segment[] = [];
   const label = el.id.slice(0, 8);
+  const worldSubPaths = getPathSubPathsInWorld(el, elementsSource);
 
-  for (const sp of el.data.subPaths as SubPath[]) {
+  for (const sp of worldSubPaths as SubPath[]) {
     const cmds = sp as Command[];
     for (let i = 1; i < cmds.length; i++) {
       const prev = cmds[i - 1];
@@ -109,13 +117,15 @@ function deduplicatePoints(points: IntersectionPoint[], tolerance: number): Inte
 export function detectIntersections(
   elements: CanvasElement[],
   tolerance: number,
-  includeSelfIntersections: boolean
+  includeSelfIntersections: boolean,
+  elementsSource?: ElementsSource
 ): IntersectionPoint[] {
   const allSegments: Map<string, Segment[]> = new Map();
+  const worldSource = elementsSource ?? elements;
 
   for (const el of elements) {
     if (el.type !== 'path') continue;
-    const segs = flattenPathToSegments(el);
+    const segs = flattenPathToSegments(el, worldSource);
     if (segs.length > 0) {
       allSegments.set(el.id, segs);
     }

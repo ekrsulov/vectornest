@@ -9,6 +9,7 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { LayerDepthPluginSlice } from './slice';
 import { analyzeLayerDepth } from './depthUtils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type DepthStore = CanvasStore & LayerDepthPluginSlice;
 
@@ -26,7 +27,7 @@ export const LayerDepthPanel: React.FC = () => {
 
   const handleAnalyze = useCallback(() => {
     if (!state || !update) return;
-    const layers = analyzeLayerDepth(elements);
+    const layers = analyzeLayerDepth(elements, buildElementMap(elements));
     const fullyObscuredCount = layers.filter((l) => l.isFullyObscured).length;
     const partiallyObscuredCount = layers.filter((l) => l.obscuredPercent > 0 && !l.isFullyObscured).length;
     update({

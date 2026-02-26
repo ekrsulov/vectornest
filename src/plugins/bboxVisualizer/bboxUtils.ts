@@ -1,35 +1,21 @@
-import type { CanvasElement, SubPath, Command } from '../../types';
+import type { CanvasElement } from '../../types';
 import type { BBoxInfo, OverlapInfo } from './slice';
+import { getPathSubPathsInWorld, getSubPathsBounds } from '../../utils/pathWorldUtils';
 
-export function computeBBoxes(elements: CanvasElement[]): BBoxInfo[] {
+type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
+
+export function computeBBoxes(
+  elements: CanvasElement[],
+  elementsSource?: ElementsSource
+): BBoxInfo[] {
   const result: BBoxInfo[] = [];
+  const worldSource = elementsSource ?? elements;
 
   for (const el of elements) {
     if (el.type !== 'path') continue;
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    let hasPoints = false;
-
-    for (const sp of el.data.subPaths as SubPath[]) {
-      for (const cmd of sp as Command[]) {
-        if (cmd.type === 'Z') continue;
-        hasPoints = true;
-        const p = cmd.position;
-        if (p.x < minX) minX = p.x;
-        if (p.y < minY) minY = p.y;
-        if (p.x > maxX) maxX = p.x;
-        if (p.y > maxY) maxY = p.y;
-        if (cmd.type === 'C') {
-          for (const cp of [cmd.controlPoint1, cmd.controlPoint2]) {
-            if (cp.x < minX) minX = cp.x;
-            if (cp.y < minY) minY = cp.y;
-            if (cp.x > maxX) maxX = cp.x;
-            if (cp.y > maxY) maxY = cp.y;
-          }
-        }
-      }
-    }
-
-    if (!hasPoints) continue;
+    const bounds = getSubPathsBounds(getPathSubPathsInWorld(el, worldSource));
+    if (!bounds) continue;
+    const { minX, minY, maxX, maxY } = bounds;
 
     const width = maxX - minX;
     const height = maxY - minY;

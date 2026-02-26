@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { TangentVisualizerPluginSlice } from './slice';
 import { computeTangents } from './tangentUtils';
 import type { CanvasElement } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type TVStore = CanvasStore & TangentVisualizerPluginSlice;
 
@@ -27,10 +28,11 @@ export const TangentVisualizerOverlay: React.FC = () => {
 
   const tangents = useMemo(() => {
     if (!enabled) return [];
+    const elementMap = buildElementMap(elements);
     const target = selectedOnly
       ? elements.filter((el: CanvasElement) => selectedIds.includes(el.id))
       : elements;
-    return computeTangents(target as CanvasElement[]);
+    return computeTangents(target as CanvasElement[], elementMap);
   }, [enabled, selectedOnly, selectedIds, elements]);
 
   if (!enabled || tangents.length === 0) return null;

@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { ElementHeatmapPluginSlice } from './slice';
 import { computeHeatmap } from './heatmapUtils';
 import type { CanvasElement } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type HMStore = CanvasStore & ElementHeatmapPluginSlice;
 
@@ -39,7 +40,7 @@ export const ElementHeatmapOverlay: React.FC = () => {
 
   const cells = useMemo(() => {
     if (!enabled) return [];
-    return computeHeatmap(elements as CanvasElement[], gridSize);
+    return computeHeatmap(elements as CanvasElement[], gridSize, buildElementMap(elements));
   }, [enabled, elements, gridSize]);
 
   if (!enabled || cells.length === 0) return null;

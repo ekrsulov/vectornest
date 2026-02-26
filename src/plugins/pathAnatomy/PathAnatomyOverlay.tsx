@@ -3,7 +3,9 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getSegmentInfos } from './anatomyUtils';
 import type { PathAnatomyPluginSlice } from './slice';
-import type { CanvasElement, SubPath, Command, Point } from '../../types';
+import type { CanvasElement, Command, Point } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
+import { getPathSubPathsInWorld } from '../../utils/pathWorldUtils';
 
 type AnatomyStore = CanvasStore & PathAnatomyPluginSlice;
 
@@ -34,6 +36,7 @@ export const PathAnatomyOverlay: React.FC = () => {
       (el: CanvasElement) => selectedIds.includes(el.id) && el.type === 'path'
     );
   }, [enabled, selectedIds, elements]);
+  const elementMap = useMemo(() => buildElementMap(elements), [elements]);
 
   if (!enabled || selectedPaths.length === 0) return null;
 
@@ -43,12 +46,13 @@ export const PathAnatomyOverlay: React.FC = () => {
     <g className="path-anatomy-overlay">
       {selectedPaths.map((el: CanvasElement) => {
         if (el.type !== 'path') return null;
-        const segments = getSegmentInfos(el.data.subPaths);
+        const worldSubPaths = getPathSubPathsInWorld(el, elementMap);
+        const segments = getSegmentInfos(worldSubPaths);
 
         // Collect nodes for type markers
         const nodes: { pos: Point; type: 'smooth' | 'corner' | 'start' }[] = [];
         if (showNodeTypes) {
-          el.data.subPaths.forEach((sp: SubPath) => {
+          worldSubPaths.forEach((sp) => {
             let isFirst = true;
             sp.forEach((cmd: Command) => {
               if (cmd.type === 'Z') return;

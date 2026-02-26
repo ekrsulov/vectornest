@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import { analyzeCurvature } from './curvatureUtils';
 import type { CurvatureCombPluginSlice } from './slice';
 import type { CanvasElement } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
+import { getPathSubPathsInWorld } from '../../utils/pathWorldUtils';
 
 type CombStore = CanvasStore & CurvatureCombPluginSlice;
 
@@ -25,6 +27,7 @@ export const CurvatureCombOverlay: React.FC = () => {
       };
     })
   );
+  const elementMap = useMemo(() => buildElementMap(elements), [elements]);
 
   if (!enabled || selectedIds.length === 0) return null;
 
@@ -40,7 +43,7 @@ export const CurvatureCombOverlay: React.FC = () => {
     <g className="curvature-comb-overlay">
       {selectedElements.map((el: CanvasElement) => {
         if (el.type !== 'path') return null;
-        const analysis = analyzeCurvature(el.data.subPaths, density);
+        const analysis = analyzeCurvature(getPathSubPathsInWorld(el, elementMap), density);
 
         return (
           <g key={el.id}>

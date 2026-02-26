@@ -11,6 +11,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { IntersectionDetectorPluginSlice } from './slice';
 import { detectIntersections } from './intersectionUtils';
 import type { CanvasElement } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type IStore = CanvasStore & IntersectionDetectorPluginSlice;
 
@@ -30,10 +31,16 @@ export const IntersectionDetectorPanel: React.FC = () => {
 
   const handleDetect = useCallback(() => {
     if (!state || !update) return;
+    const elementMap = buildElementMap(elements);
     const target = selectedIds.length > 0
       ? elements.filter((el: CanvasElement) => selectedIds.includes(el.id))
       : elements;
-    const intersections = detectIntersections(target as CanvasElement[], state.tolerance, state.selfIntersections);
+    const intersections = detectIntersections(
+      target as CanvasElement[],
+      state.tolerance,
+      state.selfIntersections,
+      elementMap
+    );
     update({ intersections });
   }, [state, update, selectedIds, elements]);
 

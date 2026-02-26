@@ -1,4 +1,7 @@
-import type { CanvasElement, SubPath, Command } from '../../types';
+import type { CanvasElement } from '../../types';
+import { getPathSubPathsInWorld, getSubPathsBounds } from '../../utils/pathWorldUtils';
+
+type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
 
 export interface ElementBounds {
   id: string;
@@ -23,30 +26,14 @@ export interface Measurement {
   midpoint: { x: number; y: number };
 }
 
-export function getElementBounds(el: CanvasElement): ElementBounds | null {
+export function getElementBounds(
+  el: CanvasElement,
+  elementsSource: ElementsSource
+): ElementBounds | null {
   if (el.type !== 'path') return null;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  let hasPoints = false;
-  el.data.subPaths.forEach((sp: SubPath) => {
-    sp.forEach((c: Command) => {
-      if (c.type === 'Z') return;
-      hasPoints = true;
-      const p = c.position;
-      if (p.x < minX) minX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y > maxY) maxY = p.y;
-      if (c.type === 'C') {
-        for (const cp of [c.controlPoint1, c.controlPoint2]) {
-          if (cp.x < minX) minX = cp.x;
-          if (cp.y < minY) minY = cp.y;
-          if (cp.x > maxX) maxX = cp.x;
-          if (cp.y > maxY) maxY = cp.y;
-        }
-      }
-    });
-  });
-  if (!hasPoints) return null;
+  const bounds = getSubPathsBounds(getPathSubPathsInWorld(el, elementsSource));
+  if (!bounds) return null;
+  const { minX, minY, maxX, maxY } = bounds;
   return {
     id: el.id,
     minX, minY, maxX, maxY,
@@ -59,6 +46,7 @@ export function getElementBounds(el: CanvasElement): ElementBounds | null {
 
 export function computeMeasurements(
   elements: CanvasElement[],
+  elementsSource: ElementsSource,
   options: {
     showDistances: boolean;
     showAngles: boolean;
@@ -68,7 +56,7 @@ export function computeMeasurements(
 ): Measurement[] {
   const boundsList: ElementBounds[] = [];
   for (const el of elements) {
-    const b = getElementBounds(el);
+    const b = getElementBounds(el, elementsSource);
     if (b) boundsList.push(b);
   }
 

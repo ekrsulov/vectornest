@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { SpacingAnalyzerPluginSlice } from './slice';
 import { analyzeSpacing } from './spacingUtils';
 import type { CanvasElement } from '../../types';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type SpStore = CanvasStore & SpacingAnalyzerPluginSlice;
 
@@ -26,7 +27,11 @@ export const SpacingAnalyzerOverlay: React.FC = () => {
   const gaps = useMemo(() => {
     if (!enabled || selectedIds.length < 2) return [];
     const selected = elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
-    const result = analyzeSpacing(selected, { showHorizontal: showH, showVertical: showV, inconsistencyThreshold: threshold });
+    const result = analyzeSpacing(
+      selected,
+      buildElementMap(elements),
+      { showHorizontal: showH, showVertical: showV, inconsistencyThreshold: threshold }
+    );
     return result.gaps;
   }, [enabled, selectedIds, elements, showH, showV, threshold]);
 

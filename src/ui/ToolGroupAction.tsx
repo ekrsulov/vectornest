@@ -58,6 +58,8 @@ export const ToolGroupAction: React.FC<ToolGroupActionProps> = ({
     const { activeTool: { bg: activeBg, color: activeColor }, counter: counterColors, menu: menuColors } = themeColors;
     const menuBg = useColorModeValue('white', 'gray.800');
     const hoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
+    const groupIndicatorColor = useColorModeValue('#4A5568', '#CBD5E0');
+    const groupIndicatorActiveColor = useColorModeValue('#FFFFFF', '#1A202C');
 
     // Determine badge colors based on theme
     const badgeColors = counterColor === 'red' ? counterColors.danger : counterColors.neutral;
@@ -79,90 +81,117 @@ export const ToolGroupAction: React.FC<ToolGroupActionProps> = ({
 
     return (
         <Menu placement="top" offset={[0, 8]}>
-        <ConditionalTooltip label={label} openDelay={500} placement="top">
-            <Box position="relative">
-                    <MenuButton
-                        as={IconButton}
-                        aria-label={label}
-                        icon={<Icon size={16} />} // Match size with ToolbarIconButton
-                        variant="ghost"
-                        isDisabled={isDisabled}
-                        bg={isActive ? activeBg : undefined}
-                        color={isActive ? activeColor : undefined}
-                        _hover={{
-                            bg: isActive ? activeBg : hoverBg,
-                        }}
-                        _active={{
-                            bg: isActive ? activeBg : hoverBg,
-                        }}
-                        size="xs"
-                        sx={{
-                            minHeight: '32px',
-                            minWidth: '32px',
-                            borderRadius: 'full',
-                        }}
-                        onClick={handleButtonClick}
-                    />
-                    {counter !== undefined && counter !== 0 && counter !== '' && (
-                        <Box
-                            position="absolute"
-                            bottom="-3px"
-                            left="50%"
-                            transform="translateX(-50%)"
-                            bg={badgeColors.bg}
-                            color={badgeColors.color}
-                            borderRadius="full"
-                            minW="16px"
-                            w="fit-content"
-                            h="11px"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                            fontSize="9px"
-                            fontWeight="bold"
-                            px="3px"
-                            zIndex={1}
-                        >
-                            {counter}
+            {({ isOpen }) => (
+                <>
+                    <ConditionalTooltip label={label} openDelay={500} placement="top">
+                        <Box position="relative">
+                            <Box
+                                as="svg"
+                                position="absolute"
+                                top={isOpen ? '0px' : '0px'}
+                                left="4px"
+                                right="4px"
+                                height="8px"
+                                viewBox="0 0 24 8"
+                                preserveAspectRatio="none"
+                                pointerEvents="none"
+                                zIndex={1}
+                                opacity={isOpen || isActive ? 0.98 : 0.78}
+                                transition="opacity 0.16s ease"
+                            >
+                                <polyline
+                                    points={isOpen ? '1,2 12,7 23,2' : '1,4 23,4'}
+                                    fill="none"
+                                    stroke={isOpen || isActive ? groupIndicatorActiveColor : groupIndicatorColor}
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </Box>
+                            <MenuButton
+                                as={IconButton}
+                                aria-label={label}
+                                icon={<Icon size={16} />} // Match size with ToolbarIconButton
+                                variant="ghost"
+                                isDisabled={isDisabled}
+                                bg={isActive ? activeBg : undefined}
+                                color={isActive ? activeColor : undefined}
+                                _hover={{
+                                    bg: isActive ? activeBg : hoverBg,
+                                }}
+                                _active={{
+                                    bg: isActive ? activeBg : hoverBg,
+                                }}
+                                size="xs"
+                                sx={{
+                                    minHeight: '32px',
+                                    minWidth: '32px',
+                                    borderRadius: 'full',
+                                }}
+                                onClick={handleButtonClick}
+                            />
+                            {counter !== undefined && counter !== 0 && counter !== '' && (
+                                <Box
+                                    position="absolute"
+                                    bottom="-3px"
+                                    left="50%"
+                                    transform="translateX(-50%)"
+                                    bg={badgeColors.bg}
+                                    color={badgeColors.color}
+                                    borderRadius="full"
+                                    minW="16px"
+                                    w="fit-content"
+                                    h="11px"
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    fontSize="9px"
+                                    fontWeight="bold"
+                                    px="3px"
+                                    zIndex={1}
+                                >
+                                    {counter}
+                                </Box>
+                            )}
                         </Box>
-                    )}
-            </Box>
-        </ConditionalTooltip>
-            <MenuList
-                bg={menuBg}
-                border="1px solid"
-                borderColor={menuColors.borderColor}
-                borderRadius="lg"
-                boxShadow="lg"
-                minW="180px"
-                py={1}
-                _focus={{ outline: 'none', boxShadow: 'lg' }}
-            >
-                {tools.map((tool) => {
-                    const ToolIcon = tool.icon;
-                    const isToolActive = tool.id === currentToolId;
+                    </ConditionalTooltip>
+                    <MenuList
+                        bg={menuBg}
+                        border="1px solid"
+                        borderColor={menuColors.borderColor}
+                        borderRadius="lg"
+                        boxShadow="lg"
+                        minW="180px"
+                        py={1}
+                        _focus={{ outline: 'none', boxShadow: 'lg' }}
+                    >
+                        {tools.map((tool) => {
+                            const ToolIcon = tool.icon;
+                            const isToolActive = tool.id === currentToolId;
 
-                    return (
-                        <MenuItem
-                            key={tool.id}
-                            onClick={() => onToolSelect(tool.id)}
-                            icon={<ToolIcon size={16} />}
-                            command={isToolActive ? '✓' : undefined}
-                            isDisabled={tool.isDisabled}
-                            color={menuColors.iconColor}
-                            _hover={{ bg: hoverBg }}
-                            _focus={{ outline: 'none', boxShadow: 'none', bg: 'transparent' }}
-                            _active={{ outline: 'none', bg: 'transparent' }}
-                            fontSize="14px"
-                            fontWeight="medium"
-                            px={3}
-                            py={2}
-                        >
-                            {tool.label}
-                        </MenuItem>
-                    );
-                })}
-            </MenuList>
+                            return (
+                                <MenuItem
+                                    key={tool.id}
+                                    onClick={() => onToolSelect(tool.id)}
+                                    icon={<ToolIcon size={16} />}
+                                    command={isToolActive ? '✓' : undefined}
+                                    isDisabled={tool.isDisabled}
+                                    color={menuColors.iconColor}
+                                    _hover={{ bg: hoverBg }}
+                                    _focus={{ outline: 'none', boxShadow: 'none', bg: 'transparent' }}
+                                    _active={{ outline: 'none', bg: 'transparent' }}
+                                    fontSize="14px"
+                                    fontWeight="medium"
+                                    px={3}
+                                    py={2}
+                                >
+                                    {tool.label}
+                                </MenuItem>
+                            );
+                        })}
+                    </MenuList>
+                </>
+            )}
         </Menu>
     );
 };

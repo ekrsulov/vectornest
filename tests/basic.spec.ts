@@ -11,13 +11,18 @@ test.describe('VectorNest Application', () => {
     // Check that the SVG canvas is present
     await expect(getCanvas(page)).toBeVisible();
 
-    // BottomActionBar groups should be visible
-    const groups = ['Basic Tools', 'Creation Tools', 'Advanced Tools'];
+    // Desktop exposes the basic tools directly; grouped menus remain for creation/advanced tools.
+    const groups = ['Creation Tools', 'Advanced Tools'];
     for (const group of groups) {
       await expect(getToolMenuButton(page, group)).toBeVisible();
     }
 
-    // Each tool should be available inside its menu
+    const desktopBasicTools = ['Select', 'Subpath', 'Transform', 'Edit', 'Pan'];
+    for (const tool of desktopBasicTools) {
+      await expect(page.locator(`button[aria-label="${tool}"]`).last()).toBeVisible();
+    }
+
+    // Each tool should still be discoverable through the shared helper regardless of layout.
     const pluginButtons = ['Select', 'Subpath', 'Transform', 'Edit', 'Pencil', 'Text', 'Shape'];
     for (const button of pluginButtons) {
       await expectToolVisible(page, button);

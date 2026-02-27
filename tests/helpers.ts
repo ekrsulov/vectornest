@@ -8,6 +8,7 @@ const TOOL_GROUP_MAP: Record<string, 'Basic Tools' | 'Creation Tools' | 'Advance
   Subpath: 'Basic Tools',
   Transform: 'Basic Tools',
   Edit: 'Basic Tools',
+  Pan: 'Basic Tools',
   Pen: 'Creation Tools',
   Pencil: 'Creation Tools',
   Text: 'Creation Tools',
@@ -29,6 +30,51 @@ const getToolGroup = (label: string): string => TOOL_GROUP_MAP[label] ?? '';
  */
 export function getToolMenuButton(page: Page, groupLabel: string): Locator {
   return page.getByRole('button', { name: groupLabel });
+}
+
+async function getDirectToolButton(page: Page, label: string): Promise<Locator | null> {
+  const buttons = page.locator(`button[aria-label="${label}"]`);
+  const count = await buttons.count();
+  if (count === 0) return null;
+
+  let bestIndex = -1;
+  let bestY = -Infinity;
+
+  for (let i = 0; i < count; i += 1) {
+    const candidate = buttons.nth(i);
+    let isCandidateVisible = false;
+
+    try {
+      isCandidateVisible = await candidate.isVisible();
+    } catch {
+      isCandidateVisible = false;
+    }
+
+    if (!isCandidateVisible) continue;
+
+    const box = await candidate.boundingBox();
+    if (!box) continue;
+
+    if (box.y > bestY) {
+      bestY = box.y;
+      bestIndex = i;
+    }
+  }
+
+  return bestIndex >= 0 ? buttons.nth(bestIndex) : null;
+}
+
+type ToolControl =
+  | { type: 'button'; locator: Locator }
+  | { type: 'menuitem'; locator: Locator };
+
+async function resolveToolControl(page: Page, label: string): Promise<ToolControl> {
+  const directButton = await getDirectToolButton(page, label);
+  if (directButton) {
+    return { type: 'button', locator: directButton };
+  }
+
+  return { type: 'menuitem', locator: await openMenuForTool(page, label) };
 }
 
 /**
@@ -104,28 +150,33 @@ async function openMenuForTool(page: Page, label: string): Promise<Locator> {
  * Select a tool by opening its group menu and clicking the menu item
  */
 export async function selectTool(page: Page, title: string): Promise<void> {
-  const menuItem = await openMenuForTool(page, title);
-  // Click immediately without scrolling to avoid timing issues
-  await menuItem.click({ force: true, timeout: 5000 });
+  const control = await resolveToolControl(page, title);
+  await control.locator.click({ force: true, timeout: 5000 });
   await page.waitForTimeout(100);
 }
 
 export async function expectToolVisible(page: Page, title: string): Promise<void> {
-  const menuItem = await openMenuForTool(page, title);
-  await expect(menuItem).toBeVisible();
-  await page.keyboard.press('Escape');
+  const control = await resolveToolControl(page, title);
+  await expect(control.locator).toBeVisible();
+  if (control.type === 'menuitem') {
+    await page.keyboard.press('Escape');
+  }
 }
 
 export async function expectToolEnabled(page: Page, title: string): Promise<void> {
-  const menuItem = await openMenuForTool(page, title);
-  await expect(menuItem).toBeEnabled();
-  await page.keyboard.press('Escape');
+  const control = await resolveToolControl(page, title);
+  await expect(control.locator).toBeEnabled();
+  if (control.type === 'menuitem') {
+    await page.keyboard.press('Escape');
+  }
 }
 
 export async function isToolButtonEnabled(page: Page, title: string): Promise<boolean> {
-  const menuItem = await openMenuForTool(page, title);
-  const enabled = await menuItem.isEnabled();
-  await page.keyboard.press('Escape');
+  const control = await resolveToolControl(page, title);
+  const enabled = await control.locator.isEnabled();
+  if (control.type === 'menuitem') {
+    await page.keyboard.press('Escape');
+  }
   return enabled;
 }
 

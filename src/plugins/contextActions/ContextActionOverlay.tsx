@@ -10,7 +10,6 @@
 
 import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import { Box, HStack, VStack, Text, Portal, useColorModeValue } from '@chakra-ui/react';
-import { ChevronDown } from 'lucide-react';
 import { useContextActions, type QuickAction, type ActionGroup } from './useContextActions';
 import { useResponsive, useThemeColors, useSidebarLayout, useToolbarPositionStyles } from '../../hooks';
 import { NO_FOCUS_STYLES_DEEP } from '../../hooks/useThemeColors';
@@ -180,8 +179,14 @@ const GroupActionButton: React.FC<{
   const { toolbar } = theme;
   const [isOpen, setIsOpen] = useState(false);
   const iconBubbleSize = isMobile ? '26px' : '30px';
+  const buttonWidth = iconBubbleSize;
+  const indicatorWidth = isMobile ? '15px' : '19px';
+  const indicatorHeight = isMobile ? '5px' : '6px';
+  const indicatorBottom = isMobile ? '2px' : '2px';
   const contrastBg = useColorModeValue('black', 'white');
   const contrastIconColor = useColorModeValue('white', 'black');
+  const indicatorColor = useColorModeValue('#4A5568', '#CBD5E0');
+  const indicatorActiveColor = contrastIconColor;
   const childKeys = useMemo(() => buildStableKeys(group.children), [group.children]);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -325,18 +330,20 @@ const GroupActionButton: React.FC<{
       onMouseEnter={isMobile ? undefined : handleMouseEnter}
       onMouseLeave={isMobile ? undefined : handleMouseLeave}
       role="group"
+      position="relative"
       display="flex"
       alignItems="center"
       justifyContent="center"
-      gap="2px"
-      h={isMobile ? '26px' : '30px'}
-      px={0.5}
+      w={buttonWidth}
+      h={iconBubbleSize}
+      px={0}
       borderRadius="full"
       cursor="pointer"
       color={toolbar.color}
       bg="transparent"
       transition="color 0.15s"
       flexShrink={0}
+      overflow="visible"
       aria-label={group.label}
       aria-expanded={isOpen}
     >
@@ -357,13 +364,27 @@ const GroupActionButton: React.FC<{
         <group.icon size={isMobile ? 13 : 16} />
       </Box>
       <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        color={toolbar.color}
-        opacity={0.6}
+        as="svg"
+        position="absolute"
+        left="50%"
+        bottom={indicatorBottom}
+        transform="translateX(-50%)"
+        width={indicatorWidth}
+        height={indicatorHeight}
+        viewBox="0 0 20 6"
+        preserveAspectRatio="none"
+        pointerEvents="none"
+        opacity={isOpen ? 0.98 : 0.78}
+        transition="opacity 0.15s ease"
       >
-        <ChevronDown size={10} />
+        <polyline
+          points={isOpen ? '1,1 10,5 19,1' : '1,3 19,3'}
+          fill="none"
+          stroke={isOpen ? indicatorActiveColor : indicatorColor}
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </Box>
     </Box>
   );

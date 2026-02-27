@@ -12,6 +12,7 @@ import { useCanvasStore, canvasStoreApi } from '../../store/canvasStore';
 import { BlockingOverlay } from '../../overlays';
 import { pluginManager } from '../../utils/pluginManager';
 import { createPluginSlice } from '../../utils/pluginUtils';
+import type { InlineTextEditSlice } from '../nativeText/inlineEditSlice';
 
 /**
  * Get snap overlay configuration for edit mode (objectSnap).
@@ -71,8 +72,34 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
   },
   init: () => {
     const unregister = registerEditDragHandlers();
+
+    // When "Edit" is activated and the selected element is not a path,
+    // redirect to the appropriate editing plugin.
+    const unregisterModeEnter = pluginManager.registerLifecycleAction(
+      'onModeEnter:edit',
+      () => {
+        const state = canvasStoreApi.getState() as CanvasStore & InlineTextEditSlice;
+        const { selectedIds, elements } = state;
+        if (selectedIds.length !== 1) return;
+        const element = elements.find(el => el.id === selectedIds[0]);
+        if (!element || element.type === 'path') return;
+
+        if (element.type === 'nativeShape') {
+          setTimeout(() => state.setActivePlugin('nativeShapes'), 0);
+        } else if (element.type === 'nativeText') {
+          setTimeout(() => {
+            state.setActivePlugin('nativeText');
+            state.startInlineTextEdit?.(element.id);
+          }, 0);
+        } else if (element.type === 'image') {
+          setTimeout(() => state.setActivePlugin('image'), 0);
+        }
+      }
+    );
+
     return () => {
       unregister();
+      unregisterModeEnter();
     };
   },
   modeConfig: {
@@ -90,11 +117,12 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     visibility: 'dynamic',
     toolGroup: 'basic',
     isDisabled: (store) => {
-      // Edit requires exactly one path element selected
+      // Edit requires exactly one path, nativeShape, nativeText, or image element selected
       const { selectedIds, elements } = store;
       if (selectedIds.length !== 1) return true;
       const element = elements.find(el => el.id === selectedIds[0]);
-      return !element || element.type !== 'path';
+      if (!element) return true;
+      return !['path', 'nativeShape', 'nativeText', 'image'].includes(element.type);
     },
   },
   onElementDoubleClick: (elementId, _event, context) => {

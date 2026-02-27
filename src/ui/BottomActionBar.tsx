@@ -17,9 +17,10 @@ import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { pluginManager, useVisibleToolIds, useDisabledToolIds } from '../utils/pluginManager';
 import { FloatingContextMenuButton } from './FloatingContextMenuButton';
-import { useEnabledPlugins, useSidebarLayout } from '../hooks';
+import { useEnabledPlugins, useResponsive, useSidebarLayout, useThemeColors } from '../hooks';
 import { getCanvasCenter } from '../utils/domHelpers';
 import { ToolGroupAction } from './ToolGroupAction';
+import { ToolbarIconButton } from './ToolbarIconButton';
 import {
   fitViewportToActiveArtboard,
   hasActiveArtboardForFit,
@@ -30,6 +31,10 @@ import {
  * Now also includes grouped tool actions
  */
 export const BottomActionBar: React.FC = () => {
+  const { isDesktop } = useResponsive();
+  const {
+    activeTool: { bg: activeBg, color: activeColor },
+  } = useThemeColors();
   // Get effective sidebar width using consolidated hook
   const { effectiveSidebarWidth, effectiveLeftSidebarWidth } = useSidebarLayout();
 
@@ -179,16 +184,40 @@ export const BottomActionBar: React.FC = () => {
         ) : (
           <>
             {/* Basic Tools Group */}
-            <ToolGroupAction
-              label="Basic Tools"
-              icon={basicGroupState.icon}
-              isActive={basicGroupState.isActive}
-              tools={basicTools}
-              currentToolId={activeMode ?? undefined}
-              onToolSelect={(toolId) => handleToolSelect('basic', toolId)}
-              toolGroup="basic"
-              defaultToolId={getDefaultToolForGroup('basic', basicTools)}
-            />
+            {isDesktop ? (
+              basicTools.map((tool) => {
+                const isToolActive = tool.id === activeMode;
+                return (
+                  <ToolbarIconButton
+                    key={tool.id}
+                    icon={tool.icon}
+                    label={tool.label}
+                    aria-label={tool.label}
+                    isDisabled={tool.isDisabled}
+                    bg={isToolActive ? activeBg : undefined}
+                    color={isToolActive ? activeColor : undefined}
+                    _hover={{
+                      bg: isToolActive ? activeBg : undefined,
+                    }}
+                    _active={{
+                      bg: isToolActive ? activeBg : undefined,
+                    }}
+                    onClick={() => handleToolSelect('basic', tool.id)}
+                  />
+                );
+              })
+            ) : (
+              <ToolGroupAction
+                label="Basic Tools"
+                icon={basicGroupState.icon}
+                isActive={basicGroupState.isActive}
+                tools={basicTools}
+                currentToolId={activeMode ?? undefined}
+                onToolSelect={(toolId) => handleToolSelect('basic', toolId)}
+                toolGroup="basic"
+                defaultToolId={getDefaultToolForGroup('basic', basicTools)}
+              />
+            )}
 
             {/* Creation Tools Group */}
             <ToolGroupAction

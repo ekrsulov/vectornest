@@ -121,11 +121,33 @@ const applyMatrixToBounds = (bounds: { minX: number; minY: number; maxX: number;
   };
 };
 
+const getNativeShapeStrokePadding = (data: NativeShapeElement['data']) => {
+  const strokeColor = data.strokeColor ?? 'none';
+  const strokeOpacity = data.strokeOpacity ?? 1;
+  const strokeWidth = data.strokeWidth ?? 0;
+  const hasVisibleStroke =
+    strokeWidth > 0 &&
+    strokeOpacity > 0 &&
+    strokeColor !== 'none' &&
+    strokeColor !== 'transparent';
+
+  return hasVisibleStroke ? strokeWidth / 2 : 0;
+};
+
 const computeNativeShapeBounds = (data: NativeShapeElement['data']) => {
   const baseBounds = getShapeBounds(data);
   if (!baseBounds) return null;
+  const strokePadding = getNativeShapeStrokePadding(data);
+  const paddedBounds = strokePadding > 0
+    ? {
+        minX: baseBounds.minX - strokePadding,
+        minY: baseBounds.minY - strokePadding,
+        maxX: baseBounds.maxX + strokePadding,
+        maxY: baseBounds.maxY + strokePadding,
+      }
+    : baseBounds;
   const matrix = data.transformMatrix ?? deriveMatrixFromTransform(data);
-  return applyMatrixToBounds(baseBounds, matrix);
+  return applyMatrixToBounds(paddedBounds, matrix);
 };
 
 const computeTransformAttr = (data: NativeShapeElement['data']) => {

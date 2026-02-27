@@ -112,19 +112,30 @@ export const deriveElementSelectionColors = (element: {
   type: string;
   data: unknown;
 }) => {
-  // Extract path data once to avoid repeated type guards
-  const pathData = element.type === 'path' && element.data && typeof element.data === 'object'
-    ? element.data as { strokeColor?: string; fillColor?: string; strokeWidth?: number; strokeOpacity?: number }
+  const styleData = element.data && typeof element.data === 'object'
+    ? element.data as {
+        strokeColor?: string;
+        fillColor?: string;
+        strokeWidth?: number;
+        strokeOpacity?: number;
+        fillOpacity?: number;
+      }
     : null;
 
-  const elementStrokeColor = pathData?.strokeColor || '#000000';
-  const elementFillColor = pathData?.fillColor || 'none';
-  const elementStrokeWidth = pathData?.strokeWidth || 0;
-  const elementOpacity = pathData?.strokeOpacity || 1;
+  const elementStrokeColor = styleData?.strokeColor ?? '#000000';
+  const elementFillColor = styleData?.fillColor ?? 'none';
+  const elementStrokeWidth = styleData?.strokeWidth ?? 0;
+  const elementOpacity = styleData?.strokeOpacity ?? 1;
+  const elementFillOpacity = styleData?.fillOpacity ?? 1;
+
+  const effectiveFillColor =
+    elementFillColor !== 'none' && elementFillOpacity > 0
+      ? elementFillColor
+      : 'none';
 
   const colorForContrast = getEffectiveColorForContrast(
     elementStrokeColor,
-    elementFillColor,
+    effectiveFillColor,
     elementStrokeWidth,
     elementOpacity
   );

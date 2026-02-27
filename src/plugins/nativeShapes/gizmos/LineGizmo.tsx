@@ -11,12 +11,11 @@ import React, { useMemo, useCallback } from 'react';
 import {
   CircleHandle,
   GizmoValueLabel,
-  GIZMO_ACCENT,
-  GIZMO_WARNING,
 } from './GizmoHandle';
 import { useGizmoDrag } from './useGizmoDrag';
 import type { NativeShapeElement } from '../types';
 import type { Point, Viewport } from '../../../types';
+import type { SelectionFeedbackPalette } from '../../../utils/canvasColorUtils';
 
 interface LineGizmoProps {
   data: NativeShapeElement['data'];
@@ -24,9 +23,10 @@ interface LineGizmoProps {
   onUpdate: (patch: Partial<NativeShapeElement['data']>) => void;
   localToWorld: (point: Point) => Point;
   worldToLocal: (point: Point) => Point;
+  colors: SelectionFeedbackPalette;
 }
 
-export const LineGizmo: React.FC<LineGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal }) => {
+export const LineGizmo: React.FC<LineGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal, colors }) => {
   const x1 = data.x;
   const y1 = data.y;
   const x2 = data.x + data.width;
@@ -84,7 +84,7 @@ export const LineGizmo: React.FC<LineGizmoProps> = React.memo(({ data, viewport,
         cx={ep1World.x}
         cy={ep1World.y}
         zoom={viewport.zoom}
-        color={GIZMO_ACCENT}
+        color={colors.primary}
         label={`(${fmt(x1)}, ${fmt(y1)})`}
         cursor="move"
         onPointerDown={onEp1Down}
@@ -95,7 +95,7 @@ export const LineGizmo: React.FC<LineGizmoProps> = React.memo(({ data, viewport,
         cx={ep2World.x}
         cy={ep2World.y}
         zoom={viewport.zoom}
-        color={GIZMO_WARNING}
+        color={colors.secondary}
         label={`(${fmt(x2)}, ${fmt(y2)})`}
         cursor="move"
         onPointerDown={onEp2Down}
@@ -107,6 +107,7 @@ export const LineGizmo: React.FC<LineGizmoProps> = React.memo(({ data, viewport,
         y={midWorld.y}
         value={`L ${fmt(length)}`}
         zoom={viewport.zoom}
+        color="#fff"
       />
     </g>
   );

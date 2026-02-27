@@ -11,6 +11,10 @@ import type { NativeShapeElement } from '../types';
 import type { CanvasElement, Point, Viewport } from '../../../types';
 import { getParentCumulativeTransformMatrix } from '../../../utils/elementTransformUtils';
 import {
+  deriveElementSelectionColors,
+  deriveSelectionFeedbackPalette,
+} from '../../../utils/canvasColorUtils';
+import {
   IDENTITY_MATRIX,
   applyToPoint,
   createRotateMatrix,
@@ -118,7 +122,10 @@ export const NativeShapeGizmoOverlay: React.FC<NativeShapeGizmoOverlayProps> = R
     if (activePlugin !== 'nativeShapes') return null;
 
     const data = selectedElement.data;
-    const gizmoProps = { data, viewport, onUpdate, localToWorld, worldToLocal };
+    const gizmoColors = deriveSelectionFeedbackPalette(
+      deriveElementSelectionColors(selectedElement).selectionColor,
+    );
+    const gizmoProps = { data, viewport, onUpdate, localToWorld, worldToLocal, colors: gizmoColors };
 
     let gizmo: React.ReactNode = null;
 

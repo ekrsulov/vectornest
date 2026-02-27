@@ -14,15 +14,15 @@ import {
   DiamondHandle,
   GizmoValueLabel,
   GizmoDashedLine,
-  GIZMO_ACCENT,
-  GIZMO_ACCENT_ALT,
-  GIZMO_SUCCESS,
-  GIZMO_WARNING,
 } from './GizmoHandle';
 import { useGizmoDrag } from './useGizmoDrag';
 import type { NativeShapeElement } from '../types';
 import type { Point, Viewport } from '../../../types';
 import { convertNativeShapeKind } from '../index';
+import {
+  getContrastingColor,
+  type SelectionFeedbackPalette,
+} from '../../../utils/canvasColorUtils';
 
 interface PolylineVertexHandleProps {
   index: number;
@@ -32,10 +32,11 @@ interface PolylineVertexHandleProps {
   worldToLocal: (point: Point) => Point;
   onDragVertex: (index: number, localPoint: Point) => void;
   variant: 'outer' | 'inner';
+  colors: SelectionFeedbackPalette;
 }
 
 const PolylineVertexHandle: React.FC<PolylineVertexHandleProps> = React.memo(
-  ({ index, point, label, viewport, worldToLocal, onDragVertex, variant }) => {
+  ({ index, point, label, viewport, worldToLocal, onDragVertex, variant, colors }) => {
     const callbacks = useMemo(
       () => ({
         onDrag: (localPoint: Point) => {
@@ -53,7 +54,7 @@ const PolylineVertexHandle: React.FC<PolylineVertexHandleProps> = React.memo(
           cx={point.x}
           cy={point.y}
           zoom={viewport.zoom}
-          color={GIZMO_ACCENT_ALT}
+          color={colors.secondary}
           label={label}
           cursor="move"
           onPointerDown={handlePointerDown}
@@ -66,7 +67,7 @@ const PolylineVertexHandle: React.FC<PolylineVertexHandleProps> = React.memo(
         cx={point.x}
         cy={point.y}
         zoom={viewport.zoom}
-        color={GIZMO_ACCENT}
+        color={colors.primary}
         label={label}
         cursor="move"
         onPointerDown={handlePointerDown}
@@ -82,12 +83,13 @@ interface PolylineGizmoProps {
   onUpdate: (patch: Partial<NativeShapeElement['data']>) => void;
   localToWorld: (point: Point) => Point;
   worldToLocal: (point: Point) => Point;
+  colors: SelectionFeedbackPalette;
 }
 
 const COUNT_CONTROL_Y_OFFSET = 34;
 const COUNT_CONTROL_X_OFFSET = 36;
 
-export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal }) => {
+export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal, colors }) => {
   // Points includes the duplicate closing point — skip it for display
   const rawPoints = useMemo(() => data.points ?? [], [data.points]);
   const points = useMemo(
@@ -107,6 +109,21 @@ export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, v
     const sum = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
     return { x: sum.x / points.length, y: sum.y / points.length };
   }, [points, data.x, data.y, data.width, data.height]);
+  const centerLineColor = useMemo(() => {
+    const fillColor = data.fillColor ?? 'none';
+    const fillOpacity = data.fillOpacity ?? 1;
+    const hasVisibleSolidFill =
+      fillOpacity > 0 &&
+      fillColor !== 'none' &&
+      fillColor !== 'transparent' &&
+      /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(fillColor);
+
+    if (hasVisibleSolidFill) {
+      return getContrastingColor(fillColor);
+    }
+
+    return colors.lineStrong;
+  }, [data.fillColor, data.fillOpacity, colors.lineStrong]);
 
   // const fmt omitted – labels use index-based names
 
@@ -217,6 +234,7 @@ export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, v
               x2={next.x}
               y2={next.y}
               zoom={viewport.zoom}
+              color={colors.line}
             />
           );
         })}
@@ -230,7 +248,7 @@ export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, v
           x2={worldPoints[i].x}
           y2={worldPoints[i].y}
           zoom={viewport.zoom}
-          color={GIZMO_ACCENT}
+          color={centerLineColor}
         />
       ))}
 
@@ -245,6 +263,7 @@ export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, v
           worldToLocal={worldToLocal}
           onDragVertex={handleVertexDrag}
           variant="outer"
+          colors={colors}
         />
       ))}
 
@@ -259,6 +278,7 @@ export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, v
           worldToLocal={worldToLocal}
           onDragVertex={handleVertexDrag}
           variant="inner"
+          colors={colors}
         />
       ))}
 
@@ -267,7 +287,7 @@ export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, v
         cx={worldCentroid.x}
         cy={worldCentroid.y}
         zoom={viewport.zoom}
-        color={GIZMO_SUCCESS}
+        color={colors.tertiary}
         label="Scale"
         cursor="nwse-resize"
         onPointerDown={onScaleDown}
@@ -279,6 +299,7 @@ export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, v
         y={worldLabelPoint.y}
         value={`${pointsCount} points`}
         zoom={viewport.zoom}
+        color="#fff"
       />
 
       {/* − button */}
@@ -287,7 +308,7 @@ export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, v
           cx={worldRemovePoint.x}
           cy={worldRemovePoint.y}
           zoom={viewport.zoom}
-          color={GIZMO_WARNING}
+          color={colors.secondary}
           label="Remove point"
           cursor="pointer"
           onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleRemovePoint(); }}
@@ -300,7 +321,7 @@ export const PolylineGizmo: React.FC<PolylineGizmoProps> = React.memo(({ data, v
           cx={worldAddPoint.x}
           cy={worldAddPoint.y}
           zoom={viewport.zoom}
-          color={GIZMO_SUCCESS}
+          color={colors.tertiary}
           label="Add point"
           cursor="pointer"
           onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleAddPoint(); }}

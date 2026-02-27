@@ -12,12 +12,11 @@ import {
   DiamondHandle,
   GizmoDashedLine,
   GizmoValueLabel,
-  GIZMO_ACCENT,
-  GIZMO_ACCENT_ALT,
 } from './GizmoHandle';
 import { useGizmoDrag } from './useGizmoDrag';
 import type { NativeShapeElement } from '../types';
 import type { Point, Viewport } from '../../../types';
+import type { SelectionFeedbackPalette } from '../../../utils/canvasColorUtils';
 
 interface RectGizmoProps {
   data: NativeShapeElement['data'];
@@ -25,9 +24,10 @@ interface RectGizmoProps {
   onUpdate: (patch: Partial<NativeShapeElement['data']>) => void;
   localToWorld: (point: Point) => Point;
   worldToLocal: (point: Point) => Point;
+  colors: SelectionFeedbackPalette;
 }
 
-export const RectGizmo: React.FC<RectGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal }) => {
+export const RectGizmo: React.FC<RectGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal, colors }) => {
   const { x, y, width: w, height: h } = data;
   const isSquare = data.kind === 'square';
   const size = isSquare ? Math.min(w, h) : undefined;
@@ -107,7 +107,7 @@ export const RectGizmo: React.FC<RectGizmoProps> = React.memo(({ data, viewport,
             x2={radiusTopEnd.x}
             y2={radiusTopEnd.y}
             zoom={viewport.zoom}
-            color={GIZMO_ACCENT_ALT}
+            color={colors.lineStrong}
           />
           <GizmoDashedLine
             x1={radiusTopEnd.x}
@@ -115,7 +115,7 @@ export const RectGizmo: React.FC<RectGizmoProps> = React.memo(({ data, viewport,
             x2={radiusRightEnd.x}
             y2={radiusRightEnd.y}
             zoom={viewport.zoom}
-            color={GIZMO_ACCENT_ALT}
+            color={colors.lineStrong}
           />
         </>
       )}
@@ -125,6 +125,7 @@ export const RectGizmo: React.FC<RectGizmoProps> = React.memo(({ data, viewport,
         cx={cornerHandle.x}
         cy={cornerHandle.y}
         zoom={viewport.zoom}
+        color={colors.secondary}
         cursor="ew-resize"
         onPointerDown={onCornerDown}
       />
@@ -134,7 +135,7 @@ export const RectGizmo: React.FC<RectGizmoProps> = React.memo(({ data, viewport,
         cx={widthHandle.x}
         cy={widthHandle.y}
         zoom={viewport.zoom}
-        color={GIZMO_ACCENT}
+        color={colors.primary}
         label={`W: ${fmt(effectiveW)}`}
         cursor="ew-resize"
         onPointerDown={onWidthDown}
@@ -145,7 +146,7 @@ export const RectGizmo: React.FC<RectGizmoProps> = React.memo(({ data, viewport,
         cx={heightHandle.x}
         cy={heightHandle.y}
         zoom={viewport.zoom}
-        color={GIZMO_ACCENT}
+        color={colors.primary}
         label={`H: ${fmt(effectiveH)}`}
         cursor="ns-resize"
         onPointerDown={onHeightDown}
@@ -158,6 +159,7 @@ export const RectGizmo: React.FC<RectGizmoProps> = React.memo(({ data, viewport,
           y={radiusLabel.y}
           value={`r ${fmt(rx)}`}
           zoom={viewport.zoom}
+          color="#fff"
         />
       )}
     </g>

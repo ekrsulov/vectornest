@@ -12,12 +12,14 @@ import {
   CircleHandle,
   GizmoDashedLine,
   GizmoValueLabel,
-  GIZMO_ACCENT,
-  GIZMO_SUCCESS,
 } from './GizmoHandle';
 import { useGizmoDrag } from './useGizmoDrag';
 import type { NativeShapeElement } from '../types';
 import type { Point, Viewport } from '../../../types';
+import {
+  getContrastingColor,
+  type SelectionFeedbackPalette,
+} from '../../../utils/canvasColorUtils';
 
 interface EllipseGizmoProps {
   data: NativeShapeElement['data'];
@@ -25,9 +27,10 @@ interface EllipseGizmoProps {
   onUpdate: (patch: Partial<NativeShapeElement['data']>) => void;
   localToWorld: (point: Point) => Point;
   worldToLocal: (point: Point) => Point;
+  colors: SelectionFeedbackPalette;
 }
 
-export const EllipseGizmo: React.FC<EllipseGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal }) => {
+export const EllipseGizmo: React.FC<EllipseGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal, colors }) => {
   const { x, y, width: w, height: h } = data;
   const isCircle = data.kind === 'circle';
   const cx = x + w / 2;
@@ -36,6 +39,21 @@ export const EllipseGizmo: React.FC<EllipseGizmoProps> = React.memo(({ data, vie
   const ry = isCircle ? Math.min(w, h) / 2 : h / 2;
 
   const fmt = useCallback((v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1)), []);
+  const radiusLineColor = useMemo(() => {
+    const fillColor = data.fillColor ?? 'none';
+    const fillOpacity = data.fillOpacity ?? 1;
+    const hasVisibleSolidFill =
+      fillOpacity > 0 &&
+      fillColor !== 'none' &&
+      fillColor !== 'transparent' &&
+      /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(fillColor);
+
+    if (hasVisibleSolidFill) {
+      return getContrastingColor(fillColor);
+    }
+
+    return isCircle ? colors.lineStrong : colors.line;
+  }, [data.fillColor, data.fillOpacity, isCircle, colors.line, colors.lineStrong]);
 
   // For circle: single handle at 0° (right)
   const circleRadiusCallbacks = useMemo(
@@ -87,15 +105,15 @@ export const EllipseGizmo: React.FC<EllipseGizmoProps> = React.memo(({ data, vie
     return (
       <g>
         {/* Cross-hair at center */}
-        <GizmoDashedLine x1={center.x} y1={center.y} x2={right.x} y2={right.y} zoom={viewport.zoom} color={GIZMO_SUCCESS} />
-        <GizmoDashedLine x1={center.x} y1={center.y} x2={bottom.x} y2={bottom.y} zoom={viewport.zoom} color={GIZMO_SUCCESS} />
+        <GizmoDashedLine x1={center.x} y1={center.y} x2={right.x} y2={right.y} zoom={viewport.zoom} color={radiusLineColor} />
+        <GizmoDashedLine x1={center.x} y1={center.y} x2={bottom.x} y2={bottom.y} zoom={viewport.zoom} color={radiusLineColor} />
 
         {/* Radius handle at right */}
         <CircleHandle
           cx={right.x}
           cy={right.y}
           zoom={viewport.zoom}
-          color={GIZMO_SUCCESS}
+          color={colors.primary}
           cursor="ew-resize"
           onPointerDown={onCircleRadiusDown}
         />
@@ -106,6 +124,7 @@ export const EllipseGizmo: React.FC<EllipseGizmoProps> = React.memo(({ data, vie
           y={circleLabel.y}
           value={`r ${fmt(rx)}`}
           zoom={viewport.zoom}
+          color="#fff"
         />
       </g>
     );
@@ -115,15 +134,15 @@ export const EllipseGizmo: React.FC<EllipseGizmoProps> = React.memo(({ data, vie
   return (
     <g>
       {/* Axis lines from center */}
-      <GizmoDashedLine x1={center.x} y1={center.y} x2={right.x} y2={right.y} zoom={viewport.zoom} />
-      <GizmoDashedLine x1={center.x} y1={center.y} x2={bottom.x} y2={bottom.y} zoom={viewport.zoom} />
+      <GizmoDashedLine x1={center.x} y1={center.y} x2={right.x} y2={right.y} zoom={viewport.zoom} color={radiusLineColor} />
+      <GizmoDashedLine x1={center.x} y1={center.y} x2={bottom.x} y2={bottom.y} zoom={viewport.zoom} color={radiusLineColor} />
 
       {/* RX handle */}
       <CircleHandle
         cx={right.x}
         cy={right.y}
         zoom={viewport.zoom}
-        color={GIZMO_ACCENT}
+        color={colors.primary}
         cursor="ew-resize"
         onPointerDown={onRxDown}
       />
@@ -133,7 +152,7 @@ export const EllipseGizmo: React.FC<EllipseGizmoProps> = React.memo(({ data, vie
         cx={bottom.x}
         cy={bottom.y}
         zoom={viewport.zoom}
-        color={GIZMO_ACCENT}
+        color={colors.secondary}
         cursor="ns-resize"
         onPointerDown={onRyDown}
       />
@@ -144,12 +163,14 @@ export const EllipseGizmo: React.FC<EllipseGizmoProps> = React.memo(({ data, vie
         y={ellipseRxLabel.y}
         value={`rx ${fmt(rx)}`}
         zoom={viewport.zoom}
+        color="#fff"
       />
       <GizmoValueLabel
         x={ellipseRyLabel.x}
         y={ellipseRyLabel.y}
         value={`ry ${fmt(ry)}`}
         zoom={viewport.zoom}
+        color="#fff"
       />
     </g>
   );

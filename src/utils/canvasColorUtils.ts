@@ -2,6 +2,9 @@
  * Utility functions for canvas color calculations and contrast determination
  */
 
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
+
 /** Parse a hex color string to RGB components. Returns null for invalid input. */
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   // Normalize 3-digit hex (#RGB) to 6-digit (#RRGGBB)
@@ -148,6 +151,77 @@ export const deriveElementSelectionColors = (element: {
     elementStrokeWidth,
     elementOpacity,
     selectionColor
+  };
+};
+
+export interface SelectionFeedbackPalette {
+  primary: string;
+  secondary: string;
+  tertiary: string;
+  line: string;
+  lineStrong: string;
+  text: string;
+}
+
+const hslToHex = (h: number, s: number, l: number): string => {
+  const normalizedH = ((h % 360) + 360) % 360;
+  const normalizedS = clamp(s, 0, 100) / 100;
+  const normalizedL = clamp(l, 0, 100) / 100;
+
+  const chroma = (1 - Math.abs(2 * normalizedL - 1)) * normalizedS;
+  const huePrime = normalizedH / 60;
+  const x = chroma * (1 - Math.abs((huePrime % 2) - 1));
+
+  let r1 = 0;
+  let g1 = 0;
+  let b1 = 0;
+
+  if (huePrime >= 0 && huePrime < 1) {
+    r1 = chroma;
+    g1 = x;
+  } else if (huePrime < 2) {
+    r1 = x;
+    g1 = chroma;
+  } else if (huePrime < 3) {
+    g1 = chroma;
+    b1 = x;
+  } else if (huePrime < 4) {
+    g1 = x;
+    b1 = chroma;
+  } else if (huePrime < 5) {
+    r1 = x;
+    b1 = chroma;
+  } else {
+    r1 = chroma;
+    b1 = x;
+  }
+
+  const matchLightness = normalizedL - chroma / 2;
+  const toHex = (channel: number) =>
+    Math.round((channel + matchLightness) * 255)
+      .toString(16)
+      .padStart(2, '0');
+
+  return `#${toHex(r1)}${toHex(g1)}${toHex(b1)}`;
+};
+
+export const deriveSelectionFeedbackPalette = (selectionColor: string): SelectionFeedbackPalette => {
+  const { h, s, l } = hexToHsl(selectionColor);
+  const lightnessDirection = l < 52 ? 1 : -1;
+  const tone = (lightnessDelta: number, saturationDelta: number = 0) =>
+    hslToHex(
+      h,
+      clamp(s + saturationDelta, 0, 100),
+      clamp(l + lightnessDirection * lightnessDelta, 0, 100),
+    );
+
+  return {
+    primary: selectionColor,
+    secondary: tone(12, 4),
+    tertiary: tone(22, 8),
+    line: tone(16, -8),
+    lineStrong: tone(8, 2),
+    text: selectionColor,
   };
 };
 

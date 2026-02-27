@@ -14,14 +14,12 @@ import {
   DiamondHandle,
   GizmoValueLabel,
   GizmoDashedLine,
-  GIZMO_ACCENT,
-  GIZMO_SUCCESS,
-  GIZMO_WARNING,
 } from './GizmoHandle';
 import { useGizmoDrag } from './useGizmoDrag';
 import type { NativeShapeElement } from '../types';
 import type { Point, Viewport } from '../../../types';
 import { convertNativeShapeKind } from '../index';
+import type { SelectionFeedbackPalette } from '../../../utils/canvasColorUtils';
 
 interface PolygonVertexHandleProps {
   index: number;
@@ -30,10 +28,11 @@ interface PolygonVertexHandleProps {
   viewport: Viewport;
   worldToLocal: (point: Point) => Point;
   onDragVertex: (index: number, localPoint: Point) => void;
+  colors: SelectionFeedbackPalette;
 }
 
 const PolygonVertexHandle: React.FC<PolygonVertexHandleProps> = React.memo(
-  ({ index, point, label, viewport, worldToLocal, onDragVertex }) => {
+  ({ index, point, label, viewport, worldToLocal, onDragVertex, colors }) => {
     const callbacks = useMemo(
       () => ({
         onDrag: (localPoint: Point) => {
@@ -50,7 +49,7 @@ const PolygonVertexHandle: React.FC<PolygonVertexHandleProps> = React.memo(
         cx={point.x}
         cy={point.y}
         zoom={viewport.zoom}
-        color={GIZMO_ACCENT}
+        color={colors.primary}
         label={label}
         cursor="move"
         onPointerDown={handlePointerDown}
@@ -66,12 +65,13 @@ interface PolygonGizmoProps {
   onUpdate: (patch: Partial<NativeShapeElement['data']>) => void;
   localToWorld: (point: Point) => Point;
   worldToLocal: (point: Point) => Point;
+  colors: SelectionFeedbackPalette;
 }
 
 const COUNT_CONTROL_Y_OFFSET = 34;
 const COUNT_CONTROL_X_OFFSET = 36;
 
-export const PolygonGizmo: React.FC<PolygonGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal }) => {
+export const PolygonGizmo: React.FC<PolygonGizmoProps> = React.memo(({ data, viewport, onUpdate, localToWorld, worldToLocal, colors }) => {
   const points = useMemo(() => data.points ?? [], [data.points]);
   const pointsCount = data.pointsCount ?? 3;
 
@@ -187,6 +187,7 @@ export const PolygonGizmo: React.FC<PolygonGizmoProps> = React.memo(({ data, vie
               x2={next.x}
               y2={next.y}
               zoom={viewport.zoom}
+              color={colors.line}
             />
           );
         })}
@@ -201,6 +202,7 @@ export const PolygonGizmo: React.FC<PolygonGizmoProps> = React.memo(({ data, vie
           viewport={viewport}
           worldToLocal={worldToLocal}
           onDragVertex={handleVertexDrag}
+          colors={colors}
         />
       ))}
 
@@ -209,7 +211,7 @@ export const PolygonGizmo: React.FC<PolygonGizmoProps> = React.memo(({ data, vie
         cx={worldCentroid.x}
         cy={worldCentroid.y}
         zoom={viewport.zoom}
-        color={GIZMO_SUCCESS}
+        color={colors.secondary}
         label="Scale"
         cursor="nwse-resize"
         onPointerDown={onScaleDown}
@@ -221,6 +223,7 @@ export const PolygonGizmo: React.FC<PolygonGizmoProps> = React.memo(({ data, vie
         y={worldLabelPoint.y}
         value={`${pointsCount} sides`}
         zoom={viewport.zoom}
+        color="#fff"
       />
 
       {/* − button */}
@@ -229,7 +232,7 @@ export const PolygonGizmo: React.FC<PolygonGizmoProps> = React.memo(({ data, vie
           cx={worldRemovePoint.x}
           cy={worldRemovePoint.y}
           zoom={viewport.zoom}
-          color={GIZMO_WARNING}
+          color={colors.secondary}
           label="Remove side"
           cursor="pointer"
           onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleRemoveSide(); }}
@@ -242,7 +245,7 @@ export const PolygonGizmo: React.FC<PolygonGizmoProps> = React.memo(({ data, vie
           cx={worldAddPoint.x}
           cy={worldAddPoint.y}
           zoom={viewport.zoom}
-          color={GIZMO_SUCCESS}
+          color={colors.tertiary}
           label="Add side"
           cursor="pointer"
           onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleAddSide(); }}

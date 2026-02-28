@@ -88,7 +88,8 @@ export const ToolGroupAction: React.FC<ToolGroupActionProps> = ({
                             <Box
                                 as="svg"
                                 position="absolute"
-                                top={isOpen ? '0px' : '0px'}
+                                top="auto"
+                                bottom={isOpen ? '2px' : '1px'}
                                 left="4px"
                                 right="4px"
                                 height="8px"

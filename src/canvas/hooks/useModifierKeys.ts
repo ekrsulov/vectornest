@@ -20,23 +20,24 @@ interface ModifierAction {
 const modifierReducer = (state: ModifierKeysState, action: ModifierAction): ModifierKeysState => {
   switch (action.type) {
     case 'SET_SHIFT': {
-      if (state.isShiftPressed === action.value) return state;
-      const isShiftPressed = action.value!;
+      const isShiftPressed = action.value === true;
+      if (state.isShiftPressed === isShiftPressed) return state;
       return { ...state, isShiftPressed, isMultiSelectActive: isShiftPressed || state.isCtrlPressed || state.isMetaPressed };
     }
     case 'SET_CTRL': {
-      if (state.isCtrlPressed === action.value) return state;
-      const isCtrlPressed = action.value!;
+      const isCtrlPressed = action.value === true;
+      if (state.isCtrlPressed === isCtrlPressed) return state;
       return { ...state, isCtrlPressed, isMultiSelectActive: state.isShiftPressed || isCtrlPressed || state.isMetaPressed };
     }
     case 'SET_META': {
-      if (state.isMetaPressed === action.value) return state;
-      const isMetaPressed = action.value!;
+      const isMetaPressed = action.value === true;
+      if (state.isMetaPressed === isMetaPressed) return state;
       return { ...state, isMetaPressed, isMultiSelectActive: state.isShiftPressed || state.isCtrlPressed || isMetaPressed };
     }
     case 'SET_ALT': {
-      if (state.isAltPressed === action.value) return state;
-      return { ...state, isAltPressed: action.value! };
+      const isAltPressed = action.value === true;
+      if (state.isAltPressed === isAltPressed) return state;
+      return { ...state, isAltPressed };
     }
     case 'RESET_ALL':
       if (!state.isShiftPressed && !state.isCtrlPressed && !state.isMetaPressed && !state.isAltPressed) return state;

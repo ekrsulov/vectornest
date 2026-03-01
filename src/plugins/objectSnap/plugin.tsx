@@ -1,4 +1,4 @@
-import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
+import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createObjectSnapPluginSlice } from './slice';
 import type { ObjectSnapPluginSlice } from './slice';
@@ -7,14 +7,9 @@ import { pluginManager } from '../../utils/pluginManager';
 import { ObjectSnapSource } from './ObjectSnapSource';
 import { snapManager } from '../../snap/SnapManager';
 import { registerSnapProvider, unregisterSnapProvider } from '../../snap/snapProviderRegistry';
+import { createPluginSlice } from '../../utils/pluginUtils';
 
-const objectSnapSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createObjectSnapPluginSlice(set as any, get as any, api as any);
-  return {
-    state: slice,
-  };
-};
+const objectSnapSliceFactory = createPluginSlice(createObjectSnapPluginSlice);
 
 export const objectSnapPlugin: PluginDefinition<CanvasStore> = {
   id: 'objectSnap',

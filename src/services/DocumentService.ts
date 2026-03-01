@@ -1,4 +1,5 @@
 import type { CanvasElement, Viewport } from '../types';
+import { logger } from '../utils/logger';
 
 interface DocumentAnimationDebugPayload {
   animations: unknown[];
@@ -69,7 +70,7 @@ export function saveDocumentToFile({
     document.body.removeChild(link);
   } catch (error) {
     if (import.meta.env.DEV) {
-      console.error('[DocumentService] Failed to save document:', error);
+      logger.error('[DocumentService] Failed to save document', error);
     }
   } finally {
     if (url) {

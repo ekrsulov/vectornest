@@ -146,11 +146,13 @@ export function createCustomPluginSlice<
       (partial: Partial<TSlice>) => set(partial),
       get
     );
+    const stateSlice = {
+      [sliceKey]: initialState,
+    } as Pick<TSlice, TSliceKey>;
 
     return {
-      [sliceKey]: initialState,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...actionFunctions as any,
+      ...stateSlice,
+      ...actionFunctions,
     } as TSlice;
   };
 }

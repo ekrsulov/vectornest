@@ -5,6 +5,7 @@ import type {
     CanvasShortcutMap,
     CanvasShortcutOptions,
     PluginContextFull,
+    PluginHandlerHelpers,
 } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { CanvasEventBus, CanvasPointerEventPayload, CanvasElementDoubleClickEventPayload, CanvasSubpathDoubleClickEventPayload, CanvasDoubleClickEventPayload, CanvasEventMap, CanvasPointerEventState } from '../../canvas/CanvasEventBusContext';
@@ -44,10 +45,9 @@ export class PluginInteractionManager {
 
     register(
         plugin: PluginDefinition<CanvasStore>,
-        isPluginEnabled: (id: string) => boolean,
-        getPluginApi: (id: string) => Record<string, (...args: unknown[]) => unknown> | undefined
+        isPluginEnabled: (id: string) => boolean
     ): void {
-        this.bindPluginInteractions(plugin, isPluginEnabled, getPluginApi);
+        this.bindPluginInteractions(plugin, isPluginEnabled);
         this.bindPluginShortcuts(plugin, isPluginEnabled);
     }
 
@@ -62,7 +62,11 @@ export class PluginInteractionManager {
         if (!this.interactionSubscriptions.has(pluginId)) {
             this.interactionSubscriptions.set(pluginId, new Set());
         }
-        this.interactionSubscriptions.get(pluginId)!.add(unsubscribe);
+        const subscriptions = this.interactionSubscriptions.get(pluginId);
+        if (!subscriptions) {
+            return;
+        }
+        subscriptions.add(unsubscribe);
     }
 
     private removeInteractionSubscription(pluginId: string, unsubscribe: () => void): void {
@@ -103,12 +107,11 @@ export class PluginInteractionManager {
 
     refreshInteractions(
         plugins: PluginDefinition<CanvasStore>[],
-        isPluginEnabled: (id: string) => boolean,
-        getPluginApi: (id: string) => Record<string, (...args: unknown[]) => unknown> | undefined
+        isPluginEnabled: (id: string) => boolean
     ) {
         // Re-bind all if event bus changes
         if (this.eventBus) {
-            plugins.forEach(p => this.bindPluginInteractions(p, isPluginEnabled, getPluginApi));
+            plugins.forEach(p => this.bindPluginInteractions(p, isPluginEnabled));
         }
     }
 
@@ -130,9 +133,7 @@ export class PluginInteractionManager {
      */
     private createPluginContext(
         pluginId: string,
-        _api: Record<string, (...args: unknown[]) => unknown>,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        helpers: Record<string, (...args: any[]) => any>,
+        helpers: PluginHandlerHelpers,
         pointerState?: Record<string, unknown>
     ): PluginContextFull<CanvasStore> {
         if (this.contextManager) {
@@ -156,10 +157,10 @@ export class PluginInteractionManager {
 
     private bindPluginInteractions(
         plugin: PluginDefinition<CanvasStore>,
-        isPluginEnabled: (id: string) => boolean,
-        getPluginApi: (id: string) => Record<string, (...args: unknown[]) => unknown> | undefined
+        isPluginEnabled: (id: string) => boolean
     ): void {
-        if (!this.eventBus) return;
+        const eventBus = this.eventBus;
+        if (!eventBus) return;
 
         this.teardownPluginInteractions(plugin.id);
 
@@ -168,19 +169,16 @@ export class PluginInteractionManager {
             const eventsToSubscribe = plugin.subscribedEvents ?? ['pointerdown'];
 
             eventsToSubscribe.forEach((eventType) => {
-                const unsubscribe = this.eventBus!.subscribe(eventType, (payload: CanvasPointerEventPayload) => {
+                const unsubscribe = eventBus.subscribe(eventType, (payload: CanvasPointerEventPayload) => {
                     if (payload.activePlugin !== plugin.id) return;
                     if (!isPluginEnabled(plugin.id)) return;
 
                     const target = payload.target as Element | null;
                     if (!target) return;
 
-                    const api = getPluginApi(plugin.id) ?? {};
                     const context = this.createPluginContext(
                         plugin.id,
-                        api,
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        payload.helpers as Record<string, (...args: any[]) => any>,
+                        payload.helpers as PluginHandlerHelpers,
                         payload.state as Record<string, unknown>
                     );
 
@@ -199,11 +197,10 @@ export class PluginInteractionManager {
         // Double Click Handlers
         if (plugin.onElementDoubleClick) {
             const handler = plugin.onElementDoubleClick;
-            const unsubscribe = this.eventBus!.subscribe('elementDoubleClick', (payload: CanvasElementDoubleClickEventPayload) => {
+            const unsubscribe = eventBus.subscribe('elementDoubleClick', (payload: CanvasElementDoubleClickEventPayload) => {
                 if (payload.activePlugin !== plugin.id) return;
 
-                const api = getPluginApi(plugin.id) ?? {};
-                const context = this.createPluginContext(plugin.id, api, {});
+                const context = this.createPluginContext(plugin.id, {});
 
                 handler(payload.elementId, payload.event, context);
             });
@@ -212,11 +209,10 @@ export class PluginInteractionManager {
 
         if (plugin.onSubpathDoubleClick) {
             const handler = plugin.onSubpathDoubleClick;
-            const unsubscribe = this.eventBus!.subscribe('subpathDoubleClick', (payload: CanvasSubpathDoubleClickEventPayload) => {
+            const unsubscribe = eventBus.subscribe('subpathDoubleClick', (payload: CanvasSubpathDoubleClickEventPayload) => {
                 if (payload.activePlugin !== plugin.id) return;
 
-                const api = getPluginApi(plugin.id) ?? {};
-                const context = this.createPluginContext(plugin.id, api, {});
+                const context = this.createPluginContext(plugin.id, {});
 
                 handler(payload.elementId, payload.subpathIndex, payload.event, context);
             });
@@ -225,11 +221,10 @@ export class PluginInteractionManager {
 
         if (plugin.onCanvasDoubleClick) {
             const handler = plugin.onCanvasDoubleClick;
-            const unsubscribe = this.eventBus!.subscribe('canvasDoubleClick', (payload: CanvasDoubleClickEventPayload) => {
+            const unsubscribe = eventBus.subscribe('canvasDoubleClick', (payload: CanvasDoubleClickEventPayload) => {
                 if (payload.activePlugin !== plugin.id) return;
 
-                const api = getPluginApi(plugin.id) ?? {};
-                const context = this.createPluginContext(plugin.id, api, {});
+                const context = this.createPluginContext(plugin.id, {});
 
                 handler(payload.event, context);
             });

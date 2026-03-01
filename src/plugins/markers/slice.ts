@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { PathData, PathElement } from '../../types';
 import type { NativeShapeElement } from '../nativeShapes/types';
+import { generateShortId } from '../../utils/idGenerator';
 import { normalizeMarkerId } from '../../utils/markerUtils';
 
 export type MarkerSide = 'start' | 'mid' | 'end';
@@ -142,7 +143,7 @@ const DEFAULT_MARKERS: MarkerDefinition[] = [
   },
 ];
 
-const makeMarkerId = () => `marker-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const makeMarkerId = () => generateShortId('marker');
 
 type MarkerFieldKey = 'markerStart' | 'markerMid' | 'markerEnd';
 

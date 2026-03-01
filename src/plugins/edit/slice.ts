@@ -6,6 +6,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { snapManager } from '../../snap/SnapManager';
 import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
 import { inverseMatrix, applyToPoint } from '../../utils/matrixUtils';
+import { logger } from '../../utils/logger';
 
 // Type for the full store state (needed for get() calls)
 type FullCanvasState = CanvasStore;
@@ -538,7 +539,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           state.clearCurrentSnapPoint();
         }
       } catch (error) {
-        console.error('Error applying object snap:', error);
+        logger.error('Error applying object snap', error);
       }
     }
 
@@ -561,11 +562,13 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     } else if (state.editingPoint && state.editingPoint.isDragging) {
       // Handle single point drag - also handled in renderer now
       set((currentState) => ({
-        editingPoint: {
-          ...currentState.editingPoint!,
-          offsetX: snappedX,
-          offsetY: snappedY
-        }
+        editingPoint: currentState.editingPoint
+          ? {
+              ...currentState.editingPoint,
+              offsetX: snappedX,
+              offsetY: snappedY
+            }
+          : null
       }));
     }
 

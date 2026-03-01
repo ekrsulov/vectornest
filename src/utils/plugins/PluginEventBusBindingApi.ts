@@ -10,7 +10,6 @@ export function applyEventBusBinding(params: {
   contextManager: PluginContextManager | null;
   plugins: PluginDefinition<CanvasStore>[];
   isPluginEnabled: (pluginId: string) => boolean;
-  getPluginApi: (pluginId: string) => Record<string, (...args: unknown[]) => unknown> | undefined;
 }): void {
   const {
     eventBus,
@@ -18,7 +17,6 @@ export function applyEventBusBinding(params: {
     contextManager,
     plugins,
     isPluginEnabled,
-    getPluginApi,
   } = params;
 
   interactionManager.setEventBus(eventBus);
@@ -31,8 +29,7 @@ export function applyEventBusBinding(params: {
   if (eventBus) {
     interactionManager.refreshInteractions(
       plugins,
-      (id) => isPluginEnabled(id),
-      (id) => getPluginApi(id) ?? {}
+      (id) => isPluginEnabled(id)
     );
   }
 }

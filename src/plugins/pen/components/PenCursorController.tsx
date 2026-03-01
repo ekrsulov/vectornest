@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useCanvasStore } from '../../../store/canvasStore';
+import type { PenPluginSlice } from '../slice';
 
 /**
  * Component that applies dynamic cursor styles based on pen tool state
@@ -7,8 +8,9 @@ import { useCanvasStore } from '../../../store/canvasStore';
 export function PenCursorController() {
     useEffect(() => {
         const updateCursor = () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const state = useCanvasStore.getState() as any;
+            const state = useCanvasStore.getState() as {
+                pen?: PenPluginSlice['pen'];
+            };
             const pen = state.pen;
 
             if (!pen) return;

@@ -7,6 +7,7 @@ import React from 'react';
 import { BlobBrushPanel } from './BlobBrushPanel';
 import { BlobBrushOverlay } from './BlobBrushOverlay';
 import { createBlobBrushShape } from './blobBrushUtils';
+import { logger } from '../../utils/logger';
 
 export const blobBrushPlugin: PluginDefinition<CanvasStore> = {
     id: 'blobBrush',
@@ -103,7 +104,7 @@ export const blobBrushPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[BlobBrush] Operation failed:', e);
+                logger.warn('[BlobBrush] Operation failed', e);
             } finally {
                 state.updateBlobBrushState?.({
                     isDrawing: false,

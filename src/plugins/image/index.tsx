@@ -5,6 +5,7 @@ import { Image as ImageIcon } from 'lucide-react';
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
+import { createPluginSlice } from '../../utils/pluginUtils';
 import type { PluginImageElement as ImageElement } from './types';
 import { ImagePanel } from './ImagePanel';
 import { createImagePluginSlice } from './slice';
@@ -65,11 +66,7 @@ const ensureMatrix = (data: { transformMatrix?: Matrix; transform?: { translateX
 };
 
 const imageSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createImagePluginSlice(set as any, get as any, api as any);
-  return {
-    state: slice,
-  };
+  return createPluginSlice(createImagePluginSlice)(set, get, api);
 };
 
 const computeImageBounds = (data: ImageElement['data']) => {
@@ -425,4 +422,3 @@ export const imagePlugin: PluginDefinition<CanvasStore> = {
   expandablePanel: () => React.createElement(ImagePanel, { hideTitle: true }),
   sidebarPanels: [createToolPanel('image', ImagePanel)],
 };
-

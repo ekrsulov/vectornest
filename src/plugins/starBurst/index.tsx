@@ -7,6 +7,7 @@ import React from 'react';
 import { StarBurstPanel } from './StarBurstPanel';
 import { StarBurstOverlay } from './StarBurstOverlay';
 import { createStarBurst } from './starBurstUtils';
+import { logger } from '../../utils/logger';
 
 export const starBurstPlugin: PluginDefinition<CanvasStore> = {
     id: 'starBurst',
@@ -108,7 +109,7 @@ export const starBurstPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[StarBurst] Operation failed:', e);
+                logger.warn('[StarBurst] Operation failed', e);
             } finally {
                 state.updateStarBurstState?.({
                     isDragging: false,

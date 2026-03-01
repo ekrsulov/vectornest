@@ -40,26 +40,28 @@ export const PathAnatomyPanel: React.FC = () => {
     if (selected.length === 0) return null;
 
     // Merge metrics across all selected paths
-    const allMetrics = selected.map((el: CanvasElement) => {
-      if (el.type !== 'path') return null;
-      return analyzePathAnatomy(el.data.subPaths);
-    }).filter(Boolean);
+    const allMetrics = selected
+      .map((el: CanvasElement) => {
+        if (el.type !== 'path') return null;
+        return analyzePathAnatomy(el.data.subPaths);
+      })
+      .filter((metric): metric is ReturnType<typeof analyzePathAnatomy> => metric !== null);
 
-    if (allMetrics.length === 0) return null;
-    if (allMetrics.length === 1) return allMetrics[0]!;
+    const [firstMetric, ...restMetrics] = allMetrics;
+    if (!firstMetric) return null;
+    if (restMetrics.length === 0) return firstMetric;
 
-    // Aggregate
-    return allMetrics.reduce((acc, m) => ({
-      totalLength: acc!.totalLength + m!.totalLength,
-      nodeCount: acc!.nodeCount + m!.nodeCount,
-      subPathCount: acc!.subPathCount + m!.subPathCount,
-      lineSegments: acc!.lineSegments + m!.lineSegments,
-      curveSegments: acc!.curveSegments + m!.curveSegments,
-      moveCommands: acc!.moveCommands + m!.moveCommands,
-      closeCommands: acc!.closeCommands + m!.closeCommands,
-      estimatedArea: acc!.estimatedArea + m!.estimatedArea,
+    return restMetrics.reduce((acc, metric) => ({
+      totalLength: acc.totalLength + metric.totalLength,
+      nodeCount: acc.nodeCount + metric.nodeCount,
+      subPathCount: acc.subPathCount + metric.subPathCount,
+      lineSegments: acc.lineSegments + metric.lineSegments,
+      curveSegments: acc.curveSegments + metric.curveSegments,
+      moveCommands: acc.moveCommands + metric.moveCommands,
+      closeCommands: acc.closeCommands + metric.closeCommands,
+      estimatedArea: acc.estimatedArea + metric.estimatedArea,
       boundingBox: null,
-    }));
+    }), firstMetric);
   }, [state?.enabled, selectedIds, elements]);
 
   if (!state || !update) return null;

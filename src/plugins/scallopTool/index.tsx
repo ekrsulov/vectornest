@@ -7,6 +7,7 @@ import React from 'react';
 import { ScallopToolPanel } from './ScallopToolPanel';
 import { ScallopToolOverlay } from './ScallopToolOverlay';
 import { scallopElements } from './scallopUtils';
+import { logger } from '../../utils/logger';
 
 export const scallopToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'scallopTool',
@@ -120,7 +121,7 @@ export const scallopToolPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[ScallopTool] Operation failed:', e);
+                logger.warn('[ScallopTool] Operation failed', e);
             } finally {
                 state.updateScallopToolState?.({
                     isScalloping: false,

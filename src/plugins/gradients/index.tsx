@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { createPluginSlice } from '../../utils/pluginUtils';
 import { createGradientsSlice, type GradientsSlice, type GradientDef, type GradientStop } from './slice';
 import { paintContributionRegistry } from '../../utils/paintContributionRegistry';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
@@ -70,9 +71,7 @@ const GradientSvgContent: React.FC<{ content: string; gradientKey?: string }> = 
 };
 
 const gradientsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createGradientsSlice(set as any, get as any, api as any);
-  return { state: slice };
+  return createPluginSlice(createGradientsSlice)(set, get, api);
 };
 
 const gradientDefsEditor: SvgDefsEditor<CanvasStore> = {

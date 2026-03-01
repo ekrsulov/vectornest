@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { PluginDefinition, PluginSliceFactory, PluginContextFull, SnapOverlayConfig } from '../../types/plugins';
+import type { PluginDefinition, PluginContextFull, SnapOverlayConfig } from '../../types/plugins';
 import { createToolPanel } from '../../utils/pluginFactories';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { CanvasStore } from '../../store/canvasStore';
@@ -8,6 +8,7 @@ import { MoveRight } from 'lucide-react';
 import { createArrowsPluginSlice } from './slice';
 import type { ArrowsPluginSlice, ArrowsPluginActions, SnapInfo } from './slice';
 import { useCanvasStore, canvasStoreApi } from '../../store/canvasStore';
+import { createPluginSlice } from '../../utils/pluginUtils';
 import { ArrowsOverlay } from './ArrowsOverlay';
 import { ArrowsPanel } from './ArrowsPanel';
 import { SnapPointsCache } from './SnapPointsCache';
@@ -34,6 +35,7 @@ type ArrowsPluginApi = {
   finalizeArrowDrawing: () => { startPoint: Point; endPoint: Point } | null;
   cancelArrowDrawing: () => void;
 };
+type ArrowsStoreState = CanvasStore & ArrowsPluginSlice & ArrowsPluginActions;
 
 
 
@@ -61,13 +63,7 @@ function getArrowsSnapOverlayConfig(): SnapOverlayConfig | null {
   };
 }
 
-const arrowsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createArrowsPluginSlice(set as any, get as any, api as any) as ArrowsPluginSlice & ArrowsPluginActions;
-  return {
-    state: slice as unknown as Partial<CanvasStore>,
-  };
-};
+const arrowsSliceFactory = createPluginSlice(createArrowsPluginSlice);
 
 // Global listener flags
 let listenersInstalled = false;
@@ -81,7 +77,7 @@ const installListeners = (context: PluginContextFull<CanvasStore>, api: ArrowsPl
     const svg = document.querySelector('svg');
     if (!svg) return;
 
-    const currentState = context.store.getState() as unknown as ArrowsPluginSlice & CanvasStore;
+    const currentState = context.store.getState() as ArrowsStoreState;
     const canvasPoint = clientToCanvas(moveEvent.clientX, moveEvent.clientY, svg, currentState.viewport);
 
     const moveSnapInfo = getSnapResult(canvasPoint, currentState);
@@ -101,7 +97,7 @@ const installListeners = (context: PluginContextFull<CanvasStore>, api: ArrowsPl
     const svg = document.querySelector('svg');
     if (!svg) return;
 
-    const currentState = context.store.getState() as unknown as ArrowsPluginSlice & ArrowsPluginActions & CanvasStore;
+    const currentState = context.store.getState() as ArrowsStoreState;
 
     // Only handle if we're drawing
     if (!currentState.arrows?.drawing?.isDrawing) return;
@@ -308,10 +304,6 @@ export const arrowsPlugin: PluginDefinition<CanvasStore> = {
       },
     });
 
-    // Initialize slice
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    context.store.setState(createArrowsPluginSlice(context.store.setState as any, context.store.getState as any, context.store as any));
-
     // Hover listener for showing snap crosshair before first click
     let hoverCleanup: (() => void) | null = null;
 
@@ -322,7 +314,7 @@ export const arrowsPlugin: PluginDefinition<CanvasStore> = {
         const svg = document.querySelector('svg');
         if (!svg) return;
 
-        const currentState = context.store.getState() as unknown as ArrowsPluginSlice & CanvasStore;
+        const currentState = context.store.getState() as ArrowsStoreState;
 
         // Only handle hover when plugin is active but no drawing in progress
         if (currentState.activePlugin !== 'arrows') return;
@@ -342,8 +334,7 @@ export const arrowsPlugin: PluginDefinition<CanvasStore> = {
           ));
 
         if (snapChanged) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (context.store.getState() as any).updateArrowsState?.({
+          (context.store.getState() as ArrowsStoreState).updateArrowsState?.({
             currentSnapInfo: hoverSnapInfo ?? null,
           });
         }
@@ -373,10 +364,9 @@ export const arrowsPlugin: PluginDefinition<CanvasStore> = {
           hoverCleanup = null;
         }
         // Also clear currentSnapInfo when leaving the mode (only if it's set)
-        const arrowsState = state as unknown as ArrowsPluginSlice;
+        const arrowsState = state as ArrowsStoreState;
         if (arrowsState.arrows?.currentSnapInfo != null) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (context.store.getState() as any).updateArrowsState?.({
+          (context.store.getState() as ArrowsStoreState).updateArrowsState?.({
             currentSnapInfo: null,
           });
         }
@@ -558,4 +548,3 @@ export const arrowsPlugin: PluginDefinition<CanvasStore> = {
 
   sidebarPanels: [createToolPanel('arrows', ArrowsPanel)],
 };
-

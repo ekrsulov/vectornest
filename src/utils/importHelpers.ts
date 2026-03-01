@@ -234,8 +234,7 @@ export const addImportedElementsToCanvas = (
                 sourceIdMap.set(sourceId, newId);
             });
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            updateElement(groupId, { data: { childIds: nestedChildIds } } as any);
+            updateElement(groupId, { data: { childIds: nestedChildIds } });
 
             createdIds.push(groupId, ...nestedCreatedIds);
             childIds.push(groupId);

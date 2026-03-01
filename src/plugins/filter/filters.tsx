@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useLayoutEffect, useRef } from 'react';
+import { generateShortId } from '../../utils/idGenerator';
 
 export type FilterType = 'blur' | 'glow' | 'shadow' | 'wave' | 'custom';
 
@@ -92,7 +93,7 @@ const renderWave = (id: string, scale: number) => (
 export const buildFilterDefinition = (type: FilterType, value: number): FilterDefinition => {
   if (type === 'custom') {
     return {
-      id: `filter-custom-${Math.round(Math.random() * 1e6)}`,
+      id: generateShortId('filter-custom'),
       type,
       value,
       svg: '',

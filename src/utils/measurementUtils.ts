@@ -263,13 +263,15 @@ export const measureNativeTextBounds = (
   if (data.writingMode && data.writingMode !== 'horizontal-tb') textEl.setAttribute('writing-mode', data.writingMode);
 
   const lineHeight = data.lineHeight ?? 1.2;
-  if (data.spans && data.spans.length > 0) {
-    data.spans.forEach((span, idx) => {
+  const spans = data.spans ?? [];
+  if (spans.length > 0) {
+    spans.forEach((span, idx) => {
       const tspan = document.createElementNS(SVG_NS, 'tspan');
-      if (idx === 0 || span.line !== data.spans![idx - 1].line) {
+      const previousSpan = idx > 0 ? spans[idx - 1] : undefined;
+      if (idx === 0 || span.line !== previousSpan?.line) {
         tspan.setAttribute('x', data.x.toString());
         if (span.line > 0) {
-          const prevLine = data.spans![idx - 1]?.line ?? 0;
+          const prevLine = previousSpan?.line ?? 0;
           const delta = span.line - prevLine;
           tspan.setAttribute('dy', (data.fontSize * lineHeight * delta).toString());
         }

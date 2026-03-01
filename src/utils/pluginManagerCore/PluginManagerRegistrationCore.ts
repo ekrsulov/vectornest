@@ -38,8 +38,7 @@ export abstract class PluginManagerRegistrationCore extends PluginManagerStoreBi
       applyPluginSlices: (plugin) => this.applyPluginSlices(plugin),
       initializePluginApi: (plugin) => this.initializePluginApi(plugin),
       createPluginContext: (pluginId) => this.createPluginContext(pluginId),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      registerHelper: (name, helperFn) => this.helpers.register(name, helperFn as (...args: any[]) => any),
+      registerHelper: (name, helperFn) => this.helpers.register(name, helperFn),
       unregisterExisting: (pluginId) => this.unregister(pluginId),
       unregisterPluginSlices: (pluginId) => {
         if (this.storeApi) {

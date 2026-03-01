@@ -19,6 +19,7 @@ import { importSVGWithDimensions } from '../../utils/svgImportUtils';
 import { translateImportedElements, addImportedElementsToCanvas } from '../../utils/importHelpers';
 import { mergeImportedResources } from '../../utils/importContributionRegistry';
 import { sanitizeSvgContent } from '../../utils/sanitizeSvgContent';
+import { generateShortId } from '../../utils/idGenerator';
 
 // Paste offset increment (cascading paste)
 const PASTE_OFFSET_INCREMENT = 10;
@@ -31,11 +32,7 @@ const APP_VERSION = '1.0.0';
  */
 function generateUniqueId(existingIds: Set<string>, baseId?: string): string {
   const base = baseId || 'elem';
-  let newId: string;
-  do {
-    newId = `${base}-${Math.random().toString(36).slice(2, 11)}`;
-  } while (existingIds.has(newId));
-  return newId;
+  return generateShortId(base, existingIds);
 }
 
 /**
@@ -104,8 +101,10 @@ function rewriteIds(
       if (newData.clipPathId && idMap.has(newData.clipPathId)) {
         newData.clipPathId = idMap.get(newData.clipPathId);
       }
-      if ((newData as { maskId?: string }).maskId && idMap.has((newData as { maskId?: string }).maskId!)) {
-        (newData as { maskId?: string }).maskId = idMap.get((newData as { maskId?: string }).maskId!);
+      const maskData = newData as { maskId?: string };
+      const { maskId } = maskData;
+      if (maskId && idMap.has(maskId)) {
+        maskData.maskId = idMap.get(maskId);
       }
 
       newElement.data = newData;

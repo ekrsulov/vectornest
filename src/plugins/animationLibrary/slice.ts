@@ -9,6 +9,8 @@ import paper from 'paper';
 import { DEFAULT_PRESETS } from './presets';
 import { makePresetId, isTextElement } from './helpers';
 import { ensurePaperSetup } from '../../utils/pathOperations/paperSetup';
+import { logger } from '../../utils/logger';
+import { generateShortId } from '../../utils/idGenerator';
 
 /**
  * Animation Library Slice
@@ -111,7 +113,7 @@ export const createAnimationLibrarySlice: StateCreator<CanvasStore, [], [], Anim
           }
           
           // Create the clip definition
-          const clipId = `clip-typewriter-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+          const clipId = generateShortId('clip-typewriter');
           const newClip: ClipDefinition = {
             id: clipId,
             name: `Typewriter ${element.type === 'nativeText' ? 'Text' : 'Element'}`,
@@ -286,7 +288,7 @@ export const createAnimationLibrarySlice: StateCreator<CanvasStore, [], [], Anim
                   targetElementId: elementId,
                 });
               } catch (error) {
-                console.error('Error calculating path length:', error);
+                logger.error('Error calculating path length', error);
               }
             }
           }

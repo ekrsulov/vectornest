@@ -7,6 +7,7 @@ import type {
   ColorModeChangeContext,
   PluginApiFactory,
   PluginContextFull,
+  PluginHandlerHelpers,
   PluginHookContribution,
   PluginSliceFactory,
 } from './plugin-context';
@@ -130,7 +131,7 @@ export interface PluginState<TStore extends object> {
 
 export interface PluginLifecycle<TStore extends object> {
   init?: (context: PluginContextFull<TStore>) => (() => void) | void;
-  registerHelpers?: (context: PluginContextFull<TStore>) => Record<string, unknown>;
+  registerHelpers?: (context: PluginContextFull<TStore>) => PluginHandlerHelpers;
   hooks?: PluginHookContribution[];
   disablesGlobalUndoRedo?: (store: TStore) => boolean;
 }

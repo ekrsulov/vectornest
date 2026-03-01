@@ -7,6 +7,7 @@ import React from 'react';
 import { CornerRounderPanel } from './CornerRounderPanel';
 import { CornerRounderOverlay } from './CornerRounderOverlay';
 import { roundCorners } from './cornerRounderUtils';
+import { logger } from '../../utils/logger';
 
 export const cornerRounderPlugin: PluginDefinition<CanvasStore> = {
     id: 'cornerRounder',
@@ -119,7 +120,7 @@ export const cornerRounderPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[CornerRounder] Operation failed:', e);
+                logger.warn('[CornerRounder] Operation failed', e);
             } finally {
                 state.updateCornerRounderState?.({
                     isRounding: false,

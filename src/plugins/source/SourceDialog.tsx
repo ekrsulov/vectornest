@@ -18,6 +18,7 @@ import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { ExportManager } from '../../utils/export/ExportManager';
 import { ImportManager } from '../../utils/import/ImportManager';
+import { logger } from '../../utils/logger';
 
 export const SourceDialog: React.FC = () => {
     const toast = useToast();
@@ -89,7 +90,7 @@ export const SourceDialog: React.FC = () => {
                 size: 'sm',
             });
         } catch (error) {
-            console.error('Failed to copy to clipboard:', error);
+            logger.error('Failed to copy to clipboard', error);
             toast({
                 title: 'Failed to copy',
                 status: 'error',

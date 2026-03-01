@@ -85,14 +85,14 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
         if (!element || element.type === 'path') return;
 
         if (element.type === 'nativeShape') {
-          setTimeout(() => state.setActivePlugin('nativeShapes'), 0);
+          queueMicrotask(() => state.setActivePlugin('nativeShapes'));
         } else if (element.type === 'nativeText') {
-          setTimeout(() => {
+          queueMicrotask(() => {
             state.setActivePlugin('nativeText');
             state.startInlineTextEdit?.(element.id);
-          }, 0);
+          });
         } else if (element.type === 'image') {
-          setTimeout(() => state.setActivePlugin('image'), 0);
+          queueMicrotask(() => state.setActivePlugin('image'));
         }
       }
     );

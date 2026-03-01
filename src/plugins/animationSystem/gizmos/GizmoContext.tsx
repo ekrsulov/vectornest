@@ -29,6 +29,7 @@ import type { Bounds } from '../../../utils/boundsUtils';
 import { formatToPrecision } from '../../../utils';
 import { elementContributionRegistry } from '../../../utils/elementContributionRegistry';
 import { getGroupBounds } from '../../../canvas/geometry/CanvasGeometryService';
+import { logger } from '../../../utils/logger';
 
 // =============================================================================
 // Context Types
@@ -223,20 +224,20 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
     (animationId: string) => {
       const animation = animationMap.get(animationId);
       if (!animation) {
-        console.warn(`[GizmoContext] Animation not found: ${animationId}`);
+        logger.warn(`[GizmoContext] Animation not found: ${animationId}`);
         return;
       }
 
       const element = elementMap.get(animation.targetElementId)
         ?? findElementForDefAnimation(animation);
       if (!element) {
-        console.warn(`[GizmoContext] Element not found: ${animation.targetElementId}`);
+        logger.warn(`[GizmoContext] Element not found: ${animation.targetElementId}`);
         return;
       }
 
       const definition = animationGizmoRegistry.findForAnimation(animation, element);
       if (!definition) {
-        console.warn(`[GizmoContext] No gizmo found for animation: ${animationId}`);
+        logger.warn(`[GizmoContext] No gizmo found for animation: ${animationId}`);
         return;
       }
 

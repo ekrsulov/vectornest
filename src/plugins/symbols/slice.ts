@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { PathData, Point } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
 import { measurePath } from '../../utils/measurementUtils';
 import { translatePathData } from '../../utils/transformationUtils';
 import type { SymbolInstanceElement } from './types';
@@ -34,7 +35,7 @@ export interface SymbolPluginSlice {
   updateSymbol: (symbolId: string, updates: Partial<SymbolDefinition>) => void;
 }
 
-const makeSymbolId = () => `symbol-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const makeSymbolId = () => generateShortId('symbol');
 
 const createDefinition = (pathData: PathData, name: string, bounds: SymbolBounds): SymbolDefinition => ({
   id: makeSymbolId(),

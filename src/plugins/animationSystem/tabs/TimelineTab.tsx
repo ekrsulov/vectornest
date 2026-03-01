@@ -21,6 +21,7 @@ import type { FilterSlice } from '../../filter/slice';
 import type { MasksSlice } from '../../masks/types';
 import type { MarkersSlice } from '../../markers/slice';
 import type { GradientsSlice } from '../../gradients/slice';
+import type { PresentationAttributes } from '../../../types';
 
 const TRACK_HEIGHT = 32;
 const TIME_SCALE_HEIGHT = 24;
@@ -61,6 +62,17 @@ interface ResolvedTarget {
   label?: string;
 }
 
+type ReferencedElementData = Partial<
+  Pick<
+    PresentationAttributes,
+    'filterId' | 'maskId' | 'markerStart' | 'markerMid' | 'markerEnd'
+  >
+> & Pick<PathData, 'fillColor' | 'strokeColor' | 'name'>;
+
+const getReferencedElementData = (element?: CanvasElement): ReferencedElementData => {
+  return (element?.data ?? {}) as ReferencedElementData;
+};
+
 export const TimelineTab: React.FC<TimelineTabProps> = ({ onEditAnimation, onAddNew, onPreviewAnimation }) => {
   const animations = useCanvasStore((state) => (state as unknown as AnimationPluginSlice).animations ?? []);
   const animationState = useCanvasStore((state) => (state as unknown as AnimationPluginSlice).animationState);
@@ -100,8 +112,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ onEditAnimation, onAdd
     const filterDef = filters?.[targetId] || importedFilters?.find(f => f.id === targetId);
     if (filterDef) {
       // Find element using this filter
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const usingElement = elements.find(el => (el.data as any).filterId === targetId);
+      const usingElement = elements.find((el) => getReferencedElementData(el).filterId === targetId);
       return {
         element: usingElement,
         type: 'filter',
@@ -113,8 +124,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ onEditAnimation, onAdd
     const gradientDef = gradients?.find(g => g.id === targetId);
     if (gradientDef) {
       const usingElement = elements.find(el => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = el.data as any;
+        const data = getReferencedElementData(el);
         return data.fillColor?.includes(targetId) || data.strokeColor?.includes(targetId);
       });
       return {
@@ -447,8 +457,7 @@ export const TimelineTab: React.FC<TimelineTabProps> = ({ onEditAnimation, onAdd
                   // For transitive animations, use previewElementId if available
                   const displayElementId = anim.previewElementId ?? anim.targetElementId;
                   const resolved = resolveTarget(displayElementId);
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const displayName = (resolved.element?.data as any)?.name ?? resolved.element?.id ?? displayElementId;
+                  const displayName = getReferencedElementData(resolved.element).name ?? resolved.element?.id ?? displayElementId;
                   
                   // Determine display type based on animation's def targets
                   const isTransitive = Boolean(anim.gradientTargetId || anim.patternTargetId || anim.clipPathTargetId || anim.filterTargetId || anim.maskTargetId || anim.markerTargetId);

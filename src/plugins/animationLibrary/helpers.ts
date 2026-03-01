@@ -1,9 +1,10 @@
 import type { CanvasElement } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
 
 /**
  * Generate a unique preset ID
  */
-export const makePresetId = () => `preset-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+export const makePresetId = () => generateShortId('preset');
 
 /**
  * Check if an element is a text element

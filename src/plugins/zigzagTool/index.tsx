@@ -7,6 +7,7 @@ import React from 'react';
 import { ZigzagToolPanel } from './ZigzagToolPanel';
 import { ZigzagToolOverlay } from './ZigzagToolOverlay';
 import { createZigzagPath } from './zigzagUtils';
+import { logger } from '../../utils/logger';
 
 export const zigzagToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'zigzagTool',
@@ -112,7 +113,7 @@ export const zigzagToolPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[ZigzagTool] Operation failed:', e);
+                logger.warn('[ZigzagTool] Operation failed', e);
             } finally {
                 state.updateZigzagToolState?.({
                     isDrawing: false,

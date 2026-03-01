@@ -7,6 +7,7 @@ import React from 'react';
 import { ShapeCutterPanel } from './ShapeCutterPanel';
 import { ShapeCutterOverlay } from './ShapeCutterOverlay';
 import { cutWithShape } from './shapeCutterUtils';
+import { logger } from '../../utils/logger';
 
 export const shapeCutterPlugin: PluginDefinition<CanvasStore> = {
     id: 'shapeCutter',
@@ -118,7 +119,7 @@ export const shapeCutterPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[ShapeCutter] Operation failed:', e);
+                logger.warn('[ShapeCutter] Operation failed', e);
             } finally {
                 state.updateShapeCutterState?.({
                     isCutting: false,

@@ -1,5 +1,5 @@
 import { Scissors } from 'lucide-react';
-import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
+import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createTrimPathPluginSlice, type TrimPathPluginSlice } from './slice';
 import { TrimPathOverlayConnected } from './TrimPathOverlay';
@@ -7,6 +7,7 @@ import { findSegmentAtPoint } from './trimPathGeometry';
 import { trimPathCache } from './cache';
 import { pluginManager } from '../../utils/pluginManager';
 import { selectionHasOnlyPaths } from '../../utils/selectionGuards';
+import { createPluginSlice } from '../../utils/pluginUtils';
 
 /**
  * Trim Path Plugin Definition.
@@ -18,15 +19,7 @@ import { selectionHasOnlyPaths } from '../../utils/selectionGuards';
  * - Visual feedback for intersections and trimmable segments
  * - Undo/redo support
  */
-// Slice factory for Trim Path
-const trimPathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createTrimPathPluginSlice(set as any, get as any, api as any);
-  return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    state: slice as any,
-  };
-};
+const trimPathSliceFactory = createPluginSlice(createTrimPathPluginSlice);
 
 export const trimPathPlugin: PluginDefinition<CanvasStore> = {
   id: 'trimPath',
@@ -196,4 +189,3 @@ export const trimPathPlugin: PluginDefinition<CanvasStore> = {
     },
   }),
 };
-

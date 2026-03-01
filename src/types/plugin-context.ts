@@ -41,12 +41,16 @@ export interface ColorModeChangeContext<TStore extends object> {
   store: PluginStoreApi<TStore>;
 }
 
+// Plugin helper signatures are dynamic by design at the plugin boundary.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PluginHandlerHelpers = Record<string, (...args: any[]) => any>;
+export type PluginHandlerHelper = (...args: any[]) => unknown;
+export type PluginHandlerHelpers = Record<string, PluginHandlerHelper>;
 
 export type PluginApiFactory<TStore extends object> = (
   context: PluginApiContext<TStore>
-) => Record<string, (...args: never[]) => unknown>;
+) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Record<string, (...args: any[]) => unknown>;
 
 export type PluginSliceFactory<TStore extends object = object> = (
   set: StoreApi<TStore>['setState'],
@@ -87,7 +91,8 @@ export interface PluginContextWithStore<TStore extends object> extends PluginCon
 }
 
 export interface PluginContextWithApi<TStore extends object> extends PluginContextWithStore<TStore> {
-  api: Record<string, (...args: never[]) => unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  api: Record<string, (...args: any[]) => unknown>;
 }
 
 export interface PluginContextWithCanvas extends PluginContextBase {

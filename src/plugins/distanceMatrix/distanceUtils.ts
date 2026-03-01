@@ -34,13 +34,19 @@ export function computeDistanceMatrix(elements: CanvasElement[]): {
   farthestPair: DistancePair | null;
   avgDistance: number;
 } {
+  type CenteredItem = {
+    id: string;
+    label: string;
+    center: { x: number; y: number };
+  };
+
   const items = elements
     .map((el) => ({
       id: el.id,
       label: (el.type === 'group' ? el.data.name : null) || el.id.slice(0, 8),
       center: getCenter(el),
     }))
-    .filter((item) => item.center !== null);
+    .filter((item): item is CenteredItem => item.center !== null);
 
   const pairs: DistancePair[] = [];
   let nearest: DistancePair | null = null;
@@ -51,8 +57,8 @@ export function computeDistanceMatrix(elements: CanvasElement[]): {
     for (let j = i + 1; j < items.length; j++) {
       const a = items[i];
       const b = items[j];
-      const dx = a.center!.x - b.center!.x;
-      const dy = a.center!.y - b.center!.y;
+      const dx = a.center.x - b.center.x;
+      const dy = a.center.y - b.center.y;
       const distance = Math.round(Math.sqrt(dx * dx + dy * dy) * 100) / 100;
 
       const pair: DistancePair = {

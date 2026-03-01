@@ -59,10 +59,10 @@ export const FiltersPanel: React.FC = () => {
   React.useEffect(() => {
     if (!selectedFromSearch) return;
     setEditingFilterId(selectedFromSearch);
-    setTimeout(() => {
+    queueMicrotask(() => {
       detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       setDetailsFlashKey(selectedFromSearch);
-    }, 0);
+    });
     selectFromSearch?.(null);
   }, [selectedFromSearch, selectFromSearch]);
   const [editingFilterId, setEditingFilterId] = useState<string | null>(null);

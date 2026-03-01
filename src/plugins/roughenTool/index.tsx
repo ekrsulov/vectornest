@@ -7,6 +7,7 @@ import React from 'react';
 import { RoughenToolPanel } from './RoughenToolPanel';
 import { RoughenToolOverlay } from './RoughenToolOverlay';
 import { roughenElements } from './roughenUtils';
+import { logger } from '../../utils/logger';
 
 export const roughenToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'roughenTool',
@@ -122,7 +123,7 @@ export const roughenToolPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[RoughenTool] Operation failed:', e);
+                logger.warn('[RoughenTool] Operation failed', e);
             } finally {
                 state.updateRoughenToolState?.({
                     isRoughening: false,

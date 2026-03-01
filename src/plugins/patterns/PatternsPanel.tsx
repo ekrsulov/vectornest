@@ -162,10 +162,10 @@ export const PatternsPanel: React.FC = () => {
   React.useEffect(() => {
     if (!selectedFromSearch) return;
     setEditingPatternId(selectedFromSearch);
-    setTimeout(() => {
+    queueMicrotask(() => {
       detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       setDetailsFlashKey(selectedFromSearch);
-    }, 0);
+    });
     selectFromSearch?.(null);
   }, [selectedFromSearch, selectFromSearch]);
 

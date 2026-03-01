@@ -7,6 +7,7 @@ import React from 'react';
 import { SprayCanPanel } from './SprayCanPanel';
 import { SprayCanOverlay } from './SprayCanOverlay';
 import { createSprayDots } from './sprayCanUtils';
+import { logger } from '../../utils/logger';
 
 export const sprayCanPlugin: PluginDefinition<CanvasStore> = {
     id: 'sprayCan',
@@ -107,7 +108,7 @@ export const sprayCanPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[SprayCan] Operation failed:', e);
+                logger.warn('[SprayCan] Operation failed', e);
             } finally {
                 state.updateSprayCanState?.({
                     isSpraying: false,

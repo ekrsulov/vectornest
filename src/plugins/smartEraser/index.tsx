@@ -7,6 +7,7 @@ import React from 'react';
 import { SmartEraserPanel } from './SmartEraserPanel';
 import { SmartEraserOverlay } from './SmartEraserOverlay';
 import { eraseElementsWithPath } from './smartEraserUtils';
+import { logger } from '../../utils/logger';
 
 export const smartEraserPlugin: PluginDefinition<CanvasStore> = {
     id: 'smartEraser',
@@ -112,7 +113,7 @@ export const smartEraserPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[SmartEraser] Operation failed:', e);
+                logger.warn('[SmartEraser] Operation failed', e);
             } finally {
                 state.updateSmartEraserState?.({
                     isErasing: false,

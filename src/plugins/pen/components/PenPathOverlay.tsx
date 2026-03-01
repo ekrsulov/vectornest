@@ -5,21 +5,26 @@ import { pathDataToPenPath } from '../utils/pathConverter';
 import { deriveElementSelectionColors } from '../../../utils/canvasColorUtils';
 import type { PathData } from '../../../types';
 import { toWorldPenPath } from '../utils/penPathTransforms';
+import type { PenPluginSlice } from '../slice';
 
 /**
  * Render anchors and handles of the current path being drawn
  */
 export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ context }) => {
     const { viewport } = context;
+    type PenStore = {
+        pen?: PenPluginSlice['pen'];
+    };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const penState = useCanvasStore((state) => (state as any).pen);
+    const penState = useCanvasStore((state) => (state as PenStore).pen);
     const elements = useCanvasStore((state) => state.elements);
 
 
     if (!penState) {
         return null;
     }
+    const currentPath = penState.currentPath;
+    const hoverTarget = penState.hoverTarget;
 
     const strokeWidth = 1 / viewport.zoom;
     const anchorRadius = 4 / viewport.zoom;
@@ -28,14 +33,14 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
     return (
         <g>
             {/* Render hover feedback for paths in idle/editing mode */}
-            {(penState.mode === 'idle' || penState.mode === 'editing') && penState.hoverTarget?.pathId && (
+            {(penState.mode === 'idle' || penState.mode === 'editing') && hoverTarget?.pathId && (
                 <>
                     {(() => {
-                        const hoveredElement = elements.find(el => el.id === penState.hoverTarget.pathId);
+                        const hoveredElement = elements.find(el => el.id === hoverTarget.pathId);
                         if (!hoveredElement || hoveredElement.type !== 'path') return null;
 
                         const pathData = hoveredElement.data as PathData;
-                        const subPathIndex = penState.hoverTarget.subPathIndex ?? 0;
+                        const subPathIndex = hoverTarget.subPathIndex ?? 0;
                         const subPath = pathData.subPaths?.[subPathIndex];
                         if (!subPath) return null;
 
@@ -77,16 +82,16 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
             )}
 
             {/* Visual indicator for close path */}
-            {penState.mode === 'drawing' && penState.cursorState === 'close' && penState.currentPath && (() => {
-                const anchors = penState.currentPath!.anchors;
+            {penState.mode === 'drawing' && penState.cursorState === 'close' && currentPath && (() => {
+                const anchors = currentPath.anchors;
                 const hasHandles = anchors.some((a: typeof anchors[0]) => a.inHandle || a.outHandle);
                 return anchors.length >= 3 || (anchors.length === 2 && hasHandles);
             })() && (
                     <>
                         {/* Pulsing ring around first anchor to indicate close action */}
                         <circle
-                            cx={penState.currentPath.anchors[0].position.x}
-                            cy={penState.currentPath.anchors[0].position.y}
+                            cx={currentPath.anchors[0].position.x}
+                            cy={currentPath.anchors[0].position.y}
                             r={anchorRadius * 2.5}
                             fill="none"
                             stroke="#22c55e"
@@ -110,12 +115,12 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
                 )}
 
             {/* Render current path being drawn/edited */}
-            {(penState.mode === 'drawing' || penState.mode === 'editing') && penState.currentPath && penState.currentPath.anchors && penState.currentPath.anchors.length > 0 && (
+            {(penState.mode === 'drawing' || penState.mode === 'editing') && currentPath && currentPath.anchors && currentPath.anchors.length > 0 && (
                 <>
                     {/* Render anchors */}
-                    {penState.currentPath.anchors.map((anchor: typeof penState.currentPath.anchors[0], index: number) => {
+                    {currentPath.anchors.map((anchor: typeof currentPath.anchors[0], index: number) => {
                         const isFirst = index === 0;
-                        const isLast = index === penState.currentPath.anchors.length - 1;
+                        const isLast = index === currentPath.anchors.length - 1;
 
                         return (
                             <g key={anchor.id}>
@@ -206,10 +211,10 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
                     })}
 
                     {/* Render path segments */}
-                    {penState.currentPath.anchors.map((anchor: typeof penState.currentPath.anchors[0], index: number) => {
+                    {currentPath.anchors.map((anchor: typeof currentPath.anchors[0], index: number) => {
                         if (index === 0) return null;
 
-                        const prevAnchor = penState.currentPath.anchors[index - 1];
+                        const prevAnchor = currentPath.anchors[index - 1];
                         const hasCurve = prevAnchor.outHandle || anchor.inHandle;
 
                         if (!hasCurve) {
@@ -256,9 +261,9 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
                     })}
 
                     {/* Render closing segment for closed paths */}
-                    {penState.currentPath.closed && penState.currentPath.anchors.length > 1 && (() => {
-                        const lastAnchor = penState.currentPath.anchors[penState.currentPath.anchors.length - 1];
-                        const firstAnchor = penState.currentPath.anchors[0];
+                    {currentPath.closed && currentPath.anchors.length > 1 && (() => {
+                        const lastAnchor = currentPath.anchors[currentPath.anchors.length - 1];
+                        const firstAnchor = currentPath.anchors[0];
                         const hasCurve = lastAnchor.outHandle || firstAnchor.inHandle;
 
                         if (!hasCurve) {

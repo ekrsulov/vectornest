@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement, PathData } from '../../types';
+import { logger } from '../../utils/logger';
 import { 
   transformPathDataToShape, 
   type ShapeBounds, 
@@ -96,6 +97,7 @@ type FullCanvasState = {
   selectedIds?: string[];
   recordSnapshot?: () => void;
 };
+type Wrap3DStoreState = FullCanvasState & Wrap3DSlice;
 
 const initialState: Wrap3DState = {
   isActive: false,
@@ -198,7 +200,7 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
     newParams?: Partial<ShapeParams>,
     newShape?: ShapeType
   ) => {
-    const state = get() as unknown as FullCanvasState & Wrap3DSlice;
+    const state = get() as Wrap3DStoreState;
     const { originalPaths, combinedBounds, isLivePreview, shapeParams, selectedShape } = state;
     
     if (!isLivePreview || originalPaths.length === 0 || !combinedBounds) {
@@ -211,7 +213,7 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
     const params = newParams ? { ...shapeParams, ...newParams } : shapeParams;
     const shape = newShape ?? selectedShape;
 
-    console.log('[Wrap3D] doUpdatePreview', { rotX, rotY, rotZ, shape, pathCount: originalPaths.length });
+    logger.debug('[Wrap3D] Updating preview', { rotX, rotY, rotZ, shape, pathCount: originalPaths.length });
 
     // Transform each path using the combined bounds
     for (const pathInfo of originalPaths) {
@@ -237,8 +239,7 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
     ...initialState,
 
     activateWrap3DTool: () => {
-      const state = get() as unknown as FullCanvasState & Wrap3DSlice;
-      console.log('[Wrap3D] activateWrap3DTool called');
+      const state = get() as Wrap3DStoreState;
       
       set({
         ...initialState,
@@ -248,8 +249,6 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
       const selectedIds = state.selectedIds || [];
       const elements = state.elements || [];
       const paths = getPathsFromSelection(selectedIds, elements);
-      
-      console.log('[Wrap3D] Found paths:', paths.length);
       
       if (paths.length > 0) {
         const currentElements = (get() as unknown as FullCanvasState).elements;
@@ -267,8 +266,7 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
         
         if (originalPaths.length > 0) {
           const combinedBounds = calculateCombinedBounds(originalPaths);
-          
-          console.log('[Wrap3D] Starting preview for', originalPaths.length, 'paths');
+          logger.debug('[Wrap3D] Starting preview from current selection', { pathCount: originalPaths.length });
           
           set({
             isActive: true,
@@ -286,13 +284,12 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
     },
 
     deactivateWrap3DTool: () => {
-      const state = get() as unknown as FullCanvasState & Wrap3DSlice;
-      console.log('[Wrap3D] deactivateWrap3DTool called');
+      const state = get() as Wrap3DStoreState;
       
       const { originalPaths, isLivePreview } = state;
       
       if (isLivePreview && originalPaths.length > 0) {
-        console.log('[Wrap3D] Restoring', originalPaths.length, 'original paths');
+        logger.debug('[Wrap3D] Restoring original paths', { pathCount: originalPaths.length });
         for (const pathInfo of originalPaths) {
           state.updateElement(pathInfo.id, {
             data: pathInfo.pathData,
@@ -303,8 +300,6 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
       set({
         ...initialState,
       });
-      
-      console.log('[Wrap3D] Tool fully deactivated and state cleared');
     },
 
     setSelectedShape: (shape: ShapeType) => {
@@ -444,7 +439,7 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
     },
 
     canApplyWrap3D: () => {
-      const state = get() as unknown as FullCanvasState & Wrap3DSlice;
+      const state = get() as Wrap3DStoreState;
       const selectedIds = state.selectedIds || [];
       const elements = state.elements || [];
 
@@ -456,25 +451,21 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
     },
 
     startWrap3DPreview: () => {
-      const state = get() as unknown as FullCanvasState & Wrap3DSlice;
+      const state = get() as Wrap3DStoreState;
       const selectedIds = state.selectedIds || [];
       const elements = state.elements || [];
 
-      console.log('[Wrap3D] startWrap3DPreview called', { selectedIds, elementsCount: elements.length });
-
       if (!selectionHasOnlyPaths(selectedIds, elements)) {
-        console.log('[Wrap3D] Skipping: selection has non-path elements');
+        logger.debug('[Wrap3D] Preview skipped because selection contains non-path elements');
         return;
       }
 
       const paths = getPathsFromSelection(selectedIds, elements);
       
       if (paths.length === 0) {
-        console.log('[Wrap3D] Skipping: no paths in selection');
+        logger.debug('[Wrap3D] Preview skipped because there are no selected paths');
         return;
       }
-
-      console.log('[Wrap3D] Starting preview for', paths.length, 'paths');
 
       const originalPaths: OriginalPathInfo[] = paths.map(path => ({
         id: path.id,
@@ -488,8 +479,6 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
         originalPaths,
         combinedBounds,
       });
-      
-      console.log('[Wrap3D] Preview started, state updated');
     },
 
     updateWrap3DPreview: () => {
@@ -497,9 +486,7 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
     },
 
     applyWrap3D: () => {
-      const state = get() as unknown as FullCanvasState & Wrap3DSlice;
-      
-      console.log('[Wrap3D] applyWrap3D called');
+      const state = get() as Wrap3DStoreState;
       
       state.recordSnapshot?.();
 
@@ -511,10 +498,8 @@ export const createWrap3DSlice: StateCreator<Wrap3DSlice, [], [], Wrap3DSlice> =
     },
 
     cancelWrap3DPreview: () => {
-      const state = get() as unknown as FullCanvasState & Wrap3DSlice;
+      const state = get() as Wrap3DStoreState;
       const { originalPaths } = state;
-
-      console.log('[Wrap3D] cancelWrap3DPreview called');
 
       for (const pathInfo of originalPaths) {
         state.updateElement(pathInfo.id, {

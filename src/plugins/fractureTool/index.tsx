@@ -7,6 +7,7 @@ import React from 'react';
 import { FractureToolPanel } from './FractureToolPanel';
 import { FractureToolOverlay } from './FractureToolOverlay';
 import { fractureElement } from './fractureUtils';
+import { logger } from '../../utils/logger';
 
 export const fractureToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'fractureTool',
@@ -97,7 +98,7 @@ export const fractureToolPlugin: PluginDefinition<CanvasStore> = {
                     }));
                 }
             } catch (e) {
-                console.warn('[FractureTool] Operation failed:', e);
+                logger.warn('[FractureTool] Operation failed', e);
             } finally {
                 state.updateFractureToolState?.({
                     isDrawing: false,

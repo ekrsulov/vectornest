@@ -2,6 +2,8 @@ import type React from 'react';
 import type {
   PluginDefinition,
   PluginActionContribution,
+  PluginHandlerHelper,
+  PluginHandlerHelpers,
   RendererOverrides,
   PluginRenderBehaviorContext,
   SidebarToolbarButtonContribution,
@@ -48,8 +50,7 @@ export abstract class PluginManagerServicesCore extends PluginManagerRegistratio
     this.canvasServiceBindings.deactivateCanvasService(serviceId);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  registerHelper(name: string, helperFn: (...args: any[]) => any): void {
+  registerHelper(name: string, helperFn: PluginHandlerHelper): void {
     this.helpers.register(name, helperFn);
   }
 
@@ -61,8 +62,7 @@ export abstract class PluginManagerServicesCore extends PluginManagerRegistratio
     return this.helpers.get<T>(name);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getAllHelpers(): Record<string, (...args: any[]) => any> {
+  getAllHelpers(): PluginHandlerHelpers {
     return this.helpers.getAll();
   }
 

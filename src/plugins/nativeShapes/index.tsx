@@ -5,6 +5,7 @@ import { Radius } from 'lucide-react';
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
+import { createPluginSlice } from '../../utils/pluginUtils';
 import { NativeShapesPanel } from './NativeShapesPanel';
 import { createNativeShapesSlice, type NativeShapesPluginSlice } from './slice';
 import { NativeShapesRenderer } from './NativeShapesRenderer';
@@ -236,9 +237,7 @@ const NativeShapeThumbnail = ({ element }: { element: NativeShapeElement }) => {
 };
 
 const nativeShapesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createNativeShapesSlice(set as any, get as any, api as any);
-  return { state: slice };
+  return createPluginSlice(createNativeShapesSlice)(set, get, api);
 };
 
 const createNativeShapeFromDrag = (start: Point, end: Point, state: CanvasStore) => {

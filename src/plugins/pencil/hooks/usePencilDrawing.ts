@@ -15,8 +15,7 @@ interface UsePencilDrawingParams {
   screenToCanvas: (screenX: number, screenY: number) => Point;
   emitPointerEvent: (
     type: 'pointerdown' | 'pointermove' | 'pointerup',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    event: any,
+    event: PointerEvent,
     point: Point
   ) => void;
   startPath: (point: Point) => void;

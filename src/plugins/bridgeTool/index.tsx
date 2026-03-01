@@ -7,6 +7,7 @@ import React from 'react';
 import { BridgeToolPanel } from './BridgeToolPanel';
 import { BridgeToolOverlay } from './BridgeToolOverlay';
 import { bridgeElements } from './bridgeUtils';
+import { logger } from '../../utils/logger';
 
 export const bridgeToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'bridgeTool',
@@ -87,20 +88,21 @@ export const bridgeToolPlugin: PluginDefinition<CanvasStore> = {
                     const scaledWidth = bridgeWidth / state.viewport.zoom;
 
                     const result = bridgeElements(targets, bridgePoints, scaledWidth, smooth);
+                    const { newElement } = result;
 
-                    if (result.newElement) {
+                    if (newElement) {
                         const removeSet = new Set(result.elementsToRemove);
                         store.setState((prev) => ({
                             elements: [
                                 ...prev.elements.filter((el) => !removeSet.has(el.id)),
-                                result.newElement!,
+                                newElement,
                             ],
-                            selectedIds: [result.newElement!.id],
+                            selectedIds: [newElement.id],
                         }));
                     }
                 }
             } catch (e) {
-                console.warn('[BridgeTool] Operation failed:', e);
+                logger.warn('[BridgeTool] Operation failed', e);
             } finally {
                 state.updateBridgeToolState?.({
                     isDrawing: false,

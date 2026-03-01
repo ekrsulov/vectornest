@@ -25,7 +25,7 @@ import type { PanelComponentProps } from '../../types/panel';
 import { useSidebarPanelState } from '../../contexts/sidebarPanelState';
 import { useCanvasStore, canvasStoreApi } from '../../store/canvasStore';
 import type { CanvasStore } from '../../store/canvasStore';
-import type { CanvasElement, Command, GroupElement, PathData } from '../../types';
+import type { CanvasElement, Command, GroupElement, PathData, PresentationAttributes } from '../../types';
 import type { MarkersSlice } from '../markers/slice';
 import type { PatternsSlice } from '../patterns/slice';
 import type { SvgStructureSlice } from './slice';
@@ -94,6 +94,20 @@ const DEF_CONTAINER_TAGS = new Set([
   'clippath',
   'symbol',
 ]);
+
+type ReferencedElementData = Partial<
+  Pick<
+    PresentationAttributes,
+    'clipPathId' | 'maskId' | 'filterId' | 'markerStart' | 'markerMid' | 'markerEnd'
+  >
+> & Pick<PathData, 'fillColor' | 'strokeColor' | 'textPath'> & {
+  href?: string;
+  'xlink:href'?: string;
+};
+
+const getReferencedElementData = (element?: CanvasElement): ReferencedElementData => {
+  return (element?.data ?? {}) as ReferencedElementData;
+};
 
 const ANIMATION_TAGS = new Set([
   'animate',
@@ -649,7 +663,7 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
     if (!node.canvasElement) return [];
     const refs: Array<{ id: string; type: string }> = [];
     const seen = new Set<string>();
-    const data = node.canvasElement.data || {};
+    const data = getReferencedElementData(node.canvasElement);
 
     const addRef = (id: string | null | undefined, type: string) => {
       if (!id) return;
@@ -662,7 +676,7 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
       refs.push({ id: cleanId, type });
     };
 
-    const idFields: Array<[keyof typeof data, string]> = [
+    const idFields: Array<[keyof ReferencedElementData, string]> = [
       ['clipPathId', 'CLIPPATH'],
       ['maskId', 'MASK'],
       ['filterId', 'FILTER'],
@@ -671,28 +685,27 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
       ['markerEnd', 'MARKER'],
     ];
     idFields.forEach(([field, type]) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const value = (data as any)[field];
+      const value = data[field];
       if (typeof value === 'string') addRef(value, type);
     });
 
-    const paintFields: Array<keyof typeof data> = ['fillColor', 'strokeColor'];
+    const paintFields: Array<keyof Pick<ReferencedElementData, 'fillColor' | 'strokeColor'>> = ['fillColor', 'strokeColor'];
     paintFields.forEach((field) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const value = (data as any)[field];
+      const value = data[field];
       if (typeof value === 'string' && value.includes('url(')) addRef(value, 'PAINT');
     });
 
     // href / xlink:href
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const href = (data as any)['href'] || (data as any)['xlink:href'];
+    const href = data.href || data['xlink:href'];
     if (typeof href === 'string') addRef(href, 'SYMBOL');
 
     // textPath href
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tp = (data as any).textPath;
-    if (tp && typeof tp === 'object' && typeof tp.href === 'string') {
-      addRef(tp.href, 'PATH');
+    const tp = data.textPath;
+    const textPathHref = tp && typeof tp === 'object'
+      ? (tp as { href?: string }).href
+      : undefined;
+    if (typeof textPathHref === 'string') {
+      addRef(textPathHref, 'PATH');
     }
 
     return refs;
@@ -1683,7 +1696,7 @@ export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) =
         const next = new Set(
           Array.from(discoveredTags).filter((tag) => tag !== 'svg' && !DEFAULT_HIDDEN_TAGS.has(tag))
         );
-        setTimeout(() => setStoredEnabledTags(Array.from(next)), 0);
+        queueMicrotask(() => setStoredEnabledTags(Array.from(next)));
         return next;
       }
       const next = new Set<string>();
@@ -1696,7 +1709,7 @@ export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) =
       });
       const isSame = next.size === prev.size && Array.from(next).every((tag) => prev.has(tag));
       if (!isSame) {
-        setTimeout(() => setStoredEnabledTags(Array.from(next)), 0);
+        queueMicrotask(() => setStoredEnabledTags(Array.from(next)));
       }
       return isSame ? prev : next;
     });

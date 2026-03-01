@@ -126,7 +126,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
             _focus={{ outline: 'none', boxShadow: 'lg' }}
             sx={NO_FOCUS_STYLES}
           >
-            {action.submenu!.map(subAction => {
+            {(action.submenu ?? []).map(subAction => {
               return (
                 <MenuItem
                   key={subAction.id}

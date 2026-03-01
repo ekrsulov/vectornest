@@ -12,6 +12,7 @@ import { canvasStoreApi } from '../../../store/canvasStore';
 import { getElementBounds as getElementBoundsService } from '../../../canvas/geometry/CanvasGeometryService';
 import { PanelToggle } from '../../../ui/PanelToggle';
 import { CopyButton } from '../../../ui/CopyButton';
+import { debugLog } from '../../../utils/debugUtils';
 
 type PreviewAnimation = Omit<SVGAnimation, 'id'> & { id?: string };
 
@@ -64,37 +65,6 @@ const computeTotalDuration = (animation?: SVGAnimation): number => {
 
 // Throttle slider updates to ~15fps to reduce React re-renders during animation
 const _SLIDER_UPDATE_INTERVAL = 1000 / 15;
-
-const safeStringify = (value: unknown): string => {
-  const seen = new WeakSet<object>();
-  try {
-    return JSON.stringify(
-      value,
-      (_key, val) => {
-        if (typeof val === 'object' && val !== null) {
-          if (seen.has(val as object)) return '[Circular]';
-          seen.add(val as object);
-          if (val instanceof Map) return { type: 'Map', entries: Array.from(val.entries()) };
-          if (val instanceof Set) return { type: 'Set', values: Array.from(val.values()) };
-        }
-        return val;
-      },
-      2
-    );
-  } catch {
-    return String(value);
-  }
-};
-
-const debugLog = (message: string, payload?: unknown) => {
-  const timestamp = new Date().toISOString();
-  if (payload === undefined) {
-    console.log(`[AnimationPreviewPanel ${timestamp}] ${message}`);
-    return;
-  }
-  const expanded = safeStringify(payload);
-  console.log(`[AnimationPreviewPanel ${timestamp}] ${message}`, payload, '\n', expanded);
-};
 
 const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
   elements,

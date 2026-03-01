@@ -7,6 +7,7 @@ import React from 'react';
 import { ErodeDilatePanel } from './ErodeDilatePanel';
 import { ErodeDilateOverlay } from './ErodeDilateOverlay';
 import { erodeOrDilateElements } from './erodeDilateUtils';
+import { logger } from '../../utils/logger';
 
 export const erodeDilatePlugin: PluginDefinition<CanvasStore> = {
     id: 'erodeDilate',
@@ -120,7 +121,7 @@ export const erodeDilatePlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[ErodeDilate] Operation failed:', e);
+                logger.warn('[ErodeDilate] Operation failed', e);
             } finally {
                 state.updateErodeDilateState?.({
                     isPainting: false,

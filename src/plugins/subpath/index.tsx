@@ -13,6 +13,11 @@ import { createPluginSlice } from '../../utils/pluginUtils';
 import { Undo, SplitSquareVertical, Combine } from 'lucide-react';
 import { pluginManager } from '../../utils/pluginManager';
 
+type GridSnapStore = CanvasStore & {
+  grid?: { snapEnabled?: boolean };
+  snapToGrid?: (x: number, y: number) => { x: number; y: number };
+};
+
 const subpathSliceFactory = createPluginSlice(createSubpathPluginSlice);
 
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
@@ -142,18 +147,19 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
       }
     } else if (event.type === 'pointerup') {
       if (pointerState?.isDragging && pointerState?.hasDragMoved) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fullState = state as any;
+        const fullState = state as GridSnapStore;
         if (fullState.grid?.snapEnabled && fullState.snapToGrid) {
           const selectedSubpaths = state.selectedSubpaths || [];
           if (selectedSubpaths.length > 0) {
             // Convert to Map<string, Set<number>>
             const subpathMap = new Map<string, Set<number>>();
             selectedSubpaths.forEach((sel: { elementId: string; subpathIndex: number }) => {
-              if (!subpathMap.has(sel.elementId)) {
-                subpathMap.set(sel.elementId, new Set());
+              let selectedIndices = subpathMap.get(sel.elementId);
+              if (!selectedIndices) {
+                selectedIndices = new Set();
+                subpathMap.set(sel.elementId, selectedIndices);
               }
-              subpathMap.get(sel.elementId)!.add(sel.subpathIndex);
+              selectedIndices.add(sel.subpathIndex);
             });
 
             const bounds = calculateSubpathsBounds(state.elements, subpathMap, state.viewport.zoom);
@@ -259,4 +265,3 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     },
   }),
 };
-

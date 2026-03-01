@@ -1,4 +1,4 @@
-import type { PluginDefinition, PluginSliceFactory, SvgDefsEditor } from '../../types/plugins';
+import type { PluginDefinition, SvgDefsEditor } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
 import { definitionTranslationRegistry } from '../../utils/definitionTranslationRegistry';
@@ -11,12 +11,11 @@ import './persistence';
 import './importContribution';
 import { generateShortId } from '../../utils/idGenerator';
 import { MASK_PRESETS, generateMaskFromPreset } from './presets';
+import type { PluginSliceFactory } from '../../types/plugins';
 
-const masksSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createMasksSlice(set as any, get as any, api as any);
-  return { state: slice };
-};
+const masksSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
+  state: createMasksSlice(set, get as () => CanvasStore & MasksSlice, api as never),
+});
 
 const maskDefsEditor: SvgDefsEditor<CanvasStore> = {
   id: 'masks-editor',

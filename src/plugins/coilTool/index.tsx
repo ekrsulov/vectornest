@@ -7,6 +7,7 @@ import React from 'react';
 import { CoilToolPanel } from './CoilToolPanel';
 import { CoilToolOverlay } from './CoilToolOverlay';
 import { createCoilPath } from './coilUtils';
+import { logger } from '../../utils/logger';
 
 export const coilToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'coilTool',
@@ -112,7 +113,7 @@ export const coilToolPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[CoilTool] Operation failed:', e);
+                logger.warn('[CoilTool] Operation failed', e);
             } finally {
                 state.updateCoilToolState?.({
                     isDrawing: false,

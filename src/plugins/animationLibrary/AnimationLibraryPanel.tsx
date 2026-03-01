@@ -60,10 +60,10 @@ export const AnimationLibraryPanel: React.FC = () => {
   useEffect(() => {
     if (!selectedFromSearch) return;
     setEditingPresetId(selectedFromSearch);
-    setTimeout(() => {
+    queueMicrotask(() => {
       detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       setDetailsFlashKey(selectedFromSearch);
-    }, 0);
+    });
     selectFromSearch?.(null);
   }, [selectedFromSearch, selectFromSearch]);
 

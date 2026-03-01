@@ -8,6 +8,7 @@
 import React, { useMemo } from 'react';
 import { pluginManager } from '../../utils/pluginManager';
 import { useCanvasStore } from '../../store/canvasStore';
+import { logger } from '../../utils/logger';
 
 interface CanvasOverlaysProps {
   viewport: { zoom: number; panX: number; panY: number };
@@ -35,7 +36,7 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = React.memo(({ viewp
             if (!overlay.condition(context)) return null;
           } catch (error) {
             if (import.meta.env.DEV) {
-              console.warn(`[CanvasOverlays] Condition check failed for overlay ${overlay.id}:`, error);
+              logger.warn(`[CanvasOverlays] Condition check failed for overlay ${overlay.id}`, error);
             }
             return null;
           }

@@ -4,12 +4,14 @@ import type { PenAnchorPoint, PenPath } from './types';
 import type { PenPluginSlice } from './slice';
 import { penPathToCommands, pathDataToPenPath } from './utils/pathConverter';
 import { toLocalPenPath, toWorldPenPath } from './utils/penPathTransforms';
+import { generateShortId } from '../../utils/idGenerator';
+import { logger } from '../../utils/logger';
 
 type PenStore = CanvasStore & PenPluginSlice;
 
 // Simple ID generator for pen anchors and paths
 function generateId(): string {
-    return `pen-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return generateShortId('pen');
 }
 
 /**
@@ -206,7 +208,7 @@ export function finalizePath(getState: () => CanvasStore): void {
 
     // Detect and warn about stray points (single anchor)
     if (path.anchors.length < 2) {
-        console.warn('Pen tool: Stray point detected. Path requires at least 2 anchors.');
+        logger.warn('Pen tool: Stray point detected. Path requires at least 2 anchors.');
         // Clear the path without creating element
         cancelPath(getState);
         return;
@@ -1196,4 +1198,3 @@ export function redoPathPoint(getState: () => CanvasStore): void {
         activeAnchorIndex: nextPath.anchors.length - 1,
     });
 }
-

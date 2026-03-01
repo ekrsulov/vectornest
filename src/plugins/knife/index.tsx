@@ -7,6 +7,7 @@ import React from 'react';
 import { KnifePanel } from './KnifePanel';
 import { KnifeOverlay } from './KnifeOverlay';
 import { cutElementsWithPath } from './knifeUtils';
+import { logger } from '../../utils/logger';
 
 export const knifePlugin: PluginDefinition<CanvasStore> = {
     id: 'knife',
@@ -106,7 +107,7 @@ export const knifePlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[Knife] Operation failed:', e);
+                logger.warn('[Knife] Operation failed', e);
             } finally {
                 state.updateKnifeState?.({
                     isCutting: false,

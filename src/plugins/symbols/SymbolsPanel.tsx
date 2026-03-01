@@ -209,10 +209,10 @@ export const SymbolsPanel: React.FC = () => {
   React.useEffect(() => {
     if (!selectedFromSearch) return;
     setActiveSymbolId(selectedFromSearch);
-    setTimeout(() => {
+    queueMicrotask(() => {
       detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       setDetailsFlashKey(selectedFromSearch);
-    }, 0);
+    });
     selectFromSearch?.(null);
   }, [selectedFromSearch, selectFromSearch]);
 

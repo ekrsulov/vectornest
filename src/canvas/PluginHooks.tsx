@@ -8,8 +8,11 @@ import { logger } from '../utils/logger';
 interface PluginHooksProps {
   svgRef: React.RefObject<SVGSVGElement | null>;
   screenToCanvas: (x: number, y: number) => Point;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  emitPointerEvent: (type: 'pointerdown' | 'pointermove' | 'pointerup', event: any, point: Point) => void;
+  emitPointerEvent: (
+    type: 'pointerdown' | 'pointermove' | 'pointerup',
+    event: PointerEvent,
+    point: Point
+  ) => void;
 }
 
 /** Always-called hook that validates hook count stability in dev mode. */

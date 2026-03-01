@@ -4,13 +4,10 @@ import type { Matrix } from '../../utils/matrixUtils';
 import { applyToPoint, IDENTITY_MATRIX, inverseMatrix, multiplyMatrices } from '../../utils/matrixUtils';
 import { parsePath, absolutize, normalize, serialize } from 'path-data-parser';
 import { ensureChainDelays } from './chainUtils';
+import { logger } from '../../utils/logger';
+import { generateShortId } from '../../utils/idGenerator';
 
-const generateAnimationId = () => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `anim-${crypto.randomUUID()}`;
-  }
-  return `anim-${Math.random().toString(36).slice(2, 10)}`;
-};
+const generateAnimationId = () => generateShortId('anim');
 
 const withDefaults = (animation: SVGAnimation): SVGAnimation => {
   return {
@@ -217,7 +214,7 @@ const isSupportedElement = (
   const elements = (getCache() as { elements?: Array<{ id: string; type: string; data?: { kind?: string } }> }).elements ?? [];
   const el = elements.find((e) => e.id === targetId);
   if (!el) {
-    console.warn(`Element ${targetId} not found for animation`);
+    logger.warn(`[AnimationSystem] Element ${targetId} not found for animation`);
     return false;
   }
   if (!kinds || kinds.length === 0) return true;
@@ -565,7 +562,7 @@ export const createAnimationSlice: AnimationSliceCreator = (set, get) => {
     createCircleAnimation: (targetId, dur = '2s', fromRadius = 10, toRadius = 50) => {
       const element = (get() as { elements?: Array<{ id: string; type: string; data?: { kind?: string } }> }).elements?.find?.((el) => el.id === targetId);
       if (!element || element.type !== 'nativeShape' || element.data?.kind !== 'circle') {
-        console.warn('Circle animation requires a nativeShape of kind circle');
+        logger.warn('[AnimationSystem] Circle animation requires a nativeShape of kind circle');
         return;
       }
       const animation: SVGAnimation = {
@@ -590,7 +587,7 @@ export const createAnimationSlice: AnimationSliceCreator = (set, get) => {
     ) => {
       const element = (get() as { elements?: Array<{ id: string; type: string; data?: { kind?: string } }> }).elements?.find?.((el) => el.id === targetId);
       if (!element || element.type !== 'nativeShape' || element.data?.kind !== 'line') {
-        console.warn('Line animation requires a nativeShape of kind line');
+        logger.warn('[AnimationSystem] Line animation requires a nativeShape of kind line');
         return;
       }
       const addAnimation = get().addAnimation;
@@ -612,7 +609,7 @@ export const createAnimationSlice: AnimationSliceCreator = (set, get) => {
     createPathDataAnimation: (targetId, dur = '2s', fromD = 'M0 0 L100 0', toD = 'M0 0 L100 100') => {
       const element = (get() as { elements?: Array<{ id: string; type: string }> }).elements?.find?.((el) => el.id === targetId);
       if (!element || element.type !== 'path') {
-        console.warn('Path data animation requires a path element');
+        logger.warn('[AnimationSystem] Path data animation requires a path element');
         return;
       }
       const animation: SVGAnimation = {
@@ -632,7 +629,7 @@ export const createAnimationSlice: AnimationSliceCreator = (set, get) => {
     createTextPositionAnimation: (targetId, dur = '2s', fromX = 0, fromY = 0, toX = 50, toY = 50) => {
       const element = (get() as { elements?: Array<{ id: string; type: string }> }).elements?.find?.((el) => el.id === targetId);
       if (!element || element.type !== 'nativeText') {
-        console.warn('Text position animation requires a nativeText element');
+        logger.warn('[AnimationSystem] Text position animation requires a nativeText element');
         return;
       }
       const addAnimation = get().addAnimation;
@@ -1039,7 +1036,7 @@ export const createAnimationSlice: AnimationSliceCreator = (set, get) => {
     },
 
     createAnimationChain: (name, entries) => {
-      const id = `anim-chain-${generateAnimationId()}`;
+      const id = generateShortId('anim-chain');
       const chainEntries = entries.map((entry) => ({
         ...entry,
         delay: Math.max(0, entry.delay),

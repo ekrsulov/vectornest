@@ -83,6 +83,14 @@ export const LibrarySearchPanel: React.FC = () => {
         animations,
     } = useShallowCanvasSelector(selectAllLibraryItems);
     const normalizedMasks = useMemo(() => masks.map((m) => ({ ...m, name: m.name ?? m.id })), [masks]);
+    const deferSelection = useCallback((select: (() => void) | undefined) => {
+        if (!select) return;
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                select();
+            });
+        });
+    }, []);
 
     const selectSearchHandlers = (state: CanvasStore) => {
         const gradientsSlice = state as CanvasStore & GradientsSlice;
@@ -246,38 +254,38 @@ export const LibrarySearchPanel: React.FC = () => {
             case 'Clips':
                 return <ClipItemCard clip={item as unknown as ClipDefinition} onClick={() => {
                     setOpenPanelKey?.('sidebar:library:clipping');
-                    setTimeout(() => selectClipFromSearch?.(item.id), 60);
+                    deferSelection(() => selectClipFromSearch?.(item.id));
                 }} />;
             case 'Markers':
                 return <MarkerItemCard marker={item as unknown as MarkerDefinition} onClick={() => {
                     setOpenPanelKey?.('sidebar:library:markers');
-                    setTimeout(() => selectMarkerFromSearch?.(item.id), 60);
+                    deferSelection(() => selectMarkerFromSearch?.(item.id));
                 }} />;
             case 'Symbols':
                 return <SymbolItemCard symbol={item as unknown as SymbolDefinition} onClick={() => {
                     setOpenPanelKey?.('sidebar:library:symbols');
-                    setTimeout(() => selectSymbolFromSearch?.(item.id), 60);
+                    deferSelection(() => selectSymbolFromSearch?.(item.id));
                 }} />;
             case 'Filters':
                 return <FilterItemCard filter={item as unknown as FilterDefinition} onClick={() => {
                     setOpenPanelKey?.('sidebar:library:filters');
-                    setTimeout(() => selectFilterFromSearch?.(item.id), 60);
+                    deferSelection(() => selectFilterFromSearch?.(item.id));
                 }} />;
             case 'Gradients':
                 return <GradientItemCard gradient={item as unknown as GradientDef} onClick={() => {
                     setOpenPanelKey?.('sidebar:library:gradients');
-                    setTimeout(() => selectGradientFromSearch?.(item.id), 60);
+                    deferSelection(() => selectGradientFromSearch?.(item.id));
                 }} />;
             case 'Patterns':
                 return <PatternItemCard pattern={item as unknown as PatternDef} onClick={() => {
                     setOpenPanelKey?.('sidebar:library:patterns');
-                    setTimeout(() => selectPatternFromSearch?.(item.id), 60);
+                    deferSelection(() => selectPatternFromSearch?.(item.id));
                 }} />;
             case 'Masks':
                 return (
                     <Box onClick={() => {
                         setOpenPanelKey?.('sidebar:library:masks');
-                        setTimeout(() => selectMaskFromSearch?.(item.id), 60);
+                        deferSelection(() => selectMaskFromSearch?.(item.id));
                     }} cursor="pointer">
                         <MaskItemCard mask={item as unknown as MaskDefinition} isSelected={false} />
                     </Box>
@@ -286,7 +294,7 @@ export const LibrarySearchPanel: React.FC = () => {
                 return (
                     <Box onClick={() => {
                         setOpenPanelKey?.('sidebar:library:animations');
-                        setTimeout(() => selectAnimationFromSearch?.(item.id), 60);
+                        deferSelection(() => selectAnimationFromSearch?.(item.id));
                     }} cursor="pointer">
                         <AnimationItemCard preset={item as unknown as AnimationPreset} isSelected={false} />
                     </Box>

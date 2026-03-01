@@ -14,7 +14,7 @@ import type { PluginSliceFactory } from '../types/plugins';
  * ```ts
  * // Before (manual boilerplate)
  * const gridSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
- *   const slice = createGridPluginSlice(set as any, get as any, api as any);
+ *   const slice = createGridPluginSlice(set, get, api);
  *   return { state: slice };
  * };
  *

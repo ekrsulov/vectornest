@@ -7,6 +7,7 @@ import React from 'react';
 import { SmoothPaintPanel } from './SmoothPaintPanel';
 import { SmoothPaintOverlay } from './SmoothPaintOverlay';
 import { smoothElements } from './smoothPaintUtils';
+import { logger } from '../../utils/logger';
 
 export const smoothPaintPlugin: PluginDefinition<CanvasStore> = {
     id: 'smoothPaint',
@@ -120,7 +121,7 @@ export const smoothPaintPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[SmoothPaint] Operation failed:', e);
+                logger.warn('[SmoothPaint] Operation failed', e);
             } finally {
                 state.updateSmoothPaintState?.({
                     isSmoothing: false,

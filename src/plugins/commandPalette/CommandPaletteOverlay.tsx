@@ -337,11 +337,12 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
     (cmd: PaletteCommand) => {
       trackCommandUsage(cmd.id);
       if (cmd.panelComponent) {
+        const panelComponent = cmd.panelComponent;
         // Open the panel in a modal instead of executing
         onClose();
         requestAnimationFrame(() => {
           setModalPanel({
-            component: cmd.panelComponent!,
+            component: panelComponent,
             label: cmd.panelLabel ?? cmd.label,
             panelCategory: cmd.panelCategory,
           });

@@ -1,11 +1,10 @@
-export class HelperRegistry {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private helpers = new Map<string, (...args: any[]) => any>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private cachedAll: Record<string, (...args: any[]) => any> | null = null;
+import type { PluginHandlerHelper, PluginHandlerHelpers } from '../../types/plugins';
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    register(name: string, helperFn: (...args: any[]) => any): void {
+export class HelperRegistry {
+    private helpers = new Map<string, PluginHandlerHelper>();
+    private cachedAll: PluginHandlerHelpers | null = null;
+
+    register(name: string, helperFn: PluginHandlerHelper): void {
         this.helpers.set(name, helperFn);
         this.cachedAll = null;
     }
@@ -15,13 +14,12 @@ export class HelperRegistry {
         this.cachedAll = null;
     }
 
-    get<T = unknown>(name: string): T | undefined {
+    get<T = PluginHandlerHelper>(name: string): T | undefined {
         return this.helpers.get(name) as T | undefined;
     }
 
     /** Returns a cached snapshot of all helpers. Invalidated on register/unregister. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getAll(): Record<string, (...args: any[]) => any> {
+    getAll(): PluginHandlerHelpers {
         if (!this.cachedAll) {
             this.cachedAll = Object.fromEntries(this.helpers);
         }

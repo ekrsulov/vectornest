@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PluginDefinition, PluginSliceFactory, PluginContextFull, SnapOverlayConfig } from '../../types/plugins';
+import type { PluginDefinition, PluginContextFull, SnapOverlayConfig } from '../../types/plugins';
 import { createToolPanel } from '../../utils/pluginFactories';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { CanvasStore } from '../../store/canvasStore';
@@ -8,6 +8,7 @@ import { Ruler } from 'lucide-react';
 import { createMeasurePluginSlice } from './slice';
 import type { MeasurePluginSlice, MeasurePluginActions, SnapInfo } from './slice';
 import { useCanvasStore, canvasStoreApi } from '../../store/canvasStore';
+import { createPluginSlice } from '../../utils/pluginUtils';
 import { MeasureOverlay } from './MeasureOverlay';
 import { MeasureInfoPanel } from './MeasureInfoPanel';
 import { getSnapPointLabel } from '../../utils/snapPointUtils';
@@ -79,13 +80,7 @@ function getMeasureSnapOverlayConfig(): SnapOverlayConfig | null {
   };
 }
 
-const measureSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createMeasurePluginSlice(set as any, get as any, api as any) as MeasurePluginSlice & MeasurePluginActions;
-  return {
-    state: slice as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  };
-};
+const measureSliceFactory = createPluginSlice(createMeasurePluginSlice);
 
 // Global listener flags and cleanup handles (kept in the module scope)
 // _stopStoreSubscription is intentionally not used, cleanup is handled by returned functions.
@@ -376,7 +371,7 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
       render: (context) => {
         const MeasureOverlayWrapper = () => {
           const measureState = useCanvasStore(state => (state as CanvasStore & MeasurePluginSlice).measure);
-          const { activePlugin, settings } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+          const { activePlugin, settings } = context;
 
           if (activePlugin !== 'measure') {
             return null;
@@ -472,4 +467,3 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
   expandablePanel: () => React.createElement(MeasureInfoPanel, { hideTitle: true }),
   sidebarPanels: [createToolPanel('measure', MeasureInfoPanel)],
 };
-

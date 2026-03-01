@@ -9,6 +9,7 @@
 import type { CanvasElement } from '../../../types';
 import type { SVGAnimation } from '../types';
 import type { ElementAnimationState, QualitySettings, SimulationQuality } from '../gizmos/types';
+import { logger } from '../../../utils/logger';
 
 /**
  * Quality presets for different use cases
@@ -646,7 +647,7 @@ export class AnimationEngine {
       try {
         listener(time, states);
       } catch (error) {
-        console.error('[AnimationEngine] Error in listener:', error);
+        logger.error('[AnimationEngine] Error in listener', error);
       }
     });
   }

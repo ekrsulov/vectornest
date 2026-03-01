@@ -166,9 +166,10 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
 
         // Case 1: Working with subpaths
         if (isWorkingWithSubpaths?.() && (selectedSubpaths ?? []).length > 0) {
+          const activeSelectedSubpaths = selectedSubpaths ?? [];
           return (
             <>
-              {selectedSubpaths!.map((selection: { elementId: string; subpathIndex: number }) => {
+              {activeSelectedSubpaths.map((selection: { elementId: string; subpathIndex: number }) => {
                 const element = elementMap.get(selection.elementId);
 
                 if (!element || element.type !== 'path' || (isElementHidden && isElementHidden(selection.elementId))) {
@@ -187,7 +188,7 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
                     key={`subpath-${selection.elementId}-${selection.subpathIndex}`}
                     element={element}
                     bounds={bounds}
-                    selectedSubpaths={selectedSubpaths ?? []}
+                    selectedSubpaths={activeSelectedSubpaths}
                     viewport={viewport}
                     activePlugin={activePlugin}
                     transformation={transformation}

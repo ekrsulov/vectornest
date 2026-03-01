@@ -1,12 +1,13 @@
 import React, { useMemo } from 'react';
 import { getCommandStartPoint } from '../../utils/pathParserUtils';
 import { clientToCanvas } from '../../utils/pointUtils';
-import { useCanvasStore } from '../../store/canvasStore';
+import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { getEffectiveShift } from '../../utils/effectiveShift';
 import { useColorModeValue } from '@chakra-ui/react';
 import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
 import { inverseMatrix, applyToPoint } from '../../utils/matrixUtils';
 import type { Point, PathData, Command, CanvasElement } from '../../types';
+import type { SmoothBrush } from '../smoothBrush/slice';
 import { NO_TAP_HIGHLIGHT } from '../../constants';
 
 interface EditPointsOverlayProps {
@@ -74,21 +75,22 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
   // EditPointsOverlay can show which points are being affected by active tools
   // This is a data dependency for visual feedback, not a behavior dependency
 
+  type SmoothBrushOverlayStore = CanvasStore & {
+    smoothBrush?: SmoothBrush | null;
+  };
+
   // Selector specifically for smoothBrush state - returns the same object reference
   // when the relevant properties haven't changed to avoid infinite loops
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const smoothBrushState = useCanvasStore(state => (state as any).smoothBrush);
+  const smoothBrushState = useCanvasStore(
+    state => (state as SmoothBrushOverlayStore).smoothBrush
+  );
 
   // Use useMemo to create stable toolState only when smoothBrush actually changes
   const toolState = useMemo((): {
     isActive: boolean;
     affectedPoints: Array<{ commandIndex: number; pointIndex: number; x: number; y: number }>;
   } | null => {
-    if (
-      smoothBrushState &&
-      smoothBrushState.isActive &&
-      'affectedPoints' in smoothBrushState
-    ) {
+    if (smoothBrushState?.isActive) {
       return {
         isActive: smoothBrushState.isActive,
         affectedPoints: smoothBrushState.affectedPoints || []

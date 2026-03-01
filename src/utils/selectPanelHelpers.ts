@@ -206,7 +206,7 @@ export function getGroupThumbnailCommands(childIds: string[] | undefined, elemen
       }
     }
 
-    const transformedCorners = baseCorners.map((pt) => applyToPoint(matrix!, pt));
+    const transformedCorners = baseCorners.map((pt) => applyToPoint(matrix, pt));
     commands.push(
       { type: 'M', position: transformedCorners[0] },
       { type: 'L', position: transformedCorners[1] },

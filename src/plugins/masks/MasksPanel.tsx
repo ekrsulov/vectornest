@@ -476,10 +476,10 @@ export const MasksPanel: React.FC = () => {
   useEffect(() => {
     if (!selectedFromSearch) return;
     setActiveMaskId(selectedFromSearch);
-    setTimeout(() => {
+    queueMicrotask(() => {
       detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       setDetailsFlashKey(selectedFromSearch);
-    }, 0);
+    });
     selectFromSearch?.(null);
   }, [selectedFromSearch, selectFromSearch]);
 

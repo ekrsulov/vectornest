@@ -9,7 +9,7 @@ import { Panel } from '../../ui/Panel';
 
 export const PathSimplificationPanel: React.FC = () => {
     const pathSimplification = useCanvasStore((state) => (state as unknown as PathSimplificationPluginSlice).pathSimplification);
-    const selectedSubpaths = useCanvasStore((state) => (state as any).selectedSubpaths || []); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const selectedSubpaths = useCanvasStore((state) => state.selectedSubpaths ?? []);
     const updatePathSimplification = useCanvasStore((state) => (state as unknown as PathSimplificationPluginSlice).updatePathSimplification);
     const applyPathSimplification = useCanvasStore((state) => (state as unknown as PathSimplificationPluginSlice).applyPathSimplification);
 

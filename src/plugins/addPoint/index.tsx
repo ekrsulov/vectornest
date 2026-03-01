@@ -1,7 +1,8 @@
 
-import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
+import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { createAddPointPluginSlice } from './slice';
+import { createPluginSlice } from '../../utils/pluginUtils';
+import { createAddPointPluginSlice, type AddPointPluginSlice } from './slice';
 
 // Import listener to ensure it registers itself
 import './listeners/AddPointListener';
@@ -10,11 +11,8 @@ import { AddPointPanel } from './AddPointPanel';
 import { AddPointFeedbackOverlay } from './AddPointFeedbackOverlay';
 import { useAddPointHook } from './hooks/useAddPointHook';
 
-const addPointSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-    const slice = createAddPointPluginSlice(set, get, api);
-    return {
-        state: slice,
-    };
+type AddPointBehaviorStore = CanvasStore & {
+    addPointMode?: AddPointPluginSlice['addPointMode'];
 };
 
 export const addPointPlugin: PluginDefinition<CanvasStore> = {
@@ -24,14 +22,13 @@ export const addPointPlugin: PluginDefinition<CanvasStore> = {
         cursor: 'default',
     },
     behaviorFlags: (state) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const addPointMode = (state as any).addPointMode;
+        const addPointMode = (state as AddPointBehaviorStore).addPointMode;
         return {
             preventsSelection: addPointMode?.isActive ?? false,
             preventsSubpathInteraction: addPointMode?.isActive ?? false,
         };
     },
-    slices: [addPointSliceFactory],
+    slices: [createPluginSlice(createAddPointPluginSlice)],
     hooks: [
         {
             id: 'add-point-interaction',

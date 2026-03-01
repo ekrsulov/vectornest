@@ -1,6 +1,10 @@
 import { updateCanvasModeMachine } from '../../canvas/modes/CanvasModeMachine';
 import type { CanvasStore, CanvasStoreApi } from '../../store/canvasStore';
-import type { PluginDefinition, PluginContextFull } from '../../types/plugins';
+import type {
+  PluginContextFull,
+  PluginDefinition,
+  PluginHandlerHelper,
+} from '../../types/plugins';
 import { logger } from '../logger';
 import { unregisterExportContribution } from '../exportContributionRegistry';
 import { unregisterImportContribution } from '../importContributionRegistry';
@@ -26,7 +30,7 @@ export interface PluginRegistrationFlowDeps {
   applyPluginSlices: (plugin: PluginDefinition<CanvasStore>) => void;
   initializePluginApi: (plugin: PluginDefinition<CanvasStore>) => void;
   createPluginContext: (pluginId: string) => PluginContextFull<CanvasStore>;
-  registerHelper: (name: string, helperFn: unknown) => void;
+  registerHelper: (name: string, helperFn: PluginHandlerHelper) => void;
   unregisterExisting: (pluginId: string) => void;
   unregisterPluginSlices: (pluginId: string) => void;
   syncModePresentation: (activePluginId: string | null) => void;
@@ -85,8 +89,7 @@ export function registerPluginFlow(
 
   deps.interactionManager.register(
     plugin,
-    (id) => deps.isPluginEnabled(id),
-    (id) => deps.pluginApis.get(id) ?? {}
+    (id) => deps.isPluginEnabled(id)
   );
 
   deps.contributionAdapter.register(plugin);

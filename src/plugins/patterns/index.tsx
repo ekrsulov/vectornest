@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
+import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import React, { useRef, useLayoutEffect } from 'react';
 import { paintContributionRegistry } from '../../utils/paintContributionRegistry';
@@ -18,6 +18,7 @@ import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/type
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/shallow';
 import { generateShortId } from '../../utils/idGenerator';
+import { createPluginSlice } from '../../utils/pluginUtils';
 import './persistence';
 import './importContribution';
 
@@ -30,7 +31,8 @@ const PatternContent: React.FC<{ content: string }> = ({ content }) => {
   const gRef = useRef<SVGGElement>(null);
 
   useLayoutEffect(() => {
-    if (!gRef.current) return;
+    const group = gRef.current;
+    if (!group) return;
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(
@@ -42,25 +44,21 @@ const PatternContent: React.FC<{ content: string }> = ({ content }) => {
     if (!root) return;
 
     // Clear existing content
-    while (gRef.current.firstChild) {
-      gRef.current.removeChild(gRef.current.firstChild);
+    while (group.firstChild) {
+      group.removeChild(group.firstChild);
     }
 
     // Clone and append each child using importNode (preserves SVG namespace)
     Array.from(root.childNodes).forEach((node) => {
       const imported = document.importNode(node, true);
-      gRef.current!.appendChild(imported);
+      group.appendChild(imported);
     });
   }, [content]);
 
   return <g ref={gRef} />;
 };
 
-const patternsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createPatternsSlice(set as any, get as any, api as any);
-  return { state: slice };
-};
+const patternsSliceFactory = createPluginSlice(createPatternsSlice);
 
 const patternDefsEditor: SvgDefsEditor<CanvasStore> = {
   id: 'patterns-editor',

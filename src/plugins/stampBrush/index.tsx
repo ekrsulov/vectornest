@@ -7,6 +7,7 @@ import React from 'react';
 import { StampBrushPanel } from './StampBrushPanel';
 import { StampBrushOverlay } from './StampBrushOverlay';
 import { createStampedCopies } from './stampBrushUtils';
+import { logger } from '../../utils/logger';
 
 export const stampBrushPlugin: PluginDefinition<CanvasStore> = {
     id: 'stampBrush',
@@ -117,7 +118,7 @@ export const stampBrushPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[StampBrush] Operation failed:', e);
+                logger.warn('[StampBrush] Operation failed', e);
             } finally {
                 state.updateStampBrushState?.({
                     isStamping: false,

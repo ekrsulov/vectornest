@@ -2,6 +2,7 @@ import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import type { CanvasStore } from '../store/canvasStore';
 import { canvasStoreApi } from '../store/canvasStore';
+import { logger } from './logger';
 
 export interface ToggleFlag {
   id: string;
@@ -31,7 +32,7 @@ const notify = () => {
     try {
       listener();
     } catch (error) {
-      console.warn('[toggleFlagRegistry] Listener failed', error);
+      logger.warn('[toggleFlagRegistry] Listener failed', error);
     }
   });
 };
@@ -69,7 +70,7 @@ const safeExecute = <T>(flagId: string, fn: () => T): T | undefined => {
   try {
     return fn();
   } catch (error) {
-    console.warn(`Toggle flag "${flagId}" failed`, error);
+    logger.warn(`Toggle flag "${flagId}" failed`, error);
     return undefined;
   }
 };

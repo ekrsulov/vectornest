@@ -42,6 +42,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
     const pathD = commandsToString(pathData.subPaths.flat());
     const pathRefId = `${element.id}-textpath-ref`;
     const effectiveStrokeColor = wireframeEnabled ? wireframeStroke : getEffectiveStrokeColor(pathData);
+    const spans = textPath.spans ?? [];
     const fillColor = wireframeEnabled
       ? (removeFill ? 'none' : wireframeStroke)
       : (textPath.fillColor ?? effectiveStrokeColor ?? '#000000');
@@ -123,13 +124,14 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
             lengthAdjust={textPath.lengthAdjust}
             textLength={textPath.textLength}
           >
-            {textPath.spans && textPath.spans.length > 0
-              ? textPath.spans.map((span, idx) => {
-                const isLineStart = idx === 0 || span.line !== textPath.spans![idx - 1]?.line;
+            {spans.length > 0
+              ? spans.map((span, idx) => {
+                const previousSpan = idx > 0 ? spans[idx - 1] : undefined;
+                const isLineStart = idx === 0 || span.line !== previousSpan?.line;
                 return (
                   <tspan
                     key={`${element.id}-tp-span-${idx}`}
-                    dy={isLineStart && span.line > 0 ? textPath.fontSize * (span.line - (textPath.spans![idx - 1]?.line ?? 0)) : undefined}
+                    dy={isLineStart && span.line > 0 ? textPath.fontSize * (span.line - (previousSpan?.line ?? 0)) : undefined}
                     dx={span.dx}
                     fontWeight={span.fontWeight}
                     fontStyle={span.fontStyle}

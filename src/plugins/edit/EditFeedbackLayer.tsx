@@ -65,8 +65,9 @@ export const EditFeedbackLayer: React.FC<EditFeedbackLayerProps> = ({
         if (snapResult && snapResult.snapPoints.length > 0) {
             const snapPoint = snapResult.snapPoints[0];
             // Get the original snap point from metadata (preserves original type)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const originalSnapPoint = snapPoint?.metadata?.original as any;
+            const originalSnapPoint = snapPoint?.metadata?.original as
+                | { type?: SnapPointType }
+                | undefined;
             const snapType = originalSnapPoint?.type || snapPoint?.type;
 
             if (snapType) {

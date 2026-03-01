@@ -15,6 +15,7 @@ import type {
   GizmoQueryOptions,
   GizmoRegistryListener,
 } from '../types';
+import { logger } from '../../../../utils/logger';
 
 /**
  * Registry for animation gizmo definitions.
@@ -47,7 +48,7 @@ export class AnimationGizmoRegistry {
    */
   register(definition: AnimationGizmoDefinition): void {
     if (this.gizmos.has(definition.id)) {
-      console.warn(
+      logger.warn(
         `[AnimationGizmoRegistry] Gizmo "${definition.id}" already registered, replacing.`
       );
     }
@@ -58,14 +59,14 @@ export class AnimationGizmoRegistry {
     if (!this.byCategory.has(definition.category)) {
       this.byCategory.set(definition.category, new Set());
     }
-    this.byCategory.get(definition.category)!.add(definition.id);
+    this.byCategory.get(definition.category)?.add(definition.id);
 
     // Index by SMIL target
     if (definition.smilTarget) {
       if (!this.bySMILTarget.has(definition.smilTarget)) {
         this.bySMILTarget.set(definition.smilTarget, new Set());
       }
-      this.bySMILTarget.get(definition.smilTarget)!.add(definition.id);
+      this.bySMILTarget.get(definition.smilTarget)?.add(definition.id);
     }
 
     this.notifyListeners();
@@ -182,7 +183,7 @@ export class AnimationGizmoRegistry {
           return gizmo;
         }
       } catch (error) {
-        console.warn(
+        logger.warn(
           `[AnimationGizmoRegistry] Error in appliesTo for gizmo "${gizmo.id}":`,
           error
         );
@@ -231,8 +232,9 @@ export class AnimationGizmoRegistry {
     }
 
     if (options.attribute) {
+      const attribute = options.attribute;
       results = results.filter((g) =>
-        g.targetAttributes?.includes(options.attribute!) ?? false
+        g.targetAttributes?.includes(attribute) ?? false
       );
     }
 
@@ -293,7 +295,7 @@ export class AnimationGizmoRegistry {
       try {
         listener();
       } catch (error) {
-        console.error('[AnimationGizmoRegistry] Error in listener:', error);
+        logger.error('[AnimationGizmoRegistry] Error in listener', error);
       }
     });
   }

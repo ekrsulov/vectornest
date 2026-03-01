@@ -376,8 +376,10 @@ export const AnimationCard: React.FC<AnimationCardProps> = ({ animation, onDelet
                                                 { value: '', label: 'None' },
                                                 ...elements
                                                     .filter((el: CanvasElement) => el.type === 'path' || el.type === 'nativeShape')
-                                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                    .map((el: CanvasElement) => ({ value: el.id, label: (el.data as any).name || el.id }))
+                                                    .map((el: CanvasElement) => ({
+                                                        value: el.id,
+                                                        label: ((el.data as { name?: string } | undefined)?.name) || el.id
+                                                    }))
                                             ]}
                                             size="sm"
                                             placeholder="Select motion path..."

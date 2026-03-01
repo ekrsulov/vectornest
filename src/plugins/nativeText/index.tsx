@@ -169,11 +169,7 @@ const NativeTextThumbnail: React.FC<{ element: NativeTextElement }> = ({ element
 };
 
 const nativeTextSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const slice = createNativeTextSlice(set as any, get as any, api as any);
-  return {
-    state: slice,
-  };
+  return createPluginSlice(createNativeTextSlice)(set, get, api);
 };
 
 const inlineTextEditSliceFactory = createPluginSlice(createInlineTextEditSlice);
@@ -405,7 +401,8 @@ export const nativeTextPlugin: PluginDefinition<CanvasStore> = {
         y: point.y,
         text: settings.spans && settings.spans.length > 0
           ? settings.spans.reduce((acc, span, idx) => {
-            if (idx > 0 && span.line !== settings.spans![idx - 1].line) {
+            const previousSpan = idx > 0 ? settings.spans?.[idx - 1] : undefined;
+            if (idx > 0 && span.line !== previousSpan?.line) {
               return `${acc}\n${span.text}`;
             }
             return `${acc}${span.text}`;

@@ -9,6 +9,7 @@ import { Wrap3DPanel } from './Wrap3DPanel';
 import { Wrap3DPreviewLayer } from './Wrap3DPreviewLayer';
 import { Box } from 'lucide-react';
 import { pluginManager } from '../../utils/pluginManager';
+import { logger } from '../../utils/logger';
 import { selectionHasOnlyPaths } from '../../utils/selectionGuards';
 
 const wrap3dSliceFactory = createPluginSlice(createWrap3DSlice);
@@ -72,12 +73,12 @@ export const wrap3dPlugin: PluginDefinition<CanvasStore> = {
     const unregisterModeEnter = pluginManager.registerLifecycleAction(
       'onModeEnter:wrap3d',
       () => {
-        console.log('[Wrap3D] Mode entered - cleaning up and activating tool');
+        logger.debug('[Wrap3D] Mode entered; activating tool');
         const state = context.store.getState() as CanvasStore & Wrap3DSlice;
 
         // First deactivate to ensure clean state (handles any residual state)
-        if (state.isActive || state.isLivePreview || state.originalPaths) {
-          console.log('[Wrap3D] Found residual state, cleaning up first');
+        if (state.isActive || state.isLivePreview || state.originalPaths.length > 0) {
+          logger.debug('[Wrap3D] Clearing residual state before activation');
           state.deactivateWrap3DTool?.();
         }
 
@@ -90,7 +91,7 @@ export const wrap3dPlugin: PluginDefinition<CanvasStore> = {
     const unregisterModeExit = pluginManager.registerLifecycleAction(
       'onModeExit:wrap3d',
       () => {
-        console.log('[Wrap3D] Mode exited - deactivating tool and clearing all state');
+        logger.debug('[Wrap3D] Mode exited; deactivating tool');
         const state = context.store.getState() as CanvasStore & Wrap3DSlice;
         state.deactivateWrap3DTool?.();
       }
@@ -114,4 +115,3 @@ export const wrap3dPlugin: PluginDefinition<CanvasStore> = {
   expandablePanel: () => React.createElement(Wrap3DPanel, { hideTitle: true }),
   sidebarPanels: [createToolPanel('wrap3d', Wrap3DPanel)],
 };
-

@@ -3,6 +3,7 @@ import type { CanvasLayerContext } from '../../../types/plugins';
 import { useCanvasStore } from '../../../store/canvasStore';
 import type { PenAnchorPoint } from '../types';
 import type { Point } from '../../../types';
+import type { PenPluginSlice } from '../slice';
 
 /**
  * Helper component to render a handle length label
@@ -81,9 +82,11 @@ function buildSegmentPathData(
  */
 export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ context }) => {
     const { viewport } = context;
+    type PenStore = {
+        pen?: PenPluginSlice['pen'];
+    };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const penState = useCanvasStore((state) => (state as any).pen);
+    const penState = useCanvasStore((state) => (state as PenStore).pen);
 
 
     if (!penState) {

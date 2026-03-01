@@ -150,7 +150,9 @@ export class PluginContextManager {
    */
   createFullContext(pluginId?: string): PluginContextFull<CanvasStore> {
     const api = this.pluginApis.get(pluginId || '') ?? {};
-    const hasCanvasContext = this.controller && this.eventBus;
+    const controller = this.controller;
+    const eventBus = this.eventBus;
+    const hasCanvasContext = controller && eventBus;
 
     return buildPluginContext({
       store: this.storeApi,
@@ -163,9 +165,9 @@ export class PluginContextManager {
       >,
       ...(hasCanvasContext
         ? {
-            svgRef: this.controller!.svgRef,
-            screenToCanvas: this.controller!.screenToCanvas,
-            emitPointerEvent: this.buildEmitPointerEvent(this.eventBus!),
+            svgRef: controller.svgRef,
+            screenToCanvas: controller.screenToCanvas,
+            emitPointerEvent: this.buildEmitPointerEvent(eventBus),
           }
         : {}),
     });

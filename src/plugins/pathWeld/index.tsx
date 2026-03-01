@@ -7,6 +7,7 @@ import React from 'react';
 import { PathWeldPanel } from './PathWeldPanel';
 import { PathWeldOverlay } from './PathWeldOverlay';
 import { weldElementsWithPath } from './pathWeldUtils';
+import { logger } from '../../utils/logger';
 
 export const pathWeldPlugin: PluginDefinition<CanvasStore> = {
     id: 'pathWeld',
@@ -111,7 +112,7 @@ export const pathWeldPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[PathWeld] Operation failed:', e);
+                logger.warn('[PathWeld] Operation failed', e);
             } finally {
                 state.updatePathWeldState?.({
                     isWelding: false,

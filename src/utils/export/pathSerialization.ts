@@ -6,6 +6,7 @@ import { serializeAnimationFromContributions } from '../exportContributionRegist
 import { normalizeMarkerId } from '../markerUtils';
 import { escapeXmlAttribute, escapeXmlText } from '../xmlEscapeUtils';
 import { getEffectiveStrokeColor } from '../pathDataBehaviors';
+import { generateShortId } from '../idGenerator';
 
 type AnimationSliceLike = {
   calculateChainDelays?: () => Map<string, number>;
@@ -205,11 +206,14 @@ const serializePathElementTag = (
 };
 
 const serializeTextPathSpans = (textPath: TextPathData): string => {
-  return textPath.spans!.map((span, index) => {
-    const isLineStart = index === 0 || span.line !== textPath.spans![index - 1]?.line;
+  const spans = textPath.spans ?? [];
+
+  return spans.map((span, index) => {
+    const previousSpan = index > 0 ? spans[index - 1] : undefined;
+    const isLineStart = index === 0 || span.line !== previousSpan?.line;
     const dy =
       isLineStart && span.line > 0
-        ? ` dy="${textPath.fontSize * (span.line - (textPath.spans![index - 1]?.line ?? 0))}"`
+        ? ` dy="${textPath.fontSize * (span.line - (previousSpan?.line ?? 0))}"`
         : '';
     const styleAttrs = [
       span.fontWeight ? `font-weight="${span.fontWeight}"` : null,
@@ -311,7 +315,7 @@ const serializeTextPathElement = (
       const minimalAnimation = {
         id:
           (animation as { id?: string }).id ??
-          `textpath-anim-${pathElement.id}-${Math.random().toString(36).slice(2, 8)}`,
+          generateShortId(`textpath-anim-${pathElement.id}`),
         type: (animation as { type?: string }).type ?? 'animate',
         targetElementId: pathElement.id,
         ...(animation as Record<string, unknown>),

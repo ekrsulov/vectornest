@@ -1,7 +1,8 @@
  
-import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
+import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { createSmoothBrushPluginSlice } from './slice';
+import { createPluginSlice } from '../../utils/pluginUtils';
+import { createSmoothBrushPluginSlice, type SmoothBrushPluginSlice } from './slice';
 
 // Import listener to ensure it registers itself
 import './listeners/SmoothBrushListener';
@@ -10,11 +11,8 @@ import { SmoothBrushPanel } from './SmoothBrushPanel';
 import { SmoothBrushCursor } from './SmoothBrushCursor';
 import { useSmoothBrushHook } from './hooks/useSmoothBrushHook';
 
-const smoothBrushSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-    const slice = createSmoothBrushPluginSlice(set, get, api);
-    return {
-        state: slice,
-    };
+type SmoothBrushBehaviorStore = CanvasStore & {
+    smoothBrush?: SmoothBrushPluginSlice['smoothBrush'];
 };
 
 export const smoothBrushPlugin: PluginDefinition<CanvasStore> = {
@@ -24,14 +22,13 @@ export const smoothBrushPlugin: PluginDefinition<CanvasStore> = {
         cursor: 'default',
     },
     behaviorFlags: (state) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const smoothBrush = (state as any).smoothBrush;
+        const smoothBrush = (state as SmoothBrushBehaviorStore).smoothBrush;
         return {
             preventsSelection: smoothBrush?.isActive ?? false,
             preventsSubpathInteraction: smoothBrush?.isActive ?? false,
         };
     },
-    slices: [smoothBrushSliceFactory],
+    slices: [createPluginSlice(createSmoothBrushPluginSlice)],
     registerHelpers: ({ store }) => ({
         isSmoothBrushActive: () => {
             const state = store.getState() as CanvasStore;

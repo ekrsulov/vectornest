@@ -5,6 +5,8 @@ import {
     convertPathDataToPaperPath,
     convertPaperPathToPathData,
 } from '../../utils/pathOperationsUtils';
+import { generateShortId } from '../../utils/idGenerator';
+import { logger } from '../../utils/logger';
 
 interface PathWithId {
     pathData: PathData;
@@ -15,7 +17,7 @@ interface PathWithId {
  * Generates a unique ID for a region
  */
 function generateRegionId(): string {
-    return `region-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return generateShortId('region');
 }
 
 const MIN_BOUNDS_SIZE = 0.1;
@@ -67,7 +69,7 @@ function runBooleanOp(
         const result = (cloneA as paper.PathItem)[operation](cloneB as paper.PathItem, { insert: false }) as paper.PathItem | null;
         return extractPaths(result).filter(isValidPath);
     } catch (error) {
-        console.warn(`Error during boolean operation (${operation}):`, error);
+        logger.warn(`Error during boolean operation (${operation})`, error);
         return [];
     }
 }

@@ -8,6 +8,7 @@ import { mergeImportedResources } from '../../utils/importContributionRegistry';
 import { addImportedElementsToCanvas } from '../../utils/importHelpers';
 import type { MaskDefinition, MasksSlice } from '../masks/types';
 import { generateShortId } from '../../utils/idGenerator';
+import { logger } from '../../utils/logger';
 
 type FullStore = CanvasStore & SourcePluginSlice & ClippingPluginSlice & MasksSlice;
 
@@ -175,7 +176,7 @@ export const createSourcePluginSlice: StateCreator<
             }));
 
         } catch (error) {
-            console.error('Failed to import SVG:', error);
+            logger.error('Failed to import SVG', error);
             throw error;
         }
     },

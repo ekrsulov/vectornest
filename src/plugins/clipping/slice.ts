@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { PathData } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
 import { measurePath } from '../../utils/measurementUtils';
 import { translatePathData } from '../../utils/transformationUtils';
 
@@ -83,7 +84,7 @@ export interface ClippingPluginSlice {
   updateClip: (clipId: string, updates: Partial<ClipDefinition>) => void;
 }
 
-const makeClipId = () => `clip-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const makeClipId = () => generateShortId('clip');
 
 const ensurePositiveDimension = (value: number): number =>
   Number.isFinite(value) && value > 0 ? value : 1;

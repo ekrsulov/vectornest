@@ -455,10 +455,12 @@ const getUntransformedBounds = (element: CanvasElement): { minX: number; minY: n
 
   // For path elements, calculate from path data
   if (element.type === 'path') {
-    const pathData = data as { subPaths?: Array<Array<unknown>>; strokeWidth?: number };
+    const pathData = data as {
+      subPaths?: Parameters<typeof measurePath>[0];
+      strokeWidth?: number;
+    };
     if (pathData.subPaths) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const bounds = measurePath(pathData.subPaths as any, pathData.strokeWidth ?? 1, 1);
+      const bounds = measurePath(pathData.subPaths, pathData.strokeWidth ?? 1, 1);
       return {
         minX: bounds.minX,
         minY: bounds.minY,
@@ -1106,7 +1108,9 @@ const importClipDefs = (doc: Document): Record<string, ClipDefinition[]> | null 
       cleanClone.querySelectorAll('animate, animateTransform, animateMotion, set').forEach((anim) => anim.remove());
       baseElementAttrs = {};
       Array.from(cleanClone.attributes).forEach((attr) => {
-        baseElementAttrs![attr.name] = attr.value;
+        if (baseElementAttrs) {
+          baseElementAttrs[attr.name] = attr.value;
+        }
       });
       const trimmedContent = (cleanClone.innerHTML ?? '').trim();
       baseElementContent = trimmedContent.length > 0 ? trimmedContent : undefined;

@@ -545,7 +545,7 @@ export function transformPathDataToShape(
       subPaths: newSubPaths,
     };
   } catch (error) {
-    console.error('Error transforming path to shape:', error);
+    logger.error('[Wrap3D] Error transforming path to shape', error);
     return null;
   }
 }
@@ -572,3 +572,4 @@ export function getDefaultShapeParams(radiusMultiplier: number = 1.0): ShapePara
     wavePhaseY: 0,
   };
 }
+import { logger } from '../../utils/logger';

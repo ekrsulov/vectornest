@@ -9,7 +9,7 @@ import { Panel } from '../../ui/Panel';
 
 export const RoundPathPanel: React.FC = () => {
     const pathRounding = useCanvasStore((state) => (state as unknown as RoundPathPluginSlice).pathRounding);
-    const selectedSubpaths = useCanvasStore((state) => (state as any).selectedSubpaths || []); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const selectedSubpaths = useCanvasStore((state) => state.selectedSubpaths ?? []);
     const updatePathRounding = useCanvasStore((state) => (state as unknown as RoundPathPluginSlice).updatePathRounding);
     const applyPathRounding = useCanvasStore((state) => (state as unknown as RoundPathPluginSlice).applyPathRounding);
 

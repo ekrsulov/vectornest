@@ -8,6 +8,7 @@
 
 import type { SVGAnimation } from '../types';
 import type { SMILCompileOptions, SMILCompileResult } from '../gizmos/types';
+import { logger } from '../../../utils/logger';
 
 /**
  * Default compilation options
@@ -416,7 +417,7 @@ export class SMILCompiler {
     // properly parse SVG and insert animations as children of their targets
     
     if (result.warnings.length > 0) {
-      console.warn('[SMILCompiler] Compilation warnings:', result.warnings);
+      logger.warn('[SMILCompiler] Compilation warnings', result.warnings);
     }
 
     // Return the SVG with embedded animations

@@ -649,7 +649,7 @@ async function renderSvgToCanvas(
 
     img.onerror = (error) => {
       logger.error('Failed to load SVG image for potrace', error);
-      console.error('SVG Content (first 500 chars):', svgContent.substring(0, 500));
+      logger.error('SVG Content preview for potrace', svgContent.substring(0, 500));
       URL.revokeObjectURL(url);
       resolve(null);
     };

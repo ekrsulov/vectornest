@@ -275,10 +275,10 @@ export const ClippingPanel: React.FC = () => {
   React.useEffect(() => {
     if (!selectedFromSearch) return;
     setActiveClipId(selectedFromSearch);
-    setTimeout(() => {
+    queueMicrotask(() => {
       detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       setDetailsFlashKey(selectedFromSearch);
-    }, 0);
+    });
     selectFromSearch?.(null);
   }, [selectedFromSearch, selectFromSearch]);
 

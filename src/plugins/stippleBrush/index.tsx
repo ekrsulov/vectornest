@@ -7,6 +7,7 @@ import React from 'react';
 import { StippleBrushPanel } from './StippleBrushPanel';
 import { StippleBrushOverlay } from './StippleBrushOverlay';
 import { createStippleDots } from './stippleBrushUtils';
+import { logger } from '../../utils/logger';
 
 export const stippleBrushPlugin: PluginDefinition<CanvasStore> = {
     id: 'stippleBrush',
@@ -116,7 +117,7 @@ export const stippleBrushPlugin: PluginDefinition<CanvasStore> = {
                     }
                 }
             } catch (e) {
-                console.warn('[StippleBrush] Operation failed:', e);
+                logger.warn('[StippleBrush] Operation failed', e);
             } finally {
                 state.updateStippleBrushState?.({
                     isStippling: false,

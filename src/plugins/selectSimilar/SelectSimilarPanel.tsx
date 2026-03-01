@@ -110,10 +110,10 @@ export const SelectSimilarPanel: React.FC<SelectSimilarPanelProps> = ({ hideTitl
 
   // Reconstruct referenceElementData object for internal usage
   const referenceElementData = React.useMemo(() => {
-    if (!hasReference) return null;
+    if (!hasReference || !refId || !refType) return null;
     return {
-      id: refId!,
-      type: refType!,
+      id: refId,
+      type: refType,
       fillColor: refFillColor,
       fillOpacity: refFillOpacity,
       strokeColor: refStrokeColor,

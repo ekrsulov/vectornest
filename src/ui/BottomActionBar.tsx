@@ -147,8 +147,8 @@ export const BottomActionBar: React.FC = () => {
   }, [setMode, updateLastUsedTool]);
 
   // Helper to get active tool in a group
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getActiveToolInGroup = useCallback((tools: Array<{ id: string, icon: any }>, defaultIcon: any) => {
+  type ToolIcon = LucideIcon | React.ComponentType<{ size?: number }>;
+  const getActiveToolInGroup = useCallback((tools: Array<{ id: string; icon: ToolIcon }>, defaultIcon: ToolIcon) => {
     const activeTool = tools.find(t => t.id === activeMode);
     return activeTool ? { isActive: true, icon: activeTool.icon } : { isActive: false, icon: defaultIcon };
   }, [activeMode]);

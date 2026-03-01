@@ -6,6 +6,7 @@ import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { CanvasElement } from '../../types';
 import { buildElementMap } from '../../utils';
+import { generateShortId } from '../../utils/idGenerator';
 import type { FilterDefinition } from './types';
 
 export interface LibraryFiltersSlice {
@@ -18,7 +19,7 @@ export interface LibraryFiltersSlice {
   removeFilterFromSelection: () => void;
 }
 
-const generateFilterId = () => `filter-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+const generateFilterId = () => generateShortId('filter');
 
 type ChildIdContainer = { childIds?: string[] };
 

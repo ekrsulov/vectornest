@@ -110,7 +110,6 @@ export abstract class PluginManagerStoreBindingCore extends PluginManagerBase {
       contextManager: this.contextManager,
       plugins: this.getAll(),
       isPluginEnabled: (pluginId) => this.isPluginEnabled(pluginId),
-      getPluginApi: (pluginId) => this.pluginApis.get(pluginId),
     });
   }
 

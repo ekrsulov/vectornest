@@ -3,6 +3,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 import type { GridType, GridPluginSlice } from '../grid/slice';
 import { parsePathD } from '../../utils/pathParserUtils';
 import { extractSubpaths } from '../../utils/pathParserUtils';
+import { logger } from '../../utils/logger';
 
 type GridFillStore = CanvasStore & GridPluginSlice;
 
@@ -513,7 +514,7 @@ export function fillGridCell(point: Point, getState: () => CanvasStore): string 
   const grid = state.grid;
 
   if (!grid || !grid.enabled) {
-    console.warn('Grid is not enabled');
+    logger.warn('Grid is not enabled');
     return null;
   }
 
@@ -524,7 +525,7 @@ export function fillGridCell(point: Point, getState: () => CanvasStore): string 
   const vertices = getGridCellVertices(point, gridType, spacing, state);
 
   if (vertices.length < 3) {
-    console.warn('Not enough vertices to create a shape');
+    logger.warn('Not enough vertices to create a shape');
     return null;
   }
 

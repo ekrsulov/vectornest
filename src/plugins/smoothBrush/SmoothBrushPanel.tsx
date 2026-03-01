@@ -13,7 +13,7 @@ import { Panel } from '../../ui/Panel';
 
 export const SmoothBrushPanel: React.FC = () => {
     const smoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).smoothBrush);
-    const selectedCommands = useCanvasStore((state) => (state as any).selectedCommands || []); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const selectedCommands = useCanvasStore((state) => state.selectedCommands ?? []);
     const updateSmoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).updateSmoothBrush);
     const applySmoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).applySmoothBrush);
     const activateSmoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).activateSmoothBrush);

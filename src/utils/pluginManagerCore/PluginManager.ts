@@ -2,6 +2,7 @@ import type React from 'react';
 import type {
   CanvasLayerContribution,
   PluginContextFull,
+  PluginHandlerHelpers,
   PluginHookContribution,
 } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
@@ -82,8 +83,7 @@ export class PluginManager extends PluginManagerServicesCore {
     event: React.PointerEvent,
     point: Point,
     target: Element,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    helpers: Record<string, (...args: any[]) => any>
+    helpers: PluginHandlerHelpers
   ): void {
     if (!this.isPluginEnabled(toolName)) {
       return;

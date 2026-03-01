@@ -5,6 +5,7 @@ import { commandsToString } from '../../utils/pathParserUtils';
 import createGraph from 'ngraph.graph';
 import { nba } from 'ngraph.path';
 import { distance } from '../../utils/math';
+import { logger } from '../../utils/logger';
 
 /**
  * Bounds interface for obstacle detection
@@ -1139,7 +1140,7 @@ async function generateLabelPathData(
       fillRule: 'nonzero',
     };
   } catch (error) {
-    console.warn('Failed to generate label path data:', error);
+    logger.warn('Failed to generate label path data', error);
     return null;
   }
 }

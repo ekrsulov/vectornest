@@ -3,6 +3,7 @@ import type { Point, SubPath, Command, PathElement } from '../../types';
 import type { SplitPathResult, ReconstructedPath, TrimIntersection } from './trimPath';
 import type { CanvasStore } from '../../store/canvasStore';
 import paper from 'paper';
+import { logger } from '../../utils/logger';
 import {
   findSegmentsAlongPath,
   reconstructPathsFromSegments,
@@ -12,6 +13,8 @@ import { trimPathCache } from './cache';
 import { selectionHasOnlyPaths, getPathsFromSelection } from '../../utils/selectionGuards';
 
 type FullStore = CanvasStore & TrimPathPluginSlice;
+type TrimPathMetrics = ReturnType<typeof analyzeTrimState>;
+const FALLBACK_SUBPATHS: SubPath[] = [[{ type: 'M', position: { x: 0, y: 0 } }]];
 
 /**
  * Converts a SubPath to SVG path data string for debugging.
@@ -86,6 +89,130 @@ export interface TrimPathPluginSlice {
 
   /** Debug method: Logs detailed information about paths and segments */
   debugTrimState: () => void;
+}
+
+function analyzeTrimState(state: FullStore) {
+  const trimPath = state.trimPath;
+  const selectedIds = state.selectedIds || [];
+  const elements = state.elements || [];
+  const selectedPaths = elements.filter(
+    (el) => selectedIds.includes(el.id) && el.type === 'path'
+  ) as PathElement[];
+
+  const intersectionsByPathAndCurve = new Map<string, Map<number, TrimIntersection[]>>();
+  const splitResult = trimPath.splitResult;
+
+  if (splitResult) {
+    splitResult.intersections.forEach((intersection) => {
+      const pathSegments = [
+        { pathId: intersection.pathId1, segmentIndex: intersection.segmentIndex1 },
+        { pathId: intersection.pathId2, segmentIndex: intersection.segmentIndex2 },
+      ];
+
+      pathSegments.forEach(({ pathId, segmentIndex }) => {
+        const curves = intersectionsByPathAndCurve.get(pathId) ?? new Map<number, TrimIntersection[]>();
+        const entries = curves.get(segmentIndex) ?? [];
+        entries.push(intersection);
+        curves.set(segmentIndex, entries);
+        intersectionsByPathAndCurve.set(pathId, curves);
+      });
+    });
+  }
+
+  return {
+    toolState: {
+      isActive: trimPath.isActive,
+      isDragging: trimPath.isDragging,
+      hoveredSegmentId: trimPath.hoveredSegmentId,
+      markedSegmentIds: trimPath.markedSegmentIds,
+    },
+    selectedPathCount: selectedIds.length,
+    selectedPaths: selectedPaths.map((path) => ({
+      id: path.id,
+      subPathCount: path.data.subPaths.length,
+      subPaths: path.data.subPaths.map(convertSubPathToSVGPathData),
+      style: {
+        strokeWidth: path.data.strokeWidth,
+        strokeColor: path.data.strokeColor,
+        fillColor: path.data.fillColor,
+      },
+    })),
+    splitResult: splitResult
+      ? {
+          intersectionCount: splitResult.intersections.length,
+          intersections: splitResult.intersections.map((intersection) => ({
+            id: intersection.id,
+            point: {
+              x: intersection.point.x,
+              y: intersection.point.y,
+            },
+            path1: intersection.pathId1,
+            path2: intersection.pathId2,
+            segment1: intersection.segmentIndex1,
+            segment2: intersection.segmentIndex2,
+            param1: Number(intersection.parameter1.toFixed(3)),
+            param2: Number(intersection.parameter2.toFixed(3)),
+          })),
+          intersectionsByPathAndCurve: Array.from(intersectionsByPathAndCurve.entries()).map(([pathId, curveMap]) => {
+            const pathElement = selectedPaths.find((path) => path.id === pathId);
+            return {
+              pathId,
+              pathLabel: pathElement ? `${pathId.substring(0, 20)}...` : pathId,
+              curves: Array.from(curveMap.entries()).map(([curveIndex, intersections]) => ({
+                curveIndex,
+                count: intersections.length,
+                points: intersections.map((intersection) => ({
+                  x: Number(intersection.point.x.toFixed(1)),
+                  y: Number(intersection.point.y.toFixed(1)),
+                })),
+              })),
+            };
+          }),
+          segmentCount: splitResult.segments.length,
+          segmentsByPath: Array.from(
+            splitResult.segments.reduce<Map<string, typeof splitResult.segments>>((acc, segment) => {
+              const segments = acc.get(segment.pathId) ?? [];
+              segments.push(segment);
+              acc.set(segment.pathId, segments);
+              return acc;
+            }, new Map())
+          ).map(([pathId, segments]) => ({
+            pathId,
+            count: segments.length,
+            segments: segments.map((segment, index) => {
+              const isHovered = segment.id === trimPath.hoveredSegmentId;
+              const isMarked = trimPath.markedSegmentIds.includes(segment.id);
+              return {
+                id: segment.id,
+                index,
+                status: isMarked ? 'marked' : isHovered ? 'hovered' : 'idle',
+                start: {
+                  x: Number(segment.startPoint.x.toFixed(2)),
+                  y: Number(segment.startPoint.y.toFixed(2)),
+                },
+                end: {
+                  x: Number(segment.endPoint.x.toFixed(2)),
+                  y: Number(segment.endPoint.y.toFixed(2)),
+                },
+                startIntersectionId: segment.startIntersectionId ?? 'none',
+                endIntersectionId: segment.endIntersectionId ?? 'none',
+                pathData: segment.pathData,
+                boundingBox: {
+                  minX: Number(segment.boundingBox.minX.toFixed(2)),
+                  maxX: Number(segment.boundingBox.maxX.toFixed(2)),
+                  minY: Number(segment.boundingBox.minY.toFixed(2)),
+                  maxY: Number(segment.boundingBox.maxY.toFixed(2)),
+                },
+              };
+            }),
+          })),
+        }
+      : null,
+    cache: {
+      cachedPathIds: trimPathCache.getCachedPathIds(),
+      isValidForSelection: trimPathCache.isValidFor(selectedIds),
+    },
+  };
 }
 
 /**
@@ -286,147 +413,8 @@ export const createTrimPathPluginSlice: StateCreator<
 
   debugTrimState: () => {
     const state = get() as FullStore;
-    const trimPath = state.trimPath;
-    const selectedIds = state.selectedIds || [];
-    const elements = state.elements || [];
-
-    console.group('🔍 Trim Path Debug Info');
-
-    // 1. Tool State
-    console.log('\n📌 Tool State:');
-    console.log('  - Active:', trimPath.isActive);
-    console.log('  - Dragging:', trimPath.isDragging);
-    console.log('  - Hovered Segment:', trimPath.hoveredSegmentId);
-    console.log('  - Marked Segments:', trimPath.markedSegmentIds);
-
-    // 2. Selected Paths
-    console.log('\n📂 Selected Paths:', selectedIds.length);
-    const selectedPaths = elements.filter(
-      (el) => selectedIds.includes(el.id) && el.type === 'path'
-    ) as PathElement[];
-
-    selectedPaths.forEach((path, index) => {
-      console.group(`  Path ${index + 1}: ${path.id}`);
-      console.log('    SubPaths:', path.data.subPaths.length);
-
-      path.data.subPaths.forEach((subPath, spIndex) => {
-        const pathData = convertSubPathToSVGPathData(subPath);
-        console.log(`    SubPath ${spIndex + 1}:`, pathData);
-      });
-
-      console.log('    Style:', {
-        strokeWidth: path.data.strokeWidth,
-        strokeColor: path.data.strokeColor,
-        fillColor: path.data.fillColor,
-      });
-      console.groupEnd();
-    });
-
-    // 3. Split Result
-    if (!trimPath.splitResult) {
-      console.log('\n⚠️ No split result available (tool not active or no intersections)');
-      console.groupEnd();
-      return;
-    }
-
-    const { intersections, segments } = trimPath.splitResult;
-
-    // 4. Intersections
-    console.log('\n🔗 Intersections:', intersections.length);
-    intersections.forEach((inter, index) => {
-      console.log(`  Intersection ${index + 1}:`, {
-        id: inter.id,
-        point: `(${inter.point.x.toFixed(2)}, ${inter.point.y.toFixed(2)})`,
-        path1: inter.pathId1,
-        path2: inter.pathId2,
-        segment1: inter.segmentIndex1,
-        segment2: inter.segmentIndex2,
-        param1: inter.parameter1.toFixed(3),
-        param2: inter.parameter2.toFixed(3),
-      });
-    });
-
-    // 4.5 Group intersections by path and curve for better analysis
-    console.log('\n🔗 Intersections by Path and Curve:');
-    const intersByPathAndCurve = new Map<string, Map<number, TrimIntersection[]>>();
-    intersections.forEach(inter => {
-      // Process path1
-      if (!intersByPathAndCurve.has(inter.pathId1)) {
-        intersByPathAndCurve.set(inter.pathId1, new Map());
-      }
-      const curvesMap1 = intersByPathAndCurve.get(inter.pathId1)!;
-      if (!curvesMap1.has(inter.segmentIndex1)) {
-        curvesMap1.set(inter.segmentIndex1, []);
-      }
-      curvesMap1.get(inter.segmentIndex1)!.push(inter);
-
-      // Process path2
-      if (!intersByPathAndCurve.has(inter.pathId2)) {
-        intersByPathAndCurve.set(inter.pathId2, new Map());
-      }
-      const curvesMap2 = intersByPathAndCurve.get(inter.pathId2)!;
-      if (!curvesMap2.has(inter.segmentIndex2)) {
-        curvesMap2.set(inter.segmentIndex2, []);
-      }
-      curvesMap2.get(inter.segmentIndex2)!.push(inter);
-    });
-
-    intersByPathAndCurve.forEach((curvesMap, pathId) => {
-      const pathElement = selectedPaths.find(p => p.id === pathId);
-      const pathLabel = pathElement ? `${pathId.substring(0, 20)}...` : pathId;
-      console.group(`  Path: ${pathLabel}`);
-
-      curvesMap.forEach((inters, curveIndex) => {
-        console.log(`    Curve ${curveIndex}: ${inters.length} intersection(s)`,
-          inters.map(i => `(${i.point.x.toFixed(1)}, ${i.point.y.toFixed(1)})`));
-      });
-
-      console.groupEnd();
-    });
-
-    // 5. Segments
-    console.log('\n✂️ Trim Segments:', segments.length);
-
-    // Group segments by pathId
-    const segmentsByPath = new Map<string, typeof segments>();
-    segments.forEach(seg => {
-      if (!segmentsByPath.has(seg.pathId)) {
-        segmentsByPath.set(seg.pathId, []);
-      }
-      segmentsByPath.get(seg.pathId)!.push(seg);
-    });
-
-    segmentsByPath.forEach((segs, pathId) => {
-      console.group(`  📍 Path: ${pathId} (${segs.length} segments)`);
-
-      segs.forEach((seg, index) => {
-        const isHovered = seg.id === trimPath.hoveredSegmentId;
-        const isMarked = trimPath.markedSegmentIds.includes(seg.id);
-        const status = isMarked ? '🔴 MARKED' : isHovered ? '🟡 HOVERED' : '⚪️';
-
-        console.group(`    ${status} Segment ${index + 1}: ${seg.id}`);
-        console.log('      Start:', `(${seg.startPoint.x.toFixed(2)}, ${seg.startPoint.y.toFixed(2)})`);
-        console.log('      End:', `(${seg.endPoint.x.toFixed(2)}, ${seg.endPoint.y.toFixed(2)})`);
-        console.log('      Start Intersection:', seg.startIntersectionId || 'none');
-        console.log('      End Intersection:', seg.endIntersectionId || 'none');
-        console.log('      Path Data:', seg.pathData);
-        console.log('      BBox:', {
-          x: `${seg.boundingBox.minX.toFixed(2)} - ${seg.boundingBox.maxX.toFixed(2)}`,
-          y: `${seg.boundingBox.minY.toFixed(2)} - ${seg.boundingBox.maxY.toFixed(2)}`,
-        });
-        console.groupEnd();
-      });
-
-      console.groupEnd();
-    });
-
-    // 6. Cache Info
-    console.log('\n💾 Cache Info:');
-    const cachedPathIds = trimPathCache.getCachedPathIds();
-    console.log('  Cached Path IDs:', cachedPathIds);
-    console.log('  Cache Valid:', trimPathCache.isValidFor(selectedIds));
-
-    console.groupEnd();
+    const metrics: TrimPathMetrics = analyzeTrimState(state);
+    logger.debug('[TrimPath] Debug state', metrics);
   },
 });
 
@@ -442,7 +430,7 @@ function applyTrim(
   const currentTrimPath = get().trimPath;
 
   if (!currentTrimPath.splitResult) {
-    console.error('Cannot apply trim: no split result');
+    logger.warn('[TrimPath] Cannot apply trim without split result');
     return;
   }
 
@@ -599,13 +587,12 @@ function recalculateTrimState(
  */
 function parsePathDataToSubPaths(pathData: string): SubPath[] {
   try {
-    console.group('🔍 parsePathDataToSubPaths DEBUG');
-    console.log('Input path data:', pathData);
-    console.log('Input length:', pathData.length);
-
     // Split path data by M commands (case insensitive)
     // This regex captures M/m and the rest of the path data until the next M/m
     const pathDataTrimmed = pathData.trim();
+    if (!pathDataTrimmed) {
+      return FALLBACK_SUBPATHS;
+    }
     const subPathStrings: string[] = [];
 
     // Find all M or m commands and split there
@@ -619,24 +606,18 @@ function parsePathDataToSubPaths(pathData: string): SubPath[] {
       }
     }
 
-    console.log('M command positions found:', mPositions);
-
     // Extract subpath strings
     for (let i = 0; i < mPositions.length; i++) {
       const start = mPositions[i];
       const end = i < mPositions.length - 1 ? mPositions[i + 1] : pathDataTrimmed.length;
       const subPathStr = pathDataTrimmed.substring(start, end).trim();
       if (subPathStr) {
-        console.log(`SubPath ${i} string (chars ${start}-${end}):`, subPathStr.substring(0, 100) + (subPathStr.length > 100 ? '...' : ''));
         subPathStrings.push(subPathStr);
       }
     }
 
-    console.log(`Total subpath strings extracted: ${subPathStrings.length}`);
-
     // If no M commands found, treat entire string as one subpath
     if (subPathStrings.length === 0 && pathDataTrimmed) {
-      console.warn('No M commands found, using entire string as one subpath');
       subPathStrings.push(pathDataTrimmed);
     }
 
@@ -645,41 +626,23 @@ function parsePathDataToSubPaths(pathData: string): SubPath[] {
 
     for (let i = 0; i < subPathStrings.length; i++) {
       const subPathStr = subPathStrings[i];
-      console.group(`Parsing subpath ${i}:`);
       try {
         // Use Paper.js to parse this single subpath
         const paperPath = new paper.Path(subPathStr);
-        console.log('Paper.js path created:');
-        console.log('  - Segments:', paperPath.segments.length);
-        console.log('  - Length:', paperPath.length);
-        console.log('  - Closed:', paperPath.closed);
-        console.log('  - Path data:', paperPath.pathData.substring(0, 100) + (paperPath.pathData.length > 100 ? '...' : ''));
-
         const commands = pathToCommands(paperPath);
-        console.log('  - Commands generated:', commands.length);
         paperPath.remove();
 
         if (commands.length > 0) {
           subPaths.push(commands);
-          console.log('  ✅ SubPath added successfully');
-        } else {
-          console.warn('  ⚠️ No commands generated from Paper.js path');
         }
       } catch (error) {
-        console.error(`  ❌ Error parsing subpath ${i}:`, error);
+        logger.warn(`[TrimPath] Failed to parse subpath ${i}`, error);
       }
-      console.groupEnd();
     }
-
-    console.log(`Total subpaths parsed: ${subPaths.length}`);
-    console.groupEnd();
-
-    return subPaths.length > 0 ? subPaths : [[{ type: 'M', position: { x: 0, y: 0 } }]];
+    return subPaths.length > 0 ? subPaths : FALLBACK_SUBPATHS;
   } catch (error) {
-    console.error('Error parsing path data to subpaths:', error);
-    console.groupEnd();
-    // Return minimal fallback
-    return [[{ type: 'M', position: { x: 0, y: 0 } }]];
+    logger.error('[TrimPath] Error parsing path data to subpaths', error);
+    return FALLBACK_SUBPATHS;
   }
 }
 

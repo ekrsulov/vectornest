@@ -16,6 +16,7 @@ import { elementContributionRegistry } from '../../utils/elementContributionRegi
 import type { Bounds } from '../../utils/boundsUtils';
 import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
 import { inverseMatrix, applyToPoint } from '../../utils/matrixUtils';
+import { generateShortId } from '../../utils/idGenerator';
 
 const PRESET_OPTIONS: { value: AnimationSelectValue; label: string }[] = [
   { value: 'fadeIn', label: 'Fade in' },
@@ -27,7 +28,7 @@ const PRESET_OPTIONS: { value: AnimationSelectValue; label: string }[] = [
   { value: 'pathDraw', label: 'Path draw' },
 ];
 
-const generateAnimationId = () => `anim-${Math.random().toString(36).slice(2, 10)}`;
+const generateAnimationId = () => generateShortId('anim');
 
 /**
  * Check if an element has its own transform (transformMatrix or legacy transform object).
@@ -357,30 +358,31 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
     }
     return ids;
   }, [collectElementTargets, elementMap, targetId]);
+  const { childIndex, defsOwnerId, idAttribute, isDefs, tagName } = node;
 
   const matchingAnimations = useMemo(() => {
     if (!targetId) return [] as SVGAnimation[];
 
     // For defs children (elements inside a def, with a child index), match by owner ID + child index
-    if (isDefsChild && node.defsOwnerId && node.childIndex !== undefined) {
+    if (isDefsChild && defsOwnerId && childIndex !== undefined) {
       return animations.filter((anim) =>
-        matchesDefsChildTarget(anim, node.defsOwnerId!, node.childIndex!, node.tagName)
+        matchesDefsChildTarget(anim, defsOwnerId, childIndex, tagName)
       );
     }
 
     // For def elements themselves (gradient, pattern, etc.), match animations on the def itself
     // These are identified by isDefs=true, having idAttribute, but no childIndex
-    const isDefElement = node.isDefs && node.idAttribute && isDefContainerTag;
+    const isDefElement = isDefs && idAttribute && isDefContainerTag;
     if (isDefElement) {
       return animations.filter((anim) =>
-        matchesDefElementTarget(anim, node.idAttribute!, node.tagName)
+        matchesDefElementTarget(anim, idAttribute, tagName)
       );
     }
 
     // For regular elements, match by element ID
     const idList = Array.from(targetIds);
     return animations.filter((anim) => idList.some((id) => matchesAnimationTarget(anim, id)));
-  }, [animations, isDefContainerTag, isDefsChild, node.childIndex, node.defsOwnerId, node.idAttribute, node.isDefs, node.tagName, targetId, targetIds]);
+  }, [animations, childIndex, defsOwnerId, idAttribute, isDefContainerTag, isDefs, isDefsChild, tagName, targetId, targetIds]);
 
   const animationCount = matchingAnimations.length;
 
@@ -821,8 +823,7 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
       { value: '', label: 'Inline path' },
       ...elements
         .filter((el) => el.type === 'path' || el.type === 'nativeShape')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((el) => ({ value: el.id, label: (el.data as any).name || el.id })),
+        .map((el) => ({ value: el.id, label: ((el.data as { name?: string } | undefined)?.name) || el.id })),
     ],
     [elements]
   );

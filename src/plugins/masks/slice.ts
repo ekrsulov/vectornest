@@ -5,9 +5,10 @@ import type { PathData } from '../../types';
 type FullStore = CanvasStore & MasksSlice;
 import { measurePath } from '../../utils/measurementUtils';
 import { commandsToString } from '../../utils/pathParserUtils';
+import { generateShortId } from '../../utils/idGenerator';
 import type { MasksSlice, MaskDefinition } from './types';
 
-const makeMaskId = () => `mask-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const makeMaskId = () => generateShortId('mask');
 const ensurePositiveDimension = (value: number): number =>
   Number.isFinite(value) && value > 0 ? value : 1;
 

@@ -21,6 +21,11 @@ import { elementContributionRegistry } from '../utils/elementContributionRegistr
 import { getAccumulatedTransformMatrix } from '../utils/elementTransformUtils';
 import type { GroupEditorSlice } from '../store/slices/features/groupEditorSlice';
 
+type GridSnapStore = CanvasStore & {
+  grid?: { snapEnabled?: boolean };
+  snapToGrid?: (x: number, y: number) => { x: number; y: number };
+};
+
 /** Type helpers for transformation-related props coming from CanvasLayerContext index signature */
 type TransformationConfig = {
   showCoordinates?: boolean;
@@ -387,8 +392,7 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
         }
 
         // Let's use a safer check
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fullState = state as any;
+        const fullState = state as GridSnapStore;
         if (fullState.grid?.snapEnabled && fullState.snapToGrid) {
           const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));
 

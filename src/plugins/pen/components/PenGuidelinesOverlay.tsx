@@ -3,6 +3,7 @@ import { useColorModeValue } from '@chakra-ui/react';
 import type { CanvasLayerContext } from '../../../types/plugins';
 import { useCanvasStore } from '../../../store/canvasStore';
 import type { PenGuidelineMatch } from '../utils/penGuidelines';
+import type { PenPluginSlice } from '../slice';
 
 /**
  * Overlay component that renders pen tool guidelines
@@ -10,9 +11,11 @@ import type { PenGuidelineMatch } from '../utils/penGuidelines';
  */
 export const PenGuidelinesOverlay: React.FC<{ context: CanvasLayerContext }> = ({ context }) => {
     const { viewport } = context;
+    type PenStore = {
+        pen?: PenPluginSlice['pen'];
+    };
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const penState = useCanvasStore((state) => (state as any).pen);
+    const penState = useCanvasStore((state) => (state as PenStore).pen);
     
     const guidelineColor = useColorModeValue('#FF00FF', '#FF00FF'); // Magenta
     const labelBgColor = useColorModeValue('rgba(255, 255, 255, 0.9)', 'rgba(26, 32, 44, 0.9)');

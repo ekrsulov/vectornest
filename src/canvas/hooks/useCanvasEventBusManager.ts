@@ -16,7 +16,10 @@ export function useCanvasEventBusManager(): CanvasEventBus {
   }
 
   useEffect(() => {
-    const bus = eventBusRef.current!;
+    const bus = eventBusRef.current;
+    if (!bus) {
+      return;
+    }
     pluginManager.setEventBus(bus);
 
     return () => {
@@ -25,5 +28,5 @@ export function useCanvasEventBusManager(): CanvasEventBus {
     };
   }, []);
 
-  return eventBusRef.current;
+  return eventBusRef.current ?? new CanvasEventBus();
 }

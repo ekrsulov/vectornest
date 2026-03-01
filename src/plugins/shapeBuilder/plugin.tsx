@@ -115,9 +115,9 @@ export const shapeBuilderPlugin: PluginDefinition<CanvasStore> = {
                     });
 
                     // Exit to select mode to show the final result
-                    setTimeout(() => {
+                    requestAnimationFrame(() => {
                         state.setActivePlugin('select');
-                    }, 10);
+                    });
                 } else {
                     // No regions selected, just clear drag state
                     updateState?.({

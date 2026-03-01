@@ -112,11 +112,15 @@ export const injectAnimationsIntoSymbolContent = (
   // Group animations by child index
   const animsByChild = new Map<number, SVGAnimation[]>();
   symbolAnimations.forEach((anim) => {
-    const idx = anim.symbolChildIndex!;
+    const idx = anim.symbolChildIndex;
+    if (idx === undefined) return;
     if (!animsByChild.has(idx)) {
       animsByChild.set(idx, []);
     }
-    animsByChild.get(idx)!.push(anim);
+    const childAnimations = animsByChild.get(idx);
+    if (childAnimations) {
+      childAnimations.push(anim);
+    }
   });
 
   // Parse content

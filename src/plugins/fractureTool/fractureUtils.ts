@@ -1,16 +1,12 @@
 import paper from 'paper';
 import type { CanvasElement, PathData } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
+import { randomInRange, randomSigned } from '../../utils/random';
 import { ensurePaperSetup } from '../../utils/pathOperations/paperSetup';
 import { convertPathDataToPaperPath } from '../../utils/pathOperations/converters/toPaperPath';
 import { convertPaperPathToPathData } from '../../utils/pathOperations/converters/fromPaperPath';
 
-const uuidv4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-};
+const uuidv4 = () => generateShortId('fracture');
 
 /**
  * Apply an element's transform/transformMatrix to a Paper.js path item.
@@ -51,8 +47,8 @@ function generateSeedPoints(
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 if (seeds.length >= numSeeds) break;
-                const jitterX = (Math.random() - 0.5) * cellW * 0.6;
-                const jitterY = (Math.random() - 0.5) * cellH * 0.6;
+                const jitterX = randomSigned(cellW * 0.3);
+                const jitterY = randomSigned(cellH * 0.3);
                 seeds.push(
                     new paper.Point(
                         bounds.left + (c + 0.5) * cellW + jitterX,
@@ -65,8 +61,8 @@ function generateSeedPoints(
         const center = bounds.center;
         const maxR = Math.min(bounds.width, bounds.height) / 2;
         for (let i = 0; i < numSeeds; i++) {
-            const angle = (i / numSeeds) * Math.PI * 2 + Math.random() * 0.3;
-            const r = maxR * (0.2 + Math.random() * 0.8);
+            const angle = (i / numSeeds) * Math.PI * 2 + randomInRange(0, 0.3);
+            const r = maxR * randomInRange(0.2, 1);
             seeds.push(
                 new paper.Point(
                     center.x + Math.cos(angle) * r,
@@ -79,8 +75,8 @@ function generateSeedPoints(
         for (let i = 0; i < numSeeds; i++) {
             seeds.push(
                 new paper.Point(
-                    bounds.left + Math.random() * bounds.width,
-                    bounds.top + Math.random() * bounds.height
+                    randomInRange(bounds.left, bounds.left + bounds.width),
+                    randomInRange(bounds.top, bounds.top + bounds.height)
                 )
             );
         }

@@ -67,6 +67,7 @@ export const createSourcePluginSlice: StateCreator<
             // We use a temporary set of elements to avoid intermediate renders
             const tempElements: CanvasElement[] = [];
             const globalZIndexCounter = { value: 0 };
+            let importedGroupIndex = 1;
 
             // Re-use core addImportedElementsToCanvas logic
             const { sourceIdMap, hiddenElementIds } = addImportedElementsToCanvas(
@@ -86,7 +87,7 @@ export const createSourcePluginSlice: StateCreator<
                         tempElements[idx] = { ...element, ...updates, data: updatedData } as CanvasElement;
                     }
                 },
-                () => `Imported Group ${Math.floor(Math.random() * 1000)}`,
+                () => `Imported Group ${importedGroupIndex++}`,
                 null,
                 globalZIndexCounter
             );

@@ -9,6 +9,7 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { FractalTreePluginSlice } from './slice';
 import { generateFractalTree, generateOrganicTree } from './fractalTreeUtils';
+import { randomInt } from '../../utils/random';
 
 type CombinedStore = CanvasStore & FractalTreePluginSlice;
 
@@ -77,7 +78,7 @@ export const FractalTreePanel: React.FC = () => {
   }, [treeState, organic, addElement, sysStyle]);
 
   const handleRandomSeed = useCallback(() => {
-    update?.({ seed: Math.floor(Math.random() * 100000) });
+    update?.({ seed: randomInt(0, 99_999) });
   }, [update]);
 
   if (!treeState || !update) return null;

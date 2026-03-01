@@ -177,7 +177,8 @@ function renderDotGrid(
   bottom: number,
   opacity: number,
   color: string,
-  zoom: number
+  zoom: number,
+  patternId: string
 ): React.ReactElement {
   const startX = Math.floor(left / spacing) * spacing;
   const endX = Math.ceil(right / spacing) * spacing;
@@ -189,9 +190,6 @@ function renderDotGrid(
   
   // Calculate dot radius based on zoom - minimum 1.5px, maximum 3px on screen
   const dotRadius = Math.max(1.5 / zoom, Math.min(3 / zoom, 2 / zoom));
-  
-  // Generate a unique pattern ID to avoid conflicts
-  const patternId = `dot-grid-pattern-${Math.random().toString(36).substr(2, 9)}`;
   
   // Use SVG pattern for optimal performance with repeated elements
   return (
@@ -698,6 +696,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   canvasSize,
 }) => {
   const defaultGridColor = useColorModeValue('#000000', 'rgba(255, 255, 255, 0.7)');
+  const dotPatternId = React.useId().replace(/:/g, '-');
 
   if (!grid.enabled) {
     return null;
@@ -732,7 +731,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
       break;
     
     case 'dots':
-      gridElement = renderDotGrid(spacing, left, right, top, bottom, opacity, color, viewport.zoom);
+      gridElement = renderDotGrid(spacing, left, right, top, bottom, opacity, color, viewport.zoom, `dot-grid-pattern-${dotPatternId}`);
       break;
     
     case 'isometric':

@@ -1,16 +1,12 @@
 import paper from 'paper';
 import type { CanvasElement, PathData, Point } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
 import { ensurePaperSetup } from '../../utils/pathOperations/paperSetup';
 import { convertPathDataToPaperPath } from '../../utils/pathOperations/converters/toPaperPath';
 import { convertPaperPathToPathData } from '../../utils/pathOperations/converters/fromPaperPath';
+import { randomSigned } from '../../utils/random';
 
-const uuidv4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-};
+const makeStampId = () => generateShortId('stamp');
 
 /**
  * Apply an element's transform/transformMatrix to a Paper.js path item.
@@ -92,17 +88,17 @@ export function createStampedCopies(
         clone.translate(offset);
 
         // Apply size multiplier
-        const scaleRand = sizeMultiplier + (Math.random() - 0.5) * 2 * scaleVariation * sizeMultiplier;
+        const scaleRand = sizeMultiplier + randomSigned(scaleVariation * sizeMultiplier);
         const finalScale = Math.max(0.1, scaleRand);
         clone.scale(finalScale, stampPoint);
 
         // Apply rotation (follow path direction + random variation)
         if (tangent) {
             const baseAngle = tangent.angle;
-            const randAngle = (Math.random() - 0.5) * 2 * rotationVariation;
+            const randAngle = randomSigned(rotationVariation);
             clone.rotate(baseAngle + randAngle, stampPoint);
         } else if (rotationVariation > 0) {
-            clone.rotate((Math.random() - 0.5) * 2 * rotationVariation, stampPoint);
+            clone.rotate(randomSigned(rotationVariation), stampPoint);
         }
 
         const pathData = convertPaperPathToPathData(clone as paper.Path | paper.CompoundPath);
@@ -118,7 +114,7 @@ export function createStampedCopies(
         };
 
         newElements.push({
-            id: uuidv4(),
+            id: makeStampId(),
             type: 'path',
             zIndex: zIndex++,
             parentId: null,

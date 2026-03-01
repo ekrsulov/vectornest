@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { randomInt } from '../../utils/random';
 
 export type NoiseType = 'fractalNoise' | 'turbulence';
 
@@ -48,7 +49,7 @@ export const createNoiseGeneratorSlice: StateCreator<
     set((state) => ({
       noiseGenerator: {
         ...state.noiseGenerator,
-        seed: Math.floor(Math.random() * 10000),
+        seed: randomInt(0, 9_999),
       },
     }));
   },

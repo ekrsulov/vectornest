@@ -15,6 +15,12 @@ import { Panel } from '../../ui/Panel';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
+const runAfterNextPaint = (callback: () => void): void => {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(callback);
+  });
+};
+
 const OpticalAlignmentPanelComponent: React.FC = () => {
   const opticalAlignmentResult = useCanvasStore((state) => state.opticalAlignmentResult);
   const isCalculatingAlignment = useCanvasStore((state) => state.isCalculatingAlignment);
@@ -47,9 +53,9 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
 
   const handleApplyDirectly = async () => {
     await calculateOpticalAlignment?.();
-    setTimeout(() => {
+    runAfterNextPaint(() => {
       applyOpticalAlignment?.();
-    }, 100);
+    });
   };
 
   const handleClear = () => {

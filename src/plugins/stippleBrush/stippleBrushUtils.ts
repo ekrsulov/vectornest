@@ -1,22 +1,18 @@
 import paper from 'paper';
 import type { CanvasElement, PathData, Point } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
+import { random, randomAngle, randomInRange } from '../../utils/random';
 import { ensurePaperSetup } from '../../utils/pathOperations/paperSetup';
 import { convertPaperPathToPathData } from '../../utils/pathOperations/converters/fromPaperPath';
 
-const uuidv4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-};
+const uuidv4 = () => generateShortId('stipple');
 
 /**
  * Generate a random point within a circle.
  */
 function randomInCircle(center: Point, radius: number): { point: Point; dist: number } {
-    const angle = Math.random() * Math.PI * 2;
-    const r = radius * Math.sqrt(Math.random());
+    const angle = randomAngle();
+    const r = radius * Math.sqrt(random());
     return {
         point: {
             x: center.x + r * Math.cos(angle),
@@ -39,13 +35,13 @@ function getDotSize(
     switch (distribution) {
         case 'center-heavy':
             // Larger dots near center
-            return minSize + range * (1 - normalizedDist) * Math.random();
+            return minSize + range * (1 - normalizedDist) * random();
         case 'edge-heavy':
             // Larger dots near edges
-            return minSize + range * normalizedDist * Math.random();
+            return minSize + range * normalizedDist * random();
         case 'uniform':
         default:
-            return minSize + range * Math.random();
+            return minSize + range * random();
     }
 }
 
@@ -108,7 +104,7 @@ export function createStippleDots(
             const newElementData: PathData = {
                 subPaths: pathData.subPaths,
                 fillColor,
-                fillOpacity: 0.7 + Math.random() * 0.3,
+                fillOpacity: randomInRange(0.7, 1),
                 strokeColor: 'none',
                 strokeOpacity: 1,
                 strokeWidth: 0,

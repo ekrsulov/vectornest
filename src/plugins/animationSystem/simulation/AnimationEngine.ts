@@ -486,7 +486,10 @@ export class AnimationEngine {
           state.attributes[animation.attributeName] = this.lerp(fromNum, toNum, progress);
         } else {
           // Discrete value
-          state.attributes[animation.attributeName] = progress < 0.5 ? from! : to!;
+          const discreteValue = progress < 0.5 ? from : to;
+          if (discreteValue !== undefined) {
+            state.attributes[animation.attributeName] = discreteValue;
+          }
         }
       }
     }

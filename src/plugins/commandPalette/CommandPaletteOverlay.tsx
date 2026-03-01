@@ -59,6 +59,11 @@ const FILTERABLE_CATEGORIES = new Set<string>(CATEGORY_CHIPS.map((c) => c.catego
 const ALL_CHIP_CATEGORIES = new Set<string>(CATEGORY_CHIPS.map((c) => c.category));
 const COMMAND_USAGE_STORAGE_KEY = 'vectornest:command-palette:usage:v1';
 const MAX_FREQUENT_COMMANDS = 10;
+const runAfterNextPaint = (callback: () => void): void => {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(callback);
+  });
+};
 
 type CommandUsageMap = Record<string, number>;
 
@@ -366,7 +371,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
       requestAnimationFrame(() => {
         setModalPanel({ component, label });
         if (afterOpen) {
-          setTimeout(afterOpen, 150);
+          runAfterNextPaint(afterOpen);
         }
       });
     },

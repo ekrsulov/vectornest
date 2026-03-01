@@ -282,7 +282,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
       if (pairedPoint) {
         anchor2 = pairedPoint.anchor;
-        const vector2 = { x: pairedPoint.x - anchor2!.x, y: pairedPoint.y - anchor2!.y };
+        const vector2 = { x: pairedPoint.x - anchor2.x, y: pairedPoint.y - anchor2.y };
         mag2 = Math.sqrt(vector2.x * vector2.x + vector2.y * vector2.y);
         angle2 = Math.atan2(vector2.y, vector2.x) * 180 / Math.PI;
       }

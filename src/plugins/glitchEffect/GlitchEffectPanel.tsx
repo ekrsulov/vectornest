@@ -11,6 +11,7 @@ import { CustomSelect } from '../../ui/CustomSelect';
 import type { GlitchEffectPluginSlice, GlitchMode } from './slice';
 import { buildGlitchFilterSvg, getGlitchModeLabel } from './filterBuilder';
 import { generateShortId } from '../../utils/idGenerator';
+import { randomInt } from '../../utils/random';
 
 const modeOptions = [
   { value: 'displacement', label: 'Displacement' },
@@ -50,7 +51,7 @@ export const GlitchEffectPanel: React.FC = () => {
   );
 
   const handleRandomize = () => {
-    updateState?.({ seed: Math.floor(Math.random() * 999) });
+    updateState?.({ seed: randomInt(0, 998) });
   };
 
   const handleApply = () => {

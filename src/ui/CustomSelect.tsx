@@ -39,7 +39,7 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
   const selectedRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const frameIdsRef = useRef<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [placement, setPlacement] = useState<'bottom-start' | 'top-start'>('bottom-start');
   const [dropdownMaxH, setDropdownMaxH] = useState(200);
@@ -77,9 +77,23 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
       }
     }
 
-    // Clear any pending timers from a previous open
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
+    // Clear any pending tasks from a previous open
+    frameIdsRef.current.forEach(cancelAnimationFrame);
+    frameIdsRef.current = [];
+
+    const scheduleAfterFrames = (frames: number, callback: () => void) => {
+      const tick = (remaining: number) => {
+        const frameId = requestAnimationFrame(() => {
+          if (remaining <= 0) {
+            callback();
+            return;
+          }
+          tick(remaining - 1);
+        });
+        frameIdsRef.current.push(frameId);
+      };
+      tick(frames);
+    };
 
     const scroll = () => {
       if (selectedRef.current) {
@@ -90,20 +104,20 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
       }
     };
 
-    timersRef.current.push(setTimeout(scroll, 50));
-    timersRef.current.push(setTimeout(scroll, 150));
-    timersRef.current.push(setTimeout(scroll, 300));
+    scheduleAfterFrames(1, scroll);
+    scheduleAfterFrames(4, scroll);
+    scheduleAfterFrames(8, scroll);
 
     if (searchable) {
-      timersRef.current.push(setTimeout(() => {
+      scheduleAfterFrames(2, () => {
         searchInputRef.current?.focus();
-      }, 100));
+      });
     }
   };
 
   // Clean up timers on unmount
   useEffect(() => () => {
-    timersRef.current.forEach(clearTimeout);
+    frameIdsRef.current.forEach(cancelAnimationFrame);
   }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {

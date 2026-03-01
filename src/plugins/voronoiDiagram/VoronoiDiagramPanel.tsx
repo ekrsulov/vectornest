@@ -10,6 +10,7 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { VoronoiDiagramPluginSlice, VoronoiMode, PointDistribution } from './slice';
 import { generateVoronoiDiagram } from './voronoiUtils';
+import { randomInt } from '../../utils/random';
 
 type CombinedStore = CanvasStore & VoronoiDiagramPluginSlice;
 
@@ -127,7 +128,7 @@ export const VoronoiDiagramPanel: React.FC = () => {
   }, [vState, addElement]);
 
   const handleRandomSeed = useCallback(() => {
-    update?.({ seed: Math.floor(Math.random() * 100000) });
+    update?.({ seed: randomInt(0, 99_999) });
   }, [update]);
 
   if (!vState || !update) return null;

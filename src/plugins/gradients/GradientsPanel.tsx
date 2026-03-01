@@ -23,6 +23,7 @@ import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { StatusMessage } from '../../ui/PresetButtonGrid';
 import { SvgPreview } from '../../ui/SvgPreview';
 import { coordinatesFromAngle } from './linearGradientUtils';
+import { randomHexColor, randomInt } from '../../utils/random';
 
 
 const selectGradientsPanelState = (state: CanvasStore) => {
@@ -94,10 +95,10 @@ export const GradientsPanel: React.FC = () => {
     if (!selectedFromSearch) return;
     setEditingGradientId(selectedFromSearch);
     // Scroll the details section into view
-    setTimeout(() => {
+    queueMicrotask(() => {
       detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       setDetailsFlashKey(selectedFromSearch);
-    }, 0);
+    });
     // Clear the selection so it doesn't re-trigger
     selectFromSearch?.(null);
   }, [selectedFromSearch, selectFromSearch]);
@@ -337,14 +338,14 @@ export const GradientsPanel: React.FC = () => {
     setEditorMessage('Gradient reversed');
   };
 
-  const randomHex = () => `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
+  const randomHex = () => randomHexColor();
 
   const handleRandomize = () => {
     if (type === 'linear') {
-      setAngle(Math.floor(Math.random() * 361));
+      setAngle(randomInt(0, 360));
     } else {
-      setCx(Math.floor(Math.random() * 101));
-      setCy(Math.floor(Math.random() * 101));
+      setCx(randomInt(0, 100));
+      setCy(randomInt(0, 100));
     }
     setStops((previousStops) =>
       normalizeStops(previousStops.map((stop) => ({ ...stop, color: randomHex() })))

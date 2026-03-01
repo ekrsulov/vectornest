@@ -227,7 +227,7 @@ export const ManualMovePanel: React.FC = () => {
     const deltaY = targetY - bounds.minY;
     moveSelectedElements(deltaX, deltaY, 3);
     // Recalculate bounds after move
-    setTimeout(recalculateBounds, 0);
+    queueMicrotask(recalculateBounds);
   }, [targetX, targetY, moveSelectedElements, recalculateBounds]);
 
   const handleReset = useCallback(() => {

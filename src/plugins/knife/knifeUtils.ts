@@ -1,16 +1,11 @@
 import paper from 'paper';
 import type { CanvasElement, PathData } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
 import { ensurePaperSetup } from '../../utils/pathOperations/paperSetup';
 import { convertPathDataToPaperPath } from '../../utils/pathOperations/converters/toPaperPath';
 import { convertPaperPathToPathData } from '../../utils/pathOperations/converters/fromPaperPath';
 
-const uuidv4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        const r = (Math.random() * 16) | 0,
-            v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-};
+const uuidv4 = () => generateShortId('knife');
 
 /**
  * Apply an element's transform/transformMatrix to a Paper.js path item

@@ -10,6 +10,7 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { MazeGeneratorPluginSlice, MazeAlgorithm, MazeShape } from './slice';
 import { generateMaze } from './mazeUtils';
+import { randomInt } from '../../utils/random';
 
 type CombinedStore = CanvasStore & MazeGeneratorPluginSlice;
 
@@ -85,7 +86,7 @@ export const MazeGeneratorPanel: React.FC = () => {
   }, [mazeState, addElement, sysStyle]);
 
   const handleRandomSeed = useCallback(() => {
-    update?.({ seed: Math.floor(Math.random() * 100000) });
+    update?.({ seed: randomInt(0, 99_999) });
   }, [update]);
 
   if (!mazeState || !update) return null;

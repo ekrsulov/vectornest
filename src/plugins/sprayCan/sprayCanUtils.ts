@@ -1,22 +1,18 @@
 import paper from 'paper';
 import type { CanvasElement, PathData, Point } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
+import { random, randomAngle, randomInRange } from '../../utils/random';
 import { ensurePaperSetup } from '../../utils/pathOperations/paperSetup';
 import { convertPaperPathToPathData } from '../../utils/pathOperations/converters/fromPaperPath';
 
-const uuidv4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-};
+const uuidv4 = () => generateShortId('spray');
 
 /**
  * Generates random points within a circle centered at `center` with given `radius`.
  */
 function randomPointInCircle(center: Point, radius: number): Point {
-    const angle = Math.random() * Math.PI * 2;
-    const r = radius * Math.sqrt(Math.random());
+    const angle = randomAngle();
+    const r = radius * Math.sqrt(random());
     return {
         x: center.x + r * Math.cos(angle),
         y: center.y + r * Math.sin(angle),
@@ -51,7 +47,7 @@ export function createSprayDots(
     for (const center of sprayPoints) {
         for (let i = 0; i < density; i++) {
             const dotCenter = randomPointInCircle(center, sprayRadius);
-            const r = dotSize / 2 + Math.random() * (dotSize / 2);
+            const r = randomInRange(dotSize / 2, dotSize);
 
             const circle = new paper.Path.Circle({
                 center: new paper.Point(dotCenter.x, dotCenter.y),
@@ -66,7 +62,7 @@ export function createSprayDots(
             const newElementData: PathData = {
                 subPaths: pathData.subPaths,
                 fillColor,
-                fillOpacity: 0.6 + Math.random() * 0.4,
+                fillOpacity: randomInRange(0.6, 1),
                 strokeColor: 'none',
                 strokeOpacity: 1,
                 strokeWidth: 0,

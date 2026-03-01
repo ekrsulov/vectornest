@@ -9,6 +9,7 @@ import { PanelTextActionButton } from '../../ui/PanelTextActionButton';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { MandalaGeneratorPluginSlice, MandalaLayer } from './slice';
 import { generateMandala } from './mandalaUtils';
+import { randomInt } from '../../utils/random';
 
 type StoreWithMandala = CanvasStore & MandalaGeneratorPluginSlice;
 
@@ -58,7 +59,7 @@ export const MandalaGeneratorPanel: React.FC = () => {
 
   const handleRandomize = useCallback(() => {
     if (!update) return;
-    update({ seed: Math.floor(Math.random() * 99999) });
+    update({ seed: randomInt(0, 99_998) });
   }, [update]);
 
   if (!state) return null;

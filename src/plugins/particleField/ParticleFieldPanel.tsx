@@ -13,6 +13,7 @@ import { CustomSelect } from '../../ui/CustomSelect';
 import type { ParticleFieldPluginSlice, ParticleShape, ParticleDistribution } from './slice';
 import type { PathData } from '../../types';
 import { generateParticleField } from './particleGenerator';
+import { randomInt } from '../../utils/random';
 
 const shapeOptions = [
   { value: 'circle', label: 'Circle' },
@@ -68,7 +69,7 @@ export const ParticleFieldPanel: React.FC = () => {
   );
 
   const handleRandomize = useCallback(() => {
-    updateState?.({ seed: Math.floor(Math.random() * 999999) });
+    updateState?.({ seed: randomInt(0, 999_998) });
   }, [updateState]);
 
   const handleApply = useCallback(() => {

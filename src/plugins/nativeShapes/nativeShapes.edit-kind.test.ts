@@ -52,7 +52,11 @@ describe('editing native shape kind', () => {
     const shapeData = updated?.data as NativeShapeElement['data'];
     expect(shapeData.kind).toBe('polyline');
     expect(Array.isArray(shapeData.points)).toBe(true);
-    expect(shapeData.points?.length).toBe(finalPoints.length);
-    expect(shapeData.points?.[0]).toEqual(shapeData.points?.[shapeData.points!.length - 1]);
+    const pointCount = shapeData.points?.length ?? 0;
+    expect(pointCount).toBe(finalPoints.length);
+    if (!shapeData.points || pointCount === 0) {
+      throw new Error('Expected generated polyline points');
+    }
+    expect(shapeData.points[0]).toEqual(shapeData.points[pointCount - 1]);
   });
 });

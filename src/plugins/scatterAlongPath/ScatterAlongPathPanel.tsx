@@ -12,6 +12,7 @@ import type { ScatterAlongPathPluginSlice, ScatterMode, ScatterAlign } from './s
 import type { CanvasStore } from '../../store/canvasStore';
 import type { PathData, PathElement } from '../../types';
 import { generateScatterCopies } from './scatterUtils';
+import { randomInt } from '../../utils/random';
 
 const modeOptions = [
   { value: 'even', label: 'Even Spacing' },
@@ -74,7 +75,7 @@ export const ScatterAlongPathPanel: React.FC = () => {
   }, [exactlyTwo]);
 
   const handleRandomize = useCallback(() => {
-    updateScatterAlongPathState?.({ seed: Math.floor(Math.random() * 999999) });
+    updateScatterAlongPathState?.({ seed: randomInt(0, 999_998) });
   }, [updateScatterAlongPathState]);
 
   const handleApply = useCallback(() => {

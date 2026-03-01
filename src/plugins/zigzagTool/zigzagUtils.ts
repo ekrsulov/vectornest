@@ -1,15 +1,10 @@
 import paper from 'paper';
 import type { CanvasElement, PathData, Point } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
 import { ensurePaperSetup } from '../../utils/pathOperations/paperSetup';
 import { convertPaperPathToPathData } from '../../utils/pathOperations/converters/fromPaperPath';
 
-const uuidv4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-};
+const uuidv4 = () => generateShortId('zigzag');
 
 /**
  * Creates a zigzag-style path along the user's freehand stroke.

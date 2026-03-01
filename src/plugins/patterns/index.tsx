@@ -211,11 +211,15 @@ const injectAnimationsIntoPatternContent = (
   // Group animations by child index
   const animsByChild = new Map<number, SVGAnimation[]>();
   patternAnimations.forEach((anim) => {
-    const idx = anim.patternChildIndex!;
+    const idx = anim.patternChildIndex;
+    if (idx === undefined) return;
     if (!animsByChild.has(idx)) {
       animsByChild.set(idx, []);
     }
-    animsByChild.get(idx)!.push(anim);
+    const childAnimations = animsByChild.get(idx);
+    if (childAnimations) {
+      childAnimations.push(anim);
+    }
   });
   
   // Inject animations into each target element

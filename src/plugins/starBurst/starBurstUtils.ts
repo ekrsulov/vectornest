@@ -1,15 +1,10 @@
 import paper from 'paper';
 import type { CanvasElement, PathData, Point } from '../../types';
+import { generateShortId } from '../../utils/idGenerator';
 import { ensurePaperSetup } from '../../utils/pathOperations/paperSetup';
 import { convertPaperPathToPathData } from '../../utils/pathOperations/converters/fromPaperPath';
 
-const uuidv4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-};
+const makeStarBurstId = () => generateShortId('starburst');
 
 /**
  * Creates a star burst shape at the given center with the outer radius
@@ -157,7 +152,7 @@ export function createStarBurst(
     };
 
     return {
-        id: uuidv4(),
+        id: makeStarBurstId(),
         type: 'path',
         zIndex: maxZIndex + 1,
         parentId: null,

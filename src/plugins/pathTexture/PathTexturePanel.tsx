@@ -13,6 +13,7 @@ import { CustomSelect } from '../../ui/CustomSelect';
 import type { PathTexturePluginSlice, TexturePattern, HatchAngle } from './slice';
 import type { PathData } from '../../types';
 import { generateTextureSubPaths } from './textureGenerator';
+import { randomInt } from '../../utils/random';
 
 const patternOptions = [
   { value: 'hatching', label: 'Hatching' },
@@ -63,7 +64,7 @@ export const PathTexturePanel: React.FC = () => {
   );
 
   const handleRandomize = useCallback(() => {
-    updateState?.({ seed: Math.floor(Math.random() * 999999) });
+    updateState?.({ seed: randomInt(0, 999_998) });
   }, [updateState]);
 
   const handleApply = useCallback(() => {

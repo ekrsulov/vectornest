@@ -3,6 +3,7 @@ import type { CanvasElement, PathData, Point } from '../../types';
 import { ensurePaperSetup } from '../../utils/pathOperations/paperSetup';
 import { convertPathDataToPaperPath } from '../../utils/pathOperations/converters/toPaperPath';
 import { convertPaperPathToPathData } from '../../utils/pathOperations/converters/fromPaperPath';
+import { randomAngle, randomSigned } from '../../utils/random';
 
 /**
  * Apply an element's transform/transformMatrix to a Paper.js path item.
@@ -126,8 +127,8 @@ export function roughenElements(
             // Displace segments near the brush stroke
             for (const seg of path.segments) {
                 if (isNearBrushStroke(seg.point, brushPoints, roughenRadius)) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const dist = (Math.random() - 0.5) * 2 * intensity;
+                    const angle = randomAngle();
+                    const dist = randomSigned(intensity);
                     seg.point = seg.point.add(
                         new paper.Point(Math.cos(angle) * dist, Math.sin(angle) * dist)
                     );
@@ -136,16 +137,16 @@ export function roughenElements(
                     if (seg.handleIn.length > 0) {
                         seg.handleIn = seg.handleIn.add(
                             new paper.Point(
-                                (Math.random() - 0.5) * intensity * 0.5,
-                                (Math.random() - 0.5) * intensity * 0.5
+                                randomSigned(intensity * 0.5),
+                                randomSigned(intensity * 0.5)
                             )
                         );
                     }
                     if (seg.handleOut.length > 0) {
                         seg.handleOut = seg.handleOut.add(
                             new paper.Point(
-                                (Math.random() - 0.5) * intensity * 0.5,
-                                (Math.random() - 0.5) * intensity * 0.5
+                                randomSigned(intensity * 0.5),
+                                randomSigned(intensity * 0.5)
                             )
                         );
                     }

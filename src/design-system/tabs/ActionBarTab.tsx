@@ -108,6 +108,7 @@ export const ActionBarTab: React.FC = () => {
                                     label="Zoom Controls"
                                     icon={ZoomIn}
                                     isActive={false}
+                                    showMenuIndicator={false}
                                     tools={[
                                         { id: 'zoom-in', label: 'Zoom In', icon: ZoomIn },
                                         { id: 'zoom-out', label: 'Zoom Out', icon: ZoomOut },

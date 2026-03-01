@@ -16,6 +16,7 @@ interface ToolGroupActionProps {
     label: string;
     icon: LucideIcon | React.ComponentType<{ size?: number }>;
     isActive: boolean;
+    showMenuIndicator?: boolean;
     tools: Array<{
         id: string;
         label: string;
@@ -45,6 +46,7 @@ export const ToolGroupAction: React.FC<ToolGroupActionProps> = ({
     label,
     icon: Icon,
     isActive,
+    showMenuIndicator = true,
     tools,
     currentToolId,
     onToolSelect,
@@ -85,30 +87,32 @@ export const ToolGroupAction: React.FC<ToolGroupActionProps> = ({
                 <>
                     <ConditionalTooltip label={label} openDelay={500} placement="top">
                         <Box position="relative">
-                            <Box
-                                as="svg"
-                                position="absolute"
-                                top="auto"
-                                bottom={isOpen ? '2px' : '1px'}
-                                left="4px"
-                                right="4px"
-                                height="8px"
-                                viewBox="0 0 24 8"
-                                preserveAspectRatio="none"
-                                pointerEvents="none"
-                                zIndex={1}
-                                opacity={isOpen || isActive ? 0.98 : 0.78}
-                                transition="opacity 0.16s ease"
-                            >
-                                <polyline
-                                    points={isOpen ? '1,2 12,7 23,2' : '1,4 23,4'}
-                                    fill="none"
-                                    stroke={isOpen || isActive ? groupIndicatorActiveColor : groupIndicatorColor}
-                                    strokeWidth="1.75"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            </Box>
+                            {showMenuIndicator && isActive && (
+                                <Box
+                                    as="svg"
+                                    position="absolute"
+                                    top="auto"
+                                    bottom={isOpen ? '2px' : '1px'}
+                                    left="4px"
+                                    right="4px"
+                                    height="8px"
+                                    viewBox="0 0 24 8"
+                                    preserveAspectRatio="none"
+                                    pointerEvents="none"
+                                    zIndex={1}
+                                    opacity={0.98}
+                                    transition="opacity 0.16s ease"
+                                >
+                                    <polyline
+                                        points={isOpen ? '1,2 12,7 23,2' : '1,4 23,4'}
+                                        fill="none"
+                                        stroke={isOpen ? groupIndicatorActiveColor : groupIndicatorColor}
+                                        strokeWidth="1.75"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </Box>
+                            )}
                             <MenuButton
                                 as={IconButton}
                                 aria-label={label}

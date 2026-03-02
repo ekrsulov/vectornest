@@ -1,14 +1,15 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Box, HStack, Flex } from '@chakra-ui/react';
 import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { PanelToggle } from '../../ui/PanelToggle';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
-import type { ColorHarmonyPluginSlice, HarmonyMode } from './slice';
-import { generateHarmony, getWheelAngles, normalizeHue, wheelPointFromHue } from './harmonyUtils';
+import { defaultColorHarmonyState, type ColorHarmonyPluginSlice, type HarmonyMode } from './slice';
+import { generateHarmony, getWheelAngles, hueFromWheelPoint, normalizeHue, wheelPointFromHue } from './harmonyUtils';
 import type { CanvasElement } from '../../types';
 
 type HarmonyStore = CanvasStore & ColorHarmonyPluginSlice;
@@ -22,20 +23,85 @@ const MODE_OPTIONS: { value: HarmonyMode; label: string }[] = [
   { value: 'monochromatic', label: 'Monochromatic' },
 ];
 
+const normalizeRoundedHue = (hue: number): number => normalizeHue(Math.round(hue));
+
 /** Mini SVG color wheel indicator */
 const HarmonyWheel: React.FC<{
   baseHue: number;
   mode: HarmonyMode;
   analogousAngle: number;
-}> = ({ baseHue, mode, analogousAngle }) => {
+  onBaseHueChange: (hue: number) => void;
+}> = ({ baseHue, mode, analogousAngle, onBaseHueChange }) => {
   const angles = getWheelAngles(baseHue, mode, analogousAngle);
   const r = 40;
   const cx = 50;
   const cy = 50;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const dragRef = useRef<{ pointerId: number; markerOffset: number } | null>(null);
+
+  const getHueFromPointer = useCallback((event: React.PointerEvent<SVGSVGElement | SVGCircleElement>) => {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+
+    const svgX = ((event.clientX - rect.left) / rect.width) * 100;
+    const svgY = ((event.clientY - rect.top) / rect.height) * 100;
+    return hueFromWheelPoint(svgX, svgY, cx, cy);
+  }, []);
+
+  const handleMarkerPointerDown = useCallback((markerIndex: number) => (event: React.PointerEvent<SVGCircleElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const markerOffset = normalizeHue(angles[markerIndex] - baseHue);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      markerOffset,
+    };
+
+    svgRef.current?.setPointerCapture(event.pointerId);
+
+    const pointerHue = getHueFromPointer(event);
+    if (pointerHue !== null) {
+      onBaseHueChange(normalizeRoundedHue(pointerHue - markerOffset));
+    }
+  }, [angles, baseHue, getHueFromPointer, onBaseHueChange]);
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<SVGSVGElement>) => {
+    if (!dragRef.current || dragRef.current.pointerId !== event.pointerId) return;
+
+    const pointerHue = getHueFromPointer(event);
+    if (pointerHue === null) return;
+
+    onBaseHueChange(normalizeRoundedHue(pointerHue - dragRef.current.markerOffset));
+  }, [getHueFromPointer, onBaseHueChange]);
+
+  const clearDrag = useCallback(() => {
+    dragRef.current = null;
+  }, []);
+
+  const handlePointerEnd = useCallback((event: React.PointerEvent<SVGSVGElement>) => {
+    if (!dragRef.current || dragRef.current.pointerId !== event.pointerId) return;
+    if (svgRef.current?.hasPointerCapture(event.pointerId)) {
+      svgRef.current.releasePointerCapture(event.pointerId);
+    }
+    clearDrag();
+  }, [clearDrag]);
 
   return (
-    <Box mx="auto" mb={2}>
-      <svg width="100" height="100" viewBox="0 0 100 100">
+    <Flex justify="center" mb={2} width="100%">
+      <svg
+        ref={svgRef}
+        width="100"
+        height="100"
+        viewBox="0 0 100 100"
+        style={{ touchAction: 'none', display: 'block' }}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        onLostPointerCapture={clearDrag}
+      >
         {/* Hue ring */}
         {Array.from({ length: 36 }, (_, i) => {
           const hue = i * 10;
@@ -75,19 +141,29 @@ const HarmonyWheel: React.FC<{
         {angles.map((a, i) => {
           const marker = wheelPointFromHue(a, cx, cy, r - 5);
           return (
-            <circle
-              key={i}
-              cx={marker.x}
-              cy={marker.y}
-              r={i === 0 ? 5 : 4}
-              fill={`hsl(${normalizeHue(a)}, 70%, 50%)`}
-              stroke="white"
-              strokeWidth={2}
-            />
+            <g key={i}>
+              <circle
+                cx={marker.x}
+                cy={marker.y}
+                r={10}
+                fill="transparent"
+                style={{ cursor: 'grab', touchAction: 'none' }}
+                onPointerDown={handleMarkerPointerDown(i)}
+              />
+              <circle
+                cx={marker.x}
+                cy={marker.y}
+                r={i === 0 ? 5 : 4}
+                fill={`hsl(${normalizeHue(a)}, 70%, 50%)`}
+                stroke="white"
+                strokeWidth={2}
+                pointerEvents="none"
+              />
+            </g>
           );
         })}
       </svg>
-    </Box>
+    </Flex>
   );
 };
 
@@ -138,6 +214,10 @@ export const ColorHarmonyPanel: React.FC = () => {
     });
   }, [state, selectedIds, elements, colors, updateElement]);
 
+  const handleReset = useCallback(() => {
+    update({ ...defaultColorHarmonyState });
+  }, [update]);
+
   if (!state || !update) return null;
 
   return (
@@ -150,7 +230,14 @@ export const ColorHarmonyPanel: React.FC = () => {
         baseHue={state.baseHue}
         mode={state.mode}
         analogousAngle={state.analogousAngle}
+        onBaseHueChange={(hue) => update({ baseHue: normalizeRoundedHue(hue) })}
       />
+
+      <Flex justify="flex-end" mb={3}>
+        <PanelStyledButton size="xs" onClick={handleReset} title="Reset Color Harmony settings">
+          Reset
+        </PanelStyledButton>
+      </Flex>
 
       <Box mb={3}>
         <CustomSelect
@@ -167,7 +254,7 @@ export const ColorHarmonyPanel: React.FC = () => {
         value={state.baseHue}
         min={0}
         max={360}
-        onChange={(v) => update({ baseHue: v })}
+        onChange={(v) => update({ baseHue: normalizeRoundedHue(v) })}
         formatter={(v) => `${v}°`}
       />
 

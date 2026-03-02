@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hueToRadians, normalizeHue, wheelPointFromHue } from './harmonyUtils';
+import { hueFromWheelPoint, hueToRadians, normalizeHue, wheelPointFromHue } from './harmonyUtils';
 
 describe('harmonyUtils wheel geometry', () => {
   it('normalizes hue values into [0, 360)', () => {
@@ -45,5 +45,12 @@ describe('harmonyUtils wheel geometry', () => {
     expect(hueToRadians(0)).toBeCloseTo(0);
     expect(hueToRadians(450)).toBeCloseTo(Math.PI / 2);
     expect(hueToRadians(-90)).toBeCloseTo((3 * Math.PI) / 2);
+  });
+
+  it('maps wheel points back to hues', () => {
+    expect(hueFromWheelPoint(60, 50, 50, 50)).toBeCloseTo(0);
+    expect(hueFromWheelPoint(50, 60, 50, 50)).toBeCloseTo(90);
+    expect(hueFromWheelPoint(40, 50, 50, 50)).toBeCloseTo(180);
+    expect(hueFromWheelPoint(50, 40, 50, 50)).toBeCloseTo(270);
   });
 });

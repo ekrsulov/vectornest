@@ -52,6 +52,16 @@ export function wheelPointFromHue(
   };
 }
 
+export function hueFromWheelPoint(
+  x: number,
+  y: number,
+  cx: number,
+  cy: number
+): number {
+  const radians = Math.atan2(y - cy, x - cx);
+  return normalizeHue((radians * 180) / Math.PI);
+}
+
 function makeColor(h: number, s: number, l: number, label: string): HarmonyColor {
   return {
     hue: normalizeHue(h),

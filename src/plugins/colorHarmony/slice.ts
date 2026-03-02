@@ -33,6 +33,17 @@ export interface ColorHarmonyPluginSlice {
   updateColorHarmonyState: (state: Partial<ColorHarmonyState>) => void;
 }
 
+export const defaultColorHarmonyState: ColorHarmonyState = {
+  baseHue: 210,
+  baseSaturation: 70,
+  baseLightness: 50,
+  mode: 'complementary',
+  analogousAngle: 30,
+  monochromaticSamples: 5,
+  applyAsFill: true,
+  applyAsStroke: false,
+};
+
 export const createColorHarmonySlice: StateCreator<
   ColorHarmonyPluginSlice,
   [],
@@ -40,14 +51,5 @@ export const createColorHarmonySlice: StateCreator<
   ColorHarmonyPluginSlice
 > = createSimplePluginSlice<'colorHarmony', ColorHarmonyState, ColorHarmonyPluginSlice>(
   'colorHarmony',
-  {
-    baseHue: 210,
-    baseSaturation: 70,
-    baseLightness: 50,
-    mode: 'complementary',
-    analogousAngle: 30,
-    monochromaticSamples: 5,
-    applyAsFill: true,
-    applyAsStroke: false,
-  }
+  defaultColorHarmonyState
 );

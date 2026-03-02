@@ -39,11 +39,11 @@ export const PathSimplificationPanel: React.FC = () => {
                     <SliderControl
                         label="Tolerance"
                         value={pathSimplification.tolerance}
-                        min={0.01}
+                        min={0}
                         max={10}
-                        step={0.01}
+                        step={1}
                         onChange={(value) => updatePathSimplification({ tolerance: value })}
-                        formatter={(value) => value.toFixed(2)}
+                        formatter={(value) => value.toFixed(1)}
                         labelWidth="60px"
                         valueWidth="40px"
                         marginBottom="0"

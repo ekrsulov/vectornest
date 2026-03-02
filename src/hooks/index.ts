@@ -1,5 +1,5 @@
 // Centralized hooks exports
-// This makes imports cleaner: import { useLocalStorage, useThemeColors } from '../hooks';
+// This makes imports cleaner: import { useThemeColors } from '../hooks';
 
 // UI/UX hooks
 export { useColorModeSync } from './useColorModeSync';
@@ -17,7 +17,6 @@ export { useSidebarFooterHeight } from './useSidebarFooterHeight';
 export { useThemeColors, NO_FOCUS_STYLES, NO_FOCUS_STYLES_DEEP } from './useThemeColors';
 
 // State/Storage hooks
-export { useLocalStorage } from './useLocalStorage';
 export { useTemporalState } from './useTemporalState';
 
 // Tool/Plugin hooks

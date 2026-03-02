@@ -391,17 +391,11 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
       // Snap logic on drag end
       if (pointerState?.isDragging && pointerState?.hasDragMoved) {
         const state = context.store.getState();
-        if (state.settings.showMinimap && state.snapToGrid) { // Assuming snapToGrid checks enabled state internally or we check settings
-          // Wait, state.grid.snapEnabled is where?
-          // In useCanvasEventHandlers: if (state.grid?.snapEnabled && state.snapToGrid)
-          // Let's check state structure.
-          // It seems grid is a plugin slice?
-          // But snapToGrid is in BaseSlice or similar?
-          // Let's assume state has it if useCanvasEventHandlers used it.
-          // But TS might complain if I don't cast state.
+        if (state.settings.showMinimap && state.snapToGrid) {
+          // Grid snap check on drag end
         }
 
-        // Let's use a safer check
+        // Use a safer check with proper type cast
         const fullState = state as GridSnapStore;
         if (fullState.grid?.snapEnabled && fullState.snapToGrid) {
           const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));

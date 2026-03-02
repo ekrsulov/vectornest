@@ -30,7 +30,7 @@ export const objectSnapPlugin: PluginDefinition<CanvasStore> = {
       isActive: (state) => Boolean((state as unknown as ObjectSnapPluginSlice)?.objectSnap?.enabled),
       getOverlayConfig: (state) => {
         const s = state as CanvasStore & ObjectSnapPluginSlice;
-        // Defer to edit plugin config when edit está activo para respetar flags específicos
+        // Defer to edit plugin config when edit is active to respect its specific flags
         if (state.activePlugin === 'edit') {
           return null;
         }

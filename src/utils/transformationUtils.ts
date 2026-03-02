@@ -1,5 +1,5 @@
 import type { Command, PathData } from '../types';
-import { PATH_DECIMAL_PRECISION } from '../types';
+import { PATH_DECIMAL_PRECISION } from '../constants';
 import { formatToPrecision } from './numberUtils';
 import { transformCommands } from './sharedTransformUtils';
 import { mapCommandPoints } from './commandPointMapper';

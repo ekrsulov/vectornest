@@ -8,6 +8,9 @@
 import type { Point } from '../types';
 import { projectPointOntoSegment } from './segmentProjection';
 
+/** Epsilon below which two lines are considered parallel (determinant threshold). */
+export const PARALLEL_EPSILON = 1e-10;
+
 /**
  * Calculate Euclidean distance between two points
  */
@@ -76,7 +79,7 @@ export function lineSegmentIntersection(
     const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 
     // Lines are parallel (use small epsilon for floating point comparison)
-    if (Math.abs(denom) < 1e-10) {
+    if (Math.abs(denom) < PARALLEL_EPSILON) {
         return null;
     }
 

@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { calculateDisplacement } from './gridDisplacement';
 
 export type GridType = 
   | 'square'           // Classic orthogonal grid
@@ -50,64 +51,6 @@ export interface GridPluginSlice {
 }
 
 export const createGridPluginSlice: StateCreator<GridPluginSlice, [], [], GridPluginSlice> = (set, get) => {
-  // Helper function: Calculate displacement field D(x,y)
-  const calculateDisplacement = (x: number, y: number, warp: WarpParams): { dx: number; dy: number } => {
-    switch (warp.kind) {
-      case 'sine2d': {
-        const phaseX = warp.phaseX ?? 0;
-        const phaseY = warp.phaseY ?? 0;
-        const dx = warp.ampX * Math.sin(2 * Math.PI * warp.freqX * x / 1024 + phaseX) * 
-                   Math.cos(2 * Math.PI * warp.freqY * y / 1024 + phaseY);
-        const dy = warp.ampY * Math.cos(2 * Math.PI * warp.freqX * x / 1024 + phaseX) * 
-                   Math.sin(2 * Math.PI * warp.freqY * y / 1024 + phaseY);
-        return { dx, dy };
-      }
-      
-      case 'radial': {
-        const cx = warp.centerX ?? 0;
-        const cy = warp.centerY ?? 0;
-        const dx = x - cx;
-        const dy = y - cy;
-        const r = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx);
-        
-        // Apply swirl if specified
-        const swirlTurns = warp.swirlTurns ?? 0;
-        const maxR = 500; // approximate max radius for normalization
-        const swirlAngle = angle + 2 * Math.PI * swirlTurns * (r / maxR);
-        
-        // Radial displacement with Hann window
-        const windowFactor = 0.5 * (1 - Math.cos(Math.PI * Math.min(r / maxR, 1)));
-        const mag = windowFactor * warp.ampX; // use ampX as magnitude
-        
-        return {
-          dx: mag * Math.cos(swirlAngle),
-          dy: mag * Math.sin(swirlAngle)
-        };
-      }
-      
-      case 'perlin2d': {
-        // Simplified Perlin-like noise (in production, use proper periodic Perlin)
-        // For now, use a combination of sines to simulate noise
-        const seed = warp.seed ?? 0;
-        const s1 = Math.sin(x * 0.01 + seed) * Math.cos(y * 0.01 + seed);
-        const s2 = Math.sin(x * 0.02 + seed * 1.3) * Math.cos(y * 0.015 + seed * 1.7);
-        const s3 = Math.sin(x * 0.007 + seed * 2.1) * Math.cos(y * 0.009 + seed * 2.3);
-        
-        const noiseX = (s1 + 0.5 * s2 + 0.25 * s3) / 1.75;
-        const noiseY = (s2 + 0.5 * s3 + 0.25 * s1) / 1.75;
-        
-        return {
-          dx: warp.ampX * noiseX * warp.freqX / 3,
-          dy: warp.ampY * noiseY * warp.freqY / 3
-        };
-      }
-      
-      default:
-        return { dx: 0, dy: 0 };
-    }
-  };
-
   // Helper function: Inverse warp using fixed-point iteration
   const inverseWarp = (qx: number, qy: number, warp: WarpParams, iterations = 4): { x: number; y: number } => {
     let ux = qx;

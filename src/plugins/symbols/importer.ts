@@ -159,19 +159,11 @@ export function importUse(
     const symbolNode = doc?.getElementById(rawId) || (isSymbolPrefix ? null : doc?.getElementById('symbol-' + rawId));
     const symbolHasMultipleChildren = symbolNode ? symbolNode.children.length > 1 : false;
 
-    // If we found a proper symbol node, or if we assume it exists due to our prefix convention...
-    // The original logic allowed assuming existence if 'symbol-' prefix was present (implicitly).
-    // But also supported generic lookup.
-
-    // We prioritize the robust generic lookup if possible, but keep the prefix fast path if we trust it.
-    // Actually, we should probably check if the target is a <symbol>.
+    // If we found a proper symbol node, verify it's actually a <symbol> element.
     const targetIsSymbol = symbolNode?.tagName.toLowerCase() === 'symbol';
 
   if (!targetIsSymbol && !isSymbolPrefix) {
-    // If not a symbol node and no symbol- prefix, we might not want to handle it (could be standard SVG use reference to path)
-    // However, if the user explicitly wants to import "use" elements pointing to paths as duplicated paths, that's different.
-    // The requirement says "import definitions belonging to a specific plugin".
-    // <use> pointing to <symbol> is definitely for this plugin.
+    // Not a <symbol> node and no symbol- prefix — skip (could be a standard SVG <use> reference).
     return null;
   }
 

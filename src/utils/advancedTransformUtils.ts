@@ -1,5 +1,5 @@
 import type { Command, Point } from '../types';
-import { PATH_DECIMAL_PRECISION } from '../types';
+import { PATH_DECIMAL_PRECISION } from '../constants';
 import { formatToPrecision } from './numberUtils';
 
 /**

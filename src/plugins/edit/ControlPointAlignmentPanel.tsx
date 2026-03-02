@@ -373,11 +373,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   // At this point, TypeScript knows selectedCommands is defined and has exactly one element
   const selectedCmd = selectedCommands[0];
 
-  // Always show the panel, even when no control point is selected
-  // if (!singlePointInfo) {
-  //   return null;
-  // }
-
   const handleAlignmentChange = (type: 'independent' | 'aligned' | 'mirrored') => {
     if (singlePointInfo && singlePointInfo.pairedPoint && setControlPointAlignmentType) {
       setControlPointAlignmentType(

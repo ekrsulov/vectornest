@@ -72,9 +72,6 @@ export type Command =
 
 export type SubPath = Command[];
 
-/** @deprecated Import from '../constants' instead. Re-exported for backward compatibility. */
-export { PATH_DECIMAL_PRECISION } from '../constants';
-
 /**
  * Shared SVG presentation attributes used across multiple element data types.
  */

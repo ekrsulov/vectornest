@@ -161,6 +161,11 @@ const isArtboardBackgroundRectNode = (el: Element, tagName: string): boolean => 
   ));
 };
 
+/** Maximum length before an element id is truncated in the structure tree. */
+const MAX_DISPLAY_ID_LENGTH = 13;
+/** Number of trailing characters to keep when truncating a long id. */
+const DISPLAY_ID_SUFFIX_LENGTH = 6;
+
 const formatDisplayId = (
   idValue: string | null | undefined,
   idType: 'id' | 'data' | 'attr' | null,
@@ -168,9 +173,9 @@ const formatDisplayId = (
 ): string => {
   if (!idValue) return fallback;
 
-  // Only shorten very long ids (13+ chars); keep shorter ids as-is
-  if (idValue.length >= 13) {
-    const suffix = idValue.slice(-6);
+  // Only shorten very long ids; keep shorter ids as-is
+  if (idValue.length >= MAX_DISPLAY_ID_LENGTH) {
+    const suffix = idValue.slice(-DISPLAY_ID_SUFFIX_LENGTH);
     const prefix = idType ?? 'id';
     return `${prefix}-${suffix}`;
   }

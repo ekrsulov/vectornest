@@ -808,23 +808,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     };
                 }
 
-                // Update drag state for preview rendering
-                // We need to pass both handles if they are independent?
-                // RubberBandPreview currently infers inHandle from handleVector if Alt logic isn't explicit.
-                // But we modified RubberBandPreview to show reflexive handle.
-                // It calculates reflexive as -handleVector.
-                // If we want it to show the LOCKED handle, we need to pass it.
-                // But PenDragState doesn't have inHandle field yet.
-                // For now, let's just update the state. The preview might be slightly off (symmetric)
-                // until we update PenDragState, but the logic for creation will be correct.
-                // Actually, let's update PenDragState to support explicit handles if we can,
-                // or just rely on the final creation being correct.
-                // The user wants visual feedback.
-                // Let's assume for now the preview shows symmetric, but creation is correct.
-                // Wait, user complained "Visual Feedback PENDIENTE DE PROBAR".
-                // If I want preview to be correct, I need to pass the locked handle.
-
-                // Update drag state for preview rendering
+                // Update drag state for preview rendering.
+                // Pass explicit handles when available so cusp-creation preview is accurate.
                 state.updatePenState?.({
                     dragState: {
                         type: 'new-anchor',

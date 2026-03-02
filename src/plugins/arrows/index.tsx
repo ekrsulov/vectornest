@@ -309,12 +309,6 @@ const installListeners = (context: PluginContextFull<CanvasStore>, api: ArrowsPl
       { event: 'click', handler: (e: MouseEvent) => { void handleClick(e); } },
     ], (state) => (state as unknown as CanvasStore).activePlugin !== 'arrows');
   }, 50);
-
-  // Keep a reference to a combined cleanup so the code that previously called the
-  // store subscription can still call stopStoreSubscription() to cleanup immediately.
-  // stopStoreSubscription = () => {
-  //   cleanupListeners();
-  // };
 };
 
 // Helper to get snap result

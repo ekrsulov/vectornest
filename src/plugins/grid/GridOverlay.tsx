@@ -1,6 +1,7 @@
 import React from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 import type { GridType, WarpParams } from './slice';
+import { calculateDisplacement } from './gridDisplacement';
 
 interface GridOverlayProps {
   grid: {
@@ -579,60 +580,6 @@ function renderParametricGrid(
 ): React.ReactElement {
   const { r, g, b } = extractRGB(color);
   const gridColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  
-  // Helper: calculate displacement
-  const calculateDisplacement = (x: number, y: number): { dx: number; dy: number } => {
-    switch (warp.kind) {
-      case 'sine2d': {
-        const phaseX = warp.phaseX ?? 0;
-        const phaseY = warp.phaseY ?? 0;
-        const dx = warp.ampX * Math.sin(2 * Math.PI * warp.freqX * x / 1024 + phaseX) * 
-                   Math.cos(2 * Math.PI * warp.freqY * y / 1024 + phaseY);
-        const dy = warp.ampY * Math.cos(2 * Math.PI * warp.freqX * x / 1024 + phaseX) * 
-                   Math.sin(2 * Math.PI * warp.freqY * y / 1024 + phaseY);
-        return { dx, dy };
-      }
-      
-      case 'radial': {
-        const cx = warp.centerX ?? 0;
-        const cy = warp.centerY ?? 0;
-        const dx = x - cx;
-        const dy = y - cy;
-        const r = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx);
-        
-        const swirlTurns = warp.swirlTurns ?? 0;
-        const maxR = 500;
-        const swirlAngle = angle + 2 * Math.PI * swirlTurns * (r / maxR);
-        
-        const windowFactor = 0.5 * (1 - Math.cos(Math.PI * Math.min(r / maxR, 1)));
-        const mag = windowFactor * warp.ampX;
-        
-        return {
-          dx: mag * Math.cos(swirlAngle),
-          dy: mag * Math.sin(swirlAngle)
-        };
-      }
-      
-      case 'perlin2d': {
-        const seed = warp.seed ?? 0;
-        const s1 = Math.sin(x * 0.01 + seed) * Math.cos(y * 0.01 + seed);
-        const s2 = Math.sin(x * 0.02 + seed * 1.3) * Math.cos(y * 0.015 + seed * 1.7);
-        const s3 = Math.sin(x * 0.007 + seed * 2.1) * Math.cos(y * 0.009 + seed * 2.3);
-        
-        const noiseX = (s1 + 0.5 * s2 + 0.25 * s3) / 1.75;
-        const noiseY = (s2 + 0.5 * s3 + 0.25 * s1) / 1.75;
-        
-        return {
-          dx: warp.ampX * noiseX * warp.freqX / 3,
-          dy: warp.ampY * noiseY * warp.freqY / 3
-        };
-      }
-      
-      default:
-        return { dx: 0, dy: 0 };
-    }
-  };
 
   let pathData = '';
   const maxSegmentLength = 10; // adaptive sampling
@@ -647,7 +594,7 @@ function renderParametricGrid(
     
     // Sample along the vertical line
     for (let y = top - 100; y <= bottom + 100; y += maxSegmentLength) {
-      const d = calculateDisplacement(baseX, y);
+      const d = calculateDisplacement(baseX, y, warp);
       const px = baseX + d.dx;
       const py = y + d.dy;
       points.push(`${px},${py}`);
@@ -668,7 +615,7 @@ function renderParametricGrid(
     
     // Sample along the horizontal line
     for (let x = left - 100; x <= right + 100; x += maxSegmentLength) {
-      const d = calculateDisplacement(x, baseY);
+      const d = calculateDisplacement(x, baseY, warp);
       const px = x + d.dx;
       const py = baseY + d.dy;
       points.push(`${px},${py}`);

@@ -8,9 +8,7 @@ import type { SnapPoint } from '../../utils/snapPointUtils';
 import {
   getAllSnapPoints,
   findClosestSnapPoint,
-  findPathSnapPoint
 } from '../../utils/snapPointUtils';
-import { screenDistance } from '../../utils/math';
 import { calculateBounds } from '../../utils/boundsUtils';
 import { getGroupBounds } from '../../canvas/geometry/CanvasGeometryService';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
@@ -254,152 +252,6 @@ export const createObjectSnapPluginSlice: StateCreator<
       // We need to pass zoom = 1 since threshold is already in canvas space
       return findClosestSnapPoint(position, availableSnapPoints, threshold, 1);
     },
-
-    /**
-     * @deprecated Use snapManager.snap() from src/snap/SnapManager.ts instead.
-     * This legacy function is kept for backwards compatibility with plugins that haven't migrated yet.
-     * The centralized snap system (snapManager + ObjectSnapSource) provides the same functionality
-     * and integrates with the unified snap store for overlay visualization.
-     */
-    applyObjectSnap: (position, excludeElementIds, options) => {
-      const state = get() as FullStore;
-
-      // If object snap is disabled, return original position
-      if (!state.objectSnap?.enabled) {
-        return position;
-      }
-
-      // Get global snap points settings
-      const snapPoints = state.snapPoints;
-
-      // Get viewport to convert threshold from screen pixels to canvas coordinates
-      const viewport = state.viewport as { zoom: number } | undefined;
-      const zoom = viewport?.zoom ?? 1;
-
-      // Convert threshold from screen pixels to canvas coordinates using global setting
-      const thresholdInCanvas = (snapPoints?.snapThreshold ?? 10) / zoom;
-
-      // Find available snap points (anchors, midpoints, bbox, intersections)
-      // These have PRIORITY over edge snap
-      let availableSnapPoints = state.findAvailableSnapPoints ?
-        state.findAvailableSnapPoints(excludeElementIds) : [];
-
-      // Filter out the specific point being edited if provided
-      const activePoint = options?.dragPointInfo;
-      if (activePoint) {
-        const { elementId } = activePoint;
-        const commandIndex = activePoint.commandIndex ?? activePoint.pointIndex ?? 0;
-        availableSnapPoints = availableSnapPoints.filter((snapPoint: SnapPoint) => {
-          // Exclude the exact point being edited
-          if (snapPoint.elementId === elementId &&
-            (snapPoint.metadata?.commandIndex === commandIndex || snapPoint.metadata?.commandIndex === activePoint?.pointIndex) &&
-            snapPoint.metadata?.pointIndex === 0) {  // Anchor points have pointIndex 0
-            return false;
-          }
-
-          // Also exclude points very close to current position (safety fallback)
-          const dx = snapPoint.point.x - position.x;
-          const dy = snapPoint.point.y - position.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance <= 0.5) {
-            return false;
-          }
-
-          return true;
-        });
-      }
-
-      // Find closest high-priority snap point
-      let closestSnap = state.findClosestSnapPoint ?
-        state.findClosestSnapPoint(position, availableSnapPoints, thresholdInCanvas) : null;
-
-      let closestDistance = closestSnap ? screenDistance(position, closestSnap.point, zoom) : Infinity;
-
-      // Only check edge snap if enabled AND no high-priority snap found within threshold
-      if (snapPoints?.snapToPath && !closestSnap) {
-        const elements = state.elements as CanvasElement[];
-
-        // Build list of commands to exclude for edge snap
-        // When moving a point at commandIndex, we need to exclude:
-        // 1. The segment at commandIndex (terminates at the point)
-        // 2. The segment at commandIndex+1 (starts from the point)
-        let excludeCommands: Array<{ subpathIndex: number; commandIndex: number }> | undefined;
-
-        const activePoint = options?.dragPointInfo;
-        if (activePoint) {
-          const { elementId } = activePoint;
-          const commandIndex = activePoint.commandIndex ?? activePoint.pointIndex ?? 0;
-          // pointIndex here is actually the commandIndex (global)
-          excludeCommands = [
-            { subpathIndex: 0, commandIndex },     // Segment ending at this point
-            { subpathIndex: 0, commandIndex: commandIndex + 1 }, // Segment starting from this point
-          ];
-
-          // Also need to handle case where point is at start of path (M command)
-          // In that case, exclude the first segment (commandIndex 1) and possibly Z command
-          if (commandIndex === 0) {
-            // For M command, only the next segment starts from it
-            excludeCommands = [
-              { subpathIndex: 0, commandIndex: 1 },
-            ];
-
-            // Check if path is closed (has Z command) - the Z segment also connects to first point
-            const element = elements.find(el => el.id === elementId);
-            if (element && isPathElement(element) && element.data?.subPaths) {
-              const commands = element.data.subPaths.flat();
-              const zIndex = commands.findIndex(cmd => cmd.type === 'Z');
-              if (zIndex !== -1) {
-                excludeCommands.push({ subpathIndex: 0, commandIndex: zIndex });
-              }
-            }
-          }
-        }
-
-        const relevantElements = elements.filter((el: CanvasElement) =>
-          isPathElement(el) &&
-          (!state.isElementHidden || !state.isElementHidden(el.id))
-        );
-
-        // Check edge snap for each element
-        for (const element of relevantElements) {
-          // Only apply exclude commands to the element being edited
-          const elementExcludeCommands = options?.dragPointInfo?.elementId === element.id
-            ? excludeCommands
-            : undefined;
-
-          const pathSnap = findPathSnapPoint(
-            position,
-            element,
-            snapPoints?.snapThreshold ?? 10,
-            zoom,
-            { excludeCommands: elementExcludeCommands }
-          );
-          if (pathSnap) {
-            const dist = screenDistance(position, pathSnap.point, zoom);
-            if (dist < closestDistance) {
-              closestDistance = dist;
-              closestSnap = pathSnap;
-            }
-          }
-        }
-      }
-
-      // Update current snap point for visualization
-      set((current) => ({
-        objectSnap: {
-          ...current.objectSnap,
-          currentSnapPoint: closestSnap,
-          availableSnapPoints,
-        },
-      }));
-
-      // Return snapped position if found, otherwise original
-      if (closestSnap) {
-        return closestSnap.point;
-      }
-
-      return position;
-    },
   };
 };
 
@@ -414,16 +266,4 @@ export interface ObjectSnapPluginSlice {
     availableSnapPoints: SnapPoint[],
     threshold: number
   ) => SnapPoint | null;
-  applyObjectSnap: (
-    position: Point,
-    excludeElementIds: string[],
-    options?: {
-      dragPointInfo?: {
-        elementId: string;
-        subpathIndex: number;
-        pointIndex: number;
-        commandIndex?: number;
-      } | null;
-    }
-  ) => Point;
 }

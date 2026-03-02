@@ -112,18 +112,7 @@ export const SourceDialog: React.FC = () => {
             const file = new File([blob], 'source.svg', { type: 'image/svg+xml' });
 
             await ImportManager.importFiles([file], {
-                appendMode: false // Source plugin usually replaces content or we might want to configure this? 
-                // The original code called importSvgToCanvas which by default (I think) replaced or appended?
-                // The original code used: importSvgToCanvas(file) which called useSvgImport().importSvgFiles([file])
-                // checks useSvgImport default options... appendMode=false. So it clears selection/canvas logic there? 
-                // Wait, useSvgImport: if (!appendMode) clearSelection(). Not clearElements().
-                // But SourcePlugin seems to imply replacing the source? 
-                // The previous implementation used `importSvgToCanvas` from slice.
-                // Let's use ImportManager with appendMode: false to clear selection, but wait, does it clear elements?
-                // No, useSvgImport only adds elements. It preserves existing unless user deletes them.
-                // The Source Plugin seems to act as "Edit Source", which usually implies replacing the whole canvas or selected elements.
-                // But the logic in `useSvgImport` just adds elements.
-                // Let's stick to what useSvgImport did: appendMode: false (default) -> clears selection, adds elements.
+                appendMode: false // Clears selection then adds elements (same behavior as the original useSvgImport default)
             });
 
             toast({

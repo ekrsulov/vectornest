@@ -6,7 +6,7 @@
  */
 
 import type { Point, Viewport } from '../types';
-import { PATH_DECIMAL_PRECISION } from '../types';
+import { PATH_DECIMAL_PRECISION } from '../constants';
 import { formatToPrecision } from './numberUtils';
 
 /**

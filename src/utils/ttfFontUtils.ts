@@ -1,6 +1,6 @@
 // TTF Font utilities for loading and extracting paths from TrueType fonts
 import { load as loadFont, Font, Path } from 'opentype.js';
-import { PATH_DECIMAL_PRECISION } from '../types';
+import { PATH_DECIMAL_PRECISION } from '../constants';
 import { logger } from './logger';
 import { formatToPrecision } from './numberUtils';
 

@@ -87,11 +87,6 @@ export const ANIMATION_FRAME_MS = 16;
 export const DRAG_THRESHOLD_PX = 3;
 
 /**
- * Debounce delay for localStorage writes to prevent excessive disk operations
- */
-export const LOCAL_STORAGE_DEBOUNCE_MS = 100;
-
-/**
  * Milliseconds window for recognizing a double-tap gesture.
  */
 export const DOUBLE_TAP_TIME_THRESHOLD_MS = 300;

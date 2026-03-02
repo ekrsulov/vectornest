@@ -5,6 +5,7 @@ import { SnapPointCrossOverlay } from '../../overlays/SnapPointOverlay';
 import type { SnapPoint as LegacySnapPoint } from '../../utils/snapPointUtils';
 import { SNAP_POINTS_VISIBILITY_RADIUS } from '../../constants';
 import type { Point } from '../../types';
+import { distanceSquared } from '../../utils/geometry';
 import { getDragPointInfo } from '../../utils/dragUtils';
 import { useActiveDragContext, usePluginSnapConfig, type SnapStoreExtensions } from './useSnapOverlayContext';
 import { getCursorPosition, setCursorPosition, subscribeCursorPosition } from '../cursorPositionStore';
@@ -113,11 +114,9 @@ export const StaticSnapPointsOverlay: React.FC = () => {
       const radiusInCanvas = SNAP_POINTS_VISIBILITY_RADIUS / viewport.zoom;
 
       return points.filter((snapPoint) => {
-        const dx = snapPoint.point.x - cursorPosition.x;
-        const dy = snapPoint.point.y - cursorPosition.y;
-        const distanceSquared = dx * dx + dy * dy;
+        const dist = distanceSquared(snapPoint.point, cursorPosition);
         const radiusSquared = radiusInCanvas * radiusInCanvas;
-        return distanceSquared <= radiusSquared;
+        return dist <= radiusSquared;
       });
     },
     [cursorPosition, viewport.zoom, snapConfig?.isPointEditMode, dragContext?.isDragging, activeDragPoint?.isDragging]

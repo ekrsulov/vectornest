@@ -1,5 +1,8 @@
 import type { Point, SubPath, Command, ControlPoint, PathData } from '../../types';
 
+/** Epsilon below which two line segments are considered parallel. */
+const PARALLEL_EPSILON = 1e-10;
+
 /**
  * Flatten a subpath to a polyline of evenly-spaced sample points.
  */
@@ -56,7 +59,7 @@ function segmentIntersection(
   const dy2 = p4.y - p3.y;
 
   const denom = dx1 * dy2 - dy1 * dx2;
-  if (Math.abs(denom) < 1e-10) return null;
+  if (Math.abs(denom) < PARALLEL_EPSILON) return null;
 
   const t1 = ((p3.x - p1.x) * dy2 - (p3.y - p1.y) * dx2) / denom;
   const t2 = ((p3.x - p1.x) * dy1 - (p3.y - p1.y) * dx1) / denom;

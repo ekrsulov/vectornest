@@ -165,11 +165,8 @@ export function pathDataToPenPath(commands: Command[], pathId: string): PenPath 
                 anchor.type = 'cusp';
             }
         } else if (anchor.inHandle || anchor.outHandle) {
-            // One handle usually means smooth transition to straight, or cusp
-            // For simplicity, let's call it smooth if it has handles, or corner if not?
-            // Actually, mixed straight/curve usually implies corner or cusp behavior at the join
-            // unless the handle is collinear with the straight segment (unlikely/rare).
-            anchor.type = 'corner'; // Or 'cusp' to allow independent editing
+            // One handle with a straight segment on the other side — treat as corner.
+            anchor.type = 'corner';
         } else {
             anchor.type = 'corner';
         }

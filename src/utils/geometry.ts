@@ -17,7 +17,7 @@ const CARDINAL_AND_DIAGONAL_DIRS = [
  * Calculate squared distance between two points.
  * Avoids the cost of Math.sqrt when only comparison is needed.
  */
-const distanceSquared = (a: Point, b: Point): number => {
+export const distanceSquared = (a: Point, b: Point): number => {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
     return dx * dx + dy * dy;

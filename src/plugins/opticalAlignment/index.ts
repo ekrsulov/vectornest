@@ -29,14 +29,6 @@ export const opticalAlignmentPlugin: PluginDefinition<CanvasStore> = {
       action: (context) => {
         if (context.type !== 'multiselection') return null;
 
-        // Original logic:
-        // const canAlign = canPerformOpticalAlignment?.() ?? false;
-        // if (!canAlign) return null;
-
-        // We need to check if we can perform optical alignment.
-        // This logic was in the store slice.
-        // We can access it via the store API.
-
         const store = pluginManager.requireStoreApi();
         const state = store.getState() as OpticalAlignmentStore;
 

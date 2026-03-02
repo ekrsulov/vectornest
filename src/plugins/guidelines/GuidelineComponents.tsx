@@ -413,8 +413,3 @@ export const SizeMatchIndicator: React.FC<SizeMatchIndicatorProps> = ({
 // NOTE: Angle snapping UI was removed from the Guidelines plugin —
 // the indicator component was previously used to show angle snap state.
 // Fully removed to avoid unused code and types.
-
-
-  // NOTE: Angle snapping UI was removed from the Guidelines plugin —
-  // the indicator component was previously used to show angle snap state.
-  // Left here as a comment for history; fully removed.

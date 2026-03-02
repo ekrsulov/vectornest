@@ -2,7 +2,7 @@
 import { potrace, init } from 'esm-potrace-wasm';
 import { parsePath, serialize, absolutize, normalize } from 'path-data-parser';
 import type { Command } from '../types';
-import { PATH_DECIMAL_PRECISION } from '../types';
+import { PATH_DECIMAL_PRECISION } from '../constants';
 import { formatToPrecision } from './numberUtils';
 import { parsePathD } from './pathParserUtils';
 import { isTTFFont, ttfTextToPath } from './ttfFontUtils';
@@ -374,26 +374,26 @@ const transformSegmentsWithGlobalBounds = (
     return [];
   }
 
-  // Usar las métricas reales del texto para cálculos más precisos
-  // actualAscent y actualDescent ya están sin escalar (en el tamaño original del fontSize)
+  // Use real text metrics for more precise calculations.
+  // actualAscent and actualDescent are unscaled (at the original fontSize).
   const realTextHeight = textHeight ?? (actualAscent + actualDescent);
 
-  // globalBounds contiene las coordenadas del SVG generado por potrace
-  // que está en el tamaño del canvas escalado (renderScale * fontSize)
-  // Para convertir de coordenadas del canvas escalado a coordenadas finales:
-  // 1. Las coordenadas del canvas están en escala renderScale
-  // 2. realTextHeight es el tamaño final deseado (sin escalar)
-  // 3. globalBounds.height es el tamaño del canvas (escalado)
-  // Por lo tanto: scaleFactor = tamaño_final / tamaño_canvas
+  // globalBounds contains coordinates from the potrace-generated SVG,
+  // which is at the scaled canvas size (renderScale * fontSize).
+  // To convert from scaled canvas coords to final coords:
+  //   1. Canvas coords are at renderScale.
+  //   2. realTextHeight is the desired final size (unscaled).
+  //   3. globalBounds.height is the canvas size (scaled).
+  // Therefore: scaleFactor = finalSize / canvasSize
   const scaledHeight = globalBounds.height || 1;
   const scaleFactor = realTextHeight / scaledHeight;
 
-  // Posicionamiento más preciso usando las métricas reales
-  // targetY es la baseline, la esquina superior izquierda está en targetY - actualAscent
+  // Precise positioning using real metrics.
+  // targetY is the baseline; the top-left corner is at targetY - actualAscent.
   const textTopLeftX = targetX;
   const textTopLeftY = targetY - actualAscent;
 
-  // Offset para mover el path a la esquina superior izquierda exacta del texto
+  // Offset to move the path to the exact top-left corner of the text.
   const offsetX = textTopLeftX - (globalBounds.minX * scaleFactor);
   const offsetY = textTopLeftY - (globalBounds.minY * scaleFactor);
 
@@ -411,9 +411,9 @@ const transformSegmentsWithGlobalBounds = (
       let x = data[i];
       let y = data[i + 1];
 
-      // Aplicar escala y offset
+      // Apply scale and offset
       x = (x * scaleFactor) + offsetX;
-      // Restaurar la inversión Y para manejar diferencia de coordenadas Canvas/SVG
+      // Restore Y inversion to handle Canvas/SVG coordinate difference
       y = offsetY + (globalBounds.maxY - y) * scaleFactor;
 
       transformedData.push(formatToPrecision(x, PATH_DECIMAL_PRECISION));

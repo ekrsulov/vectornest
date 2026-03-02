@@ -17,6 +17,9 @@ import type { SVGAnimation } from '../../types';
 import type { Point } from '../../../../types';
 import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 
+/** Reusable style to disable pointer events on decorative SVG elements. */
+const NO_POINTER_EVENTS = { pointerEvents: 'none' as const };
+
 // =============================================================================
 // Linear Gradient Gizmo (14)
 // =============================================================================
@@ -189,7 +192,7 @@ const linearGradientGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#FBBF24' : '#D97706';
     
     return (
-      <g className="linear-gradient-gizmo" style={{ pointerEvents: 'none' }}>
+      <g className="linear-gradient-gizmo" style={NO_POINTER_EVENTS}>
         <line
           x1={cx - Math.cos(rad) * dist}
           y1={cy - Math.sin(rad) * dist}
@@ -361,7 +364,7 @@ const radialGradientGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#C084FC' : '#9333EA';
     
     return (
-      <g className="radial-gradient-gizmo" style={{ pointerEvents: 'none' }}>
+      <g className="radial-gradient-gizmo" style={NO_POINTER_EVENTS}>
         <circle
           cx={center.x}
           cy={center.y}
@@ -539,7 +542,7 @@ const patternTransformGizmoDefinition: AnimationGizmoDefinition = {
     const gridSize = 20 * scale;
     
     return (
-      <g className="pattern-transform-gizmo" opacity={0.5} style={{ pointerEvents: 'none' }}>
+      <g className="pattern-transform-gizmo" opacity={0.5} style={NO_POINTER_EVENTS}>
         {Array.from({ length: Math.ceil((maxX - minX) / gridSize) }).map((_, i) => (
           <line
             key={`v-${i}`}
@@ -723,7 +726,7 @@ const gradientStopsGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#FB923C' : '#EA580C';
     
     return (
-      <g className="gradient-stops-gizmo" style={{ pointerEvents: 'none' }}>
+      <g className="gradient-stops-gizmo" style={NO_POINTER_EVENTS}>
         <rect
           x={minX}
           y={maxY + 10 / viewport.zoom}

@@ -1,5 +1,5 @@
 import type { Point, Command, ControlPoint } from '../types';
-import { PATH_DECIMAL_PRECISION } from '../types';
+import { PATH_DECIMAL_PRECISION } from '../constants';
 import { formatToPrecision } from './numberUtils';
 import { BEZIER_CIRCLE_KAPPA } from './bezierCircle';
 

@@ -10,6 +10,9 @@ import { cloneValue } from '../../utils/clone';
 
 type PenStore = CanvasStore & PenPluginSlice;
 
+/** Cosine threshold for handle-to-segment alignment (dot product deviation from 1.0). */
+const HANDLE_ALIGNMENT_EPSILON = 0.01;
+
 // Simple ID generator for pen anchors and paths
 function generateId(): string {
     return generateShortId('pen');
@@ -381,10 +384,8 @@ export function addAnchorToSegment(
         id: generateId(),
         position: { ...point },
         type: isCurved ? 'smooth' : 'corner',
-        // TODO: Calculate handles for splitting curve properly
-        // For now, we just insert the point. If it was smooth, we might want handles.
-        // If we insert into a curve without handles, it becomes a sharp corner on a curve?
-        // Ideally we split the bezier.
+        // Known limitation: inserting into a curve should split the bezier
+        // and distribute handles. Currently inserts a bare corner point.
     };
 
     anchors.splice(segmentIndex + 1, 0, newAnchor);
@@ -663,11 +664,7 @@ export function moveLastAnchor(
     lastAnchor.position = { ...newPosition };
 
     // Also move handles to maintain their relative positions
-    if (lastAnchor.inHandle) {
-        // Handles are relative, no need to adjust
-        // Actually, handles are already relative to the anchor position
-        // so we don't need to modify them
-    }
+    // (handles are stored relative to anchor position, so no adjustment needed)
 
     anchors[lastIndex] = lastAnchor;
 
@@ -810,7 +807,7 @@ export function curveSegment(
                                 y: prevAnchor.outHandle.y / handleLen
                             };
                             const dot = handleNorm.x * segNorm.x + handleNorm.y * segNorm.y;
-                            if (Math.abs(dot - 1) > 0.01) { // Not aligned
+                            if (Math.abs(dot - 1) > HANDLE_ALIGNMENT_EPSILON) {
                                 isActuallyStraight = false;
                             }
                         }
@@ -825,7 +822,7 @@ export function curveSegment(
                                 y: startAnchor.inHandle.y / handleLen
                             };
                             const dot = handleNorm.x * (-segNorm.x) + handleNorm.y * (-segNorm.y);
-                            if (Math.abs(dot - 1) > 0.01) { // Not aligned
+                            if (Math.abs(dot - 1) > HANDLE_ALIGNMENT_EPSILON) {
                                 isActuallyStraight = false;
                             }
                         }
@@ -872,7 +869,7 @@ export function curveSegment(
                                 y: endAnchor.outHandle.y / handleLen
                             };
                             const dot = handleNorm.x * segNorm.x + handleNorm.y * segNorm.y;
-                            if (Math.abs(dot - 1) > 0.01) { // Not aligned
+                            if (Math.abs(dot - 1) > HANDLE_ALIGNMENT_EPSILON) {
                                 isActuallyStraight = false;
                             }
                         }
@@ -887,7 +884,7 @@ export function curveSegment(
                                 y: nextAnchor.inHandle.y / handleLen
                             };
                             const dot = handleNorm.x * (-segNorm.x) + handleNorm.y * (-segNorm.y);
-                            if (Math.abs(dot - 1) > 0.01) { // Not aligned
+                            if (Math.abs(dot - 1) > HANDLE_ALIGNMENT_EPSILON) {
                                 isActuallyStraight = false;
                             }
                         }

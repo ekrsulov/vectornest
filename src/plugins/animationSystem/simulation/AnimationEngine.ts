@@ -381,8 +381,8 @@ export class AnimationEngine {
     // For now, provide a simplified linear interpolation
     if (!animation.path) return;
 
-    // TODO: Implement full path interpolation with keyPoints
-    // This would parse the path and calculate position/angle at progress
+    // Known limitation: full path interpolation with keyPoints is not yet implemented.
+    // Currently provides a placeholder position.
 
     state.motionPath = {
       position: { x: 0, y: 0 }, // Placeholder
@@ -465,15 +465,13 @@ export class AnimationEngine {
             const nextIndex = Math.min(segmentIndex + 1, keyframes.length - 1);
             const segmentProgress = (progress * (keyframes.length - 1)) - segmentIndex;
             
-            // For now, use discrete switching between keyframes
-            // TODO: Implement proper path interpolation algorithm
+            // Known limitation: uses discrete switching; smooth path interpolation not yet implemented.
             state.pathData = segmentProgress < 0.5 ? keyframes[segmentIndex] : keyframes[nextIndex];
           } else {
             state.pathData = keyframes[0] ?? String(from);
           }
         } else {
-          // Simple from/to - discrete switching for now
-          // TODO: Implement proper path interpolation
+          // Known limitation: uses discrete switching; smooth path interpolation not yet implemented.
           state.pathData = progress < 0.5 ? String(from) : String(to);
         }
         break;

@@ -20,6 +20,13 @@ import type {
 import type { Point } from '../../../types';
 
 // =============================================================================
+// Constants
+// =============================================================================
+
+/** Reusable style to disable pointer events on decorative SVG elements. */
+const NO_POINTER_EVENTS: React.CSSProperties = { pointerEvents: 'none' };
+
+// =============================================================================
 // Helper Functions
 // =============================================================================
 
@@ -124,7 +131,7 @@ function HandleVisual({
               stroke={colors.accent}
               strokeWidth={adjustedStrokeWidth}
               strokeLinecap="round"
-              style={{ pointerEvents: 'none' }}
+              style={NO_POINTER_EVENTS}
             />
           )}
         </g>
@@ -215,7 +222,7 @@ function HandleVisual({
             y2={position.y}
             stroke={strokeColor}
             strokeWidth={adjustedStrokeWidth * 0.7}
-            style={{ pointerEvents: 'none' }}
+            style={NO_POINTER_EVENTS}
           />
           <line
             x1={position.x}
@@ -224,7 +231,7 @@ function HandleVisual({
             y2={position.y + adjustedSize * 1.4}
             stroke={strokeColor}
             strokeWidth={adjustedStrokeWidth * 0.7}
-            style={{ pointerEvents: 'none' }}
+            style={NO_POINTER_EVENTS}
           />
         </g>
       );
@@ -562,14 +569,14 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
           stroke={labelStroke}
           strokeWidth={isRotateAngleLabel ? 1 / context.viewport.zoom : undefined}
           paintOrder={isRotateAngleLabel ? 'stroke fill' : undefined}
-          style={{ pointerEvents: 'none' }}
+          style={NO_POINTER_EVENTS}
         >
           {normalizedLabel}
         </text>
       )}
       {/* Tooltip on hover (only when not dragging and not already showing label) */}
       {hovered && !isActive && tooltipText && !normalizedLabel && (
-        <g style={{ pointerEvents: 'none' }}>
+        <g style={NO_POINTER_EVENTS}>
           <rect
             x={position.x - tooltipWidth / 2}
             y={tooltipCenterY - tooltipHeight / 2}

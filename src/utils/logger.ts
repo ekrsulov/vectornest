@@ -164,10 +164,6 @@ class Logger {
       } else {
         this.formatMessage('ERROR', message, error, ...args);
       }
-
-      // TODO: When implementing remote error tracking (Sentry, etc.),
-      // add enableRemote config flag and check:
-      // if (this.config.enableRemote && process.env.NODE_ENV === 'production') { ... }
     }
   }
 

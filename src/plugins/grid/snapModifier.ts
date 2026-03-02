@@ -26,7 +26,7 @@ export const createGridSnapModifier = (context: PluginContextFull<CanvasStore>):
             const viewport = store.viewport;
             const snapContext = {
                 viewport,
-                canvasSize: { width: 0, height: 0 }, // TODO: Get canvas size if needed
+                canvasSize: { width: 0, height: 0 }, // Not needed for basic grid snapping
                 activePlugin: store.activePlugin,
                 selectedIds: store.selectedIds,
                 dragPointInfo: getDragPointInfo(_dragContext),

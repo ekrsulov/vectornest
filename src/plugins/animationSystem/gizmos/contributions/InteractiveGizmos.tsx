@@ -15,6 +15,9 @@ import type {
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
 
+/** Reusable style to disable pointer events on decorative SVG elements. */
+const NO_POINTER_EVENTS = { pointerEvents: 'none' as const };
+
 // =============================================================================
 // Hover State Gizmo (27)
 // =============================================================================
@@ -90,7 +93,7 @@ const hoverStateGizmoDefinition: AnimationGizmoDefinition = {
     const hh = (maxY - minY) / 2 * scale;
     
     return (
-      <g className="hover-state-gizmo" style={{ pointerEvents: 'none' }}>
+      <g className="hover-state-gizmo" style={NO_POINTER_EVENTS}>
         <rect
           x={cx - hw}
           y={cy - hh}
@@ -182,7 +185,7 @@ const clickTriggerGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#F472B6' : '#EC4899';
     
     return (
-      <g className="click-trigger-gizmo" style={{ pointerEvents: 'none' }}>
+      <g className="click-trigger-gizmo" style={NO_POINTER_EVENTS}>
         <circle
           cx={cx}
           cy={maxY + 30 / viewport.zoom}
@@ -308,7 +311,7 @@ const scrollTriggerGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#60A5FA' : '#2563EB';
     
     return (
-      <g className="scroll-trigger-gizmo" style={{ pointerEvents: 'none' }}>
+      <g className="scroll-trigger-gizmo" style={NO_POINTER_EVENTS}>
         <rect
           x={minX - 25 / viewport.zoom}
           y={minY}
@@ -429,7 +432,7 @@ const focusStateGizmoDefinition: AnimationGizmoDefinition = {
     const color = colorMode === 'dark' ? '#A78BFA' : '#7C3AED';
     
     return (
-      <g className="focus-state-gizmo" style={{ pointerEvents: 'none' }}>
+      <g className="focus-state-gizmo" style={NO_POINTER_EVENTS}>
         <rect
           x={minX - ringSize}
           y={minY - ringSize}

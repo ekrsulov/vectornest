@@ -32,6 +32,8 @@ const IOSEdgeGuard: React.FC<IOSEdgeGuardProps> = ({ isIOS }) => {
   );
 };
 
+IOSEdgeGuard.displayName = 'IOSEdgeGuard';
+
 interface GlobalOverlaysProps {
   /** Whether the device is iOS (for edge guard) */
   isIOS?: boolean;
@@ -86,8 +88,6 @@ export const GlobalOverlays: React.FC<GlobalOverlaysProps> = ({ isIOS = false })
   const registrationVersion = usePluginRegistrationVersion();
   const globalOverlays = useMemo<GlobalOverlayEntry[]>(
     () => {
-      void registrationVersion;
-
       return pluginManager.getAll().flatMap((plugin) =>
         (plugin.overlays ?? []).map((overlay) => ({
           id: `${plugin.id}:${overlay.id}`,
@@ -97,6 +97,9 @@ export const GlobalOverlays: React.FC<GlobalOverlaysProps> = ({ isIOS = false })
         }))
       );
     },
+    // registrationVersion is intentionally used as a cache-buster to recompute
+    // when plugins register/unregister, even though it's not read in the callback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [registrationVersion]
   );
 

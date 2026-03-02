@@ -12,7 +12,7 @@
 	import { GizmoProvider, useGizmoContext } from '../gizmos/GizmoContext';
 	import { GizmoOverlay } from '../gizmos/GizmoOverlay';
 	import { useGizmoInteraction } from '../gizmos/GizmoInteractionHandler';
-	import { registerCoreGizmos } from '../gizmos';
+	import { ensureCoreGizmosRegistered } from '../gizmos';
 	import { getViewBoxString } from '../../../canvas/viewport/ViewportController';
 	import { useDoubleTap } from '../../../canvas/hooks/useDoubleTap';
 	import { zIndices } from '../../../theme/spacing';
@@ -20,20 +20,9 @@
 	import type { CanvasElement } from '../../../types';
 		import type { SVGAnimation } from '../types';
 
-// Track if gizmos have been registered
-let gizmosRegistered = false;
 const GIZMO_OVERLAY_Z_INDEX = zIndices.docked;
 
-/**
- * Initialize the gizmo system.
- * Should be called once during application startup.
- */
- 
-function initializeGizmoSystem(): void {
-  if (gizmosRegistered) return;
-  registerCoreGizmos();
-  gizmosRegistered = true;
-}
+ensureCoreGizmosRegistered();
 
 /**
  * Props for the AnimationGizmoOverlay component
@@ -227,11 +216,6 @@ interface AnimationGizmoOverlayProps {
  * NOTE: Mounts its own GizmoProvider because gizmo runtime is store-backed.
  */
 export const AnimationGizmoOverlay: React.FC<AnimationGizmoOverlayProps> = (props) => {
-  // Ensure gizmos are registered
-  useEffect(() => {
-    initializeGizmoSystem();
-  }, []);
-  
   return (
     <GizmoProvider>
       <AnimationGizmoOverlayInner {...props} />

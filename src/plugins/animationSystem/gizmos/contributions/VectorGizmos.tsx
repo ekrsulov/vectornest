@@ -17,7 +17,7 @@ import type {
 } from '../types';
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
-import type { Command, Point } from '../../../../types';
+import type { CanvasElement, Command, Point } from '../../../../types';
 import { formatToPrecision } from '../../../../utils/numberUtils';
 import { parsePathD } from '../../../../utils/path';
 import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
@@ -469,6 +469,75 @@ const motionPathGizmoDefinition: AnimationGizmoDefinition = {
 // Stroke Draw Gizmo (07)
 // =============================================================================
 
+function getStrokeDrawGizmoPalette(colorMode: 'light' | 'dark') {
+  if (colorMode === 'dark') {
+    return {
+      track: '#334155',
+      trackStroke: '#64748B',
+      fill: '#F8FAFC',
+      secondary: '#CBD5E1',
+      markerFill: '#0F172A',
+      markerStroke: '#F8FAFC',
+      tooltipFill: '#F8FAFC',
+      tooltipStroke: '#CBD5E1',
+      tooltipText: '#0F172A',
+    };
+  }
+
+  return {
+    track: '#E5E7EB',
+    trackStroke: '#9CA3AF',
+    fill: '#111827',
+    secondary: '#6B7280',
+    markerFill: '#F9FAFB',
+    markerStroke: '#111827',
+    tooltipFill: '#0F172A',
+    tooltipStroke: '#334155',
+    tooltipText: '#F8FAFC',
+  };
+}
+
+function normalizeUnitInterval(value: number): number {
+  const clamped = Math.max(0, Math.min(1, value));
+  if (Math.abs(clamped) < 0.0001) return 0;
+  if (Math.abs(clamped - 1) < 0.0001) return 1;
+  return formatToPrecision(clamped, 4);
+}
+
+function serializeStrokeDrawValue(value: number): string {
+  const normalized = formatToPrecision(value, 4);
+  return Number.isInteger(normalized) ? String(normalized) : String(normalized);
+}
+
+function resolveStrokeDrawTotalLength(
+  element: CanvasElement,
+  fromValue: number,
+  toValue: number,
+  keyframes: string[]
+): number {
+  const pathData = element.data as { pathLength?: number | string; strokeDasharray?: string } | undefined;
+  const pathLengthValue =
+    pathData?.pathLength !== undefined ? parseFloat(String(pathData.pathLength)) : Number.NaN;
+
+  if (Number.isFinite(pathLengthValue) && pathLengthValue > 0) {
+    return pathLengthValue;
+  }
+
+  const dashArrayValue = pathData?.strokeDasharray
+    ? parseFloat(pathData.strokeDasharray.split(/[,\s]+/)[0] ?? '')
+    : Number.NaN;
+
+  if (Number.isFinite(dashArrayValue) && dashArrayValue > 0) {
+    return dashArrayValue;
+  }
+
+  const numericKeyframes = keyframes
+    .map((value) => parseFloat(value))
+    .filter((value) => Number.isFinite(value));
+
+  return Math.max(1, fromValue, toValue, ...numericKeyframes);
+}
+
 const strokeDrawHandles: GizmoHandle[] = [
   {
     id: 'draw-start',
@@ -487,7 +556,9 @@ const strokeDrawHandles: GizmoHandle[] = [
       const width = maxX - minX;
       const current = (ctx.state.props.startOffset as number) ?? 0;
       const progress = (ctx.state.props.drawProgress as number) ?? 1;
-      const newStart = Math.max(0, Math.min(progress - 0.01, current + delta.x / width));
+      const newStart = normalizeUnitInterval(
+        Math.max(0, Math.min(progress - 0.01, current + delta.x / width))
+      );
       ctx.updateState({ startOffset: newStart });
     },
     onDragEnd: (ctx) => {
@@ -502,7 +573,7 @@ const strokeDrawHandles: GizmoHandle[] = [
       
       if (hasValues && keyframes.length > 0) {
         const updatedKeyframes = [...keyframes];
-        updatedKeyframes[0] = String(fromValue);
+        updatedKeyframes[0] = serializeStrokeDrawValue(fromValue);
         ctx.updateAnimation({
           values: formatStyleValuesKeyframes(updatedKeyframes),
           from: undefined,
@@ -510,8 +581,8 @@ const strokeDrawHandles: GizmoHandle[] = [
         });
       } else {
         ctx.updateAnimation({
-          from: String(fromValue),
-          to: String(toValue),
+          from: serializeStrokeDrawValue(fromValue),
+          to: serializeStrokeDrawValue(toValue),
         });
       }
       ctx.commitChanges();
@@ -536,7 +607,9 @@ const strokeDrawHandles: GizmoHandle[] = [
       const width = maxX - minX;
       const current = (ctx.state.props.drawProgress as number) ?? 1;
       const startOffset = (ctx.state.props.startOffset as number) ?? 0;
-      const newProgress = Math.max(startOffset + 0.01, Math.min(1, current + delta.x / width));
+      const newProgress = normalizeUnitInterval(
+        Math.max(startOffset + 0.01, Math.min(1, current + delta.x / width))
+      );
       ctx.updateState({ drawProgress: newProgress });
     },
     onDragEnd: (ctx) => {
@@ -551,7 +624,7 @@ const strokeDrawHandles: GizmoHandle[] = [
       
       if (hasValues && keyframes.length > 0) {
         const updatedKeyframes = [...keyframes];
-        updatedKeyframes[updatedKeyframes.length - 1] = String(toValue);
+        updatedKeyframes[updatedKeyframes.length - 1] = serializeStrokeDrawValue(toValue);
         ctx.updateAnimation({
           values: formatStyleValuesKeyframes(updatedKeyframes),
           from: undefined,
@@ -559,8 +632,8 @@ const strokeDrawHandles: GizmoHandle[] = [
         });
       } else {
         ctx.updateAnimation({
-          from: String(fromValue),
-          to: String(toValue),
+          from: serializeStrokeDrawValue(fromValue),
+          to: serializeStrokeDrawValue(toValue),
         });
       }
       ctx.commitChanges();
@@ -597,7 +670,9 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
     const { from, to, hasValues, keyframes } = extractStyleAnimationValues(animation);
     const fromNum = parseFloat(from || '100');
     const toNum = parseFloat(to || '0');
-    const progress = 1 - toNum / fromNum;
+    const totalLength = resolveStrokeDrawTotalLength(element, fromNum, toNum, keyframes);
+    const progress = normalizeUnitInterval(1 - toNum / totalLength);
+    const startOffset = normalizeUnitInterval(1 - fromNum / totalLength);
     
     return {
       gizmoId: 'stroke-draw',
@@ -606,8 +681,8 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
       isFocused: false,
       props: {
         drawProgress: progress,
-        startOffset: 0,
-        totalLength: fromNum,
+        startOffset,
+        totalLength,
         hasValues,
         keyframes,
       },
@@ -622,13 +697,13 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
     const hasValues = state.props.hasValues as boolean;
     const keyframes = state.props.keyframes as string[];
     
-    const fromValue = totalLength * (1 - startOffset);
-    const toValue = totalLength * (1 - progress);
+    const fromValue = totalLength * (1 - normalizeUnitInterval(startOffset));
+    const toValue = totalLength * (1 - normalizeUnitInterval(progress));
     
     if (hasValues && keyframes.length > 0) {
       const updatedKeyframes = [...keyframes];
-      updatedKeyframes[0] = String(fromValue);
-      updatedKeyframes[updatedKeyframes.length - 1] = String(toValue);
+      updatedKeyframes[0] = serializeStrokeDrawValue(fromValue);
+      updatedKeyframes[updatedKeyframes.length - 1] = serializeStrokeDrawValue(toValue);
       return {
         type: 'animate',
         attributeName: 'stroke-dashoffset',
@@ -641,8 +716,8 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
     return {
       type: 'animate',
       attributeName: 'stroke-dashoffset',
-      from: String(fromValue),
-      to: String(toValue),
+      from: serializeStrokeDrawValue(fromValue),
+      to: serializeStrokeDrawValue(toValue),
     };
   },
   
@@ -650,13 +725,22 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
     const { elementBounds, viewport, colorMode } = ctx;
     const { minX, maxX, minY, maxY: _maxY } = elementBounds;
     const width = maxX - minX;
-    const progressColor = colorMode === 'dark' ? '#10B981' : '#059669';
-    const handleColor = colorMode === 'dark' ? '#34D399' : '#10B981';
+    const palette = getStrokeDrawGizmoPalette(colorMode);
     
     const progress = (ctx.state.props.drawProgress as number) ?? 0;
     const startOffset = (ctx.state.props.startOffset as number) ?? 0;
     const hasValues = ctx.state.props.hasValues as boolean;
     const keyframes = (ctx.state.props.keyframes as string[]) ?? [];
+    const startLabel = `${Math.round(startOffset * 100)}%`;
+    const endLabel = `${Math.round(progress * 100)}%`;
+    const labelFontSize = 9 / viewport.zoom;
+    const labelPaddingX = labelFontSize * 0.7;
+    const labelPaddingY = labelFontSize * 0.45;
+    const startLabelWidth = startLabel.length * labelFontSize * 0.58 + labelPaddingX * 2;
+    const endLabelWidth = endLabel.length * labelFontSize * 0.58 + labelPaddingX * 2;
+    const labelHeight = labelFontSize + labelPaddingY * 2;
+    const startLabelCenterY = minY - 58 / viewport.zoom;
+    const endLabelCenterY = minY - 58 / viewport.zoom;
     
     return (
       <g className="stroke-draw-gizmo" style={{ pointerEvents: 'none' }}>
@@ -666,7 +750,9 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
           y={minY - 25 / viewport.zoom}
           width={width}
           height={6 / viewport.zoom}
-          fill={colorMode === 'dark' ? '#374151' : '#E5E7EB'}
+          fill={palette.track}
+          stroke={palette.trackStroke}
+          strokeWidth={1 / viewport.zoom}
           rx={3 / viewport.zoom}
         />
         
@@ -676,7 +762,7 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
           y={minY - 25 / viewport.zoom}
           width={width * (progress - startOffset)}
           height={6 / viewport.zoom}
-          fill={progressColor}
+          fill={palette.fill}
           rx={3 / viewport.zoom}
         />
         
@@ -691,14 +777,14 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
                 y1={minY - 28 / viewport.zoom}
                 x2={minX + width * kfProgress}
                 y2={minY - 22 / viewport.zoom}
-                stroke={colorMode === 'dark' ? '#6B7280' : '#9CA3AF'}
+                stroke={palette.secondary}
                 strokeWidth={1.5 / viewport.zoom}
               />
               <circle
                 cx={minX + width * kfProgress}
                 cy={minY - 25 / viewport.zoom}
                 r={2 / viewport.zoom}
-                fill={handleColor}
+                fill={palette.secondary}
               />
             </g>
           );
@@ -709,8 +795,8 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
           cx={minX + width * startOffset}
           cy={minY - 25 / viewport.zoom}
           r={4 / viewport.zoom}
-          fill={handleColor}
-          stroke={colorMode === 'dark' ? '#1F2937' : '#F3F4F6'}
+          fill={palette.markerFill}
+          stroke={palette.markerStroke}
           strokeWidth={1.5 / viewport.zoom}
         />
         
@@ -719,30 +805,60 @@ const strokeDrawGizmoDefinition: AnimationGizmoDefinition = {
           cx={minX + width * progress}
           cy={minY - 25 / viewport.zoom}
           r={4 / viewport.zoom}
-          fill={handleColor}
-          stroke={colorMode === 'dark' ? '#1F2937' : '#F3F4F6'}
+          fill={palette.markerFill}
+          stroke={palette.markerStroke}
           strokeWidth={1.5 / viewport.zoom}
         />
         
         {/* Labels */}
-        <text
-          x={minX + width * startOffset}
-          y={minY - 32 / viewport.zoom}
-          fontSize={9 / viewport.zoom}
-          fill={colorMode === 'dark' ? '#9CA3AF' : '#6B7280'}
-          textAnchor="middle"
-        >
-          {Math.round(startOffset * 100)}%
-        </text>
-        <text
-          x={minX + width * progress}
-          y={minY - 32 / viewport.zoom}
-          fontSize={9 / viewport.zoom}
-          fill={colorMode === 'dark' ? '#9CA3AF' : '#6B7280'}
-          textAnchor="middle"
-        >
-          {Math.round(progress * 100)}%
-        </text>
+        <g>
+          <rect
+            x={minX + width * startOffset - startLabelWidth / 2}
+            y={startLabelCenterY - labelHeight / 2}
+            width={startLabelWidth}
+            height={labelHeight}
+            rx={4 / viewport.zoom}
+            fill={palette.tooltipFill}
+            stroke={palette.tooltipStroke}
+            strokeWidth={1 / viewport.zoom}
+            opacity={0.98}
+          />
+          <text
+            x={minX + width * startOffset}
+            y={startLabelCenterY}
+            fontSize={labelFontSize}
+            fill={palette.tooltipText}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontWeight="600"
+          >
+            {startLabel}
+          </text>
+        </g>
+        <g>
+          <rect
+            x={minX + width * progress - endLabelWidth / 2}
+            y={endLabelCenterY - labelHeight / 2}
+            width={endLabelWidth}
+            height={labelHeight}
+            rx={4 / viewport.zoom}
+            fill={palette.tooltipFill}
+            stroke={palette.tooltipStroke}
+            strokeWidth={1 / viewport.zoom}
+            opacity={0.98}
+          />
+          <text
+            x={minX + width * progress}
+            y={endLabelCenterY}
+            fontSize={labelFontSize}
+            fill={palette.tooltipText}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontWeight="600"
+          >
+            {endLabel}
+          </text>
+        </g>
       </g>
     );
   },

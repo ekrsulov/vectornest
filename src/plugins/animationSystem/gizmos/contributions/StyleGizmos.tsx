@@ -274,6 +274,30 @@ function getActiveOpacity(ctx: Pick<GizmoContext, 'state'>): number {
   return activeKeyframeIndex === 0 ? fromOpacity : toOpacity;
 }
 
+function getOpacityGizmoPalette(colorMode: 'light' | 'dark') {
+  if (colorMode === 'dark') {
+    return {
+      track: '#334155',
+      trackStroke: '#64748B',
+      markerFill: '#F8FAFC',
+      markerStroke: '#CBD5E1',
+      tooltipFill: '#F8FAFC',
+      tooltipStroke: '#CBD5E1',
+      tooltipText: '#0F172A',
+    };
+  }
+
+  return {
+    track: '#E5E7EB',
+    trackStroke: '#9CA3AF',
+    markerFill: '#111827',
+    markerStroke: '#374151',
+    tooltipFill: '#0F172A',
+    tooltipStroke: '#334155',
+    tooltipText: '#F8FAFC',
+  };
+}
+
 /**
  * Generate handles for opacity - shows only active keyframe
  */
@@ -437,12 +461,17 @@ const opacityGizmoDefinition: AnimationGizmoDefinition = {
     const activeKeyframeIndex = (ctx.state.props.activeKeyframeIndex as number) ?? 0;
     const activeOpacity = getActiveOpacity(ctx);
     const numKeyframes = hasValues ? keyframes.length : 2;
-    
-    const trackColor = colorMode === 'dark' ? '#374151' : '#E5E7EB';
-    const activeColor = colorMode === 'dark' ? '#60A5FA' : '#3B82F6';
+    const palette = getOpacityGizmoPalette(colorMode);
     
     // Position for active marker
     const xPos = minX + (width * activeKeyframeIndex) / (numKeyframes - 1);
+    const label = `${Math.round(activeOpacity * 100)}% (frame ${activeKeyframeIndex + 1}/${numKeyframes})`;
+    const labelFontSize = 9 / viewport.zoom;
+    const labelPaddingX = labelFontSize * 0.7;
+    const labelPaddingY = labelFontSize * 0.45;
+    const labelWidth = label.length * labelFontSize * 0.58 + labelPaddingX * 2;
+    const labelHeight = labelFontSize + labelPaddingY * 2;
+    const labelCenterY = maxY + 24 / viewport.zoom + 24 / viewport.zoom;
     
     return (
       <g className="opacity-gizmo" style={{ pointerEvents: 'none' }}>
@@ -452,7 +481,9 @@ const opacityGizmoDefinition: AnimationGizmoDefinition = {
           y={maxY + 20 / viewport.zoom}
           width={width}
           height={8 / viewport.zoom}
-          fill={trackColor}
+          fill={palette.track}
+          stroke={palette.trackStroke}
+          strokeWidth={1 / viewport.zoom}
           rx={4 / viewport.zoom}
         />
         
@@ -461,21 +492,36 @@ const opacityGizmoDefinition: AnimationGizmoDefinition = {
           cx={xPos}
           cy={maxY + 24 / viewport.zoom}
           r={6 / viewport.zoom}
-          fill={activeColor}
-          stroke={colorMode === 'dark' ? '#1F2937' : '#F3F4F6'}
+          fill={palette.markerFill}
+          stroke={palette.markerStroke}
           strokeWidth={1.5 / viewport.zoom}
         />
         
         {/* Label */}
-        <text
-          x={xPos}
-          y={maxY + 38 / viewport.zoom}
-          fontSize={9 / viewport.zoom}
-          fill={colorMode === 'dark' ? '#9CA3AF' : '#6B7280'}
-          textAnchor="middle"
-        >
-          {Math.round(activeOpacity * 100)}% (frame {activeKeyframeIndex + 1}/{numKeyframes})
-        </text>
+        <g>
+          <rect
+            x={xPos - labelWidth / 2}
+            y={labelCenterY - labelHeight / 2}
+            width={labelWidth}
+            height={labelHeight}
+            rx={4 / viewport.zoom}
+            fill={palette.tooltipFill}
+            stroke={palette.tooltipStroke}
+            strokeWidth={1 / viewport.zoom}
+            opacity={0.98}
+          />
+          <text
+            x={xPos}
+            y={labelCenterY}
+            fontSize={labelFontSize}
+            fill={palette.tooltipText}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontWeight="600"
+          >
+            {label}
+          </text>
+        </g>
       </g>
     );
   },

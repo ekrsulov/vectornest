@@ -11,6 +11,8 @@ export * from './types';
 // Registry
 export { animationGizmoRegistry } from './registry/GizmoRegistry';
 
+// Bootstrap
+export { ensureCoreGizmosRegistered } from './bootstrap';
+
 // Contributions (gizmo definitions)
 export * from './contributions';
-

@@ -13,9 +13,11 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
+import { useColorMode } from '@chakra-ui/react';
 import { useShallow } from 'zustand/react/shallow';
 import { canvasStoreApi, useCanvasStore, type CanvasStore } from '../../../store/canvasStore';
 import { animationGizmoRegistry } from './registry/GizmoRegistry';
+import { ensureCoreGizmosRegistered } from './bootstrap';
 import type {
   GizmoState,
   GizmoRenderContext,
@@ -67,6 +69,8 @@ export interface GizmoContextValue {
 
 const GizmoContext = createContext<GizmoContextValue | null>(null);
 const EMPTY_ACTIVE_GIZMOS = new Map<string, GizmoState>();
+
+ensureCoreGizmosRegistered();
 
 type GizmoRuntimeState = AnimationPluginSlice['animationState'] & {
   activeGizmos: Map<string, GizmoState>;
@@ -142,7 +146,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
     })
   );
 
-  const colorMode = useCanvasStore((state) => state.colorMode ?? 'light');
+  const { colorMode } = useColorMode();
 
   // Refs for drag state
   const dragStartRef = useRef<Point | null>(null);

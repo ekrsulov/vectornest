@@ -19,6 +19,24 @@ import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmo
 // Blur Gizmo (18)
 // =============================================================================
 
+function getBlurGizmoPalette(colorMode: 'light' | 'dark') {
+  if (colorMode === 'dark') {
+    return {
+      outline: '#E5E7EB',
+      tooltipFill: '#F8FAFC',
+      tooltipStroke: '#CBD5E1',
+      tooltipText: '#0F172A',
+    };
+  }
+
+  return {
+    outline: '#1F2937',
+    tooltipFill: '#0F172A',
+    tooltipStroke: '#334155',
+    tooltipText: '#F8FAFC',
+  };
+}
+
 const blurGizmoDefinition: AnimationGizmoDefinition = {
   id: 'blur',
   category: 'filter',
@@ -121,7 +139,15 @@ const blurGizmoDefinition: AnimationGizmoDefinition = {
     const { elementBounds, viewport, colorMode } = ctx;
     const { minX, maxX, minY, maxY } = elementBounds;
     const blur = (ctx.state.props.blurRadius as number) ?? 0;
-    const color = colorMode === 'dark' ? '#60A5FA' : '#2563EB';
+    const palette = getBlurGizmoPalette(colorMode);
+    const label = `${blur.toFixed(1)}px`;
+    const labelFontSize = 9 / viewport.zoom;
+    const labelPaddingX = labelFontSize * 0.7;
+    const labelPaddingY = labelFontSize * 0.45;
+    const labelWidth = label.length * labelFontSize * 0.58 + labelPaddingX * 2;
+    const labelHeight = labelFontSize + labelPaddingY * 2;
+    const labelCenterX = maxX + 52 / viewport.zoom + blur * 2;
+    const labelCenterY = (minY + maxY) / 2;
     
     return (
       <g className="blur-gizmo" style={{ pointerEvents: 'none' }}>
@@ -131,19 +157,35 @@ const blurGizmoDefinition: AnimationGizmoDefinition = {
           width={maxX - minX + blur * 2}
           height={maxY - minY + blur * 2}
           fill="none"
-          stroke={color}
+          stroke={palette.outline}
           strokeWidth={1 / viewport.zoom}
           strokeDasharray={`${3 / viewport.zoom} ${2 / viewport.zoom}`}
           opacity={0.6}
         />
-        <text
-          x={maxX + 25 / viewport.zoom + blur * 2}
-          y={(minY + maxY) / 2 + 4 / viewport.zoom}
-          fontSize={10 / viewport.zoom}
-          fill={color}
-        >
-          {blur.toFixed(1)}px
-        </text>
+        <g>
+          <rect
+            x={labelCenterX - labelWidth / 2}
+            y={labelCenterY - labelHeight / 2}
+            width={labelWidth}
+            height={labelHeight}
+            rx={4 / viewport.zoom}
+            fill={palette.tooltipFill}
+            stroke={palette.tooltipStroke}
+            strokeWidth={1 / viewport.zoom}
+            opacity={0.98}
+          />
+          <text
+            x={labelCenterX}
+            y={labelCenterY}
+            fontSize={labelFontSize}
+            fill={palette.tooltipText}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontWeight="600"
+          >
+            {label}
+          </text>
+        </g>
       </g>
     );
   },

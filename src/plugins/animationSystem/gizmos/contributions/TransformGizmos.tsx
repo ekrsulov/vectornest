@@ -62,6 +62,140 @@ function roundNumber(value: number, precision: number): number {
   return parseFloat(value.toFixed(precision));
 }
 
+function roundInteger(value: number): number {
+  return Math.round(value);
+}
+
+function getResponsiveScreenSize(
+  basePx: number,
+  zoom: number,
+  minPx: number,
+  maxPx: number
+): number {
+  const safeZoom = Math.max(zoom, 0.01);
+  const zoomDelta = Math.log2(safeZoom);
+  const responsivePx = basePx + zoomDelta * 2.5;
+  return Math.max(minPx, Math.min(maxPx, responsivePx));
+}
+
+function shortenLineEnd(
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  inset: number
+): { x: number; y: number } {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const distance = Math.hypot(dx, dy);
+
+  if (distance <= inset || distance === 0) {
+    return end;
+  }
+
+  const ratio = (distance - inset) / distance;
+  return {
+    x: start.x + dx * ratio,
+    y: start.y + dy * ratio,
+  };
+}
+
+function getTranslateGizmoPalette(colorMode: 'light' | 'dark') {
+  if (colorMode === 'dark') {
+    return {
+      stroke: '#F8FAFC',
+      secondary: '#CBD5E1',
+      surface: '#F8FAFC',
+      pointFill: '#F8FAFC',
+      pointStroke: '#CBD5E1',
+      pointFillOpacity: 0.96,
+      arrowMarkerId: 'gizmo-arrow-dark',
+      textOnSurface: '#0F172A',
+      text: '#F8FAFC',
+      textStroke: '#020617',
+      tooltipFill: '#F8FAFC',
+      tooltipStroke: '#CBD5E1',
+      tooltipText: '#0F172A',
+    };
+  }
+
+  return {
+    stroke: '#111827',
+    secondary: '#374151',
+    surface: '#6B7280',
+    pointFill: '#6B7280',
+    pointStroke: '#111827',
+    pointFillOpacity: 0.3,
+    arrowMarkerId: 'gizmo-arrow-light',
+    textOnSurface: '#F9FAFB',
+    text: '#111827',
+    textStroke: '#F8FAFC',
+    tooltipFill: '#0F172A',
+    tooltipStroke: '#334155',
+    tooltipText: '#F8FAFC',
+  };
+}
+
+function getRotateGizmoPalette(colorMode: 'light' | 'dark') {
+  if (colorMode === 'dark') {
+    return {
+      stroke: '#F8FAFC',
+      secondary: '#E5E7EB',
+      surface: '#F3F4F6',
+    };
+  }
+
+  return {
+    stroke: '#111827',
+    secondary: '#374151',
+    surface: '#9CA3AF',
+  };
+}
+
+function getScaleGizmoPalette(colorMode: 'light' | 'dark') {
+  if (colorMode === 'dark') {
+    return {
+      stroke: '#F8FAFC',
+      secondary: '#E5E7EB',
+      surface: '#F3F4F6',
+      handleFill: '#0F172A',
+      handleStroke: '#F8FAFC',
+      tooltipFill: '#F8FAFC',
+      tooltipStroke: '#CBD5E1',
+      tooltipText: '#0F172A',
+    };
+  }
+
+  return {
+    stroke: '#111827',
+    secondary: '#374151',
+    surface: '#D1D5DB',
+    handleFill: '#F9FAFB',
+    handleStroke: '#111827',
+    tooltipFill: '#0F172A',
+    tooltipStroke: '#334155',
+    tooltipText: '#F8FAFC',
+  };
+}
+
+function getSkewGizmoPalette(colorMode: 'light' | 'dark') {
+  if (colorMode === 'dark') {
+    return {
+      stroke: '#F8FAFC',
+      secondary: '#CBD5E1',
+      tooltipFill: '#F8FAFC',
+      tooltipStroke: '#CBD5E1',
+      tooltipText: '#0F172A',
+    };
+  }
+
+  return {
+    stroke: '#111827',
+    secondary: '#4B5563',
+    tooltipFill: '#0F172A',
+    tooltipStroke: '#334155',
+    tooltipText: '#F8FAFC',
+  };
+}
+
 /**
  * Extract from/to values from animation, supporting both from/to and values attributes
  * Returns: { from: number[], to: number[], hasValues: boolean, keyframes: number[][] }
@@ -299,25 +433,31 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
 	        const kf = keyframes[activeIndex] ?? [];
 	        const x = elementCenter.x + (kf[0] ?? 0);
 	        const y = elementCenter.y + (kf[1] ?? 0);
+          const palette = getTranslateGizmoPalette(colorMode);
+          const arrowEnd = shortenLineEnd(
+            { x: elementCenter.x, y: elementCenter.y },
+            { x, y },
+            10 / viewport.zoom
+          );
 
 	        return (
 	          <g className="translate-gizmo" data-gizmo="translate">
 	            <line
 	              x1={elementCenter.x}
 	              y1={elementCenter.y}
-	              x2={x}
-	              y2={y}
-	              stroke={colorMode === 'dark' ? '#63b3ed' : '#3182ce'}
+	              x2={arrowEnd.x}
+	              y2={arrowEnd.y}
+	              stroke={palette.stroke}
 	              strokeWidth={2 / viewport.zoom}
 	              strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
-	              markerEnd="url(#gizmo-arrow)"
+	              markerEnd={`url(#${palette.arrowMarkerId})`}
 	              style={{ pointerEvents: 'none' }}
 	            />
 	            <text
 	              x={(elementCenter.x + x) / 2}
 	              y={(elementCenter.y + y) / 2 - 10 / viewport.zoom}
 	              fontSize={11 / viewport.zoom}
-	              fill={colorMode === 'dark' ? '#63b3ed' : '#3182ce'}
+	              fill={palette.stroke}
 	              textAnchor="middle"
 	              style={{ pointerEvents: 'none' }}
 	            >
@@ -332,10 +472,26 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
 	      const endX = elementCenter.x + toX;
 	      const endY = elementCenter.y + toY;
 
-      const strokeColor = colorMode === 'dark' ? '#63b3ed' : '#3182ce';
-      const ghostColor = colorMode === 'dark' ? '#4299e1' : '#2b6cb0';
-      const intermediateColor = colorMode === 'dark' ? '#F59E0B' : '#D97706';
+      const palette = getTranslateGizmoPalette(colorMode);
+      const strokeColor = palette.stroke;
       const sw = 2 / viewport.zoom; // zoom-adjusted stroke width
+      const metricLabelFontSize = 12 / viewport.zoom;
+      const metricLabelOffsetY = 14 / viewport.zoom;
+      const metricLabel = hasValues && keyframes.length > 2
+        ? `${keyframes.length} keyframes`
+        : `Δ${Math.round(Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2))}px`;
+      const metricLabelPaddingX = metricLabelFontSize * 0.7;
+      const metricLabelPaddingY = metricLabelFontSize * 0.45;
+      const metricLabelWidth =
+        metricLabel.length * metricLabelFontSize * 0.58 + metricLabelPaddingX * 2;
+      const metricLabelHeight = metricLabelFontSize + metricLabelPaddingY * 2;
+      const metricLabelCenterX = (startX + endX) / 2;
+      const metricLabelCenterY = (startY + endY) / 2 - metricLabelOffsetY;
+      const arrowEnd = shortenLineEnd(
+        { x: startX, y: startY },
+        { x: endX, y: endY },
+        10 / viewport.zoom
+      );
       // Calculate intermediate keyframe positions
       const intermediatePoints = hasValues && keyframes.length > 2
         ? keyframes.slice(1, -1).map((kf) => ({
@@ -367,12 +523,12 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
             <line
               x1={startX}
               y1={startY}
-              x2={endX}
-              y2={endY}
+              x2={arrowEnd.x}
+              y2={arrowEnd.y}
               stroke={strokeColor}
               strokeWidth={sw}
               strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
-              markerEnd="url(#gizmo-arrow)"
+              markerEnd={`url(#${palette.arrowMarkerId})`}
             />
           )}
 
@@ -383,16 +539,16 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
                 cx={point.x}
                 cy={point.y}
                 r={8 / viewport.zoom}
-                fill={intermediateColor}
-                fillOpacity={0.3}
-                stroke={intermediateColor}
+                fill={palette.pointFill}
+                fillOpacity={palette.pointFillOpacity}
+                stroke={palette.pointStroke}
                 strokeWidth={2 / viewport.zoom}
               />
               <text
                 x={point.x}
                 y={point.y + 3 / viewport.zoom}
                 fontSize={8 / viewport.zoom}
-                fill={intermediateColor}
+                fill={palette.textOnSurface}
                 textAnchor="middle"
                 fontWeight="bold"
               >
@@ -406,8 +562,8 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
             cx={startX}
             cy={startY}
             r={6 / viewport.zoom}
-            fill="white"
-            stroke={strokeColor}
+            fill={palette.pointFill}
+            stroke={palette.pointStroke}
             strokeWidth={2 / viewport.zoom}
             data-handle="origin"
             style={{ cursor: 'move' }}
@@ -428,29 +584,18 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
 
           {/* Destination marker (last keyframe) */}
           <g data-handle="destination" style={{ cursor: 'move' }}>
-            <rect
-              x={endX - 12 / viewport.zoom}
-              y={endY - 12 / viewport.zoom}
-              width={24 / viewport.zoom}
-              height={24 / viewport.zoom}
-              fill={ghostColor}
-              fillOpacity={0.3}
-              stroke={ghostColor}
-              strokeWidth={2 / viewport.zoom}
-              rx={4 / viewport.zoom}
-            />
             <circle
               cx={endX}
               cy={endY}
               r={4 / viewport.zoom}
-              fill={ghostColor}
+              fill={palette.pointFill}
             />
             {hasValues && keyframes.length > 2 && (
               <text
                 x={endX}
                 y={endY + 3 / viewport.zoom}
                 fontSize={8 / viewport.zoom}
-                fill="white"
+                fill={palette.textOnSurface}
                 textAnchor="middle"
                 fontWeight="bold"
                 style={{ pointerEvents: 'none' }}
@@ -460,18 +605,31 @@ const translateGizmoDefinition: AnimationGizmoDefinition = {
             )}
           </g>
 
-          {/* Distance/keyframe count label */}
-          <text
-            x={(startX + endX) / 2}
-            y={(startY + endY) / 2 - 10}
-            fontSize={11}
-            fill={strokeColor}
-            textAnchor="middle"
-          >
-            {hasValues && keyframes.length > 2
-              ? `${keyframes.length} keyframes`
-              : `Δ${Math.round(Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2))}px`}
-          </text>
+          {/* Distance/keyframe count badge */}
+          <g style={{ pointerEvents: 'none' }}>
+            <rect
+              x={metricLabelCenterX - metricLabelWidth / 2}
+              y={metricLabelCenterY - metricLabelHeight / 2}
+              width={metricLabelWidth}
+              height={metricLabelHeight}
+              rx={4 / viewport.zoom}
+              fill={palette.tooltipFill}
+              stroke={palette.tooltipStroke}
+              strokeWidth={1 / viewport.zoom}
+              opacity={0.98}
+            />
+            <text
+              x={metricLabelCenterX}
+              y={metricLabelCenterY}
+              fontSize={metricLabelFontSize}
+              fill={palette.tooltipText}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontWeight="600"
+            >
+              {metricLabel}
+            </text>
+          </g>
         </g>
       );
     },
@@ -575,22 +733,22 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
         const currentX = (ctx.state.props.pivotX as number) ?? ctx.elementCenter.x;
         const currentY = (ctx.state.props.pivotY as number) ?? ctx.elementCenter.y;
         ctx.updateState({
-          pivotX: currentX + delta.x,
-          pivotY: currentY + delta.y,
+          pivotX: roundInteger(currentX + delta.x),
+          pivotY: roundInteger(currentY + delta.y),
         });
 	      },
 	      onDragEnd: (ctx) => {
 	        const fromDegrees = (ctx.state.props.fromDegrees as number) ?? 0;
 	        const toDegrees = (ctx.state.props.toDegrees as number) ?? 360;
-	        const px = (ctx.state.props.pivotX as number) ?? ctx.elementCenter.x;
-	        const py = (ctx.state.props.pivotY as number) ?? ctx.elementCenter.y;
+	        const px = roundInteger((ctx.state.props.pivotX as number) ?? ctx.elementCenter.x);
+	        const py = roundInteger((ctx.state.props.pivotY as number) ?? ctx.elementCenter.y);
 	        const hasValues = (ctx.state.props.hasValues as boolean) ?? false;
 	        const keyframes = ctx.state.props.keyframes as number[][] | undefined;
 	        
 			        if (hasValues) {
 			          // Update keyframes preserving the original structure, updating pivot in all keyframes
 			          const kfs = keyframes ?? [[fromDegrees, px, py], [toDegrees, px, py]];
-			          const updatedKeyframes = kfs.map((kf) => [kf[0] ?? 0, px, py]);
+			          const updatedKeyframes = kfs.map((kf) => [roundInteger(kf[0] ?? 0), px, py]);
 			          ctx.updateState({ keyframes: updatedKeyframes });
 			          ctx.updateAnimation({
 			            values: formatValuesKeyframes(updatedKeyframes, ctx.precision),
@@ -633,7 +791,7 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	        const activeDegrees = (hasValues && keyframes.length >= 2)
 	          ? (keyframes[activeIndex]?.[0] ?? 0)
 	          : ((ctx.state.props.toDegrees as number) ?? 0);
-	        return `${formatTransformValue([activeDegrees], ctx.precision)}°`;
+	        return `${roundInteger(activeDegrees)}°`;
 	      },
       constraints: {
         axis: 'circular',
@@ -656,7 +814,9 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	        if (deltaDegrees < -180) deltaDegrees += 360;
 
 	        if (hasValues) {
-	          const kfs = keyframes.length > 0 ? keyframes : [[fromDegrees, pivotX, pivotY], [toDegrees, pivotX, pivotY]];
+	          const px = roundInteger(pivotX);
+	          const py = roundInteger(pivotY);
+	          const kfs = keyframes.length > 0 ? keyframes : [[fromDegrees, px, py], [toDegrees, px, py]];
 	          const updatedKeyframes = [...kfs];
 	          const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, kfs.length);
 	          const currentDeg = updatedKeyframes[activeIndex]?.[0] ?? 0;
@@ -664,7 +824,8 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	          if (ctx.modifiers.shift) {
 	            nextDeg = Math.round(nextDeg / 15) * 15;
 	          }
-	          updatedKeyframes[activeIndex] = [roundNumber(nextDeg, ctx.precision), pivotX, pivotY];
+	          const roundedDegrees = roundInteger(nextDeg);
+	          updatedKeyframes[activeIndex] = [roundedDegrees, px, py];
 
 	          const first = updatedKeyframes[0] ?? [0];
 	          const last = updatedKeyframes[updatedKeyframes.length - 1] ?? first;
@@ -682,22 +843,22 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	        if (ctx.modifiers.shift) {
 	          nextDegrees = Math.round(nextDegrees / 15) * 15;
 	        }
-	        ctx.updateState({ toDegrees: nextDegrees });
+	        ctx.updateState({ toDegrees: roundInteger(nextDegrees) });
 	      },
 	      onDragEnd: (ctx) => {
 	        const fromDegrees = (ctx.state.props.fromDegrees as number) ?? 0;
 	        const toDegrees = (ctx.state.props.toDegrees as number) ?? 360;
-	        const px = (ctx.state.props.pivotX as number) ?? ctx.elementCenter.x;
-		        const py = (ctx.state.props.pivotY as number) ?? ctx.elementCenter.y;
+	        const px = roundInteger((ctx.state.props.pivotX as number) ?? ctx.elementCenter.x);
+		        const py = roundInteger((ctx.state.props.pivotY as number) ?? ctx.elementCenter.y);
 		        const hasValues = (ctx.state.props.hasValues as boolean) ?? false;
 		        const keyframes = ctx.state.props.keyframes as number[][] | undefined;
 		        
 			        if (hasValues) {
 			          const kfs = keyframes ?? [[fromDegrees, px, py], [toDegrees, px, py]];
 			          const activeIndex = clampKeyframeIndex(ctx.state.props.activeKeyframeIndex, kfs.length);
-			          const degrees = kfs[activeIndex]?.[0] ?? 0;
+			          const degrees = roundInteger(kfs[activeIndex]?.[0] ?? 0);
 			          const updatedKeyframes = [...kfs];
-			          updatedKeyframes[activeIndex] = [roundNumber(degrees, ctx.precision), px, py];
+			          updatedKeyframes[activeIndex] = [degrees, px, py];
 
 			          const first = updatedKeyframes[0] ?? [0];
 			          const last = updatedKeyframes[updatedKeyframes.length - 1] ?? first;
@@ -727,6 +888,7 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	    zIndex: 100,
 	    render: (ctx: GizmoRenderContext) => {
 	      const { elementCenter, state, colorMode, viewport } = ctx;
+	      const palette = getRotateGizmoPalette(colorMode);
 	      const pivotX = (state.props.pivotX as number) ?? elementCenter.x;
 	      const pivotY = (state.props.pivotY as number) ?? elementCenter.y;
 	      const fromDegrees = (state.props.fromDegrees as number) ?? 0;
@@ -735,8 +897,8 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
 	      const keyframes = (state.props.keyframes as number[][]) ?? [];
 	      const isMultiKeyframeValues = hasValues && keyframes.length >= 2;
 
-	      const strokeColor = colorMode === 'dark' ? '#68d391' : '#38a169';
-	      const radius = 60 / viewport.zoom;
+	      const strokeColor = palette.stroke;
+	      const radius = getResponsiveScreenSize(66, viewport.zoom, 58, 84) / viewport.zoom;
 
 	      // Calculate arc path
 	      const startAngle = (fromDegrees - 90) * (Math.PI / 180);
@@ -759,7 +921,8 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
               cx={pivotX}
               cy={pivotY}
               r={8 / viewport.zoom}
-              fill="none"
+              fill={palette.surface}
+              fillOpacity={colorMode === 'dark' ? 0.18 : 0.1}
               stroke={strokeColor}
               strokeWidth={2 / viewport.zoom}
             />
@@ -776,7 +939,7 @@ const rotateGizmoDefinition: AnimationGizmoDefinition = {
               y1={pivotY - 12 / viewport.zoom}
               x2={pivotX}
               y2={pivotY + 12 / viewport.zoom}
-              stroke={strokeColor}
+              stroke={palette.secondary}
               strokeWidth={1.5 / viewport.zoom}
             />
 		          </g>
@@ -1046,7 +1209,7 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
     },
   ],
 
-  visual: {
+	  visual: {
 	    zIndex: 100,
 	    render: (ctx: GizmoRenderContext) => {
 	      const { elementCenter, elementBounds, state, colorMode, viewport } = ctx;
@@ -1065,13 +1228,25 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
 	      const width = elementBounds.maxX - elementBounds.minX;
 	      const height = elementBounds.maxY - elementBounds.minY;
 
-	      const strokeColor = colorMode === 'dark' ? '#f6ad55' : '#dd6b20';
+	      const palette = getScaleGizmoPalette(colorMode);
+	      const strokeColor = palette.stroke;
 
 	      // Target size box
 	      const targetWidth = width * displayScaleX;
 	      const targetHeight = height * displayScaleY;
 	      const targetX = elementCenter.x - targetWidth / 2;
 	      const targetY = elementCenter.y - targetHeight / 2;
+        const scaleLabel = isMultiKeyframeValues
+          ? `kf ${activeIndex + 1}/${keyframes.length} -> ${displayScaleX.toFixed(2)}x${displayScaleY.toFixed(2)}`
+          : `${toScaleX.toFixed(2)}x${toScaleY.toFixed(2)}`;
+        const scaleLabelFontSize = 11 / viewport.zoom;
+        const scaleLabelPaddingX = scaleLabelFontSize * 0.7;
+        const scaleLabelPaddingY = scaleLabelFontSize * 0.45;
+        const scaleLabelWidth =
+          scaleLabel.length * scaleLabelFontSize * 0.58 + scaleLabelPaddingX * 2;
+        const scaleLabelHeight = scaleLabelFontSize + scaleLabelPaddingY * 2;
+        const scaleLabelCenterX = targetX + targetWidth + scaleLabelWidth / 2 + 10 / viewport.zoom;
+        const scaleLabelCenterY = targetY - scaleLabelHeight / 2 - 5 / viewport.zoom;
 
 	      return (
 	        <g className="scale-gizmo" data-gizmo="scale">
@@ -1100,8 +1275,8 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
               y={y - 5 / viewport.zoom}
               width={10 / viewport.zoom}
               height={10 / viewport.zoom}
-              fill="white"
-              stroke={strokeColor}
+              fill={palette.handleFill}
+              stroke={palette.handleStroke}
               strokeWidth={2 / viewport.zoom}
               data-handle={handle}
               style={{ cursor }}
@@ -1109,17 +1284,30 @@ const scaleGizmoDefinition: AnimationGizmoDefinition = {
           ))}
 
           {/* Scale label */}
+          <g style={{ pointerEvents: 'none' }}>
+            <rect
+              x={scaleLabelCenterX - scaleLabelWidth / 2}
+              y={scaleLabelCenterY - scaleLabelHeight / 2}
+              width={scaleLabelWidth}
+              height={scaleLabelHeight}
+              rx={4 / viewport.zoom}
+              fill={palette.tooltipFill}
+              stroke={palette.tooltipStroke}
+              strokeWidth={1 / viewport.zoom}
+              opacity={0.98}
+            />
 	          <text
-	            x={targetX + targetWidth + 10 / viewport.zoom}
-	            y={targetY - 5 / viewport.zoom}
-	            fontSize={11 / viewport.zoom}
-	            fill={strokeColor}
-	            style={{ pointerEvents: 'none' }}
+	            x={scaleLabelCenterX}
+	            y={scaleLabelCenterY}
+	            fontSize={scaleLabelFontSize}
+	            fill={palette.tooltipText}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontWeight="600"
 	          >
-	            {isMultiKeyframeValues
-	              ? `kf ${activeIndex + 1}/${keyframes.length} → ${displayScaleX.toFixed(2)}x${displayScaleY.toFixed(2)}`
-	              : `${toScaleX.toFixed(2)}x${toScaleY.toFixed(2)}`}
+	            {scaleLabel}
 	          </text>
+          </g>
 	        </g>
 	      );
 	    },
@@ -1412,9 +1600,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
       const activeValue = activeKf[0] ?? 0;
       const displaySkewX = isMultiKeyframeValues ? (activeAxis === 'x' ? activeValue : 0) : toSkewX;
       const displaySkewY = isMultiKeyframeValues ? (activeAxis === 'y' ? activeValue : 0) : toSkewY;
-
-      const strokeColor = colorMode === 'dark' ? '#b794f4' : '#805ad5';
-      const intermediateColor = colorMode === 'dark' ? '#D6BCFA' : '#6B46C1';
+      const palette = getSkewGizmoPalette(colorMode);
 
       // Calculate skewed parallelogram corners
       const w = (elementBounds.maxX - elementBounds.minX) / 2;
@@ -1435,6 +1621,26 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
       }));
 
       const pathD = `M ${corners[0].x} ${corners[0].y} L ${corners[1].x} ${corners[1].y} L ${corners[2].x} ${corners[2].y} L ${corners[3].x} ${corners[3].y} Z`;
+      const skewXLabel = `${Math.round(displaySkewX)}°X`;
+      const skewYLabel = `${Math.round(displaySkewY)}°Y`;
+      const keyframeLabel = `kf ${activeIndex + 1}/${keyframes.length}`;
+      const labelFontSize = 10 / viewport.zoom;
+      const keyframeFontSize = 8 / viewport.zoom;
+      const labelPaddingX = labelFontSize * 0.7;
+      const labelPaddingY = labelFontSize * 0.45;
+      const keyframePaddingX = keyframeFontSize * 0.7;
+      const keyframePaddingY = keyframeFontSize * 0.45;
+      const skewXLabelWidth = skewXLabel.length * labelFontSize * 0.58 + labelPaddingX * 2;
+      const skewYLabelWidth = skewYLabel.length * labelFontSize * 0.58 + labelPaddingX * 2;
+      const keyframeLabelWidth = keyframeLabel.length * keyframeFontSize * 0.58 + keyframePaddingX * 2;
+      const labelHeight = labelFontSize + labelPaddingY * 2;
+      const keyframeHeight = keyframeFontSize + keyframePaddingY * 2;
+      const skewXLabelCenterX = elementCenter.x + displaySkewX;
+      const skewXLabelCenterY = elementBounds.minY - 40 / viewport.zoom;
+      const skewXKeyframeCenterY = elementBounds.minY - 58 / viewport.zoom;
+      const skewYLabelCenterX = elementBounds.maxX + 47 / viewport.zoom;
+      const skewYLabelCenterY = elementCenter.y + displaySkewY;
+      const skewYKeyframeCenterY = elementCenter.y + displaySkewY - 20 / viewport.zoom;
       
       return (
         <g className="skew-gizmo" data-gizmo="skew">
@@ -1442,7 +1648,7 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           <path
             d={pathD}
             fill="none"
-            stroke={strokeColor}
+            stroke={palette.stroke}
             strokeWidth={2 / viewport.zoom}
             strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
           />
@@ -1450,75 +1656,111 @@ const skewGizmoDefinition: AnimationGizmoDefinition = {
           {/* Horizontal skew handle */}
           <g data-handle="skew-horizontal" style={{ cursor: 'ew-resize' }}>
             <rect
-              x={elementCenter.x + displaySkewX - 15 / viewport.zoom}
-              y={elementBounds.minY - 48 / viewport.zoom}
-              width={30 / viewport.zoom}
-              height={16 / viewport.zoom}
-              fill="white"
-              stroke={strokeColor}
-              strokeWidth={2 / viewport.zoom}
+              x={skewXLabelCenterX - skewXLabelWidth / 2}
+              y={skewXLabelCenterY - labelHeight / 2}
+              width={skewXLabelWidth}
+              height={labelHeight}
+              fill={palette.tooltipFill}
+              stroke={palette.tooltipStroke}
+              strokeWidth={1 / viewport.zoom}
               rx={4 / viewport.zoom}
+              opacity={0.98}
             />
             <text
-              x={elementCenter.x + displaySkewX}
-              y={elementBounds.minY - 36 / viewport.zoom}
-              fontSize={10 / viewport.zoom}
-              fill={strokeColor}
+              x={skewXLabelCenterX}
+              y={skewXLabelCenterY}
+              fontSize={labelFontSize}
+              fill={palette.tooltipText}
               textAnchor="middle"
+              dominantBaseline="middle"
+              fontWeight="600"
               style={{ pointerEvents: 'none' }}
             >
-              {Math.round(displaySkewX)}°X
+              {skewXLabel}
             </text>
           </g>
           
           {isMultiKeyframeValues && activeAxis === 'x' && (
-            <text
-              x={elementCenter.x + displaySkewX}
-              y={elementBounds.minY - 56 / viewport.zoom}
-              fontSize={8 / viewport.zoom}
-              fill={intermediateColor}
-              textAnchor="middle"
-              style={{ pointerEvents: 'none' }}
-            >
-              kf {activeIndex + 1}/{keyframes.length}
-            </text>
+            <g>
+              <rect
+                x={skewXLabelCenterX - keyframeLabelWidth / 2}
+                y={skewXKeyframeCenterY - keyframeHeight / 2}
+                width={keyframeLabelWidth}
+                height={keyframeHeight}
+                rx={4 / viewport.zoom}
+                fill={palette.tooltipFill}
+                stroke={palette.tooltipStroke}
+                strokeWidth={1 / viewport.zoom}
+                opacity={0.94}
+              />
+              <text
+                x={skewXLabelCenterX}
+                y={skewXKeyframeCenterY}
+                fontSize={keyframeFontSize}
+                fill={palette.tooltipText}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontWeight="600"
+                style={{ pointerEvents: 'none' }}
+              >
+                {keyframeLabel}
+              </text>
+            </g>
           )}
 
           {/* Vertical skew handle */}
           <g data-handle="skew-vertical" style={{ cursor: 'ns-resize' }}>
             <rect
-              x={elementBounds.maxX + 32 / viewport.zoom}
-              y={elementCenter.y + displaySkewY - 8 / viewport.zoom}
-              width={30 / viewport.zoom}
-              height={16 / viewport.zoom}
-              fill="white"
-              stroke={strokeColor}
-              strokeWidth={2 / viewport.zoom}
+              x={skewYLabelCenterX - skewYLabelWidth / 2}
+              y={skewYLabelCenterY - labelHeight / 2}
+              width={skewYLabelWidth}
+              height={labelHeight}
+              fill={palette.tooltipFill}
+              stroke={palette.tooltipStroke}
+              strokeWidth={1 / viewport.zoom}
               rx={4 / viewport.zoom}
+              opacity={0.98}
             />
             <text
-              x={elementBounds.maxX + 47 / viewport.zoom}
-              y={elementCenter.y + displaySkewY + 4 / viewport.zoom}
-              fontSize={10 / viewport.zoom}
-              fill={strokeColor}
+              x={skewYLabelCenterX}
+              y={skewYLabelCenterY}
+              fontSize={labelFontSize}
+              fill={palette.tooltipText}
               textAnchor="middle"
+              dominantBaseline="middle"
+              fontWeight="600"
               style={{ pointerEvents: 'none' }}
             >
-              {Math.round(displaySkewY)}°Y
+              {skewYLabel}
             </text>
           </g>
           
           {isMultiKeyframeValues && activeAxis === 'y' && (
-            <text
-              x={elementBounds.maxX + 47 / viewport.zoom}
-              y={elementCenter.y + displaySkewY - 16 / viewport.zoom}
-              fontSize={8 / viewport.zoom}
-              fill={intermediateColor}
-              textAnchor="middle"
-              style={{ pointerEvents: 'none' }}
-            >
-              kf {activeIndex + 1}/{keyframes.length}
-            </text>
+            <g>
+              <rect
+                x={skewYLabelCenterX - keyframeLabelWidth / 2}
+                y={skewYKeyframeCenterY - keyframeHeight / 2}
+                width={keyframeLabelWidth}
+                height={keyframeHeight}
+                rx={4 / viewport.zoom}
+                fill={palette.tooltipFill}
+                stroke={palette.tooltipStroke}
+                strokeWidth={1 / viewport.zoom}
+                opacity={0.94}
+              />
+              <text
+                x={skewYLabelCenterX}
+                y={skewYKeyframeCenterY}
+                fontSize={keyframeFontSize}
+                fill={palette.tooltipText}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontWeight="600"
+                style={{ pointerEvents: 'none' }}
+              >
+                {keyframeLabel}
+              </text>
+            </g>
           )}
         </g>
       );

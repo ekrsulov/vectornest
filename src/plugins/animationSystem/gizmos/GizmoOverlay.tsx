@@ -58,6 +58,18 @@ interface HandleVisualProps {
   hasLabel: boolean;
 }
 
+function getResponsiveScreenSize(
+  basePx: number,
+  zoom: number,
+  minPx: number,
+  maxPx: number
+): number {
+  const safeZoom = Math.max(zoom, 0.01);
+  const zoomDelta = Math.log2(safeZoom);
+  const responsivePx = basePx + zoomDelta * 2.5;
+  return Math.max(minPx, Math.min(maxPx, responsivePx));
+}
+
 function HandleVisual({
   type,
   position,
@@ -267,13 +279,19 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
 
   const handlePointerEnter = useCallback(() => setLocalHover(true), []);
   const handlePointerLeave = useCallback(() => setLocalHover(false), []);
+  const isRotateHandle =
+    context.state.gizmoId === 'rotate' &&
+    (handle.type === 'arc' || handle.type === 'rotation');
 
   // Determine handle appearance based on type
   const getHandleStyle = () => {
-    const baseSize = 8 / context.viewport.zoom;
-    const strokeWidth = 1.5 / context.viewport.zoom;
-    
-    const colors = context.colorMode === 'dark'
+    const baseScreenSize = isRotateHandle
+      ? getResponsiveScreenSize(13, context.viewport.zoom, 11.5, 18)
+      : 8;
+    const baseSize = baseScreenSize / context.viewport.zoom;
+    const strokeWidth = (isRotateHandle ? 1.8 : 1.5) / context.viewport.zoom;
+
+    const defaultColors = context.colorMode === 'dark'
       ? {
           primary: '#3B82F6',      // blue-500
           secondary: '#60A5FA',    // blue-400
@@ -290,6 +308,148 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
           stroke: '#2563EB',
           active: '#F59E0B',
         };
+
+    const translateColors = context.colorMode === 'dark'
+      ? {
+          primary: '#F8FAFC',
+          secondary: '#E2E8F0',
+          accent: '#CBD5E1',
+          fill: '#F8FAFC',
+          stroke: '#CBD5E1',
+          active: '#FFFFFF',
+        }
+      : {
+          primary: '#111827',
+          secondary: '#1F2937',
+          accent: '#374151',
+          fill: '#6B7280',
+          stroke: '#111827',
+          active: '#030712',
+        };
+
+    const rotateColors = context.colorMode === 'dark'
+      ? {
+          primary: '#F8FAFC',
+          secondary: '#E5E7EB',
+          accent: '#D1D5DB',
+          fill: '#F3F4F6',
+          stroke: '#D1D5DB',
+          active: '#FFFFFF',
+        }
+      : {
+          primary: '#111827',
+          secondary: '#1F2937',
+          accent: '#374151',
+          fill: '#9CA3AF',
+          stroke: '#111827',
+          active: '#030712',
+        };
+
+    const scaleColors = context.colorMode === 'dark'
+      ? {
+          primary: '#F8FAFC',
+          secondary: '#E5E7EB',
+          accent: '#D1D5DB',
+          fill: '#F3F4F6',
+          stroke: '#D1D5DB',
+          active: '#FFFFFF',
+        }
+      : {
+          primary: '#111827',
+          secondary: '#1F2937',
+          accent: '#374151',
+          fill: '#D1D5DB',
+          stroke: '#111827',
+          active: '#030712',
+        };
+
+    const skewColors = context.colorMode === 'dark'
+      ? {
+          primary: '#F8FAFC',
+          secondary: '#E5E7EB',
+          accent: '#D1D5DB',
+          fill: '#CBD5E1',
+          stroke: '#F8FAFC',
+          active: '#FFFFFF',
+        }
+      : {
+          primary: '#111827',
+          secondary: '#374151',
+          accent: '#4B5563',
+          fill: '#9CA3AF',
+          stroke: '#111827',
+          active: '#030712',
+        };
+
+    const opacityColors = context.colorMode === 'dark'
+      ? {
+          primary: '#F8FAFC',
+          secondary: '#E5E7EB',
+          accent: '#D1D5DB',
+          fill: '#CBD5E1',
+          stroke: '#F8FAFC',
+          active: '#FFFFFF',
+        }
+      : {
+          primary: '#111827',
+          secondary: '#374151',
+          accent: '#4B5563',
+          fill: '#9CA3AF',
+          stroke: '#111827',
+          active: '#030712',
+        };
+
+    const blurColors = context.colorMode === 'dark'
+      ? {
+          primary: '#F8FAFC',
+          secondary: '#E5E7EB',
+          accent: '#D1D5DB',
+          fill: '#CBD5E1',
+          stroke: '#F8FAFC',
+          active: '#FFFFFF',
+        }
+      : {
+          primary: '#111827',
+          secondary: '#374151',
+          accent: '#4B5563',
+          fill: '#9CA3AF',
+          stroke: '#111827',
+          active: '#030712',
+        };
+
+    const strokeDrawColors = context.colorMode === 'dark'
+      ? {
+          primary: '#F8FAFC',
+          secondary: '#E5E7EB',
+          accent: '#D1D5DB',
+          fill: '#CBD5E1',
+          stroke: '#F8FAFC',
+          active: '#FFFFFF',
+        }
+      : {
+          primary: '#111827',
+          secondary: '#374151',
+          accent: '#4B5563',
+          fill: '#9CA3AF',
+          stroke: '#111827',
+          active: '#030712',
+        };
+
+    const colors = context.state.gizmoId === 'translate'
+      ? translateColors
+      : context.state.gizmoId === 'rotate'
+        ? rotateColors
+        : context.state.gizmoId === 'scale'
+          ? scaleColors
+          : context.state.gizmoId === 'skew'
+            ? skewColors
+          : context.state.gizmoId === 'opacity'
+            ? opacityColors
+            : context.state.gizmoId === 'blur'
+              ? blurColors
+            : context.state.gizmoId === 'stroke-draw'
+              ? strokeDrawColors
+            : defaultColors;
 
     return {
       size: baseSize,
@@ -308,13 +468,58 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
   const labelDigitCount = normalizedLabel
     ? normalizedLabel.replace(/[^0-9]/g, '').length
     : 0;
+  const isRotateAngleLabel =
+    context.state.gizmoId === 'rotate' &&
+    (handle.type === 'arc' || handle.type === 'rotation');
+  const rotateLabelScreenSize = getResponsiveScreenSize(10, context.viewport.zoom, 10.5, 16.5);
   const labelFontSize =
-    labelDigitCount >= 3 ? style.size * 0.75 : style.size * 0.9;
+    isRotateAngleLabel
+      ? (
+          (rotateLabelScreenSize / context.viewport.zoom) *
+          (labelDigitCount >= 3 ? 0.95 : 1.05)
+        )
+      : (labelDigitCount >= 3 ? style.size * 0.75 : style.size * 0.9);
+  const labelFill = isRotateAngleLabel
+    ? (
+        context.colorMode === 'dark'
+          ? '#0F172A'
+          : (style.isActive || style.isHovered ? '#F9FAFB' : '#111827')
+      )
+    : (context.colorMode === 'dark' ? '#F9FAFB' : '#111827');
+  const labelStroke = isRotateAngleLabel
+    ? (
+        context.colorMode === 'dark'
+          ? '#F8FAFC'
+          : (style.isActive || style.isHovered ? '#030712' : '#F9FAFB')
+      )
+    : 'none';
 
   // Tooltip text: use handle's tooltip prop, then fall back to label
   const tooltipText = handle.tooltip ?? normalizedLabel;
   const tooltipFontSize = 10 / context.viewport.zoom;
-  const tooltipOffsetY = style.size * 2.5;
+  const tooltipOffsetY = context.state.gizmoId === 'opacity'
+    ? style.size * 3.8
+    : context.state.gizmoId === 'stroke-draw'
+      ? style.size * 4.2
+    : style.size * 2.5;
+  const tooltipPaddingX = tooltipFontSize * 0.7;
+  const tooltipPaddingY = tooltipFontSize * 0.45;
+  const tooltipWidth = tooltipText
+    ? tooltipText.length * tooltipFontSize * 0.58 + tooltipPaddingX * 2
+    : 0;
+  const tooltipHeight = tooltipFontSize + tooltipPaddingY * 2;
+  const tooltipCenterY = position.y - tooltipOffsetY - tooltipHeight / 2;
+  const tooltipColors = context.colorMode === 'dark'
+    ? {
+        fill: '#F8FAFC',
+        stroke: '#CBD5E1',
+        text: '#0F172A',
+      }
+    : {
+        fill: '#0F172A',
+        stroke: '#334155',
+        text: '#F8FAFC',
+      };
 
   return (
     <g
@@ -350,10 +555,13 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
           x={position.x}
           y={position.y}
           fontSize={labelFontSize}
-          fill={context.colorMode === 'dark' ? '#F9FAFB' : '#111827'}
+          fill={labelFill}
           fontWeight="bold"
           textAnchor="middle"
           dominantBaseline="central"
+          stroke={labelStroke}
+          strokeWidth={isRotateAngleLabel ? 1 / context.viewport.zoom : undefined}
+          paintOrder={isRotateAngleLabel ? 'stroke fill' : undefined}
           style={{ pointerEvents: 'none' }}
         >
           {normalizedLabel}
@@ -363,24 +571,25 @@ const GizmoHandleRenderer = memo(function GizmoHandleRenderer({
       {hovered && !isActive && tooltipText && !normalizedLabel && (
         <g style={{ pointerEvents: 'none' }}>
           <rect
-            x={position.x - tooltipText.length * tooltipFontSize * 0.3}
-            y={position.y - tooltipOffsetY - tooltipFontSize * 1.4}
-            width={tooltipText.length * tooltipFontSize * 0.6}
-            height={tooltipFontSize * 1.4}
+            x={position.x - tooltipWidth / 2}
+            y={tooltipCenterY - tooltipHeight / 2}
+            width={tooltipWidth}
+            height={tooltipHeight}
             rx={3 / context.viewport.zoom}
-            fill={context.colorMode === 'dark' ? '#1F2937' : '#F9FAFB'}
-            stroke={context.colorMode === 'dark' ? '#4B5563' : '#D1D5DB'}
+            fill={tooltipColors.fill}
+            stroke={tooltipColors.stroke}
             strokeWidth={1 / context.viewport.zoom}
-            opacity={0.95}
+            opacity={0.98}
           />
           <text
             x={position.x}
-            y={position.y - tooltipOffsetY - tooltipFontSize * 0.35}
+            y={tooltipCenterY}
             fontSize={tooltipFontSize}
-            fill={context.colorMode === 'dark' ? '#E5E7EB' : '#374151'}
+            fill={tooltipColors.text}
             textAnchor="middle"
-            dominantBaseline="central"
+            dominantBaseline="middle"
             fontFamily="system-ui, -apple-system, sans-serif"
+            fontWeight="600"
           >
             {tooltipText}
           </text>
@@ -528,7 +737,7 @@ export const GizmoOverlay = memo(function GizmoOverlay({
       <defs>
         {/* Arrow marker used by trajectory lines */}
         <marker
-          id="gizmo-arrow"
+          id="gizmo-arrow-light"
           viewBox="0 0 10 10"
           refX="9"
           refY="5"
@@ -536,7 +745,18 @@ export const GizmoOverlay = memo(function GizmoOverlay({
           markerHeight="6"
           orient="auto-start-reverse"
         >
-          <path d="M 0 0 L 10 5 L 0 10 Z" fill="currentColor" />
+          <path d="M 0 0 L 10 5 L 0 10 Z" fill="#111827" />
+        </marker>
+        <marker
+          id="gizmo-arrow-dark"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 Z" fill="#F8FAFC" />
         </marker>
         {/* Generic arrowhead (used by scene/typography gizmos) */}
         <marker
@@ -602,4 +822,3 @@ function getCursorForHandle(type: GizmoHandle['type']): string {
       return 'pointer';
   }
 }
-

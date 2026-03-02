@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import type { PluginDefinition, PluginContextFull, SnapOverlayConfig } from '../../types/plugins';
 import { createToolPanel } from '../../utils/pluginFactories';
@@ -27,6 +28,78 @@ import { registerSnapProvider, unregisterSnapProvider } from '../../snap/snapPro
 import { registerDragHandler, unregisterDragHandler } from '../../canvas/interactions/dragHandlerRegistry';
 
 import type { SnapPointCache } from './slice';
+
+/**
+ * Module-level component extracted from the `render` callback to avoid
+ * re-creating the component definition on every render (which would cause
+ * React to remount it, losing internal state and causing unnecessary DOM churn).
+ */
+const MeasureOverlayWrapper: React.FC<{
+  activePlugin: string | null;
+  viewport: { zoom: number; panX: number; panY: number };
+  precision: number;
+}> = ({ activePlugin, viewport, precision }) => {
+  const measureState = useCanvasStore(state => (state as CanvasStore & MeasurePluginSlice).measure);
+
+  if (activePlugin !== 'measure') {
+    return null;
+  }
+
+  if (!measureState) {
+    return null;
+  }
+
+  const { measurement, showInfo, units, startSnapInfo, currentSnapInfo } = measureState;
+
+  const canvasSize = { width: window.innerWidth, height: window.innerHeight };
+
+  const snapFeedback = currentSnapInfo ? {
+    message: getSnapPointLabel(currentSnapInfo.type),
+    visible: true
+  } : undefined;
+
+  // Show feedback overlay during hover (before first click) when hovering over snap point
+  if (!measurement?.isActive && !(measurement?.startPoint && measurement?.endPoint)) {
+    if (currentSnapInfo) {
+      const snapPoint = currentSnapInfo.point;
+      return (
+        <FeedbackOverlay
+          viewport={viewport}
+          canvasSize={canvasSize}
+          pointPositionFeedback={{ x: Math.round(snapPoint.x), y: Math.round(snapPoint.y), visible: true }}
+          customFeedback={snapFeedback}
+        />
+      );
+    }
+    return null;
+  }
+
+  const endPoint = measurement.endPoint;
+  const mouseX = endPoint ? Math.round(endPoint.x) : 0;
+  const mouseY = endPoint ? Math.round(endPoint.y) : 0;
+
+  return (
+    <>
+      <MeasureOverlay
+        measurement={measurement}
+        viewport={viewport}
+        startSnapInfo={startSnapInfo ?? null}
+        currentSnapInfo={currentSnapInfo ?? null}
+        units={units ?? 'px'}
+        showInfo={showInfo ?? true}
+        precision={precision}
+      />
+      {measurement.isActive && (
+        <FeedbackOverlay
+          viewport={viewport}
+          canvasSize={canvasSize}
+          pointPositionFeedback={{ x: mouseX, y: mouseY, visible: true }}
+          customFeedback={snapFeedback}
+        />
+      )}
+    </>
+  );
+};
 
 type MeasurePluginApi = {
   startMeasurement: (point: Point, snapInfo?: SnapInfo | null) => void;
@@ -371,75 +444,14 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
       id: 'measure-overlay',
       placement: 'foreground',
       render: (context) => {
-        const MeasureOverlayWrapper = () => {
-          const measureState = useCanvasStore(state => (state as CanvasStore & MeasurePluginSlice).measure);
-          const { activePlugin, settings } = context;
-
-          if (activePlugin !== 'measure') {
-            return null;
-          }
-
-          if (!measureState) {
-            return null;
-          }
-
-          const { measurement, showInfo, units, startSnapInfo, currentSnapInfo } = measureState;
-          const precision = settings?.keyboardMovementPrecision ?? 1;
-
-          // Memoize canvasSize
-          const canvasSize = { width: window.innerWidth, height: window.innerHeight };
-
-          // Get snap feedback from currentSnapInfo (for both hover and drawing states)
-          const snapFeedback = currentSnapInfo ? {
-            message: getSnapPointLabel(currentSnapInfo.type),
-            visible: true
-          } : undefined;
-
-          // Show feedback overlay during hover (before first click) when hovering over snap point
-          if (!measurement?.isActive && !(measurement?.startPoint && measurement?.endPoint)) {
-            if (currentSnapInfo) {
-              const snapPoint = currentSnapInfo.point;
-              return (
-                <FeedbackOverlay
-                  viewport={context.viewport}
-                  canvasSize={canvasSize}
-                  pointPositionFeedback={{ x: Math.round(snapPoint.x), y: Math.round(snapPoint.y), visible: true }}
-                  customFeedback={snapFeedback}
-                />
-              );
-            }
-            return null;
-          }
-
-          // Get current endpoint for position display (during measurement)
-          const endPoint = measurement.endPoint;
-          const mouseX = endPoint ? Math.round(endPoint.x) : 0;
-          const mouseY = endPoint ? Math.round(endPoint.y) : 0;
-
-          return (
-            <>
-              <MeasureOverlay
-                measurement={measurement}
-                viewport={context.viewport}
-                startSnapInfo={startSnapInfo ?? null}
-                currentSnapInfo={currentSnapInfo ?? null}
-                units={units ?? 'px'}
-                showInfo={showInfo ?? true}
-                precision={precision}
-              />
-              {measurement.isActive && (
-                <FeedbackOverlay
-                  viewport={context.viewport}
-                  canvasSize={canvasSize}
-                  pointPositionFeedback={{ x: mouseX, y: mouseY, visible: true }}
-                  customFeedback={snapFeedback}
-                />
-              )}
-            </>
-          );
-        };
-
-        return <MeasureOverlayWrapper />;
+        const precision = context.settings?.keyboardMovementPrecision ?? 1;
+        return (
+          <MeasureOverlayWrapper
+            activePlugin={context.activePlugin}
+            viewport={context.viewport}
+            precision={precision}
+          />
+        );
       },
     },
   ],

@@ -2,6 +2,7 @@
 import React from 'react';
 import { useColorMode } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useShallow } from 'zustand/react/shallow';
 import type { CanvasLayerContext } from '../../types/plugins';
 import type { PathElement } from '../../types';
 import type { WireframePluginSlice } from '../wireframe/slice';
@@ -17,7 +18,15 @@ const getEffectiveStrokeColor = (path: PathElement['data']): string => {
 
 const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) => {
   const wireframe = useCanvasStore((state) => (state as unknown as WireframePluginSlice).wireframe);
-  const { animations = [], animationState } = useCanvasStore((state) => state as unknown as AnimationPluginSlice);
+  const { animations, animationState } = useCanvasStore(
+    useShallow((state) => {
+      const s = state as unknown as AnimationPluginSlice;
+      return {
+        animations: s.animations ?? [],
+        animationState: s.animationState,
+      };
+    })
+  );
   const { colorMode } = useColorMode();
   const { sortedElements, isElementHidden } = context;
   const nodes: React.ReactNode[] = [];

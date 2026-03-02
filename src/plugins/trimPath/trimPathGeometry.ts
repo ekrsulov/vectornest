@@ -708,7 +708,8 @@ export function findSegmentAtPoint(
 
       tempPath.remove();
     } catch (_error) {
-      // Silently continue if error occurs
+      // Paper.js may throw on degenerate path segments (zero-length curves, NaN coords).
+      // Skip this segment and continue checking others rather than aborting the search.
     }
   }
 

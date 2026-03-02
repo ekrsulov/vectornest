@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasDecorator, CanvasDecoratorContext } from '../../types/interaction';
@@ -19,6 +20,25 @@ import { createPluginSlice } from '../../utils/pluginUtils';
 registerStateKeys('grid', ['grid'], 'temporal');
 
 const GridPanelComponent = React.lazy(() => import('./GridPanel'));
+
+/**
+ * Module-level component extracted from the `render` callback to avoid
+ * re-creating the component definition on every render (which would cause
+ * React to remount it, losing internal state and causing unnecessary DOM churn).
+ */
+const GridOverlayWrapper: React.FC<{
+  viewport: { zoom: number; panX: number; panY: number };
+  canvasSize: { width: number; height: number };
+}> = ({ viewport, canvasSize }) => {
+  const grid = useCanvasStore(state => (state as CanvasStore & GridPluginSlice).grid);
+  return (
+    <GridOverlay
+      grid={grid ?? { enabled: false, type: 'square', spacing: 20, showRulers: false }}
+      viewport={viewport}
+      canvasSize={canvasSize}
+    />
+  );
+};
 
 const GRID_ENABLED_TOGGLE_ID = 'grid-enabled';
 const GRID_RULERS_TOGGLE_ID = 'grid-show-rulers';
@@ -104,18 +124,7 @@ export const gridPlugin: PluginDefinition<CanvasStore> = {
       id: 'grid-overlay',
       placement: 'background',
       render: ({ viewport, canvasSize }) => {
-        // Access grid state from store instead of context
-        const GridOverlayWrapper = () => {
-          const grid = useCanvasStore(state => (state as CanvasStore & GridPluginSlice).grid);
-          return (
-            <GridOverlay
-              grid={grid ?? { enabled: false, type: 'square', spacing: 20, showRulers: false }}
-              viewport={viewport}
-              canvasSize={canvasSize}
-            />
-          );
-        };
-        return <GridOverlayWrapper />;
+        return <GridOverlayWrapper viewport={viewport} canvasSize={canvasSize} />;
       },
     },
   ],

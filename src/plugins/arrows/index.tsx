@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useMemo } from 'react';
 import type { PluginDefinition, PluginContextFull, SnapOverlayConfig } from '../../types/plugins';
 import { createToolPanel } from '../../utils/pluginFactories';
@@ -66,6 +67,90 @@ const arrowsSliceFactory = createPluginSlice(createArrowsPluginSlice);
 const ArrowsPanel = React.lazy(() =>
   import('./ArrowsPanel').then((module) => ({ default: module.ArrowsPanel }))
 );
+
+/**
+ * Module-level component extracted from the `render` callback to avoid
+ * re-creating the component definition on every render (which would cause
+ * React to remount it, losing internal state and causing unnecessary DOM churn).
+ */
+const ArrowsOverlayWrapper: React.FC<{
+  activePlugin: string | null;
+  viewport: { zoom: number; panX: number; panY: number };
+}> = ({ activePlugin, viewport }) => {
+  const arrowsState = useCanvasStore(state => (state as CanvasStore & ArrowsPluginSlice).arrows);
+  const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
+  const defaultStrokeWidth = useCanvasStore(state => state.style?.strokeWidth ?? 2);
+  const precision = useCanvasStore(state => state.settings?.keyboardMovementPrecision ?? 1);
+  const elements = useCanvasStore(state => state.elements);
+
+  const canvasSize = useMemo(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight
+  }), []);
+
+  const obstacles: Bounds[] = useMemo(() => {
+    if (!arrowsState?.config?.avoidObstacles) {
+      return [];
+    }
+    return elements
+      .filter(el => el.type === 'path')
+      .map(el => {
+        const pathData = el.data as PathData;
+        return measurePath(pathData.subPaths, pathData.strokeWidth ?? 1, viewport.zoom);
+      })
+      .filter((bounds): bounds is NonNullable<typeof bounds> => bounds !== null);
+  }, [arrowsState?.config?.avoidObstacles, elements, viewport.zoom]);
+
+  if (activePlugin !== 'arrows') {
+    return null;
+  }
+
+  const currentSnapInfo = arrowsState?.currentSnapInfo;
+  const snapFeedback = currentSnapInfo ? {
+    message: getSnapPointLabel(currentSnapInfo.type),
+    visible: true
+  } : undefined;
+
+  if (!arrowsState?.drawing?.isDrawing) {
+    if (currentSnapInfo) {
+      const snapPoint = currentSnapInfo.point;
+      return (
+        <FeedbackOverlay
+          viewport={viewport}
+          canvasSize={canvasSize}
+          pointPositionFeedback={{ x: Math.round(snapPoint.x), y: Math.round(snapPoint.y), visible: true }}
+          customFeedback={snapFeedback}
+        />
+      );
+    }
+    return null;
+  }
+
+  const endPoint = arrowsState.drawing.endPoint;
+  const mouseX = endPoint ? Math.round(endPoint.x) : 0;
+  const mouseY = endPoint ? Math.round(endPoint.y) : 0;
+
+  return (
+    <>
+      <ArrowsOverlay
+        startPoint={arrowsState.drawing.startPoint}
+        endPoint={arrowsState.drawing.endPoint}
+        config={arrowsState.config}
+        color={defaultStrokeColor}
+        strokeWidth={defaultStrokeWidth}
+        viewport={viewport}
+        precision={precision}
+        obstacles={obstacles}
+      />
+      <FeedbackOverlay
+        viewport={viewport}
+        canvasSize={canvasSize}
+        pointPositionFeedback={{ x: mouseX, y: mouseY, visible: true }}
+        customFeedback={snapFeedback}
+      />
+    </>
+  );
+};
 
 // Global listener flags
 let listenersInstalled = false;
@@ -438,89 +523,12 @@ export const arrowsPlugin: PluginDefinition<CanvasStore> = {
       id: 'arrows-overlay',
       placement: 'foreground',
       render: (context) => {
-        const ArrowsOverlayWrapper = () => {
-          const arrowsState = useCanvasStore(state => (state as CanvasStore & ArrowsPluginSlice).arrows);
-          const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
-          const defaultStrokeWidth = useCanvasStore(state => state.style?.strokeWidth ?? 2);
-          const precision = useCanvasStore(state => state.settings?.keyboardMovementPrecision ?? 1);
-          const elements = useCanvasStore(state => state.elements);
-          const { activePlugin, viewport } = context;
-
-          // Memoize canvasSize
-          const canvasSize = useMemo(() => ({
-            width: window.innerWidth,
-            height: window.innerHeight
-          }), []);
-
-          // Calculate obstacles when avoidObstacles is enabled
-          const obstacles: Bounds[] = useMemo(() => {
-            if (!arrowsState?.config?.avoidObstacles) {
-              return [];
-            }
-            return elements
-              .filter(el => el.type === 'path')
-              .map(el => {
-                const pathData = el.data as PathData;
-                return measurePath(pathData.subPaths, pathData.strokeWidth ?? 1, viewport.zoom);
-              })
-              .filter((bounds): bounds is NonNullable<typeof bounds> => bounds !== null);
-          }, [arrowsState?.config?.avoidObstacles, elements, viewport.zoom]);
-
-          if (activePlugin !== 'arrows') {
-            return null;
-          }
-
-          // Get snap feedback from currentSnapInfo (for both hover and drawing states)
-          const currentSnapInfo = arrowsState?.currentSnapInfo;
-          const snapFeedback = currentSnapInfo ? {
-            message: getSnapPointLabel(currentSnapInfo.type),
-            visible: true
-          } : undefined;
-
-          // Show feedback overlay during hover (before first click) when hovering over snap point
-          if (!arrowsState?.drawing?.isDrawing) {
-            if (currentSnapInfo) {
-              const snapPoint = currentSnapInfo.point;
-              return (
-                <FeedbackOverlay
-                  viewport={viewport}
-                  canvasSize={canvasSize}
-                  pointPositionFeedback={{ x: Math.round(snapPoint.x), y: Math.round(snapPoint.y), visible: true }}
-                  customFeedback={snapFeedback}
-                />
-              );
-            }
-            return null;
-          }
-
-          // Get current endpoint for mouse position display (during drawing)
-          const endPoint = arrowsState.drawing.endPoint;
-          const mouseX = endPoint ? Math.round(endPoint.x) : 0;
-          const mouseY = endPoint ? Math.round(endPoint.y) : 0;
-
-          return (
-            <>
-              <ArrowsOverlay
-                startPoint={arrowsState.drawing.startPoint}
-                endPoint={arrowsState.drawing.endPoint}
-                config={arrowsState.config}
-                color={defaultStrokeColor}
-                strokeWidth={defaultStrokeWidth}
-                viewport={viewport}
-                precision={precision}
-                obstacles={obstacles}
-              />
-              <FeedbackOverlay
-                viewport={viewport}
-                canvasSize={canvasSize}
-                pointPositionFeedback={{ x: mouseX, y: mouseY, visible: true }}
-                customFeedback={snapFeedback}
-              />
-            </>
-          );
-        };
-
-        return <ArrowsOverlayWrapper />;
+        return (
+          <ArrowsOverlayWrapper
+            activePlugin={context.activePlugin}
+            viewport={context.viewport}
+          />
+        );
       },
     },
   ],

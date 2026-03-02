@@ -47,7 +47,9 @@ interface GlobalOverlayEntry {
  */
 export const GlobalOverlays: React.FC<GlobalOverlaysProps> = ({ isIOS = false }) => {
   usePluginRegistrationVersion();
-  useCanvasStore((state) => state);
+  // Subscribe only to activePlugin — all overlay conditions depend solely on this value.
+  // Previously subscribed to the entire state, causing re-renders on every store change.
+  useCanvasStore((state) => state.activePlugin);
 
   const globalOverlays = pluginManager.getGlobalOverlays() as GlobalOverlayEntry[];
 

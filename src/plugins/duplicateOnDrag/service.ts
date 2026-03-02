@@ -131,7 +131,8 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
         try {
           cleanup();
         } catch (_err) {
-          // ignore
+          // Cleanup may fail if DOM elements were already removed (e.g., during hot reload or unmount race).
+          // Safe to ignore since the resources are being disposed anyway.
         }
         currentState = null;
       },

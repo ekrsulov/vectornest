@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Flower2 } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createKaleidoscopeSlice } from './slice';
-import { KaleidoscopePanel } from './KaleidoscopePanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('kaleidoscope', ['kaleidoscope'], 'temporal');
+
+const KaleidoscopePanel = React.lazy(() =>
+  import('./KaleidoscopePanel').then((module) => ({ default: module.KaleidoscopePanel }))
+);
 
 export const kaleidoscopePlugin: PluginDefinition<CanvasStore> = {
   id: 'kaleidoscope',

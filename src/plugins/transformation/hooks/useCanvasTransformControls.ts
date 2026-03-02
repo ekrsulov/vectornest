@@ -7,10 +7,11 @@ import { computeTransformDeltas } from '../../../utils/animationTransformDelta';
 import { measurePath, measureSubpathBounds } from '../../../utils/measurementUtils';
 import { getGroupBounds } from '../../../canvas/geometry/CanvasGeometryService';
 import { calculateScaledStrokeWidth, transformCommands } from '../../../utils/sharedTransformUtils';
-import { buildElementMap } from '../../../utils';
+import { buildElementMap } from '../../../utils/elementMapUtils';
 import { elementContributionRegistry } from '../../../utils/elementContributionRegistry';
 import { getAllElementsShareSameParentGroup } from '../../basePluginDefinitions';
 import { getParentCumulativeTransformMatrix } from '../../../utils/elementTransformUtils';
+import { cloneValue } from '../../../utils/clone';
 import {
   IDENTITY_MATRIX,
   applyToPoint,
@@ -237,7 +238,7 @@ export const useCanvasTransformControls = () => {
 
     return {
       animationTargetIds: collectAnimationTargetIds(state),
-      elementsBeforeTransform: JSON.parse(JSON.stringify(state.elements)),
+      elementsBeforeTransform: cloneValue(state.elements),
     };
   }, [collectAnimationTargetIds]);
 
@@ -316,13 +317,13 @@ export const useCanvasTransformControls = () => {
 
         // Store original state of all descendant elements
         const originalElementsData = new Map<string, CanvasElement>();
-        originalElementsData.set(realGroupId, JSON.parse(JSON.stringify(element as CanvasElement)));
+        originalElementsData.set(realGroupId, cloneValue(element as CanvasElement));
         const collectDescendants = (groupEl: GroupElement) => {
           const childIds = (groupEl.data as { childIds: string[] }).childIds;
           childIds.forEach((childId) => {
             const child = elementMap.get(childId);
             if (child) {
-              originalElementsData.set(childId, JSON.parse(JSON.stringify(child)));
+              originalElementsData.set(childId, cloneValue(child));
               if (child.type === 'group') {
                 collectDescendants(child as GroupElement);
               }
@@ -418,7 +419,7 @@ export const useCanvasTransformControls = () => {
           visited.add(id);
           const el = elementMap.get(id);
           if (!el) return;
-          originalElementsData.set(id, JSON.parse(JSON.stringify(el)));
+          originalElementsData.set(id, cloneValue(el));
 
           if (el.type === 'group') {
             const childIds = (el.data as { childIds: string[] }).childIds ?? [];

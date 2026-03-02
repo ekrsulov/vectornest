@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createStippleBrushPluginSlice, type StippleBrushPluginSlice } from './slice';
 import React from 'react';
-import { StippleBrushPanel } from './StippleBrushPanel';
 import { StippleBrushOverlay } from './StippleBrushOverlay';
 import { createStippleDots } from './stippleBrushUtils';
 import { logger } from '../../utils/logger';
+
+const StippleBrushPanel = React.lazy(() =>
+    import('./StippleBrushPanel').then((module) => ({ default: module.StippleBrushPanel }))
+);
 
 export const stippleBrushPlugin: PluginDefinition<CanvasStore> = {
     id: 'stippleBrush',

@@ -6,24 +6,28 @@ import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
 import { createPluginSlice } from '../../utils/pluginUtils';
-import { NativeShapesPanel } from './NativeShapesPanel';
 import { createNativeShapesSlice, type NativeShapesPluginSlice } from './slice';
 import { NativeShapesRenderer } from './NativeShapesRenderer';
 import { isMonoColor, transformMonoColor } from '../../utils/colorModeSyncUtils';
 import type { NativeShapeElement } from './types';
 import type { ElementContribution } from '../../utils/elementContributionRegistry';
-import { BlockingOverlay, FeedbackOverlay } from '../../overlays';
+import { BlockingOverlay } from '../../overlays/BlockingOverlay';
+import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
 import { NativeShapesPreview } from './NativeShapesPreview';
 import { ShapeCreationController } from '../shape/ShapeCreationController';
 import { getEffectiveShift } from '../../utils/effectiveShift';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { Point, Viewport } from '../../types';
 import { normalizeMarkerId } from '../../utils/markerUtils';
+import { cloneValue } from '../../utils/clone';
 
 import { shapeToNativeShape } from './importer';
 import { NativeShapeGizmoOverlay } from './gizmos/NativeShapeGizmoOverlay';
 
 type AffineMatrix = [number, number, number, number, number, number];
+const NativeShapesPanel = React.lazy(() =>
+  import('./NativeShapesPanel').then((module) => ({ default: module.NativeShapesPanel }))
+);
 const identityMatrix = (): AffineMatrix => [1, 0, 0, 1, 0, 0];
 const multiplyMatrix = (m1: AffineMatrix, m2: AffineMatrix): AffineMatrix => ([
   m1[0] * m2[0] + m1[2] * m2[1],
@@ -475,7 +479,7 @@ const nativeShapeContribution: ElementContribution<NativeShapeElement> = {
       },
     };
   },
-  clone: (el) => ({ ...el, data: JSON.parse(JSON.stringify(el.data)) }),
+  clone: (el) => ({ ...el, data: cloneValue(el.data) }),
   serialize: (el) => {
     const d = el.data;
     // Use precision for consistent decimal formatting

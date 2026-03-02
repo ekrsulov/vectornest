@@ -2,7 +2,7 @@ import React from 'react';
 import { IconButton as ChakraIconButton } from '@chakra-ui/react';
 import type { LucideIcon } from 'lucide-react';
 import ConditionalTooltip from './ConditionalTooltip';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface PanelActionButtonProps {
   label: string;

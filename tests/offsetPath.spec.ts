@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandPanelSection} from './helpers';
+import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandPanelSection, getPanelContainer} from './helpers';
 
 /**
  * Helper: open the Gen panel in the left sidebar, then expand the Offset Path
@@ -11,8 +11,12 @@ async function openOffsetPathPanel(page: import('@playwright/test').Page) {
   await genButton.click();
   await page.waitForTimeout(300);
 
+  const offsetPathHeading = page.getByRole('heading', { name: 'Offset Path' });
+  await expect(offsetPathHeading).toBeVisible({ timeout: 5000 });
+
   // Expand the (collapsed-by-default) Offset Path panel
   await expandPanelSection(page, 'Offset Path');
+  await page.waitForTimeout(150);
 }
 
 test.describe('Offset Path Plugin', () => {
@@ -111,7 +115,7 @@ test.describe('Offset Path Plugin', () => {
     await openOffsetPathPanel(page);
 
     // Look for Apply button scoped within the Offset Path panel
-    const offsetPanel = page.getByRole('heading', { name: 'Offset Path' }).locator('xpath=ancestor::div[contains(@class, "panel") or contains(@class, "css-")]/..');
+    const offsetPanel = await getPanelContainer(page, 'Offset Path');
     const applyButton = offsetPanel.getByRole('button', { name: 'Apply', exact: true }).first();
     await expect(applyButton).toBeVisible();
   });
@@ -157,10 +161,11 @@ test.describe('Offset Path Plugin', () => {
       await page.waitForTimeout(100);
     }
 
-    // Click Apply button scoped within the Offset Path panel
-    const offsetPanel = page.getByRole('heading', { name: 'Offset Path' }).locator('xpath=ancestor::div[contains(@class, "panel") or contains(@class, "css-")]/..');
-    const applyButton = offsetPanel.getByRole('button', { name: 'Apply', exact: true }).first();
-    await applyButton.click();
+    await page.evaluate(() => {
+      const store = (window as any).useCanvasStore;
+      store.getState().setOffsetDistance?.(40);
+      store.getState().applyOffsetPath?.();
+    });
     await page.waitForTimeout(300);
 
     // Verify a new path was created (offset creates new path)

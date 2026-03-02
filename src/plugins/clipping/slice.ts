@@ -111,7 +111,7 @@ export const createClippingSlice: StateCreator<CanvasStore, [], [], ClippingPlug
     const safeWidth = ensurePositiveDimension(width);
     const safeHeight = ensurePositiveDimension(height);
 
-    const storedPathData = JSON.parse(JSON.stringify(pathData)) as PathData;
+    const storedPathData = structuredClone(pathData);
     const normalizedPathData = translatePathData(storedPathData, -bounds.minX, -bounds.minY);
     const clip = {
       id: makeClipId(),
@@ -142,7 +142,7 @@ export const createClippingSlice: StateCreator<CanvasStore, [], [], ClippingPlug
     const safeWidth = ensurePositiveDimension(width);
     const safeHeight = ensurePositiveDimension(height);
 
-    const storedPathData = JSON.parse(JSON.stringify(pathData)) as PathData;
+    const storedPathData = structuredClone(pathData);
     const normalizedPathData = translatePathData(storedPathData, -bounds.minX, -bounds.minY);
     const clip = {
       id: makeClipId(),

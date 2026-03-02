@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createZigzagToolPluginSlice, type ZigzagToolPluginSlice } from './slice';
 import React from 'react';
-import { ZigzagToolPanel } from './ZigzagToolPanel';
 import { ZigzagToolOverlay } from './ZigzagToolOverlay';
 import { createZigzagPath } from './zigzagUtils';
 import { logger } from '../../utils/logger';
+
+const ZigzagToolPanel = React.lazy(() =>
+    import('./ZigzagToolPanel').then((module) => ({ default: module.ZigzagToolPanel }))
+);
 
 export const zigzagToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'zigzagTool',

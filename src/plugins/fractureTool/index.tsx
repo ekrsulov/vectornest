@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createFractureToolPluginSlice, type FractureToolPluginSlice } from './slice';
 import React from 'react';
-import { FractureToolPanel } from './FractureToolPanel';
 import { FractureToolOverlay } from './FractureToolOverlay';
 import { fractureElement } from './fractureUtils';
 import { logger } from '../../utils/logger';
+
+const FractureToolPanel = React.lazy(() =>
+    import('./FractureToolPanel').then((module) => ({ default: module.FractureToolPanel }))
+);
 
 export const fractureToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'fractureTool',

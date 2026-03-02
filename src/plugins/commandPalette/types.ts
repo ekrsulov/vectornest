@@ -3,7 +3,11 @@
  * The command palette provides VSCode-style quick command execution (⌘K / Ctrl+K).
  */
 
-import type { ComponentType } from 'react';
+import type { ComponentType, LazyExoticComponent } from 'react';
+
+export type PalettePanelComponent =
+  | ComponentType
+  | LazyExoticComponent<ComponentType>;
 
 /** A single executable command in the palette */
 export interface PaletteCommand {
@@ -24,7 +28,7 @@ export interface PaletteCommand {
   /** Search keywords (improves fuzzy matching) */
   keywords?: string[];
   /** Optional panel component to render in a modal (for Gen/Audit/Prefs/Lib panels) */
-  panelComponent?: ComponentType;
+  panelComponent?: PalettePanelComponent;
   /** Label shown in the panel modal header */
   panelLabel?: string;
   /** Panel category, used to adapt modal rendering (e.g. 'prefs' shows full panel header) */

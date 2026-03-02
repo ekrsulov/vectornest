@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { Search } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createElementInspectorSlice } from './slice';
-import { ElementInspectorPanel } from './ElementInspectorPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('elementInspector', ['elementInspector'], 'temporal');
+const ElementInspectorPanel = lazy(() =>
+  import('./ElementInspectorPanel').then((module) => ({ default: module.ElementInspectorPanel }))
+);
 
 export const elementInspectorPlugin: PluginDefinition<CanvasStore> = {
   id: 'elementInspector',

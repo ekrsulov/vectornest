@@ -6,12 +6,12 @@ import {
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Bold, Italic } from 'lucide-react';
-import { getAvailableFonts } from '../../utils';
+import { getAvailableFonts } from '../../utils/fontDetectionUtils';
 import { FontSelector } from '../../ui/FontSelector';
 import { ToggleButton } from '../../ui/ToggleButton';
 import { NumberInput } from '../../ui/NumberInput';
 import { Panel } from '../../ui/Panel';
-import { logger } from '../../utils';
+import { logger } from '../../utils/logger';
 import { createPropertyUpdater, createPropertyGetters, preventSpacebarPropagation } from '../../utils/panelHelpers';
 
 interface TextPanelProps { hideTitle?: boolean }

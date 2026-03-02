@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, LazyExoticComponent } from 'react';
 import type { Point, CanvasElement, ElementType, AppSettings } from '.';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
 import type { Bounds } from '../utils/boundsUtils';
@@ -8,16 +8,21 @@ import type { DragContext } from './extensionPoints';
 import type {
   PluginCanvasLayerContribution,
   PluginCanvasOverlayContribution,
-  PluginProviderContribution as CanonicalPluginProviderContribution,
 } from './ui-contributions';
 import type { SelectionContextInfo } from './selection';
 import type { PluginStoreApi } from './plugin-context';
 import type { FillPropertiesOptional, StrokePropertiesOptional } from './style';
 
-export interface PluginUIContribution<TProps = Record<string, unknown>> {
+export interface PluginOverlayConditionContext {
+  activePlugin: string | null;
+  state: Record<string, unknown>;
+}
+
+export interface PluginOverlayContribution<TProps = Record<string, unknown>> {
   id: string;
   component: ComponentType<TProps>;
-  placement?: 'tool' | 'global';
+  placement: 'global';
+  condition?: (ctx: PluginOverlayConditionContext) => boolean;
 }
 
 export interface SvgStructureAttributeSnapshot {
@@ -105,7 +110,7 @@ export interface SvgDefsEditor<TStore extends object = object> {
 export interface PluginPanelContribution<TProps = Record<string, unknown>> {
   id: string;
   targetPlugin: string;
-  component: ComponentType<TProps>;
+  component: ComponentType<TProps> | LazyExoticComponent<ComponentType<TProps>>;
   order?: number;
 }
 
@@ -194,8 +199,6 @@ export interface SidebarToolbarButtonContribution {
   order?: number;
 }
 
-export type PluginProviderContribution = CanonicalPluginProviderContribution;
-
 export type CanvasOverlayContribution = PluginCanvasOverlayContribution;
 
 export interface FloatingContextMenuAction {
@@ -221,4 +224,3 @@ export interface PluginIdentityMetadata {
   pathCursorMode?: 'select' | 'default' | 'pointer';
   mobileFixed?: boolean;
 }
-

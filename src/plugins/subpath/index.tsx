@@ -1,10 +1,9 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createConditionalToolPanel } from '../../utils/pluginFactories';
 import { Route } from 'lucide-react';
 import { createSubpathPluginSlice } from './slice';
-import { SubPathOperationsPanel } from './SubPathOperationsPanel';
-import { EditorPanel } from '../../sidebar/panels/EditorPanel';
 import { SubpathOverlay } from './SubpathOverlay';
 import type { PathData } from '../../types';
 import { performPathSimplify, performSubPathReverse, performSubPathJoin } from './actions';
@@ -19,6 +18,12 @@ type GridSnapStore = CanvasStore & {
 };
 
 const subpathSliceFactory = createPluginSlice(createSubpathPluginSlice);
+const EditorPanel = React.lazy(() =>
+  import('../../sidebar/panels/EditorPanel').then((module) => ({ default: module.EditorPanel }))
+);
+const SubPathOperationsPanel = React.lazy(() =>
+  import('./SubPathOperationsPanel').then((module) => ({ default: module.SubPathOperationsPanel }))
+);
 
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',

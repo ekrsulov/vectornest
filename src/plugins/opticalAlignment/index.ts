@@ -1,16 +1,19 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createSelectModePanel } from '../../utils/pluginFactories';
 import { pluginManager } from '../../utils/pluginManager';
 import { createOpticalAlignmentSlice } from './slice';
 import type { OpticalAlignmentSlice } from './slice';
-import { OpticalAlignmentPanel } from './OpticalAlignmentPanel';
 import { Target } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 
 type OpticalAlignmentStore = CanvasStore & OpticalAlignmentSlice;
 
 const opticalAlignmentSliceFactory = createPluginSlice(createOpticalAlignmentSlice);
+const OpticalAlignmentPanel = React.lazy(() =>
+  import('./OpticalAlignmentPanel').then((module) => ({ default: module.OpticalAlignmentPanel }))
+);
 export const opticalAlignmentPlugin: PluginDefinition<CanvasStore> = {
   id: 'opticalAlignment',
   metadata: {
@@ -59,4 +62,3 @@ export const opticalAlignmentPlugin: PluginDefinition<CanvasStore> = {
     ),
   ],
 };
-

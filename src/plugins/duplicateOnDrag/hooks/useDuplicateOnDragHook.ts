@@ -1,7 +1,7 @@
 import type { PluginHooksContext } from '../../../types/plugins';
 import { useDuplicateOnDrag } from './useDuplicateOnDrag';
 import { pluginManager } from '../../../utils/pluginManager';
-import { useEnabledPlugins } from '../../../hooks';
+import { useEnabledPlugins } from '../../../hooks/useEnabledPlugins';
 
 /**
  * Hook wrapper for duplicate on drag functionality.

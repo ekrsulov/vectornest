@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { CanvasStore } from '../../store/canvasStore';
 import { useSidebarContext } from '../../contexts/SidebarContext';
-import { useEnabledPlugins } from '../../hooks';
+import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
 import {
   getPanelConfigs,
 } from './panelConfig';

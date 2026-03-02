@@ -3,18 +3,18 @@
  * Provides a library of filter presets that can be applied to elements
  */
 
+import { lazy } from 'react';
 import { Filter } from 'lucide-react';
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { CanvasElement } from '../../types';
 import { createLibraryFiltersSlice, type LibraryFiltersSlice, type FilterDefinition } from './slice';
 import type { FilterPrimitive } from './types';
-import { FiltersPanel } from './FiltersPanel';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
 import { renderFilterNode } from './renderer';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { generateShortId } from '../../utils/idGenerator';
-import { buildElementMap } from '../../utils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 import { FILTER_PRESETS } from './presets';
 
 registerStateKeys('libraryFilters', ['libraryFilters'], 'persist');
@@ -22,6 +22,9 @@ registerStateKeys('libraryFilters', ['libraryFilters'], 'persist');
 const libraryFiltersSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
   state: createLibraryFiltersSlice(set, get, api),
 });
+const FiltersPanel = lazy(() =>
+  import('./FiltersPanel').then((module) => ({ default: module.FiltersPanel }))
+);
 
 const escapeAttr = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 const safeChildIds = (data: { childIds?: string[] } | null | undefined): string[] => (

@@ -9,13 +9,12 @@
  * - Zone 3: Preset Catalog — unified searchable preset browser
  * - Batch actions — stagger, chain, apply-to-all for multi-selection
  */
-
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { createAnimationManagerSlice } from './slice';
-import { AnimationManagerPanel } from './AnimationManagerPanel';
 
 // Persistence: favorites, recents, and settings survive page reloads.
 // Selection/editor UI state uses temporal for undo/redo only.
@@ -23,6 +22,10 @@ registerStateKeys(
   'animationManager',
   ['animationManager'],
   'both',
+);
+
+const AnimationManagerPanel = React.lazy(() =>
+  import('./AnimationManagerPanel').then((module) => ({ default: module.AnimationManagerPanel }))
 );
 
 export const animationManagerPlugin: PluginDefinition<CanvasStore> = {

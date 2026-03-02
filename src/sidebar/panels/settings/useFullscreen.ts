@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createListenerContext, installGlobalPluginListeners } from '../../../utils/pluginListeners';
-import { logger } from '../../../utils';
+import { logger } from '../../../utils/logger';
 import { useCanvasStore } from '../../../store/canvasStore';
 
 interface DocumentWithFullscreen extends Document {

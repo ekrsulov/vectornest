@@ -1,14 +1,18 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { AlignVerticalSpaceAround } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createAlignmentAnalyzerSlice } from './slice';
-import { AlignmentAnalyzerPanel } from './AlignmentAnalyzerPanel';
 import { AlignmentAnalyzerOverlay } from './AlignmentAnalyzerOverlay';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('alignmentAnalyzer', ['alignmentAnalyzer'], 'both');
+
+const AlignmentAnalyzerPanel = React.lazy(() =>
+  import('./AlignmentAnalyzerPanel').then((module) => ({ default: module.AlignmentAnalyzerPanel }))
+);
 
 export const alignmentAnalyzerPlugin: PluginDefinition<CanvasStore> = {
   id: 'alignmentAnalyzer',

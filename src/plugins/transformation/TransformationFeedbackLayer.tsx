@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { FeedbackOverlay } from '../../overlays';
+import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
 import type { TransformationPluginSlice } from './slice';
 import { useShallow } from 'zustand/react/shallow';
 

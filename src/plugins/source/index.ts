@@ -1,9 +1,13 @@
 import { FileCode } from 'lucide-react';
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createSourcePluginSlice } from './sourcePluginSlice';
 import { canvasStoreApi, registerPluginSlices } from '../../store/canvasStore';
-import { SourcePanel } from './SourcePanel';
+
+const SourcePanel = React.lazy(() =>
+    import('./SourcePanel').then((module) => ({ default: module.SourcePanel }))
+);
 
 export const sourcePlugin: PluginDefinition<CanvasStore> = {
     id: 'source',

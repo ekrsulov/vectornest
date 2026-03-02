@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { SidebarUtilityButton } from '../../ui/SidebarUtilityButton';
 import { useCanvasStore } from '../../store/canvasStore';
-import { useResponsive } from '../../hooks';
+import { useResponsive } from '../../hooks/useResponsive';
 
 export const LeftSidebarToolGrid: React.FC = () => {
   const { canPinSidebar } = useResponsive();

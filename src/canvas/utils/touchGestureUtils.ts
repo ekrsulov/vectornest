@@ -1,4 +1,5 @@
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { PATH_DECIMAL_PRECISION } from '../../constants';
+import { formatToPrecision } from '../../utils/numberUtils';
 
 export interface ZoomLimits {
     min: number;

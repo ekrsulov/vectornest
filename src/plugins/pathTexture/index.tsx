@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { Brush } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPathTextureSlice } from './slice';
-import { PathTexturePanel } from './PathTexturePanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('pathTexture', ['pathTexture'], 'temporal');
+const PathTexturePanel = lazy(() =>
+  import('./PathTexturePanel').then((module) => ({ default: module.PathTexturePanel }))
+);
 
 const pathTextureSliceFactory = createPluginSlice(createPathTextureSlice);
 

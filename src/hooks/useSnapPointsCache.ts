@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useCanvasStore } from '../store/canvasStore';
 import type { CanvasElement, GroupElement, Viewport } from '../types';
 import { getAllSnapPoints, type SnapPoint } from '../utils/snapPointUtils';
-import { buildElementMap } from '../utils';
+import { buildElementMap } from '../utils/elementMapUtils';
 import { getCanvasElementBounds } from '../utils/canvasElementBounds';
 
 const EMPTY_ELEMENTS: CanvasElement[] = [];

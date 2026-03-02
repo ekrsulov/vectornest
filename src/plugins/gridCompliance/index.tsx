@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createGridComplianceSlice } from './slice';
-import { GridCompliancePanel } from './GridCompliancePanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('gridCompliance', ['gridCompliance'], 'temporal');
+const GridCompliancePanel = lazy(() =>
+  import('./GridCompliancePanel').then((module) => ({ default: module.GridCompliancePanel }))
+);
 
 export const gridCompliancePlugin: PluginDefinition<CanvasStore> = {
   id: 'gridCompliance',

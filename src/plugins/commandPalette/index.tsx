@@ -8,8 +8,11 @@
 import React, { useState, useCallback } from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { CommandPaletteOverlay } from './CommandPaletteOverlay';
 import { OPEN_COMMAND_PALETTE_EVENT } from './events';
+
+const CommandPaletteOverlay = React.lazy(() =>
+  import('./CommandPaletteOverlay').then((module) => ({ default: module.CommandPaletteOverlay }))
+);
 
 /**
  * Global overlay component that manages command palette open/close state.
@@ -17,8 +20,15 @@ import { OPEN_COMMAND_PALETTE_EVENT } from './events';
  */
 const CommandPaletteGlobalOverlay: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [shouldMountOverlay, setShouldMountOverlay] = useState(false);
 
   const handleClose = useCallback(() => setIsOpen(false), []);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setShouldMountOverlay(true);
+    }
+  }, [isOpen]);
 
   // Listen for the global keyboard shortcut
   React.useEffect(() => {
@@ -42,7 +52,15 @@ const CommandPaletteGlobalOverlay: React.FC = () => {
     };
   }, []);
 
-  return <CommandPaletteOverlay isOpen={isOpen} onClose={handleClose} />;
+  if (!shouldMountOverlay) {
+    return null;
+  }
+
+  return (
+    <React.Suspense fallback={null}>
+      <CommandPaletteOverlay isOpen={isOpen} onClose={handleClose} />
+    </React.Suspense>
+  );
 };
 
 CommandPaletteGlobalOverlay.displayName = 'CommandPaletteGlobalOverlay';

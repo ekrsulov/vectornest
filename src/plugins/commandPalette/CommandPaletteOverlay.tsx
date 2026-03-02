@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { ComponentType } from 'react';
 import {
   Box,
   Input,
@@ -29,10 +28,11 @@ import { useCommandPaletteCommands } from './useCommandPaletteCommands';
 import type { PaletteCommand } from './types';
 import { PanelModal } from './PanelModal';
 import { NO_FOCUS_STYLES_DEEP } from '../../hooks/useThemeColors';
-import { useResponsive } from '../../hooks';
+import { useResponsive } from '../../hooks/useResponsive';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useLibrarySearchResults, LIBRARY_CHIP_ITEMS, LIB_TYPE_LABELS } from './useLibrarySearchResults';
 import { LibraryCardRenderer } from './LibraryCardRenderer';
+import type { PalettePanelComponent } from './types';
 
 /** Category chips for filtering — label shown in UI, category matches PaletteCommand.category */
 const CATEGORY_CHIPS = [
@@ -181,7 +181,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
     () => new Set(ALL_CHIP_CATEGORIES)
   );
   const [modalPanel, setModalPanel] = useState<{
-    component: React.ComponentType;
+    component: PalettePanelComponent;
     label: string;
     panelCategory?: string;
   } | null>(null);
@@ -366,7 +366,7 @@ export const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
    * time to render before we trigger scroll-select.
    */
   const openLibraryModal = useCallback(
-    (component: ComponentType, label: string, afterOpen?: () => void) => {
+    (component: PalettePanelComponent, label: string, afterOpen?: () => void) => {
       onClose();
       requestAnimationFrame(() => {
         setModalPanel({ component, label });

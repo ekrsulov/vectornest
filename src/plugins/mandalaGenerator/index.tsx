@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createMandalaGeneratorSlice } from './slice';
-import { MandalaGeneratorPanel } from './MandalaGeneratorPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { Flower2 } from 'lucide-react';
 
 registerStateKeys('mandalaGenerator', ['mandalaGenerator'], 'temporal');
+const MandalaGeneratorPanel = lazy(() =>
+  import('./MandalaGeneratorPanel').then((module) => ({ default: module.MandalaGeneratorPanel }))
+);
 
 export const mandalaGeneratorPlugin: PluginDefinition<CanvasStore> = {
   id: 'mandalaGenerator',

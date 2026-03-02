@@ -35,11 +35,14 @@ import type { FilterSlice } from '../filter/slice';
 import type { ClippingPluginSlice } from '../clipping/slice';
 import type { SymbolPluginSlice } from '../symbols/slice';
 import type { AnimationPluginSlice } from '../animationSystem/types';
-import { buildElementMap, formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { PATH_DECIMAL_PRECISION } from '../../constants';
+import { buildElementMap } from '../../utils/elementMapUtils';
+import { formatToPrecision } from '../../utils/numberUtils';
 import { pluginManager } from '../../utils/pluginManager';
 import type { RegisteredSvgDefsEditor } from '../../utils/svgDefsEditorRegistry';
 import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
 import { useFrozenCanvasStoreValueDuringDrag, useFrozenElementsDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { getGroupBounds } from '../../canvas/geometry/CanvasGeometryService';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
 import { PathThumbnail } from '../../ui/PathThumbnail';
@@ -59,7 +62,6 @@ import type {
 } from '../../types/plugins';
 import type { RegisteredSvgStructureContribution } from '../../utils/svgStructureContributionRegistry';
 import type { UiSlice } from '../../store/slices/uiSlice';
-import { useThemeColors } from '../../hooks';
 interface SvgTreeNode {
   key: string;
   numberPath: string | null;

@@ -6,6 +6,7 @@ import { penPathToCommands, pathDataToPenPath } from './utils/pathConverter';
 import { toLocalPenPath, toWorldPenPath } from './utils/penPathTransforms';
 import { generateShortId } from '../../utils/idGenerator';
 import { logger } from '../../utils/logger';
+import { cloneValue } from '../../utils/clone';
 
 type PenStore = CanvasStore & PenPluginSlice;
 
@@ -37,7 +38,7 @@ export function startPath(
     };
 
     // Initialize history with the first state
-    const initialHistory = [JSON.parse(JSON.stringify(newPath))];
+    const initialHistory = [cloneValue(newPath)];
 
     state.updatePenState?.({
         mode: 'drawing',
@@ -1117,7 +1118,7 @@ export function savePathToHistory(getState: () => CanvasStore): void {
     }
 
     // Deep clone the current path
-    const pathSnapshot: PenPath = JSON.parse(JSON.stringify(penState.currentPath));
+    const pathSnapshot: PenPath = cloneValue(penState.currentPath);
 
     // Get current history and index
     const currentHistory = penState.pathHistory || [];
@@ -1161,7 +1162,7 @@ export function undoPathPoint(getState: () => CanvasStore): void {
     }
 
     const newIndex = currentIndex - 1;
-    const previousPath: PenPath = JSON.parse(JSON.stringify(history[newIndex]));
+    const previousPath: PenPath = cloneValue(history[newIndex]);
 
     state.updatePenState?.({
         currentPath: previousPath,
@@ -1190,7 +1191,7 @@ export function redoPathPoint(getState: () => CanvasStore): void {
     }
 
     const newIndex = currentIndex + 1;
-    const nextPath: PenPath = JSON.parse(JSON.stringify(history[newIndex]));
+    const nextPath: PenPath = cloneValue(history[newIndex]);
 
     state.updatePenState?.({
         currentPath: nextPath,

@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const useExternalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER === '1';
+
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
@@ -11,7 +13,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  workers: 5,
   
   /* Global test timeout */
   timeout: 30000,
@@ -44,11 +46,13 @@ export default defineConfig({
   },
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    port: 5174,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: useExternalServer
+    ? undefined
+    : {
+        command: 'npm run dev',
+        port: 5173,
+        reuseExistingServer: !process.env.CI,
+      },
 
   /* Configure projects for major browsers */
   projects: [

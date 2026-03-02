@@ -1,11 +1,14 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createWhiteSpaceAnalyzerSlice } from './slice';
-import { WhiteSpaceAnalyzerPanel } from './WhiteSpaceAnalyzerPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('whiteSpaceAnalyzer', ['whiteSpaceAnalyzer'], 'temporal');
+const WhiteSpaceAnalyzerPanel = lazy(() =>
+  import('./WhiteSpaceAnalyzerPanel').then((module) => ({ default: module.WhiteSpaceAnalyzerPanel }))
+);
 
 export const whiteSpaceAnalyzerPlugin: PluginDefinition<CanvasStore> = {
   id: 'whiteSpaceAnalyzer',

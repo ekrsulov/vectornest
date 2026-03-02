@@ -1,7 +1,9 @@
 import React from 'react';
 import { IconButton, VStack, useColorModeValue, Box } from '@chakra-ui/react';
 import { Undo2, Redo2, Search, PanelRightOpen, PanelRightClose, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
-import { useTemporalState, useSidebarLayout, useThemeColors } from '../hooks';
+import { useSidebarLayout } from '../hooks/useSidebarLayout';
+import { useTemporalState } from '../hooks/useTemporalState';
+import { useThemeColors } from '../hooks/useThemeColors';
 import { useIsGlobalUndoRedoDisabled } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';

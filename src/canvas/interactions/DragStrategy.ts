@@ -1,4 +1,5 @@
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { PATH_DECIMAL_PRECISION } from '../../constants';
+import { formatToPrecision } from '../../utils/numberUtils';
 import { extractEditablePoints, updateCommands, extractSubpaths, getControlPointAlignmentInfo } from '../../utils/pathParserUtils';
 import { svgToCanvas } from '../../utils/pointUtils';
 import { pluginManager } from '../../utils/pluginManager';

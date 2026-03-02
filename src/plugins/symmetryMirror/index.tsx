@@ -1,3 +1,4 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { FlipHorizontal2 } from 'lucide-react';
@@ -5,13 +6,16 @@ import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSymmetryMirrorSlice } from './slice';
 import type { SymmetryMirrorPluginSlice } from './slice';
 import type { SymmetryDrawPluginSlice } from '../symmetryDraw/slice';
-import { SymmetryMirrorPanel } from './SymmetryMirrorPanel';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { getMirrorTransforms, transformSubPaths } from './mirrorUtils';
 import type { PathData, CanvasElement } from '../../types';
 
 registerStateKeys('symmetryMirror', ['symmetryMirror'], 'temporal');
+
+const SymmetryMirrorPanel = React.lazy(() =>
+  import('./SymmetryMirrorPanel').then((module) => ({ default: module.SymmetryMirrorPanel }))
+);
 
 const symmetryMirrorSliceFactory = createPluginSlice(createSymmetryMirrorSlice);
 

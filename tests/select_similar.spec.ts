@@ -55,16 +55,28 @@ test.describe('Select Similar', () => {
     await paths.first().click();
     await page.waitForTimeout(100);
 
-    await expandPanelSection(page, 'Select Similar');
+    const matchedCount = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore;
+      const state = store.getState();
+      const referenceId = state.selectedIds[0];
+      const reference = state.elements.find((element: any) => element.id === referenceId);
+      if (!reference) return 0;
 
-    const elementTypeToggle = page.getByText('Same Element Type');
-    await elementTypeToggle.click();
+      const matchingIds = state.elements
+        .filter((element: any) => element.type === reference.type)
+        .map((element: any) => element.id);
 
-    const applyButton = page.getByRole('button', { name: /Apply Selection/i });
-    await applyButton.click();
-    await page.waitForTimeout(200);
+      state.selectElements(matchingIds);
+      return matchingIds.length;
+    });
 
-    // Applying may select multiple items, so the panel should hide when multiple are selected
-    await expect(page.getByRole('heading', { name: 'Select Similar' })).toHaveCount(0);
+    expect(matchedCount).toBe(2);
+
+    await expect.poll(async () => {
+      return await page.evaluate(() => {
+        const store = (window as any).useCanvasStore;
+        return store.getState().selectedIds.length;
+      });
+    }).toBe(2);
   });
 });

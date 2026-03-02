@@ -1,14 +1,18 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Space } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSpacingAnalyzerSlice } from './slice';
-import { SpacingAnalyzerPanel } from './SpacingAnalyzerPanel';
 import { SpacingAnalyzerOverlay } from './SpacingAnalyzerOverlay';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('spacingAnalyzer', ['spacingAnalyzer'], 'both');
+
+const SpacingAnalyzerPanel = React.lazy(() =>
+  import('./SpacingAnalyzerPanel').then((module) => ({ default: module.SpacingAnalyzerPanel }))
+);
 
 export const spacingAnalyzerPlugin: PluginDefinition<CanvasStore> = {
   id: 'spacingAnalyzer',

@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createGearGeneratorSlice } from './slice';
-import { GearGeneratorPanel } from './GearGeneratorPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { Cog } from 'lucide-react';
 
 registerStateKeys('gearGenerator', ['gearGenerator'], 'temporal');
+
+const GearGeneratorPanel = React.lazy(() =>
+  import('./GearGeneratorPanel').then((module) => ({ default: module.GearGeneratorPanel }))
+);
 
 export const gearGeneratorPlugin: PluginDefinition<CanvasStore> = {
   id: 'gearGenerator',

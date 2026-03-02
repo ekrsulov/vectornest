@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSmoothPaintPluginSlice, type SmoothPaintPluginSlice } from './slice';
 import React from 'react';
-import { SmoothPaintPanel } from './SmoothPaintPanel';
 import { SmoothPaintOverlay } from './SmoothPaintOverlay';
 import { smoothElements } from './smoothPaintUtils';
 import { logger } from '../../utils/logger';
+
+const SmoothPaintPanel = React.lazy(() =>
+    import('./SmoothPaintPanel').then((module) => ({ default: module.SmoothPaintPanel }))
+);
 
 export const smoothPaintPlugin: PluginDefinition<CanvasStore> = {
     id: 'smoothPaint',

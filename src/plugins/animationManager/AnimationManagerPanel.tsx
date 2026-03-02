@@ -29,6 +29,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
 import type { AnimationManagerSlice } from './types';
 import { GizmoToolbarCompact } from '../animationSystem/gizmos/ui/GizmoToolbar';
+import { GizmoProvider } from '../animationSystem/gizmos/GizmoContext';
 
 import { AnimationMap } from './components/AnimationMap';
 import { AnimationEditor } from './components/AnimationEditor';
@@ -237,43 +238,45 @@ export const AnimationManagerPanel: React.FC = () => {
   }
 
   return (
-    <VStack spacing={0} align="stretch">
-      {/* Header panel with playback + settings */}
-      <Panel
-        title="Animation Manager"
-        isCollapsible
-        defaultOpen
-        headerActions={
-          <PlaybackControls
-            isPlaying={isPlaying}
-            currentTime={currentTime}
-            onPlayPause={handlePlayPause}
-            onStop={handleStop}
-            onSkip={handleSkip}
+    <GizmoProvider>
+      <VStack spacing={0} align="stretch">
+        {/* Header panel with playback + settings */}
+        <Panel
+          title="Animation Manager"
+          isCollapsible
+          defaultOpen
+          headerActions={
+            <PlaybackControls
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              onPlayPause={handlePlayPause}
+              onStop={handleStop}
+              onSkip={handleSkip}
+            />
+          }
+        >
+          <SettingsSection
+            autoPlayOnEdit={autoPlayOnEdit}
+            defaultDuration={defaultDuration}
+            updateState={updateAnimationManagerState}
           />
-        }
-      >
-        <SettingsSection
-          autoPlayOnEdit={autoPlayOnEdit}
-          defaultDuration={defaultDuration}
-          updateState={updateAnimationManagerState}
-        />
-        <Box px={1} pb={1}>
-          <GizmoToolbarCompact />
-        </Box>
-      </Panel>
+          <Box px={1} pb={1}>
+            <GizmoToolbarCompact />
+          </Box>
+        </Panel>
 
-      {/* Zone 1: Animation Map */}
-      <AnimationMap />
+        {/* Zone 1: Animation Map */}
+        <AnimationMap />
 
-      {/* Zone 2: Animation Editor */}
-      <AnimationEditor />
+        {/* Zone 2: Animation Editor */}
+        <AnimationEditor />
 
-      {/* Zone 3: Preset Catalog */}
-      <PresetCatalog />
+        {/* Zone 3: Preset Catalog */}
+        <PresetCatalog />
 
-      {/* Batch Actions (only for multi-selection) */}
-      <BatchActions />
-    </VStack>
+        {/* Batch Actions (only for multi-selection) */}
+        <BatchActions />
+      </VStack>
+    </GizmoProvider>
   );
 };

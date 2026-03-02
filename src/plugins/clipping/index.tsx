@@ -3,7 +3,6 @@ import { Scissors } from 'lucide-react';
 import type { PluginDefinition, PluginSliceFactory, SvgDefsEditor } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createClippingSlice, type ClipDefinition, type ClippingPluginSlice } from './slice';
-import { ClippingPanel } from './ClippingPanel';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
 import { definitionTranslationRegistry } from '../../utils/definitionTranslationRegistry';
 import type { CanvasElement, PathData, GroupElement } from '../../types';
@@ -17,6 +16,10 @@ import { generateShortId } from '../../utils/idGenerator';
 import { CLIPPATH_PRESETS } from './presets';
 import './persistence';
 import './importContribution';
+
+const ClippingPanel = React.lazy(() =>
+  import('./ClippingPanel').then((module) => ({ default: module.ClippingPanel }))
+);
 
 /**
  * Inject a transform attribute directly into each top-level element in SVG content.

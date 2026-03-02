@@ -10,7 +10,6 @@ import type { ArrowsPluginSlice, ArrowsPluginActions, SnapInfo } from './slice';
 import { useCanvasStore, canvasStoreApi } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { ArrowsOverlay } from './ArrowsOverlay';
-import { ArrowsPanel } from './ArrowsPanel';
 import { SnapPointsCache } from './SnapPointsCache';
 import { generateArrowComponents, type Bounds } from './arrowUtils';
 import { getEffectiveShift } from '../../utils/effectiveShift';
@@ -64,6 +63,9 @@ function getArrowsSnapOverlayConfig(): SnapOverlayConfig | null {
 }
 
 const arrowsSliceFactory = createPluginSlice(createArrowsPluginSlice);
+const ArrowsPanel = React.lazy(() =>
+  import('./ArrowsPanel').then((module) => ({ default: module.ArrowsPanel }))
+);
 
 // Global listener flags
 let listenersInstalled = false;

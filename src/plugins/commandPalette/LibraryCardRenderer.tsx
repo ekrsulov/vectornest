@@ -15,16 +15,6 @@ import { FilterItemCard } from '../libraryFilters/FilterItemCard';
 import { PatternItemCard } from '../patterns/PatternItemCard';
 import { MaskItemCard } from '../masks/MaskItemCard';
 
-// Library sub-panel components
-import { SymbolsPanel } from '../symbols/SymbolsPanel';
-import { GradientsPanel } from '../gradients/GradientsPanel';
-import { AnimationLibraryPanel } from '../animationLibrary/AnimationLibraryPanel';
-import { ClippingPanel } from '../clipping/ClippingPanel';
-import { MarkersPanel } from '../markers/MarkersPanel';
-import { FiltersPanel } from '../libraryFilters/FiltersPanel';
-import { PatternsPanel } from '../patterns/PatternsPanel';
-import { MasksPanel } from '../masks/MasksPanel';
-
 import { useCanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { CanvasStore } from '../../store/canvasStore';
@@ -38,7 +28,8 @@ import type { MasksSlice } from '../masks/types';
 import type { AnimationLibrarySlice } from '../animationLibrary/types';
 import type { LibraryItem, LibraryItemType } from './useLibrarySearchResults';
 import { LIB_TYPE_LABELS } from './useLibrarySearchResults';
-import type { ComponentType } from 'react';
+import { pluginManager } from '../../utils/pluginManager';
+import type { PalettePanelComponent } from './types';
 
 interface LibraryCardRendererProps {
   item: LibraryItem;
@@ -48,19 +39,25 @@ interface LibraryCardRendererProps {
    * Open a floating PanelModal with the given panel component.
    * `afterOpen` is called ~150 ms after mount — use it to scroll/select the item.
    */
-  onOpenModal: (component: ComponentType, label: string, afterOpen?: () => void) => void;
+  onOpenModal: (component: PalettePanelComponent, label: string, afterOpen?: () => void) => void;
 }
 
-/** Maps each library type to its standalone panel component */
-const LIB_PANEL_COMPONENTS: Record<LibraryItemType, ComponentType> = {
-  symbols:    SymbolsPanel,
-  gradients:  GradientsPanel,
-  animations: AnimationLibraryPanel,
-  clips:      ClippingPanel,
-  markers:    MarkersPanel,
-  filters:    FiltersPanel,
-  patterns:   PatternsPanel,
-  masks:      MasksPanel,
+const LIBRARY_PANEL_PLUGIN_IDS: Record<LibraryItemType, string> = {
+  symbols: 'symbols',
+  gradients: 'gradients',
+  animations: 'animationLibrary',
+  clips: 'clipping',
+  markers: 'markers',
+  filters: 'libraryFilters',
+  patterns: 'patterns',
+  masks: 'masks',
+};
+
+const resolveLibraryPanelComponent = (
+  libType: LibraryItemType
+): PalettePanelComponent | undefined => {
+  const plugin = pluginManager.getPlugin(LIBRARY_PANEL_PLUGIN_IDS[libType]);
+  return plugin?.relatedPluginPanels?.find((panel) => panel.targetPlugin === 'library')?.component;
 };
 
 export const LibraryCardRenderer: React.FC<LibraryCardRendererProps> = ({
@@ -91,7 +88,10 @@ export const LibraryCardRenderer: React.FC<LibraryCardRendererProps> = ({
   );
 
   const handleClick = useCallback((libType: LibraryItemType, id: string) => {
-    const PanelComponent = LIB_PANEL_COMPONENTS[libType];
+    const PanelComponent = resolveLibraryPanelComponent(libType);
+    if (!PanelComponent) {
+      return;
+    }
     const label = LIB_TYPE_LABELS[libType];
 
     const selectors: Record<LibraryItemType, ((id: string) => void) | undefined> = {

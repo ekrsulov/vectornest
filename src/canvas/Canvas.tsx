@@ -144,6 +144,7 @@ const CanvasContent: React.FC = () => {
   const animationCurrentTime = animationState?.currentTime ?? 0;
   const animationIsPlaying = animationState?.isPlaying ?? false;
   const animationRestartKey = animationState?.restartKey ?? 0;
+  const isCanvasPreviewMode = animationState?.isCanvasPreviewMode ?? false;
 
   const rendererOverridesCacheRef = useRef<RendererOverrides>({});
   const lastActivePluginRef = useRef<string | null>(null);
@@ -355,6 +356,7 @@ const CanvasContent: React.FC = () => {
               handlePointerUp={interactionState.handlePointerUp}
               handleCanvasDoubleClick={interactionState.handleCanvasDoubleClick}
               handleCanvasTouchEnd={interactionState.handleCanvasTouchEnd}
+              isCanvasPreviewMode={isCanvasPreviewMode}
             />
           );
         }}

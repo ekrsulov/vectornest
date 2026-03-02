@@ -4,7 +4,7 @@ import { useCanvasServiceActivation } from '../../../canvas/hooks/useCanvasServi
 import { useCanvasStore } from '../../../store/canvasStore';
 import { DUPLICATE_ON_DRAG_SERVICE_ID, type DuplicateOnDragServiceState } from '../service';
 import type { Point } from '../../../types';
-import { buildElementMap } from '../../../utils';
+import { buildElementMap } from '../../../utils/elementMapUtils';
 
 interface UseDuplicateOnDragParams {
   svgRef: React.RefObject<SVGSVGElement | null>;

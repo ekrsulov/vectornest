@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
-import type { ComponentType } from 'react';
+import type { ComponentType, LazyExoticComponent } from 'react';
 import { pluginManager } from '../utils/pluginManager';
 import type { PluginPanelContribution } from '../types/plugins';
 import { useEnabledPlugins } from './useEnabledPlugins';
 
 interface PluginPanel {
     id: string;
-    component: ComponentType<Record<string, unknown>>;
+    component: ComponentType<Record<string, unknown>> | LazyExoticComponent<ComponentType<Record<string, unknown>>>;
     order: number;
     pluginLabel: string;
 }

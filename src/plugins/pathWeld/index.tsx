@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPathWeldPluginSlice, type PathWeldPluginSlice } from './slice';
 import React from 'react';
-import { PathWeldPanel } from './PathWeldPanel';
 import { PathWeldOverlay } from './PathWeldOverlay';
 import { weldElementsWithPath } from './pathWeldUtils';
 import { logger } from '../../utils/logger';
+
+const PathWeldPanel = React.lazy(() =>
+    import('./PathWeldPanel').then((module) => ({ default: module.PathWeldPanel }))
+);
 
 export const pathWeldPlugin: PluginDefinition<CanvasStore> = {
     id: 'pathWeld',

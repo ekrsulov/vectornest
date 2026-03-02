@@ -10,7 +10,6 @@ import { stylePresetRegistry, type Preset } from '../../utils/stylePresetRegistr
 import { adjustStrokeForDarkMode } from '../../utils/fillAndStrokePresets';
 import { createPatternsSlice, type PatternsSlice, type PatternDef } from './slice';
 import { PatternPicker } from './PatternPicker';
-import { PatternsPanel } from './PatternsPanel';
 import { resolvePatternTileGeometry } from './patternPreviewUtils';
 import { useCanvasStore } from '../../store/canvasStore';
 import { collectUsedPaintIds } from '../../utils/paintUsageUtils';
@@ -59,6 +58,9 @@ const PatternContent: React.FC<{ content: string }> = ({ content }) => {
 };
 
 const patternsSliceFactory = createPluginSlice(createPatternsSlice);
+const PatternsPanel = React.lazy(() =>
+  import('./PatternsPanel').then((module) => ({ default: module.PatternsPanel }))
+);
 
 const patternDefsEditor: SvgDefsEditor<CanvasStore> = {
   id: 'patterns-editor',

@@ -1,6 +1,7 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { pluginManager } from '../utils/pluginManager';
+import { usePluginRegistrationVersion } from './usePluginRegistrationVersion';
 
 /**
  * Hook to subscribe to enabled plugins state.
@@ -14,6 +15,7 @@ import { pluginManager } from '../utils/pluginManager';
  */
 export function useEnabledPlugins(): string[] {
   const prevRef = useRef<string[]>([]);
+  const registrationVersion = usePluginRegistrationVersion();
 
   const rawPlugins = useCanvasStore((state) => {
     const selectorState = (state as Record<string, unknown>).pluginSelector as { enabledPlugins?: string[] } | undefined;
@@ -23,15 +25,15 @@ export function useEnabledPlugins(): string[] {
     return null; // signal to compute fallback outside selector
   });
 
-  return useMemo(() => {
-    const next = rawPlugins ?? pluginManager.getAll().map((p) => p.id).filter((id) => pluginManager.isPluginEnabled(id));
+  void registrationVersion;
 
-    // Return previous reference if contents are identical to avoid re-renders
-    const prev = prevRef.current;
-    if (prev.length === next.length && prev.every((id, i) => id === next[i])) {
-      return prev;
-    }
-    prevRef.current = next;
-    return next;
-  }, [rawPlugins]);
+  const next = rawPlugins ?? pluginManager.getAll().map((p) => p.id).filter((id) => pluginManager.isPluginEnabled(id));
+
+  // Return previous reference if contents are identical to avoid re-renders
+  const prev = prevRef.current;
+  if (prev.length === next.length && prev.every((id, i) => id === next[i])) {
+    return prev;
+  }
+  prevRef.current = next;
+  return next;
 }

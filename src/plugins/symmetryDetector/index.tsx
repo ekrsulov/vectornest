@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Radar } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSymmetryDetectorSlice } from './slice';
-import { SymmetryDetectorPanel } from './SymmetryDetectorPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('symmetryDetector', ['symmetryDetector'], 'temporal');
+
+const SymmetryDetectorPanel = React.lazy(() =>
+  import('./SymmetryDetectorPanel').then((module) => ({ default: module.SymmetryDetectorPanel }))
+);
 
 export const symmetryDetectorPlugin: PluginDefinition<CanvasStore> = {
   id: 'symmetryDetector',

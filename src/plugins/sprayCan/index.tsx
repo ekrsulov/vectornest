@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSprayCanPluginSlice, type SprayCanPluginSlice } from './slice';
 import React from 'react';
-import { SprayCanPanel } from './SprayCanPanel';
 import { SprayCanOverlay } from './SprayCanOverlay';
 import { createSprayDots } from './sprayCanUtils';
 import { logger } from '../../utils/logger';
+
+const SprayCanPanel = React.lazy(() =>
+    import('./SprayCanPanel').then((module) => ({ default: module.SprayCanPanel }))
+);
 
 export const sprayCanPlugin: PluginDefinition<CanvasStore> = {
     id: 'sprayCan',

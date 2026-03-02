@@ -17,7 +17,7 @@ import {
     Minimize,
     Maximize
 } from 'lucide-react';
-import { useThemeColors } from '../../hooks';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 
 interface MinimapTopBarProps {

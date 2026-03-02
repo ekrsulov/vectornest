@@ -6,7 +6,8 @@ import { ToolbarIconButton } from './ToolbarIconButton';
 import type { CanvasStore } from '../store/canvasStore';
 import { FloatingContextMenu } from './FloatingContextMenu';
 import { useFloatingContextMenuActions } from '../hooks/useFloatingContextMenuActions';
-import { useSelectionContext, NO_FOCUS_STYLES_DEEP } from '../hooks';
+import { useSelectionContext } from '../hooks/useSelectionContext';
+import { NO_FOCUS_STYLES_DEEP } from '../hooks/useThemeColors';
 import { useCanvasStore } from '../store/canvasStore';
 import { pluginManager } from '../utils/pluginManager';
 

@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { PathData } from '../../types';
 import { rangesOverlap, calculateElementBoundsMap, type ElementBoundsInfo } from '../../utils/guidelinesHelpers';
 import { getCanvasClientRect } from '../../utils/domHelpers';
+import { generateShortId } from '../../utils/idGenerator';
 import { GUIDELINES_DISTANCE_SNAP_MULTIPLE } from '../../constants';
 import {
   type GuidelinesState,
@@ -87,9 +88,7 @@ export interface GuidelinesPluginSlice {
   clearGuidelines: () => void;
 }
 
-// Generate unique ID for guides
-let guideIdCounter = 0;
-const generateGuideId = () => `guide-${Date.now()}-${guideIdCounter++}`;
+const generateGuideId = () => generateShortId('guide');
 
 const resolveCanvasViewportSize = (): { width: number; height: number } => {
   const rect = getCanvasClientRect();

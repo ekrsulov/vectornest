@@ -3,7 +3,6 @@ import { Target } from 'lucide-react';
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createMarkersSlice, type MarkerDefinition, type MarkersSlice } from './slice';
-import { MarkersPanel } from './MarkersPanel';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
 import type { SvgDefsEditor } from '../../types/plugins';
 import type { CanvasElement } from '../../types';
@@ -20,6 +19,9 @@ registerStateKeys('markers', ['markers'], 'persist');
 const markersSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
   state: createMarkersSlice(set, get, api),
 });
+const MarkersPanel = React.lazy(() =>
+  import('./MarkersPanel').then((module) => ({ default: module.MarkersPanel }))
+);
 
 const escapeAttr = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 

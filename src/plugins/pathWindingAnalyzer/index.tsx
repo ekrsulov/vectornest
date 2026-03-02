@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { RotateCcw } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPathWindingAnalyzerSlice } from './slice';
-import { PathWindingAnalyzerPanel } from './PathWindingAnalyzerPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('pathWindingAnalyzer', ['pathWindingAnalyzer'], 'temporal');
+
+const PathWindingAnalyzerPanel = React.lazy(() =>
+  import('./PathWindingAnalyzerPanel').then((module) => ({ default: module.PathWindingAnalyzerPanel }))
+);
 
 export const pathWindingAnalyzerPlugin: PluginDefinition<CanvasStore> = {
   id: 'pathWindingAnalyzer',

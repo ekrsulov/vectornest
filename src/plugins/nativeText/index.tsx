@@ -5,7 +5,6 @@ import { Type } from 'lucide-react';
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
-import { NativeTextPanel } from './NativeTextPanel';
 import { createNativeTextSlice, type NativeTextPluginSlice } from './slice';
 import { createInlineTextEditSlice, type InlineTextEditSlice } from './inlineEditSlice';
 import { NativeTextRenderer } from './NativeTextRenderer';
@@ -20,8 +19,12 @@ import { renderTextPaths } from './TextPathRenderer';
 import { escapeXmlAttribute, escapeXmlText } from '../../utils/xmlEscapeUtils';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { pluginManager } from '../../utils/pluginManager';
+import { cloneValue } from '../../utils/clone';
 
 type AffineMatrix = [number, number, number, number, number, number];
+const NativeTextPanel = React.lazy(() =>
+  import('./NativeTextPanel').then((module) => ({ default: module.NativeTextPanel }))
+);
 
 const identityMatrix = (): AffineMatrix => [1, 0, 0, 1, 0, 0];
 const multiplyMatrix = (m1: AffineMatrix, m2: AffineMatrix): AffineMatrix => ([
@@ -234,7 +237,7 @@ const nativeTextContribution: ElementContribution<NativeTextElement> = {
       },
     };
   },
-  clone: (el) => ({ ...el, data: JSON.parse(JSON.stringify(el.data)) }),
+  clone: (el) => ({ ...el, data: cloneValue(el.data) }),
   serialize: (el) => {
     const { x, y, text, richText, spans, fontSize, fontFamily, fontWeight, fontStyle, textDecoration, fillColor, fillOpacity, strokeColor, strokeWidth, strokeOpacity, strokeLinecap, strokeLinejoin, strokeDasharray, textAnchor, dominantBaseline, lineHeight, letterSpacing, textTransform, writingMode, transformMatrix, transform, filterId, clipPathId, clipPathTemplateId } = el.data;
     const attrs = [
@@ -516,6 +519,8 @@ export const nativeTextPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'nativeText-inline-editor',
       component: InlineTextEditorOverlay,
+      condition: (ctx) =>
+        Boolean((ctx.state as CanvasStore & InlineTextEditSlice).inlineTextEdit?.editingElementId),
     },
   ],
   expandablePanel: () => React.createElement(NativeTextPanel, { hideTitle: true }),

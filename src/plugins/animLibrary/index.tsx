@@ -1,8 +1,11 @@
 import { Clapperboard } from 'lucide-react';
+import { lazy } from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
-import { AnimLibraryPanel } from './AnimLibraryPanel';
+const AnimLibraryPanel = lazy(() =>
+  import('./AnimLibraryPanel').then((module) => ({ default: module.AnimLibraryPanel }))
+);
 
 export const animLibraryPlugin: PluginDefinition<CanvasStore> = {
   id: 'animLibrary',

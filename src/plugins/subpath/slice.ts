@@ -5,9 +5,11 @@ type FullStore = CanvasStore & SubpathPluginSlice;
 import type { PathData, Command, CanvasElement } from '../../types';
 import { extractSubpaths } from '../../utils/pathParserUtils';
 import { measureSubpathBounds } from '../../utils/measurementUtils';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { PATH_DECIMAL_PRECISION } from '../../constants';
+import { formatToPrecision } from '../../utils/numberUtils';
 import { translateCommands, scaleCommands } from '../../utils/transformationUtils';
 import { groupSubpathsByElement, moveSubpathsWithinElement, deleteSubpathsFromElement } from '../../utils/subpathHelpers';
+import { cloneValue } from '../../utils/clone';
 
 // Helper interface for subpath bounds
 interface SubpathWithBounds {
@@ -637,7 +639,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
             elementId,
             subpathIndex,
             bounds,
-            originalCommands: JSON.parse(JSON.stringify(subpaths[subpathIndex].commands)) // Deep copy of original commands
+            originalCommands: cloneValue(subpaths[subpathIndex].commands)
           });
         }
       }

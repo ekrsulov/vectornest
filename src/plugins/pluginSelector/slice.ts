@@ -7,6 +7,7 @@ const DEFAULT_DISABLED_PLUGIN_IDS = new Set(import.meta.env.DEV ? [] : ['clipboa
 export interface PluginSelectorSlice {
     pluginSelector: {
         enabledPlugins: string[];
+        knownPluginIds: string[];
         isDialogOpen: boolean;
     };
     setPluginEnabled: (pluginId: string, enabled: boolean) => void;
@@ -19,19 +20,31 @@ export const createPluginSelectorSlice: PluginSliceFactory<CanvasStore> = (set) 
     state: {
         pluginSelector: {
             enabledPlugins: [], // Empty means "not initialized yet"; defaults are applied in pluginSelector init.
+            knownPluginIds: [],
             isDialogOpen: false,
         },
         setPluginEnabled: (pluginId: string, enabled: boolean) =>
             set((state) => {
-                let currentEnabled = (state as PluginSelectorStore).pluginSelector.enabledPlugins;
+                const pluginSelectorState = (state as PluginSelectorStore).pluginSelector;
+                let currentEnabled = pluginSelectorState.enabledPlugins;
+                let knownPluginIds = pluginSelectorState.knownPluginIds ?? [];
                 
-                // If list is empty, initialize with all plugin IDs first
-                // This ensures proper tracking when first toggling
-                if (currentEnabled.length === 0) {
-                    currentEnabled = pluginManager
+                // If state is uninitialized, bootstrap from the currently registered plugins.
+                if (currentEnabled.length === 0 || knownPluginIds.length === 0) {
+                    const registeredPluginIds = pluginManager
                         .getAll()
                         .map((p) => p.id)
                         .filter((id) => !DEFAULT_DISABLED_PLUGIN_IDS.has(id));
+                    if (currentEnabled.length === 0) {
+                        currentEnabled = registeredPluginIds;
+                    }
+                    if (knownPluginIds.length === 0) {
+                        knownPluginIds = registeredPluginIds;
+                    }
+                }
+
+                if (!knownPluginIds.includes(pluginId)) {
+                    knownPluginIds = [...knownPluginIds, pluginId];
                 }
                 
                 if (enabled) {
@@ -39,8 +52,9 @@ export const createPluginSelectorSlice: PluginSliceFactory<CanvasStore> = (set) 
                     if (!currentEnabled.includes(pluginId)) {
                         return {
                             pluginSelector: {
-                                ...(state as PluginSelectorStore).pluginSelector,
+                                ...pluginSelectorState,
                                 enabledPlugins: [...currentEnabled, pluginId],
+                                knownPluginIds,
                             },
                         } as Partial<CanvasStore>;
                     }
@@ -48,8 +62,9 @@ export const createPluginSelectorSlice: PluginSliceFactory<CanvasStore> = (set) 
                     // Remove from enabled list
                     return {
                         pluginSelector: {
-                            ...(state as PluginSelectorStore).pluginSelector,
+                            ...pluginSelectorState,
                             enabledPlugins: currentEnabled.filter((id) => id !== pluginId),
+                            knownPluginIds,
                         },
                     } as Partial<CanvasStore>;
                 }

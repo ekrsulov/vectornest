@@ -3,6 +3,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 import type { Point } from '../../types';
 import type { UseElement, UseElementData, UseReferenceType } from './types';
 import type { SymbolPluginSlice, SymbolDefinition } from '../symbols/slice';
+import { cloneValue } from '../../utils/clone';
 
 export interface UsePluginSlice {
   /**
@@ -146,7 +147,7 @@ export const createUseSlice: StateCreator<CanvasStore, [], [], UsePluginSlice> =
         }
         
         // Clone the referenced element with use position applied
-        const clonedData = JSON.parse(JSON.stringify(referencedElement.data));
+        const clonedData = cloneValue(referencedElement.data);
         
         // Apply x/y offset if present
         if (data.x !== 0 || data.y !== 0) {

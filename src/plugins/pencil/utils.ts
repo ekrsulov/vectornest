@@ -1,6 +1,8 @@
 import type { Point, PathData, SubPath } from '../../types';
-import { commandsToString, formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { PATH_DECIMAL_PRECISION } from '../../constants';
+import { formatToPrecision } from '../../utils/numberUtils';
 import { performPathSimplifyPaperJS } from '../../utils/pathOperationsUtils';
+import { commandsToString } from '../../utils/path';
 import type { StyleSlice } from '../../store/slices/features/styleSlice';
 import { getDefaultStrokeColorFromSettings } from '../../utils/defaultColors';
 

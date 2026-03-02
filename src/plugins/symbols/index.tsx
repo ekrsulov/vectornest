@@ -1,4 +1,5 @@
 import { Layers } from 'lucide-react';
+import { lazy } from 'react';
 import type {
   PluginDefinition,
   PluginSliceFactory,
@@ -7,7 +8,6 @@ import type {
 import type { CanvasStore } from '../../store/canvasStore';
 import { isMonoColor, transformMonoColor } from '../../utils/colorModeSyncUtils';
 import { createSymbolsSlice, type SymbolDefinition, type SymbolPluginSlice } from './slice';
-import { SymbolsPanel } from './SymbolsPanel';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
 import type { CanvasElement, PathData } from '../../types';
 import type { CanvasElementRenderer, CanvasRenderContext } from '../../canvas/renderers/CanvasRendererRegistry';
@@ -33,11 +33,15 @@ import { serializeAnimation } from '../animationSystem';
 import type { AnimationPluginSlice } from '../animationSystem/types';
 import { ensureChainDelays } from '../animationSystem/chainUtils';
 import { createCircleCommands, createDiamondCommands, createHeartCommands, createTriangleCommands } from '../../utils/ShapeFactory';
+import { cloneValue } from '../../utils/clone';
 import './importContribution';
 
 const symbolsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
   state: createSymbolsSlice(set, get, api),
 });
+const SymbolsPanel = lazy(() =>
+  import('./SymbolsPanel').then((module) => ({ default: module.SymbolsPanel }))
+);
 
 /**
  * Strip animation elements from a node's innerHTML.
@@ -817,7 +821,7 @@ const createSymbolInstanceContribution = (): ElementContribution => {
     renderThumbnail: (element) => <SymbolInstanceThumbnail element={element as SymbolInstanceElement} />,
     clone: (element) => ({
       ...element,
-      data: JSON.parse(JSON.stringify(element.data)),
+      data: cloneValue(element.data),
     }),
     serialize: (element) => {
       const id = element.id;

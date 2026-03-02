@@ -6,7 +6,7 @@ import { calculateBounds, type Bounds } from '../../../utils/boundsUtils';
 import type { ElementDragModifier, ElementDragContext } from '../../../types/interaction';
 import { GUIDELINES_VELOCITY_THRESHOLD } from '../../../constants';
 import { elementContributionRegistry } from '../../../utils/elementContributionRegistry';
-import { buildElementMap } from '../../../utils';
+import { buildElementMap } from '../../../utils/elementMapUtils';
 import { calculateElementBoundsMap } from '../../../utils/guidelinesHelpers';
 
 /**

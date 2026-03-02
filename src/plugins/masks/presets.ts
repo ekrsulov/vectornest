@@ -1,3 +1,5 @@
+import { generateShortId } from '../../utils/idGenerator';
+
 /**
  * Bounding box for generating dynamic mask presets
  */
@@ -30,7 +32,7 @@ interface MaskPreset {
 /**
  * Helper to generate unique gradient/element IDs per mask instance
  */
-const uniqueId = (base: string) => `${base}-${Date.now()}`;
+const uniqueId = (base: string) => generateShortId(base);
 
 export const MASK_PRESETS: MaskPreset[] = [
   {
@@ -981,7 +983,7 @@ export const generateMaskFromPreset = (
 } => {
   const attrs = preset.generateAttrs(bbox);
   return {
-    id: `${preset.id}-${Date.now()}`,
+    id: generateShortId(preset.id),
     name: preset.name,
     content: preset.generateContent(bbox),
     ...attrs,

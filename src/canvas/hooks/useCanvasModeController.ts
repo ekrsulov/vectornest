@@ -1,13 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import type { ComponentType } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { pluginManager } from '../../utils/pluginManager';
-import type { PluginDefinition } from '../../types/plugins';
-import type { CanvasStore } from '../../store/canvasStore';
 import {
-  getCanvasModeMachine,
+  getInitialCanvasMode,
   getCanvasModeDefinition,
-  getCanvasModeResources,
   transitionCanvasMode,
   type CanvasMode,
   type CanvasModeStateConfig,
@@ -16,32 +12,18 @@ import {
 
 type CanvasModeTransitionExecutor = (mode: CanvasMode) => CanvasModeTransitionResult;
 
-type CanvasModePointerHandler = NonNullable<PluginDefinition<CanvasStore>['handler']>;
-
-interface CanvasModeListeners {
-  pointerdown?: CanvasModePointerHandler;
-}
-
-interface CanvasModeEffects {
-  listeners: CanvasModeListeners;
-  overlays: ComponentType<Record<string, unknown>>[];
-}
-
 interface CanvasModeMachineHookResult {
   currentMode: CanvasMode;
   definition: CanvasModeStateConfig;
   transition: CanvasModeTransitionExecutor;
-  effects: CanvasModeEffects;
 }
 
 const normalizeMode = (mode: string | null | undefined): CanvasMode => {
   if (!mode) {
-    return getCanvasModeMachine().initial;
+    return getInitialCanvasMode();
   }
   return mode as CanvasMode;
 };
-
-const dedupe = <T,>(items: T[]): T[] => Array.from(new Set(items));
 
 export const useCanvasModeController = (): CanvasModeMachineHookResult => {
   const activePlugin = useCanvasStore((state) => state.activePlugin);
@@ -53,32 +35,10 @@ export const useCanvasModeController = (): CanvasModeMachineHookResult => {
     [currentMode],
   );
 
-  const resources = useMemo(
-    () => getCanvasModeResources(currentMode),
-    [currentMode],
-  );
-
-  const pluginIds = useMemo(
-    () => dedupe((resources.plugins && resources.plugins.length > 0 ? resources.plugins : [currentMode]).map((id) => id)),
-    [resources.plugins, currentMode],
-  );
-
-  const overlays = useMemo(
-    () => pluginIds.flatMap((id) => pluginManager.getOverlays(id) ?? []),
-    [pluginIds],
-  );
-
-  const listeners = useMemo<CanvasModeListeners>(() => {
-    const primaryPlugin = pluginManager.getPlugin(currentMode);
-    return {
-      pointerdown: primaryPlugin?.handler,
-    };
-  }, [currentMode]);
-
   const transition = useCallback<CanvasModeTransitionExecutor>((mode) => {
     const store = useCanvasStore.getState();
     const current = normalizeMode(store.activePlugin);
-    const result = transitionCanvasMode(current, { type: 'ACTIVATE', value: mode });
+    const result = transitionCanvasMode(current, mode);
 
     if (!result.changed) {
       return result;
@@ -116,9 +76,5 @@ export const useCanvasModeController = (): CanvasModeMachineHookResult => {
     currentMode,
     definition,
     transition,
-    effects: {
-      listeners,
-      overlays,
-    },
   };
 };

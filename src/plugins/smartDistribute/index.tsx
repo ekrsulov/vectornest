@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Waypoints } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSmartDistributeSlice } from './slice';
-import { SmartDistributePanel } from './SmartDistributePanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('smartDistribute', ['smartDistribute'], 'temporal');
+
+const SmartDistributePanel = React.lazy(() =>
+  import('./SmartDistributePanel').then((module) => ({ default: module.SmartDistributePanel }))
+);
 
 export const smartDistributePlugin: PluginDefinition<CanvasStore> = {
   id: 'smartDistribute',

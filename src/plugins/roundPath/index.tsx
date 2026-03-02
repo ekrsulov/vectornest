@@ -1,12 +1,14 @@
-
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createRoundPathPluginSlice } from './slice';
-import { RoundPathPanel } from './RoundPathPanel';
 
 
 const roundPathSliceFactory = createPluginSlice(createRoundPathPluginSlice);
+const RoundPathPanel = React.lazy(() =>
+    import('./RoundPathPanel').then((module) => ({ default: module.RoundPathPanel }))
+);
 export const roundPathPlugin: PluginDefinition<CanvasStore> = {
     id: 'roundPath',
     metadata: {

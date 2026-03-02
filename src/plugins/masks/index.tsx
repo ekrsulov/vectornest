@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import type { PluginDefinition, SvgDefsEditor } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
@@ -5,7 +6,6 @@ import { definitionTranslationRegistry } from '../../utils/definitionTranslation
 import { createMasksSlice } from './slice';
 import type { MaskDefinition, MasksSlice } from './types';
 import type { CanvasElement } from '../../types';
-import { MasksPanel } from './MasksPanel';
 import type { SVGAnimation, AnimationPluginSlice } from '../animationSystem/types';
 import './persistence';
 import './importContribution';
@@ -16,6 +16,9 @@ import type { PluginSliceFactory } from '../../types/plugins';
 const masksSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
   state: createMasksSlice(set, get as () => CanvasStore & MasksSlice, api as never),
 });
+const MasksPanel = lazy(() =>
+  import('./MasksPanel').then((module) => ({ default: module.MasksPanel }))
+);
 
 const maskDefsEditor: SvgDefsEditor<CanvasStore> = {
   id: 'masks-editor',

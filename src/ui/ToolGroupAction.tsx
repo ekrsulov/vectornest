@@ -9,7 +9,7 @@ import {
     Box
 } from '@chakra-ui/react';
 import type { LucideIcon } from 'lucide-react';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 import ConditionalTooltip from './ConditionalTooltip';
 
 interface ToolGroupActionProps {

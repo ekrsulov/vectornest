@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, adjustControlPointForAlignment, getControlPointAlignmentInfo } from '../../utils/pathParserUtils';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { PATH_DECIMAL_PRECISION } from '../../constants';
+import { formatToPrecision } from '../../utils/numberUtils';
 import type { CanvasElement, Point, PathData, Command, SelectedCommand, PointUpdate } from '../../types';
 import type { CanvasStore } from '../../store/canvasStore';
 import { snapManager } from '../../snap/SnapManager';

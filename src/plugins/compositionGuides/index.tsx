@@ -1,14 +1,18 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Crosshair } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createCompositionGuidesSlice } from './slice';
-import { CompositionGuidesPanel } from './CompositionGuidesPanel';
 import { CompositionGuidesOverlay } from './CompositionGuidesOverlay';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('compositionGuides', ['compositionGuides'], 'both');
+
+const CompositionGuidesPanel = React.lazy(() =>
+  import('./CompositionGuidesPanel').then((module) => ({ default: module.CompositionGuidesPanel }))
+);
 
 export const compositionGuidesPlugin: PluginDefinition<CanvasStore> = {
   id: 'compositionGuides',

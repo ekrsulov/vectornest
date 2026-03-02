@@ -1,4 +1,4 @@
- 
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
@@ -7,9 +7,12 @@ import { createSmoothBrushPluginSlice, type SmoothBrushPluginSlice } from './sli
 // Import listener to ensure it registers itself
 import './listeners/SmoothBrushListener';
 
-import { SmoothBrushPanel } from './SmoothBrushPanel';
 import { SmoothBrushCursor } from './SmoothBrushCursor';
 import { useSmoothBrushHook } from './hooks/useSmoothBrushHook';
+
+const SmoothBrushPanel = React.lazy(() =>
+    import('./SmoothBrushPanel').then((module) => ({ default: module.SmoothBrushPanel }))
+);
 
 type SmoothBrushBehaviorStore = CanvasStore & {
     smoothBrush?: SmoothBrushPluginSlice['smoothBrush'];
@@ -44,6 +47,7 @@ export const smoothBrushPlugin: PluginDefinition<CanvasStore> = {
             id: 'smooth-brush-interaction',
             hook: useSmoothBrushHook,
             global: true, // Execute regardless of active plugin
+            when: (state) => Boolean((state as SmoothBrushBehaviorStore).smoothBrush?.isActive),
         },
     ],
     relatedPluginPanels: [

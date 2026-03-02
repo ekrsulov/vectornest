@@ -4,15 +4,19 @@
  * Provides helpers to reduce boilerplate when registering sidebar panels.
  */
 
-import type { ComponentType } from 'react';
+import type { ComponentType, LazyExoticComponent } from 'react';
 import type { PanelConfig, PanelConditionContext } from '../types/panel';
+
+type PanelFactoryComponent<TProps = unknown> =
+  | ComponentType<TProps>
+  | LazyExoticComponent<ComponentType<TProps>>;
 
 /**
  * Creates a standard tool panel configuration.
  */
 export function createToolPanel<TProps = unknown>(
   pluginId: string,
-  component: ComponentType<TProps>,
+  component: PanelFactoryComponent<TProps>,
   options?: {
     /** Custom condition for showing the panel. */
     condition?: (ctx: PanelConditionContext) => boolean;
@@ -34,7 +38,7 @@ export function createToolPanel<TProps = unknown>(
  */
 export function createSettingsPanel<TProps = unknown>(
   key: string,
-  component: ComponentType<TProps>,
+  component: PanelFactoryComponent<TProps>,
   options?: {
     /** Additional condition beyond settings mode. */
     additionalCondition?: (ctx: PanelConditionContext) => boolean;
@@ -60,7 +64,7 @@ export function createSettingsPanel<TProps = unknown>(
  */
 export function createConditionalToolPanel<TProps = unknown>(
   pluginId: string,
-  component: ComponentType<TProps>,
+  component: PanelFactoryComponent<TProps>,
   additionalCondition: (ctx: PanelConditionContext) => boolean,
   options?: {
     /** Custom key (defaults to pluginId). */
@@ -82,7 +86,7 @@ export function createConditionalToolPanel<TProps = unknown>(
  */
 export function createSelectModePanel<TProps = unknown>(
   key: string,
-  component: ComponentType<TProps>,
+  component: PanelFactoryComponent<TProps>,
   condition: (ctx: PanelConditionContext) => boolean
 ): PanelConfig {
   return {
@@ -100,7 +104,7 @@ export function createSelectModePanel<TProps = unknown>(
  */
 export function createSelectOrIdlePanel<TProps = unknown>(
   key: string,
-  component: ComponentType<TProps>
+  component: PanelFactoryComponent<TProps>
 ): PanelConfig {
   return {
     key,
@@ -115,7 +119,7 @@ export function createSelectOrIdlePanel<TProps = unknown>(
  */
 export function createGlobalPanel<TProps = unknown>(
   key: string,
-  component: ComponentType<TProps>,
+  component: PanelFactoryComponent<TProps>,
   options?: {
     /** Condition for when to show (still respects special panel mode). */
     condition?: (ctx: PanelConditionContext) => boolean;

@@ -1,12 +1,14 @@
-
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPathSimplificationPluginSlice } from './slice';
-import { PathSimplificationPanel } from './PathSimplificationPanel';
 import { createPluginSlice } from '../../utils/pluginUtils';
 
 
 const pathSimplificationSliceFactory = createPluginSlice(createPathSimplificationPluginSlice);
+const PathSimplificationPanel = React.lazy(() =>
+    import('./PathSimplificationPanel').then((module) => ({ default: module.PathSimplificationPanel }))
+);
 export const pathSimplificationPlugin: PluginDefinition<CanvasStore> = {
     id: 'pathSimplification',
     metadata: {

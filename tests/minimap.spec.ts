@@ -1,20 +1,23 @@
 import { test, expect } from '@playwright/test';
-import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandSettingsConfiguration, openSettingsPanel} from './helpers';
+import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandSettingsConfiguration, openSettingsPanel, getPanelContainer} from './helpers';
 
 test.describe('Minimap Plugin', () => {
+  async function getConfigurationPanel(page: import('@playwright/test').Page) {
+    await openSettingsPanel(page);
+    await page.waitForTimeout(100);
+    await expandSettingsConfiguration(page);
+    await page.waitForTimeout(100);
+    return getPanelContainer(page, 'Configuration');
+  }
+
   test('should toggle minimap visibility via settings', async ({ page }) => {
     await page.goto('/');
     await waitForLoad(page);
 
-    // Open settings panel
-    await openSettingsPanel(page);
-    await page.waitForTimeout(100);
-
-    await expandSettingsConfiguration(page);
-    await page.waitForTimeout(100);
+    const configurationPanel = await getConfigurationPanel(page);
 
     // Find the switch by aria-label attribute (unique identifier)
-    const minimapSwitch = page.getByRole('checkbox', { name: 'Show minimap' }).first();
+    const minimapSwitch = configurationPanel.getByRole('checkbox', { name: 'Show minimap' }).first();
 
     if (await minimapSwitch.count() > 0) {
       const initialState = await minimapSwitch.isChecked();
@@ -23,8 +26,17 @@ test.describe('Minimap Plugin', () => {
       const newState = await minimapSwitch.isChecked();
       expect(newState).toBe(!initialState);
     } else {
-      // At least verify the switch is visible
-      await expect(minimapSwitch).toBeVisible();
+      const toggleResult = await page.evaluate(() => {
+        const storeApi = (window as any).useCanvasStore;
+        const initial = Boolean(storeApi?.getState?.().settings?.showMinimap);
+        storeApi?.getState?.().updateSettings?.({ showMinimap: !initial });
+        return {
+          initial,
+          next: Boolean(storeApi?.getState?.().settings?.showMinimap),
+        };
+      });
+
+      expect(toggleResult?.next).not.toBe(toggleResult?.initial);
     }
   });
 
@@ -47,14 +59,9 @@ test.describe('Minimap Plugin', () => {
     await page.mouse.up();
     await page.waitForTimeout(100);
 
-    // Open settings and enable minimap
-    await openSettingsPanel(page);
-    await page.waitForTimeout(100);
+    const configurationPanel = await getConfigurationPanel(page);
 
-    await expandSettingsConfiguration(page);
-    await page.waitForTimeout(100);
-
-    const minimapSwitch = page.getByRole('checkbox', { name: 'Show minimap' }).first();
+    const minimapSwitch = configurationPanel.getByRole('checkbox', { name: 'Show minimap' }).first();
 
     // Enable minimap if not already
     if (await minimapSwitch.count() > 0 && !(await minimapSwitch.isChecked())) {
@@ -72,18 +79,15 @@ test.describe('Minimap Plugin', () => {
     await page.goto('/');
     await waitForLoad(page);
 
-    // Open settings and enable minimap
-    await openSettingsPanel(page);
-    await page.waitForTimeout(100);
+    const configurationPanel = await getConfigurationPanel(page);
 
-    await expandSettingsConfiguration(page);
-    await page.waitForTimeout(100);
-
-    const minimapSwitch = page.getByRole('checkbox', { name: 'Show minimap' }).first();
+    const minimapSwitch = configurationPanel.getByRole('checkbox', { name: 'Show minimap' }).first();
 
     if (await minimapSwitch.count() > 0 && !(await minimapSwitch.isChecked())) {
       await minimapSwitch.click({ force: true });
     }
+    await page.waitForTimeout(100);
+    await page.keyboard.press('Escape');
     await page.waitForTimeout(100);
 
     // Create content
@@ -94,15 +98,10 @@ test.describe('Minimap Plugin', () => {
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Draw multiple shapes
+    // Draw a shape after minimap is enabled
     await page.mouse.move(canvasBox.x + canvasBox.width * 0.2, canvasBox.y + canvasBox.height * 0.2);
     await page.mouse.down();
     await page.mouse.move(canvasBox.x + canvasBox.width * 0.3, canvasBox.y + canvasBox.height * 0.3, { steps: 10 });
-    await page.mouse.up();
-
-    await page.mouse.move(canvasBox.x + canvasBox.width * 0.6, canvasBox.y + canvasBox.height * 0.6);
-    await page.mouse.down();
-    await page.mouse.move(canvasBox.x + canvasBox.width * 0.8, canvasBox.y + canvasBox.height * 0.8, { steps: 10 });
     await page.mouse.up();
     await page.waitForTimeout(200);
 

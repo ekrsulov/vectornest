@@ -7,7 +7,8 @@
 
 import { useMemo } from 'react';
 import type { ComponentType } from 'react';
-import { useSelectionContext, useEnabledPlugins } from '../../hooks';
+import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
+import { useSelectionContext } from '../../hooks/useSelectionContext';
 import { useFloatingContextMenuActions } from '../../hooks/useFloatingContextMenuActions';
 import type { FloatingContextMenuAction } from '../../types/plugins';
 
@@ -100,4 +101,3 @@ export function useContextActions(): ContextActionsResult {
     return processActions(allActions);
   }, [context, allActions]);
 }
-

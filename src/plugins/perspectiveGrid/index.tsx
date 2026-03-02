@@ -1,15 +1,19 @@
 import { Grid3X3 } from 'lucide-react';
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPerspectiveGridPluginSlice, type PerspectiveGridPluginSlice } from './slice';
-import { PerspectiveGridPanel } from './PerspectiveGridPanel';
 import { PerspectiveGridLayer } from './PerspectiveGridLayer';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { registerSnapProvider, unregisterSnapProvider } from '../../snap/snapProviderRegistry';
 
 registerStateKeys('perspectiveGrid', ['perspectiveGrid'], 'temporal');
+
+const PerspectiveGridPanel = React.lazy(() =>
+    import('./PerspectiveGridPanel').then((module) => ({ default: module.PerspectiveGridPanel }))
+);
 
 export const perspectiveGridPlugin: PluginDefinition<CanvasStore> = {
     id: 'perspectiveGrid',

@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createBlobBrushPluginSlice, type BlobBrushPluginSlice } from './slice';
 import React from 'react';
-import { BlobBrushPanel } from './BlobBrushPanel';
 import { BlobBrushOverlay } from './BlobBrushOverlay';
 import { createBlobBrushShape } from './blobBrushUtils';
 import { logger } from '../../utils/logger';
+
+const BlobBrushPanel = React.lazy(() =>
+    import('./BlobBrushPanel').then((module) => ({ default: module.BlobBrushPanel }))
+);
 
 export const blobBrushPlugin: PluginDefinition<CanvasStore> = {
     id: 'blobBrush',

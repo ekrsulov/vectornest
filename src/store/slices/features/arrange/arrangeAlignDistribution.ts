@@ -1,9 +1,10 @@
 import type { CanvasElement } from '../../../../types';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../../utils';
+import { PATH_DECIMAL_PRECISION } from '../../../../constants';
 import {
   collectSelectedElementBounds,
   getTopLevelSelectedElements,
 } from '../../../../utils/arrangementUtils';
+import { formatToPrecision } from '../../../../utils/numberUtils';
 import type { Axis, TargetCalculator } from '../../../../utils/transformationUtils';
 import { translateTopLevelElement } from './arrangeElementOperations';
 

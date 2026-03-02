@@ -12,12 +12,12 @@
  * - ID collision avoidance on paste
  */
 
+import React from 'react';
 import { Clipboard, Copy, Scissors, ClipboardPaste } from 'lucide-react';
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createSelectOrIdlePanel } from '../../utils/pluginFactories';
 import { createClipboardSlice, type ClipboardSlice } from './slice';
-import { ClipboardPanel } from './ClipboardPanel';
 import { copySelectedElements, cutSelectedElements, pasteFromClipboard } from './actions';
 import { pluginManager } from '../../utils/pluginManager';
 
@@ -29,6 +29,9 @@ const clipboardSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) =
   );
   return { state: slice };
 };
+const ClipboardPanel = React.lazy(() =>
+  import('./ClipboardPanel').then((module) => ({ default: module.ClipboardPanel }))
+);
 
  
 export const clipboardPlugin: PluginDefinition<CanvasStore> = {
@@ -267,4 +270,3 @@ export const clipboardPlugin: PluginDefinition<CanvasStore> = {
 
 // Import useCanvasStore for context menu actions
 import { useCanvasStore } from '../../store/canvasStore';
-

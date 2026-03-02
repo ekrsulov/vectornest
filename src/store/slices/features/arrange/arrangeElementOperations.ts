@@ -1,6 +1,7 @@
 import type { CanvasElement, PathData } from '../../../../types';
-import { buildElementMap, PATH_DECIMAL_PRECISION } from '../../../../utils';
+import { PATH_DECIMAL_PRECISION } from '../../../../constants';
 import { elementContributionRegistry } from '../../../../utils/elementContributionRegistry';
+import { buildElementMap } from '../../../../utils/elementMapUtils';
 import { scalePathData, translatePathData } from '../../../../utils/transformationUtils';
 import { collectGroupDescendants } from '../../../../utils/groupTraversalUtils';
 

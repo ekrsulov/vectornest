@@ -4,7 +4,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 type FullStore = CanvasStore & LlmAssistantSlice;
 import type { CanvasElement, CanvasElementInput, GroupElement, GroupData } from '../../types';
 import { generateShortId } from '../../utils/idGenerator';
-import { buildElementMap } from '../../utils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 import { runCleanupHooks } from '../../store/cleanupHookRegistry';
 import { pluginManager } from '../../utils/pluginManager';
 import { ExportManager } from '../../utils/export/ExportManager';

@@ -24,6 +24,9 @@ export const contextActionsPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'context-action-overlay',
       component: ContextActionOverlay,
+      condition: (ctx) =>
+        !ctx.withoutDistractionMode &&
+        (ctx.selectedElementsCount > 0 || ctx.selectedSubpathsCount > 0 || ctx.selectedCommandsCount > 0),
     },
   ],
 };

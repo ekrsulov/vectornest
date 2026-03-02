@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Waves } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createWaveDistortSlice } from './slice';
-import { WaveDistortPanel } from './WaveDistortPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('waveDistort', ['waveDistort'], 'temporal');
+
+const WaveDistortPanel = React.lazy(() =>
+  import('./WaveDistortPanel').then((module) => ({ default: module.WaveDistortPanel }))
+);
 
 export const waveDistortPlugin: PluginDefinition<CanvasStore> = {
   id: 'waveDistort',

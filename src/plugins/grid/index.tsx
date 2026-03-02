@@ -1,3 +1,4 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasDecorator, CanvasDecoratorContext } from '../../types/interaction';
 import type { CanvasStore } from '../../store/canvasStore';
@@ -5,7 +6,6 @@ import { createSettingsPanel } from '../../utils/pluginFactories';
 import { useCanvasStore } from '../../store/canvasStore';
 import { createGridPluginSlice } from './slice';
 import type { GridPluginSlice } from './slice';
-import GridPanelComponent from './GridPanel';
 import { GridOverlay } from './GridOverlay';
 import { createGridSnapModifier } from './snapModifier';
 import { pluginManager } from '../../utils/pluginManager';
@@ -17,6 +17,8 @@ import { registerToggleFlag, unregisterToggleFlag } from '../../utils/toggleFlag
 import { createPluginSlice } from '../../utils/pluginUtils';
 
 registerStateKeys('grid', ['grid'], 'temporal');
+
+const GridPanelComponent = React.lazy(() => import('./GridPanel'));
 
 const GRID_ENABLED_TOGGLE_ID = 'grid-enabled';
 const GRID_RULERS_TOGGLE_ID = 'grid-show-rulers';
@@ -145,4 +147,3 @@ export const gridPlugin: PluginDefinition<CanvasStore> = {
   },
   sidebarPanels: [createSettingsPanel('grid', GridPanelComponent)],
 };
-

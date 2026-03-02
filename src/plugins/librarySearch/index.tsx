@@ -1,7 +1,11 @@
 import { Search } from 'lucide-react';
+import { lazy } from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { LibrarySearchPanel } from './LibrarySearchPanel';
+
+const LibrarySearchPanel = lazy(() =>
+  import('./LibrarySearchPanel').then((module) => ({ default: module.LibrarySearchPanel }))
+);
 
 export const librarySearchPlugin: PluginDefinition<CanvasStore> = {
     id: 'library-search',

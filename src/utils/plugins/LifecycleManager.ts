@@ -16,8 +16,10 @@ import { logger } from '../logger';
  * ```
  */
 export class LifecycleManager {
-  private actions = new Map<string, Set<() => void>>();
-  private globalTransitionActions: string[] = [];
+  private actions = new Map<string, {
+    handlers: Set<() => void>;
+    globalTransition: boolean;
+  }>();
 
   /**
    * Register a lifecycle action handler.
@@ -26,11 +28,15 @@ export class LifecycleManager {
    * @param handler - Function to execute when the action is triggered
    * @returns Unregister function
    */
-  register(id: string, handler: () => void): () => void {
-    if (!this.actions.has(id)) {
-      this.actions.set(id, new Set());
-    }
-    this.actions.get(id)!.add(handler);
+  register(id: string, handler: () => void, options?: { global?: boolean }): () => void {
+    const entry = this.actions.get(id) ?? {
+      handlers: new Set<() => void>(),
+      globalTransition: false,
+    };
+
+    entry.handlers.add(handler);
+    entry.globalTransition = entry.globalTransition || options?.global === true;
+    this.actions.set(id, entry);
 
     // Return cleanup function
     return () => this.unregister(id, handler);
@@ -43,10 +49,10 @@ export class LifecycleManager {
    * @param handler - Handler function to remove
    */
   unregister(id: string, handler: () => void): void {
-    const handlers = this.actions.get(id);
-    if (handlers) {
-      handlers.delete(handler);
-      if (handlers.size === 0) {
+    const entry = this.actions.get(id);
+    if (entry) {
+      entry.handlers.delete(handler);
+      if (entry.handlers.size === 0) {
         this.actions.delete(id);
       }
     }
@@ -59,11 +65,11 @@ export class LifecycleManager {
    * @returns Number of handlers executed
    */
   execute(id: string): number {
-    const handlers = this.actions.get(id);
-    if (!handlers) return 0;
+    const entry = this.actions.get(id);
+    if (!entry) return 0;
 
     let count = 0;
-    for (const handler of handlers) {
+    for (const handler of entry.handlers) {
       try {
         handler();
         count++;
@@ -76,20 +82,12 @@ export class LifecycleManager {
   }
 
   /**
-   * Register a global transition action.
-   * These actions run on every mode transition.
-   */
-  registerGlobalTransitionAction(action: string): void {
-    if (!this.globalTransitionActions.includes(action)) {
-      this.globalTransitionActions.push(action);
-    }
-  }
-
-  /**
    * Get all global transition actions.
    */
   getGlobalTransitionActions(): string[] {
-    return [...this.globalTransitionActions];
+    return [...this.actions.entries()]
+      .filter(([, entry]) => entry.globalTransition)
+      .map(([actionId]) => actionId);
   }
 
   /**
@@ -98,7 +96,6 @@ export class LifecycleManager {
    */
   clear(): void {
     this.actions.clear();
-    this.globalTransitionActions = [];
   }
 
 }

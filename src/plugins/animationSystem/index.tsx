@@ -1,11 +1,10 @@
+import React from 'react';
 import type { PluginDefinition, SvgDefsEditor, SvgStructureNodeSnapshot } from '../../types/plugins';
 import { Play } from 'lucide-react';
-import { canvasStoreApi } from '../../store/canvasStore';
+import { canvasStoreApi, useCanvasStore } from '../../store/canvasStore';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSelectOrIdlePanel } from '../../utils/pluginFactories';
-import { AnimationControlsPanel } from './AnimationControlsPanel';
-import { AnimationWorkspaceDialog } from './AnimationWorkspaceDialog';
 import { createAnimationSlice } from './slice';
 import type { AnimationPluginSlice, SVGAnimation, AnimationType } from './types';
 import { useAnimationTimer } from './hooks/useAnimationTimer';
@@ -18,8 +17,30 @@ import './exportContribution';
 import { registerAnimationCleanupHook } from './cleanupHook';
 import './rendererExtension';
 import './persistence';
-import { GizmoProvider } from './gizmos/GizmoContext';
 import { AnimationGizmoOverlay } from './integration';
+const AnimationWorkspaceDialog = React.lazy(() =>
+  import('./AnimationWorkspaceDialog').then((module) => ({ default: module.AnimationWorkspaceDialog }))
+);
+const AnimationControlsPanel = React.lazy(() =>
+  import('./AnimationControlsPanel').then((module) => ({ default: module.AnimationControlsPanel }))
+);
+
+// eslint-disable-next-line react-refresh/only-export-components
+const AnimationWorkspaceGlobalOverlay: React.FC = () => {
+  const isWorkspaceOpen = useCanvasStore(
+    (state) => ((state as unknown as AnimationPluginSlice).animationState?.isWorkspaceOpen) ?? false
+  );
+
+  if (!isWorkspaceOpen) {
+    return null;
+  }
+
+  return (
+    <React.Suspense fallback={null}>
+      <AnimationWorkspaceDialog />
+    </React.Suspense>
+  );
+};
 
 // Register cleanup hook to keep animation state in sync with element lifecycle
 registerAnimationCleanupHook();
@@ -871,16 +892,15 @@ export const animationSystemPlugin: PluginDefinition<CanvasStore> = {
   },
   keyboardShortcutScope: 'global',
   slices: [animationSliceFactory],
-  providers: [
-    {
-      id: 'gizmo-provider',
-      component: GizmoProvider,
-    },
-  ],
   canvasOverlays: [
     {
       id: 'animation-gizmo-overlay',
       component: AnimationGizmoOverlay,
+      condition: ({ state }) => {
+        const animationState = (state as CanvasStore & AnimationPluginSlice).animationState;
+        const activeGizmos = animationState?.activeGizmos as Map<string, unknown> | undefined;
+        return Boolean(animationState?.gizmoEditMode) && (activeGizmos?.size ?? 0) > 0;
+      },
     },
   ],
   importDefs: importAnimationDefs,
@@ -908,13 +928,16 @@ export const animationSystemPlugin: PluginDefinition<CanvasStore> = {
       id: 'animation-timer',
       hook: useAnimationTimer,
       global: true,
+      when: (state) => Boolean((state as CanvasStore & AnimationPluginSlice).animationState?.isPlaying),
     },
   ],
   overlays: [
     {
       id: 'animation-workspace-dialog',
-      component: AnimationWorkspaceDialog,
+      component: AnimationWorkspaceGlobalOverlay,
       placement: 'global',
+      condition: ({ state }) =>
+        Boolean((state as CanvasStore & AnimationPluginSlice).animationState?.isWorkspaceOpen),
     },
   ],
   keyboardShortcuts: {

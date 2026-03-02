@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createKnifePluginSlice, type KnifePluginSlice } from './slice';
 import React from 'react';
-import { KnifePanel } from './KnifePanel';
 import { KnifeOverlay } from './KnifeOverlay';
 import { cutElementsWithPath } from './knifeUtils';
 import { logger } from '../../utils/logger';
+
+const KnifePanel = React.lazy(() =>
+    import('./KnifePanel').then((module) => ({ default: module.KnifePanel }))
+);
 
 export const knifePlugin: PluginDefinition<CanvasStore> = {
     id: 'knife',

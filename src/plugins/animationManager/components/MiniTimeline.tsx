@@ -5,7 +5,7 @@
 
 import React, { useCallback, useRef, useMemo } from 'react';
 import { Box, Text, Flex } from '@chakra-ui/react';
-import { useThemeColors } from '../../../hooks';
+import { useThemeColors } from '../../../hooks/useThemeColors';
 import type { SVGAnimation } from '../../animationSystem/types';
 import { computeTotalDuration } from '../utils/descriptionGenerator';
 

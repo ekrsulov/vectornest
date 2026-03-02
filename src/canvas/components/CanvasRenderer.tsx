@@ -7,7 +7,6 @@ import { isTouchDevice } from '../../utils/domHelpers';
 import { zIndices } from '../../theme/spacing';
 import { PluginHooksRenderer } from '../PluginHooks';
 import { CanvasStage } from './CanvasStage';
-import { AnimationPreviewOverlay } from '../../overlays/AnimationPreviewOverlay';
 import { CanvasOverlays } from './CanvasOverlays';
 
 /** Cached once at module load to avoid repeated DOM queries per render */
@@ -15,6 +14,10 @@ const IS_TOUCH = isTouchDevice();
 
 /** Static style — hoisted to module scope to preserve referential identity */
 const OUTER_WRAPPER_STYLE: React.CSSProperties = { position: 'relative', width: '100%', height: '100%' };
+const AnimationPreviewOverlay = React.lazy(async () => {
+  const module = await import('../../overlays/AnimationPreviewOverlay');
+  return { default: module.AnimationPreviewOverlay };
+});
 
 const DevRenderCountBadgeWrapper = import.meta.env.DEV
   ? React.lazy(async () => {
@@ -40,6 +43,7 @@ interface CanvasRendererProps {
   isSpacePressed: boolean;
   currentMode: string;
   isPanMode: boolean;
+  isCanvasPreviewMode: boolean;
   sortedElements: CanvasElement[];
   renderElement: (element: CanvasElement) => React.ReactNode;
   canvasLayerContext: CanvasLayerContext;
@@ -67,6 +71,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   isSpacePressed,
   currentMode,
   isPanMode,
+  isCanvasPreviewMode,
   sortedElements,
   renderElement,
   canvasLayerContext,
@@ -148,10 +153,14 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             {...(!IS_TOUCH && { handleCanvasDoubleClick })}
             {...(IS_TOUCH && { handleCanvasTouchEnd })}
           />
-          <AnimationPreviewOverlay
-            viewport={viewport}
-            canvasSize={canvasSize}
-          />
+          {isCanvasPreviewMode && (
+            <React.Suspense fallback={null}>
+              <AnimationPreviewOverlay
+                viewport={viewport}
+                canvasSize={canvasSize}
+              />
+            </React.Suspense>
+          )}
           <CanvasOverlays
             viewport={viewport}
             canvasSize={canvasSize}

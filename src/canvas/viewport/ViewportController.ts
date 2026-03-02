@@ -1,7 +1,8 @@
 import type { Viewport, Point } from '../../types';
 import type { Bounds } from '../../utils/boundsUtils';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { PATH_DECIMAL_PRECISION } from '../../constants';
 import { clamp } from '../../utils/coreHelpers';
+import { formatToPrecision } from '../../utils/numberUtils';
 
 export interface ViewportSize {
   width: number;

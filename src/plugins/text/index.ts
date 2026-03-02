@@ -5,7 +5,6 @@ import { createToolPanel } from '../../utils/pluginFactories';
 import { RemoveFormatting } from 'lucide-react';
 import { createTextPluginSlice } from './slice';
 import React from 'react';
-import { TextPanel } from './TextPanel';
 import { addText } from './actions';
 
 type TextPluginApi = {
@@ -13,6 +12,9 @@ type TextPluginApi = {
 };
 
 const textSliceFactory = createPluginSlice(createTextPluginSlice);
+const TextPanel = React.lazy(() =>
+  import('./TextPanel').then((module) => ({ default: module.TextPanel }))
+);
 export const textPlugin: PluginDefinition<CanvasStore> = {
   id: 'text',
   metadata: {
@@ -43,4 +45,3 @@ export const textPlugin: PluginDefinition<CanvasStore> = {
   expandablePanel: () => React.createElement(TextPanel, { hideTitle: true }),
   sidebarPanels: [createToolPanel('text', TextPanel)],
 };
-

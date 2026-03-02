@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPathStitchSlice } from './slice';
-import { PathStitchPanel } from './PathStitchPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { Cable } from 'lucide-react';
 
 registerStateKeys('pathStitch', ['pathStitch'], 'temporal');
+
+const PathStitchPanel = React.lazy(() =>
+  import('./PathStitchPanel').then((module) => ({ default: module.PathStitchPanel }))
+);
 
 export const pathStitchPlugin: PluginDefinition<CanvasStore> = {
   id: 'pathStitch',

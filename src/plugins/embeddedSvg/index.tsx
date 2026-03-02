@@ -3,6 +3,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 import type { CanvasElement } from '../../types';
 import type { CanvasRenderContext } from '../../canvas/renderers/CanvasRendererRegistry';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
+import { cloneValue } from '../../utils/clone';
 import { importForeignObject } from './importForeignObject';
 
 type Matrix = [number, number, number, number, number, number];
@@ -326,7 +327,7 @@ elementContributionRegistry.register('embeddedSvg', {
   },
   clone: (element) => ({
     ...element,
-    data: JSON.parse(JSON.stringify(element.data)),
+    data: cloneValue(element.data),
   }),
 });
 
@@ -414,7 +415,7 @@ elementContributionRegistry.register('foreignObject', {
   },
   clone: (element) => ({
     ...element,
-    data: JSON.parse(JSON.stringify(element.data)),
+    data: cloneValue(element.data),
   }),
 });
 

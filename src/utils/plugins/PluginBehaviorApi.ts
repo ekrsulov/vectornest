@@ -119,17 +119,23 @@ export function isGlobalUndoRedoDisabled(params: {
 
 export function getPluginHooks(
   registry: PluginRegistry,
-  pluginId: string | null
+  pluginId: string | null,
+  isPluginEnabled?: (pluginId: string) => boolean
 ): PluginHookContribution[] {
   if (!pluginId) return [];
+  if (isPluginEnabled && !isPluginEnabled(pluginId)) return [];
   const plugin = registry.get(pluginId);
   return plugin?.hooks ?? [];
 }
 
-export function getGlobalPluginHooks(registry: PluginRegistry): PluginHookContribution[] {
+export function getGlobalPluginHooks(
+  registry: PluginRegistry,
+  isPluginEnabled?: (pluginId: string) => boolean
+): PluginHookContribution[] {
   const globalHooks: PluginHookContribution[] = [];
 
   Array.from(registry.values()).forEach((plugin) => {
+    if (isPluginEnabled && !isPluginEnabled(plugin.id)) return;
     if (!plugin.hooks) return;
     plugin.hooks.forEach((hook) => {
       if (hook.global) {

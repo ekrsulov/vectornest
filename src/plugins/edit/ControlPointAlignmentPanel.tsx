@@ -24,7 +24,7 @@ import { Panel } from '../../ui/Panel';
 import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { NumberInput } from '../../ui/NumberInput';
-import { formatToPrecision } from '../../utils';
+import { formatToPrecision } from '../../utils/numberUtils';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
   // ALL HOOKS FIRST - must be called unconditionally

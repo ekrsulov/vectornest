@@ -5,7 +5,6 @@ import { createPenPluginSlice } from './slice';
 import { PenTool } from 'lucide-react';
 import type { PenPluginSlice } from './slice';
 import React from 'react';
-import { PenPanel } from './PenPanel';
 import { usePenDrawingHook } from './hooks/usePenDrawingHook';
 import { RubberBandPreview } from './components/RubberBandPreview';
 import { PenPathOverlay } from './components/PenPathOverlay';
@@ -16,6 +15,9 @@ import { registerShortcutInterceptor } from '../../canvas/shortcuts/shortcutInte
 import { createPluginSlice } from '../../utils/pluginUtils';
 
 type PenStore = CanvasStore & PenPluginSlice;
+const PenPanel = React.lazy(() =>
+    import('./PenPanel').then((module) => ({ default: module.PenPanel }))
+);
 
 registerShortcutInterceptor({
     pluginId: 'pen',
@@ -165,4 +167,3 @@ export const penPlugin: PluginDefinition<CanvasStore> = {
     expandablePanel: () => React.createElement(PenPanel, { hideTitle: true }),
     sidebarPanels: [createToolPanel('pen', PenPanel)],
 };
-

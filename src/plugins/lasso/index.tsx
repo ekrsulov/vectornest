@@ -1,8 +1,8 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Lasso } from 'lucide-react';
 import { createLassoPluginSlice } from './slice';
-import { LassoPanel } from './LassoPanel';
 import { LassoOverlayWrapper } from './LassoOverlayWrapper';
 import { LassoSelectionStrategy } from './LassoSelectionStrategy';
 import { selectionStrategyRegistry } from '../../canvas/selection/SelectionStrategy';
@@ -11,6 +11,9 @@ import { createSettingsPanel } from '../../utils/pluginFactories';
 import './persistence';
 
 const lassoSliceFactory = createPluginSlice(createLassoPluginSlice);
+const LassoPanel = React.lazy(() =>
+  import('./LassoPanel').then((module) => ({ default: module.LassoPanel }))
+);
 export const lassoPlugin: PluginDefinition<CanvasStore> = {
   id: 'lasso',
   metadata: {

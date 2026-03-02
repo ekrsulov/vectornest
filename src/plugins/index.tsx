@@ -40,108 +40,98 @@ import { arrowsPlugin } from './arrows';
 import { imagePlugin } from './image';
 import { filterPlugin } from './filter';
 import { libraryFiltersPlugin } from './libraryFilters';
-import { librarySearchPlugin } from './librarySearch';
-import { potracePlugin } from './potrace';
-import { shapeBuilderPlugin } from './shapeBuilder';
-import { selectSimilarPlugin } from './selectSimilar';
 import { animationSystemPlugin } from './animationSystem';
 import { svgStructurePlugin } from './svgStructure';
 import { masksPlugin } from './masks';
-import { animationLibraryPlugin } from './animationLibrary';
 import { embeddedSvgPlugin } from './embeddedSvg';
 import { clipboardPlugin } from './clipboard';
-import { manualMovePlugin } from './manualMove';
-import { gridDistributionPlugin } from './gridDistribution';
 import { usePlugin } from './use';
-import { paintsPlugin } from './paints';
 import { artboardPlugin } from './artboard';
-import { llmAssistantPlugin } from './llmAssistant';
-import { noiseGeneratorPlugin } from './noiseGenerator';
-import { symmetryDrawPlugin } from './symmetryDraw';
-import { pathMorphPlugin } from './pathMorph';
-import { halftonePlugin } from './halftone';
-import { stickerEffectPlugin } from './stickerEffect';
-import { scatterAlongPathPlugin } from './scatterAlongPath';
-import { symmetryMirrorPlugin } from './symmetryMirror';
-import { pathTexturePlugin } from './pathTexture';
-import { glitchEffectPlugin } from './glitchEffect';
-import { particleFieldPlugin } from './particleField';
-import { waveDistortPlugin } from './waveDistort';
-import { spiralGeneratorPlugin } from './spiralGenerator';
-import { pathWeavePlugin } from './pathWeave';
-import { geometricPatternPlugin } from './geometricPattern';
-import { kaleidoscopePlugin } from './kaleidoscope';
-import { pathStitchPlugin } from './pathStitch';
-import { fractalTreePlugin } from './fractalTree';
-import { voronoiDiagramPlugin } from './voronoiDiagram';
-import { mazeGeneratorPlugin } from './mazeGenerator';
-import { guillochePlugin } from './guilloche';
-import { isometricGridPlugin } from './isometricGrid';
-import { celticKnotPlugin } from './celticKnot';
-import { gearGeneratorPlugin } from './gearGenerator';
-import { mandalaGeneratorPlugin } from './mandalaGenerator';
-import { generatorLibraryPlugin } from './generatorLibrary';
-import { auditLibraryPlugin } from './auditLibrary';
-import { curvatureCombPlugin } from './curvatureComb';
-import { colorHarmonyPlugin } from './colorHarmony';
-import { layoutEnginePlugin } from './layoutEngine';
-import { pathDirectionPlugin } from './pathDirection';
-import { compositionGuidesPlugin } from './compositionGuides';
-import { pathAnatomyPlugin } from './pathAnatomy';
-import { smartDistributePlugin } from './smartDistribute';
-import { contrastCheckerPlugin } from './contrastChecker';
-import { elementRulerPlugin } from './elementRuler';
-import { colorPalettePlugin } from './colorPalette';
-import { elementInspectorPlugin } from './elementInspector';
-import { alignmentAnalyzerPlugin } from './alignmentAnalyzer';
-import { svgSizeAnalyzerPlugin } from './svgSizeAnalyzer';
-import { gridCompliancePlugin } from './gridCompliance';
-import { duplicateFinderPlugin } from './duplicateFinder';
-import { documentAuditPlugin } from './documentAudit';
-import { bboxVisualizerPlugin } from './bboxVisualizer';
-import { layerDepthPlugin } from './layerDepth';
-import { accessibilityCheckerPlugin } from './accessibilityChecker';
-import { pathStatisticsPlugin } from './pathStatistics';
-import { spacingAnalyzerPlugin } from './spacingAnalyzer';
-import { namingManagerPlugin } from './namingManager';
-import { symmetryDetectorPlugin } from './symmetryDetector';
-import { elementComparatorPlugin } from './elementComparator';
-import { whiteSpaceAnalyzerPlugin } from './whiteSpaceAnalyzer';
-import { coordinateMapperPlugin } from './coordinateMapper';
-import { selectionStatisticsPlugin } from './selectionStatistics';
-import { anchorPointAnalyzerPlugin } from './anchorPointAnalyzer';
-import { pathComplexityScorerPlugin } from './pathComplexityScorer';
-import { tangentVisualizerPlugin } from './tangentVisualizer';
-import { elementHeatmapPlugin } from './elementHeatmap';
-import { proportionCheckerPlugin } from './proportionChecker';
-import { pathWindingAnalyzerPlugin } from './pathWindingAnalyzer';
-import { distanceMatrixPlugin } from './distanceMatrix';
-import { gradientMapperPlugin } from './gradientMapper';
-import { intersectionDetectorPlugin } from './intersectionDetector';
-import { strokeProfileAnalyzerPlugin } from './strokeProfileAnalyzer';
-import { knifePlugin } from './knife';
-import { blobBrushPlugin } from './blobBrush';
 import { perspectiveGridPlugin } from './perspectiveGrid';
-import { smartEraserPlugin } from './smartEraser';
-import { sprayCanPlugin } from './sprayCan';
-import { pathWeldPlugin } from './pathWeld';
-import { shapeCutterPlugin } from './shapeCutter';
-import { roughenToolPlugin } from './roughenTool';
-import { cornerRounderPlugin } from './cornerRounder';
-import { zigzagToolPlugin } from './zigzagTool';
-import { stampBrushPlugin } from './stampBrush';
-import { stippleBrushPlugin } from './stippleBrush';
-import { coilToolPlugin } from './coilTool';
-import { starBurstPlugin } from './starBurst';
-import { erodeDilatePlugin } from './erodeDilate';
-import { scallopToolPlugin } from './scallopTool';
-import { fractureToolPlugin } from './fractureTool';
-import { bridgeToolPlugin } from './bridgeTool';
-import { smoothPaintPlugin } from './smoothPaint';
 import { commandPalettePlugin } from './commandPalette';
 import { contextActionsPlugin } from './contextActions';
-import { animationManagerPlugin } from './animationManager';
-import { animLibraryPlugin } from './animLibrary';
+
+export type DeferredPluginBatchId = 'libraryShell' | 'advancedTool' | 'longTail' | 'utility';
+
+export const DEFERRED_PLUGIN_BATCHES: Array<{
+  id: DeferredPluginBatchId;
+  loadPlugins: () => Promise<PluginDefinition<CanvasStore>[]>;
+}> = [
+  {
+    id: 'libraryShell',
+    loadPlugins: () => import('./deferred/libraryShellPlugins').then((module) => module.LIBRARY_SHELL_PLUGINS),
+  },
+  {
+    id: 'advancedTool',
+    loadPlugins: () => import('./deferred/advancedToolPlugins').then((module) => module.ADVANCED_TOOL_PLUGINS),
+  },
+  {
+    id: 'longTail',
+    loadPlugins: () => import('./deferred/longTailPlugins').then((module) => module.LONG_TAIL_PLUGINS),
+  },
+  {
+    id: 'utility',
+    loadPlugins: () => import('./deferred/utilityPlugins').then((module) => module.UTILITY_PLUGINS),
+  },
+];
+
+export const DEFERRED_PLUGIN_LOADERS: Array<() => Promise<PluginDefinition<CanvasStore>[]>> =
+  DEFERRED_PLUGIN_BATCHES.map((batch) => batch.loadPlugins);
+
+type DeferredUiState = Pick<
+  CanvasStore,
+  'activePlugin' | 'showFilePanel' | 'showSettingsPanel' | 'showLibraryPanel' | 'leftSidebarActivePanel'
+>;
+
+export const getDeferredPluginBatchIdsForUiState = (
+  state: DeferredUiState
+): DeferredPluginBatchId[] => {
+  const required = new Set<DeferredPluginBatchId>();
+
+  if (state.showFilePanel) {
+    required.add('utility');
+  }
+
+  if (state.showSettingsPanel) {
+    required.add('utility');
+    required.add('longTail');
+  }
+
+  if (state.showLibraryPanel || state.leftSidebarActivePanel === 'library') {
+    required.add('utility');
+  }
+
+  if (state.leftSidebarActivePanel === 'generatorLibrary') {
+    required.add('utility');
+    required.add('longTail');
+  }
+
+  if (state.leftSidebarActivePanel === 'animLibrary') {
+    required.add('utility');
+  }
+
+  switch (state.activePlugin) {
+    case 'generatorLibrary':
+      required.add('libraryShell');
+      required.add('utility');
+      required.add('longTail');
+      break;
+    case 'animLibrary':
+      required.add('libraryShell');
+      required.add('utility');
+      break;
+    case 'auditLibrary':
+      required.add('libraryShell');
+      required.add('longTail');
+      break;
+    default:
+      break;
+  }
+
+  return DEFERRED_PLUGIN_BATCHES
+    .filter((batch) => required.has(batch.id))
+    .map((batch) => batch.id);
+};
 
 export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectPlugin,
@@ -153,10 +143,6 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   filePlugin,
   settingsPlugin,
   libraryPlugin,
-  generatorLibraryPlugin,
-  animLibraryPlugin,
-  auditLibraryPlugin,
-  librarySearchPlugin,
   pencilPlugin,
   penPlugin,
   textPlugin,
@@ -169,14 +155,6 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   editPlugin,
   pathPlugin,
   convertToPathPlugin,
-  knifePlugin,
-  pathWeldPlugin,
-  shapeCutterPlugin,
-  roughenToolPlugin,
-  cornerRounderPlugin,
-  smartEraserPlugin,
-  blobBrushPlugin,
-  sprayCanPlugin,
   gridFillPlugin,
   measurePlugin,
   opticalAlignmentPlugin,
@@ -205,92 +183,12 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   arrowsPlugin,
   libraryFiltersPlugin,
   filterPlugin,
-  potracePlugin,
-  shapeBuilderPlugin,
-  selectSimilarPlugin,
   masksPlugin,
-  animationLibraryPlugin,
   embeddedSvgPlugin,
   clipboardPlugin,
-  manualMovePlugin,
-  gridDistributionPlugin,
-  paintsPlugin,
   usePlugin,
-  llmAssistantPlugin,
-  noiseGeneratorPlugin,
-  symmetryDrawPlugin,
-  pathMorphPlugin,
-  halftonePlugin,
-  stickerEffectPlugin,
-  scatterAlongPathPlugin,
-  symmetryMirrorPlugin,
-  pathTexturePlugin,
-  glitchEffectPlugin,
-  particleFieldPlugin,
-  waveDistortPlugin,
-  spiralGeneratorPlugin,
-  pathWeavePlugin,
-  geometricPatternPlugin,
-  kaleidoscopePlugin,
-  pathStitchPlugin,
-  fractalTreePlugin,
-  voronoiDiagramPlugin,
-  mazeGeneratorPlugin,
-  guillochePlugin,
-  isometricGridPlugin,
-  celticKnotPlugin,
-  gearGeneratorPlugin,
-  mandalaGeneratorPlugin,
-  curvatureCombPlugin,
-  colorHarmonyPlugin,
-  layoutEnginePlugin,
-  pathDirectionPlugin,
-  compositionGuidesPlugin,
-  pathAnatomyPlugin,
-  smartDistributePlugin,
-  contrastCheckerPlugin,
-  elementRulerPlugin,
-  colorPalettePlugin,
-  elementInspectorPlugin,
-  alignmentAnalyzerPlugin,
-  svgSizeAnalyzerPlugin,
-  gridCompliancePlugin,
-  duplicateFinderPlugin,
-  documentAuditPlugin,
-  bboxVisualizerPlugin,
-  layerDepthPlugin,
-  accessibilityCheckerPlugin,
-  pathStatisticsPlugin,
-  spacingAnalyzerPlugin,
-  namingManagerPlugin,
-  symmetryDetectorPlugin,
-  elementComparatorPlugin,
-  whiteSpaceAnalyzerPlugin,
-  coordinateMapperPlugin,
-  selectionStatisticsPlugin,
-  anchorPointAnalyzerPlugin,
-  pathComplexityScorerPlugin,
-  tangentVisualizerPlugin,
-  elementHeatmapPlugin,
-  proportionCheckerPlugin,
-  pathWindingAnalyzerPlugin,
-  distanceMatrixPlugin,
-  gradientMapperPlugin,
-  intersectionDetectorPlugin,
-  strokeProfileAnalyzerPlugin,
-  zigzagToolPlugin,
-  stampBrushPlugin,
-  stippleBrushPlugin,
-  coilToolPlugin,
-  starBurstPlugin,
-  erodeDilatePlugin,
-  scallopToolPlugin,
-  fractureToolPlugin,
-  bridgeToolPlugin,
-  smoothPaintPlugin,
   commandPalettePlugin,
   contextActionsPlugin,
-  animationManagerPlugin,
   // pluginSelectorPlugin must be last so its init() runs after all other plugins are registered
   pluginSelectorPlugin,
 ];

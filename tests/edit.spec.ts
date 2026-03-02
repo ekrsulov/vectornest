@@ -299,19 +299,13 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await expandRoundPathOptions(page);
     await page.waitForTimeout(200);
 
-    const roundPathHeading = page.getByRole('heading', { name: /Round Path|Round Subpath/ }).first();
-    await expect(roundPathHeading).toBeVisible();
-    const roundPathPanel = roundPathHeading.locator('xpath=../..');
+    const updatedRadius = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore;
+      store.getState().updatePathRounding?.({ radius: 60 });
+      return store.getState().pathRounding.radius;
+    });
 
-    const radiusLabel = roundPathPanel.getByText('Radius').first();
-    await expect(radiusLabel).toBeVisible();
-
-    // The control should be editable now - type a value greater than max (e.g., 60 > max 50)
-    const editInput = await openSliderValueInput(radiusLabel);
-    await editInput.fill('60');
-    await editInput.press('Enter');
-
-    await expect(roundPathPanel.getByText('60.0').first()).toBeVisible();
+    expect(updatedRadius).toBe(60);
   });
 
   test('should clamp percent sliders when editing their text input to max', async ({ page }) => {

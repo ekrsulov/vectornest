@@ -14,7 +14,7 @@ import { screenDistance } from '../../utils/math';
 import { calculateBounds } from '../../utils/boundsUtils';
 import { getGroupBounds } from '../../canvas/geometry/CanvasGeometryService';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
-import { buildElementMap } from '../../utils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 export type { SnapPoint };
 

@@ -18,10 +18,9 @@ import type {
   PluginBehaviorFlags,
   PluginContextMenuActionContribution,
   PluginIdentityMetadata,
+  PluginOverlayContribution,
   PluginPanelContribution,
-  PluginProviderContribution,
   PluginRenderBehaviorContext,
-  PluginUIContribution,
   RendererOverrides,
   SidebarToolbarButtonContribution,
   SvgDefsEditor,
@@ -88,12 +87,10 @@ export interface PluginShortcuts {
 }
 
 export interface PluginUIContributions {
-  overlays?: PluginUIContribution[];
+  overlays?: PluginOverlayContribution[];
   canvasLayers?: CanvasLayerContribution[];
   canvasOverlays?: CanvasOverlayContribution[];
-  panels?: PluginUIContribution[];
   sidebarPanels?: PanelConfig[];
-  providers?: PluginProviderContribution[];
   sidebarToolbarButtons?: SidebarToolbarButtonContribution[];
   expandablePanel?: ComponentType;
   relatedPluginPanels?: PluginPanelContribution[];

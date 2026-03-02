@@ -1,15 +1,51 @@
+import React from 'react';
 import { Settings } from 'lucide-react';
 import type { PluginDefinition } from '../../types/plugins';
+import { useCanvasStore } from '../../store/canvasStore';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSelectorSlice, type PluginSelectorSlice } from './slice';
-
-type PluginSelectorStore = CanvasStore & PluginSelectorSlice;
-import { PluginSelectorDialog } from './PluginSelectorDialog';
-import { PluginSelectorAction } from './PluginSelectorAction';
 import { pluginManager } from '../../utils/pluginManager';
 import './persistence';
 
+type PluginSelectorStore = CanvasStore & PluginSelectorSlice;
+
 const DEFAULT_DISABLED_PLUGIN_IDS = new Set(import.meta.env.DEV ? [] : ['clipboard']);
+const PluginSelectorDialog = React.lazy(() =>
+    import('./PluginSelectorDialog').then((module) => ({ default: module.PluginSelectorDialog }))
+);
+const PluginSelectorAction = React.lazy(() =>
+    import('./PluginSelectorAction').then((module) => ({ default: module.PluginSelectorAction }))
+);
+
+const PluginSelectorGlobalOverlay: React.FC = () => {
+    const isDialogOpen = useCanvasStore(
+        (state) => ((state as unknown as PluginSelectorSlice).pluginSelector?.isDialogOpen) ?? false
+    );
+
+    if (!isDialogOpen) {
+        return null;
+    }
+
+    return React.createElement(
+        React.Suspense,
+        { fallback: null },
+        React.createElement(PluginSelectorDialog)
+    );
+};
+
+const PluginSelectorSettingsAction: React.FC = () =>
+    React.createElement(
+        React.Suspense,
+        { fallback: null },
+        React.createElement(PluginSelectorAction)
+    );
+
+const getRegisteredPluginIds = (): string[] => (
+    pluginManager
+        .getAll()
+        .map((plugin) => plugin.id)
+        .filter((id) => !DEFAULT_DISABLED_PLUGIN_IDS.has(id))
+);
 
 export const pluginSelectorPlugin: PluginDefinition<CanvasStore> = {
     id: 'pluginSelector',
@@ -22,48 +58,71 @@ export const pluginSelectorPlugin: PluginDefinition<CanvasStore> = {
     overlays: [
         {
             id: 'pluginSelector-dialog',
-            component: PluginSelectorDialog,
+            component: PluginSelectorGlobalOverlay,
             placement: 'global',
+            condition: ({ state }) =>
+                Boolean((state as PluginSelectorStore).pluginSelector?.isDialogOpen),
         },
     ],
     actions: [
         {
             id: 'pluginSelector-settings-action',
-            component: PluginSelectorAction,
+            component: PluginSelectorSettingsAction,
             placement: 'settings-panel',
         },
     ],
     init: (context) => {
-        // Initialize enabled plugins with all registered plugins
-        // Only if not already populated (first time use)
-        const state = context.store.getState();
-        const psState = (state as PluginSelectorStore).pluginSelector;
+        const syncRegisteredPlugins = () => {
+            const state = context.store.getState();
+            const psState = (state as PluginSelectorStore).pluginSelector;
+            if (!psState) {
+                return;
+            }
 
-        const newState: Partial<PluginSelectorSlice['pluginSelector']> = psState ? { ...psState } : {};
-        let hasChanges = false;
+            const registeredPluginIds = getRegisteredPluginIds();
+            const hadKnownPluginIds = (psState.knownPluginIds?.length ?? 0) > 0;
+            const nextKnownPluginIds = hadKnownPluginIds
+                ? [...psState.knownPluginIds]
+                : Array.from(new Set([...registeredPluginIds, ...psState.enabledPlugins]));
+            const nextEnabledPlugins = psState.enabledPlugins.length
+                ? [...psState.enabledPlugins]
+                : [...registeredPluginIds];
 
-        // Only initialize if enabledPlugins is empty or doesn't exist
-        if (psState && (!psState.enabledPlugins || psState.enabledPlugins.length === 0)) {
-            const allPluginIds = pluginManager
-                .getAll()
-                .map((p) => p.id)
-                .filter((id) => !DEFAULT_DISABLED_PLUGIN_IDS.has(id));
-            newState.enabledPlugins = allPluginIds;
-            hasChanges = true;
-        }
+            let hasChanges = false;
 
-        // Force dialog closed on init to prevent blocking UI (e.g. from persisted state)
-        if (psState && psState.isDialogOpen) {
-            newState.isDialogOpen = false;
-            hasChanges = true;
-        }
+            if (!hadKnownPluginIds) {
+                hasChanges = true;
+            } else {
+                registeredPluginIds.forEach((pluginId) => {
+                    if (!nextKnownPluginIds.includes(pluginId)) {
+                        nextKnownPluginIds.push(pluginId);
+                        hasChanges = true;
+                        if (!nextEnabledPlugins.includes(pluginId)) {
+                            nextEnabledPlugins.push(pluginId);
+                        }
+                    }
+                });
+            }
 
-        if (hasChanges) {
+            if (psState.isDialogOpen) {
+                hasChanges = true;
+            }
+
+            if (!hasChanges) {
+                return;
+            }
+
             (context.store.setState as (partial: Partial<CanvasStore>) => void)({
-                pluginSelector: newState
+                pluginSelector: {
+                    ...psState,
+                    enabledPlugins: nextEnabledPlugins,
+                    knownPluginIds: nextKnownPluginIds,
+                    isDialogOpen: false,
+                }
             });
-        }
+        };
 
-        return () => { };
+        syncRegisteredPlugins();
+        return pluginManager.onPluginRegistrationChange(syncRegisteredPlugins);
     }
 };

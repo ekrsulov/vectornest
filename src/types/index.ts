@@ -211,7 +211,6 @@ export type {
   UnifiedCanvasLayerContribution,
   CanvasOverlayContribution,
   ToolbarButtonContribution,
-  ProviderContribution,
   UIContribution,
 } from './ui-contributions';
 
@@ -220,7 +219,6 @@ export {
   isCanvasLayerContribution,
   isCanvasOverlayContribution,
   isToolbarButtonContribution,
-  isProviderContribution,
   whenActivePlugin,
   whenNotInSpecialPanelMode,
   allConditions,

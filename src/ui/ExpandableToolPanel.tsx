@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import {
   Box,
   VStack,
@@ -8,7 +8,10 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { pluginManager } from '../utils/pluginManager';
-import { useThemeColors, useSidebarLayout, useResponsive } from '../hooks';
+import { usePluginRegistrationVersion } from '../hooks/usePluginRegistrationVersion';
+import { useResponsive } from '../hooks/useResponsive';
+import { useSidebarLayout } from '../hooks/useSidebarLayout';
+import { useThemeColors } from '../hooks/useThemeColors';
 import { useCanvasStore } from '../store/canvasStore';
 import { zIndices } from '../theme/spacing';
 
@@ -18,6 +21,7 @@ import { zIndices } from '../theme/spacing';
  */
 export const ExpandableToolPanel: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const registrationVersion = usePluginRegistrationVersion();
 
   // Get effective sidebar width using consolidated hook
   const { effectiveSidebarWidth, effectiveLeftSidebarWidth, isSidebarPinned } = useSidebarLayout();
@@ -39,6 +43,7 @@ export const ExpandableToolPanel: React.FC = () => {
   const inactiveBgDark = 'rgba(26, 32, 44, 0.95)';
 
   const PanelComponent = activePlugin ? pluginManager.getExpandablePanel(activePlugin) : null;
+  void registrationVersion;
 
   // The expandable panel only shows when the right sidebar is not pinned.
   if (!PanelComponent || isSidebarPinned) {
@@ -155,7 +160,9 @@ export const ExpandableToolPanel: React.FC = () => {
             maxW="250px"
             overflow="hidden"
           >
-            <PanelComponent />
+            <Suspense fallback={<Box py={4} />}>
+              <PanelComponent />
+            </Suspense>
           </Box>
         </Collapse>
       </VStack>

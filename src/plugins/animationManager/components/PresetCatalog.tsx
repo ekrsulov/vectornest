@@ -9,7 +9,7 @@ import { Star, Clock } from 'lucide-react';
 import { Panel } from '../../../ui/Panel';
 import { PanelTextInput } from '../../../ui/PanelTextInput';
 import { PanelStyledButton } from '../../../ui/PanelStyledButton';
-import { useThemeColors } from '../../../hooks';
+import { useThemeColors } from '../../../hooks/useThemeColors';
 import { useCanvasStore } from '../../../store/canvasStore';
 import type { CanvasStore } from '../../../store/canvasStore';
 import type { AnimationManagerSlice, PresetCategory } from '../types';

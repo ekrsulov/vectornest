@@ -206,7 +206,7 @@ export const PatternsPanel: React.FC = () => {
   }, [editingPattern]);
 
   const handleAdd = () => {
-    const id = `pattern-${Date.now()}`;
+    const id = generateShortId('pattern');
     const newPattern: PatternDef = {
       id,
       type: 'stripes',

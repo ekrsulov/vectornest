@@ -1,14 +1,18 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Activity } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createCurvatureCombSlice } from './slice';
-import { CurvatureCombPanel } from './CurvatureCombPanel';
 import { CurvatureCombOverlay } from './CurvatureCombOverlay';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('curvatureComb', ['curvatureComb'], 'both');
+
+const CurvatureCombPanel = React.lazy(() =>
+  import('./CurvatureCombPanel').then((module) => ({ default: module.CurvatureCombPanel }))
+);
 
 export const curvatureCombPlugin: PluginDefinition<CanvasStore> = {
   id: 'curvatureComb',

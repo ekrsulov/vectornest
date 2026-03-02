@@ -1,5 +1,5 @@
 import type { CanvasElement, ElementTransform, GroupData, GroupElement } from '../../../../types';
-import { buildElementMap } from '../../../../utils';
+import { buildElementMap } from '../../../../utils/elementMapUtils';
 import { getElementTransformMatrix } from '../../../../utils/elementTransformUtils';
 import { IDENTITY_MATRIX, isIdentityMatrix, type Matrix } from '../../../../utils/matrixUtils';
 import { elementContributionRegistry } from '../../../../utils/elementContributionRegistry';

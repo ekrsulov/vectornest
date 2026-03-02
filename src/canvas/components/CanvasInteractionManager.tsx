@@ -1,11 +1,9 @@
+import React, { Suspense, useEffect, useState } from 'react';
 import { useEventCallback } from '../../hooks/useEventCallback';
 import { useCanvasDrag } from '../hooks/useCanvasDrag';
 import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
 import { useCanvasPointerEvents } from '../hooks/useCanvasPointerEvents';
-import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts';
 import { useCanvasZoom } from '../hooks/useCanvasZoom';
-import { useMobileTouchGestures } from '../hooks/useMobileTouchGestures';
-import { canvasShortcutRegistry } from '../shortcuts';
 import type { CanvasEventBus } from '../CanvasEventBusContext';
 import type { CanvasElementEventHandlers } from '../renderers/CanvasRendererRegistry';
 import type {
@@ -14,6 +12,13 @@ import type {
   Point,
   Viewport,
 } from '../../types';
+import { isTouchDevice } from '../../utils/domHelpers';
+
+const CanvasDeferredSupport = React.lazy(async () => {
+  const module = await import('./CanvasDeferredSupport');
+  return { default: module.CanvasDeferredSupport };
+});
+const SHOULD_ENABLE_TOUCH_GESTURES = isTouchDevice();
 
 interface CanvasInteractionManagerProps {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -88,9 +93,12 @@ export const CanvasInteractionManager: React.FC<CanvasInteractionManagerProps> =
   screenToCanvas,
   children,
 }) => {
-  useCanvasShortcuts(canvasShortcutRegistry, svgRef);
   useCanvasZoom(svgRef);
-  useMobileTouchGestures(svgRef, dragSelection.cancelSelection);
+  const [shouldLoadDeferredSupport, setShouldLoadDeferredSupport] = useState(false);
+
+  useEffect(() => {
+    setShouldLoadDeferredSupport(true);
+  }, []);
 
   const handleMoveSelectedElements = useEventCallback((deltaX: number, deltaY: number, precisionOverride?: number) => {
     movement.moveSelectedElements(deltaX, deltaY, precisionOverride);
@@ -158,6 +166,15 @@ export const CanvasInteractionManager: React.FC<CanvasInteractionManagerProps> =
 
   return (
     <>
+      {shouldLoadDeferredSupport && (
+        <Suspense fallback={null}>
+          <CanvasDeferredSupport
+            svgRef={svgRef}
+            cancelSelection={dragSelection.cancelSelection}
+            enableTouchGestures={SHOULD_ENABLE_TOUCH_GESTURES}
+          />
+        </Suspense>
+      )}
       {children({
         isDragging,
         dragStart,

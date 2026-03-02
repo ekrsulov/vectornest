@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createBridgeToolPluginSlice, type BridgeToolPluginSlice } from './slice';
 import React from 'react';
-import { BridgeToolPanel } from './BridgeToolPanel';
 import { BridgeToolOverlay } from './BridgeToolOverlay';
 import { bridgeElements } from './bridgeUtils';
 import { logger } from '../../utils/logger';
+
+const BridgeToolPanel = React.lazy(() =>
+    import('./BridgeToolPanel').then((module) => ({ default: module.BridgeToolPanel }))
+);
 
 export const bridgeToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'bridgeTool',

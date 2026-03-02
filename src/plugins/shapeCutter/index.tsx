@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createShapeCutterPluginSlice, type ShapeCutterPluginSlice } from './slice';
 import React from 'react';
-import { ShapeCutterPanel } from './ShapeCutterPanel';
 import { ShapeCutterOverlay } from './ShapeCutterOverlay';
 import { cutWithShape } from './shapeCutterUtils';
 import { logger } from '../../utils/logger';
+
+const ShapeCutterPanel = React.lazy(() =>
+    import('./ShapeCutterPanel').then((module) => ({ default: module.ShapeCutterPanel }))
+);
 
 export const shapeCutterPlugin: PluginDefinition<CanvasStore> = {
     id: 'shapeCutter',

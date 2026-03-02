@@ -16,7 +16,7 @@ import {
 import { paintContributionRegistry } from '../utils/paintContributionRegistry';
 import { PanelStyledButton } from './PanelStyledButton';
 import { PanelTextInput } from './PanelTextInput';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 const COLLAPSE_STYLE: React.CSSProperties = { width: '100%', overflow: 'visible' };
 interface MultiPaintPickerProps {

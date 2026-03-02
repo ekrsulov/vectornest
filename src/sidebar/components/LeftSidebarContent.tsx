@@ -1,18 +1,43 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Box, useColorModeValue } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { LeftSidebarToolGrid } from './LeftSidebarToolGrid';
-import { SvgStructurePanel } from '../../plugins/svgStructure/SvgStructurePanel';
 import { LibraryRelatedPanels } from '../panels/LibraryRelatedPanels';
 import { SidebarPanelScopeContext } from '../../contexts/sidebarPanelState';
+import { panelRegistry } from '../../utils/panelRegistry';
+import { usePluginRegistrationVersion } from '../../hooks/usePluginRegistrationVersion';
 
 export const LeftSidebarContent: React.FC = () => {
+  const registrationVersion = usePluginRegistrationVersion();
   const leftSidebarActivePanel = useCanvasStore((state) => state.leftSidebarActivePanel);
   const maximizedLeftSidebarPanelKey = useCanvasStore((state) => state.leftMaximizedSidebarPanelKey);
+  const StructurePanel = panelRegistry.get('svgStructure:svgStructure')?.component;
+  void registrationVersion;
 
   const scrollbarTrack = useColorModeValue('#f1f1f1', 'rgba(255, 255, 255, 0.06)');
   const scrollbarThumb = useColorModeValue('#888', 'rgba(255, 255, 255, 0.3)');
   const scrollbarThumbHover = useColorModeValue('#555', 'rgba(255, 255, 255, 0.45)');
+  const panelContent = leftSidebarActivePanel === 'structure'
+    ? (StructurePanel ? (
+      <Suspense fallback={<Box py={4} />}>
+        <StructurePanel panelKey="svgStructure:svg-structure-panel" />
+      </Suspense>
+    ) : null)
+    : leftSidebarActivePanel === 'library'
+      ? <LibraryRelatedPanels />
+      : leftSidebarActivePanel === 'animLibrary'
+        ? (
+          <LibraryRelatedPanels
+            targetPluginId="animLibrary"
+            badgeComponentName="AnimLibraryPanelRelated"
+          />
+        )
+        : (
+          <LibraryRelatedPanels
+            targetPluginId="generatorLibrary"
+            badgeComponentName="GeneratorLibraryPanelRelated"
+          />
+        );
 
   return (
     <SidebarPanelScopeContext.Provider value="left">
@@ -46,21 +71,7 @@ export const LeftSidebarContent: React.FC = () => {
           },
         }}
       >
-        {leftSidebarActivePanel === 'structure' ? (
-          <SvgStructurePanel panelKey="svgStructure:svg-structure-panel" />
-        ) : leftSidebarActivePanel === 'library' ? (
-          <LibraryRelatedPanels />
-        ) : leftSidebarActivePanel === 'animLibrary' ? (
-          <LibraryRelatedPanels
-            targetPluginId="animLibrary"
-            badgeComponentName="AnimLibraryPanelRelated"
-          />
-        ) : (
-          <LibraryRelatedPanels
-            targetPluginId="generatorLibrary"
-            badgeComponentName="GeneratorLibraryPanelRelated"
-          />
-        )}
+        {panelContent}
       </Box>
     </Box>
     </SidebarPanelScopeContext.Provider>

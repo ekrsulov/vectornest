@@ -1,7 +1,7 @@
 import React from 'react';
 import { SimpleGrid, VStack, useColorModeValue } from '@chakra-ui/react';
 import { SectionHeader } from '../../ui/SectionHeader';
-import { useThemeColors } from '../../hooks';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { ColorSwatch } from '../components/DesignSystemShared';
 
 export const ColorsTab: React.FC = () => {

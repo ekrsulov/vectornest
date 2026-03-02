@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createErodeDilatePluginSlice, type ErodeDilatePluginSlice } from './slice';
 import React from 'react';
-import { ErodeDilatePanel } from './ErodeDilatePanel';
 import { ErodeDilateOverlay } from './ErodeDilateOverlay';
 import { erodeOrDilateElements } from './erodeDilateUtils';
 import { logger } from '../../utils/logger';
+
+const ErodeDilatePanel = React.lazy(() =>
+    import('./ErodeDilatePanel').then((module) => ({ default: module.ErodeDilatePanel }))
+);
 
 export const erodeDilatePlugin: PluginDefinition<CanvasStore> = {
     id: 'erodeDilate',

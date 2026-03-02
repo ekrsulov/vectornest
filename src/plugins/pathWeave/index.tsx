@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Shuffle } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPathWeaveSlice } from './slice';
-import { PathWeavePanel } from './PathWeavePanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('pathWeave', ['pathWeave'], 'temporal');
+
+const PathWeavePanel = React.lazy(() =>
+  import('./PathWeavePanel').then((module) => ({ default: module.PathWeavePanel }))
+);
 
 export const pathWeavePlugin: PluginDefinition<CanvasStore> = {
   id: 'pathWeave',

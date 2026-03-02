@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createStampBrushPluginSlice, type StampBrushPluginSlice } from './slice';
 import React from 'react';
-import { StampBrushPanel } from './StampBrushPanel';
 import { StampBrushOverlay } from './StampBrushOverlay';
 import { createStampedCopies } from './stampBrushUtils';
 import { logger } from '../../utils/logger';
+
+const StampBrushPanel = React.lazy(() =>
+    import('./StampBrushPanel').then((module) => ({ default: module.StampBrushPanel }))
+);
 
 export const stampBrushPlugin: PluginDefinition<CanvasStore> = {
     id: 'stampBrush',

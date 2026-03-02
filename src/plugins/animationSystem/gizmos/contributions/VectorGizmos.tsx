@@ -18,7 +18,7 @@ import type {
 import { createDefaultInteraction } from '../types';
 import type { SVGAnimation } from '../../types';
 import type { Command, Point } from '../../../../types';
-import { formatToPrecision } from '../../../../utils';
+import { formatToPrecision } from '../../../../utils/numberUtils';
 import { parsePathD } from '../../../../utils/path';
 import { formatStyleValuesKeyframes, extractStyleAnimationValues } from './gizmoHelpers';
 

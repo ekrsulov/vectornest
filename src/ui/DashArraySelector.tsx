@@ -4,7 +4,7 @@ import { Minus } from 'lucide-react';
 import { ToggleButton } from './ToggleButton';
 import { DASH_PRESETS } from '../utils/dashPresets';
 import type { DashPreset } from '../utils/dashPresets';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 const PRESET_CONTAINER_STYLE: React.CSSProperties = {
   display: 'flex',

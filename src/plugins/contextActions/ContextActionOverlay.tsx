@@ -11,7 +11,10 @@
 import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import { Box, HStack, VStack, Text, Portal, useColorModeValue } from '@chakra-ui/react';
 import { useContextActions, type QuickAction, type ActionGroup } from './useContextActions';
-import { useResponsive, useThemeColors, useSidebarLayout, useToolbarPositionStyles } from '../../hooks';
+import { useResponsive } from '../../hooks/useResponsive';
+import { useThemeColors } from '../../hooks/useThemeColors';
+import { useSidebarLayout } from '../../hooks/useSidebarLayout';
+import { useToolbarPositionStyles } from '../../hooks/useToolbarPositionStyles';
 import { NO_FOCUS_STYLES_DEEP } from '../../hooks/useThemeColors';
 import type { CanvasOverlayProps } from '../../types/ui-contributions';
 import { useCanvasStore } from '../../store/canvasStore';

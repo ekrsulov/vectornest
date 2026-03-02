@@ -1,10 +1,10 @@
+import React from 'react';
 import type { PluginDefinition, CanvasShortcutContext } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 import { useCanvasStore } from '../../store/canvasStore';
 import { createGuidelinesPluginSlice } from './slice';
 import type { GuidelinesPluginSlice } from './slice';
-import { GuidelinesPanel } from './GuidelinesPanel';
 import { GuidelinesLayer } from './GuidelinesLayer';
 import type { GuidelinesState } from './types';
 import { useGuidelinesAltKey } from './hooks/useGuidelinesAltKey';
@@ -17,6 +17,10 @@ import { registerToggleFlag, unregisterToggleFlag } from '../../utils/toggleFlag
 import { createPluginSlice } from '../../utils/pluginUtils';
 
 registerStateKeys('guidelines', ['guidelines'], 'temporal');
+
+const GuidelinesPanel = React.lazy(() =>
+  import('./GuidelinesPanel').then((module) => ({ default: module.GuidelinesPanel }))
+);
 
 const GUIDELINES_ENABLED_TOGGLE_ID = 'guidelines-enabled';
 const MANUAL_GUIDES_TOGGLE_ID = 'manual-guides-enabled';
@@ -105,11 +109,19 @@ export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
       id: 'guidelines-alt-key-listener',
       global: true,
       hook: useGuidelinesAltKey,
+      when: (state) => {
+        const casted = state as CanvasStore & GuidelinesPluginSlice;
+        return Boolean(casted.guidelines?.enabled || casted.guidelines?.manualGuidesEnabled);
+      },
     },
     {
       id: 'guidelines-hover-element-listener',
       global: true,
       hook: useGuidelinesHoverElement,
+      when: (state) => {
+        const casted = state as CanvasStore & GuidelinesPluginSlice;
+        return Boolean(casted.guidelines?.enabled || casted.guidelines?.manualGuidesEnabled);
+      },
     },
   ],
   slices: [guidelinesSliceFactory],

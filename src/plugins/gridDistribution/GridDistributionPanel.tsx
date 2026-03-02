@@ -8,7 +8,7 @@ import { PanelToggle } from '../../ui/PanelToggle';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { CanvasElement, Command, PathData, GroupData } from '../../types';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
-import { buildElementMap } from '../../utils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 import { applyToPoint, createTranslateMatrix, inverseMatrix, type Matrix } from '../../utils/matrixUtils';
 import { getAccumulatedTransformMatrix, getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
 import { buildNativeShapeThumbnailCommands, getGroupThumbnailCommands } from '../../utils/selectPanelHelpers';

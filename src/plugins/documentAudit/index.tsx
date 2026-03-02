@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { ClipboardCheck } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createDocumentAuditSlice } from './slice';
-import { DocumentAuditPanel } from './DocumentAuditPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('documentAudit', ['documentAudit'], 'temporal');
+const DocumentAuditPanel = lazy(() =>
+  import('./DocumentAuditPanel').then((module) => ({ default: module.DocumentAuditPanel }))
+);
 
 export const documentAuditPlugin: PluginDefinition<CanvasStore> = {
   id: 'documentAudit',

@@ -6,7 +6,7 @@ import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { SidebarUtilityButton } from '../../ui/SidebarUtilityButton';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { pluginManager } from '../../utils/pluginManager';
-import { useEnabledPlugins } from '../../hooks';
+import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
 import { useCanvasStore } from '../../store/canvasStore';
 
 interface ToolConfig {

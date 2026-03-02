@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@chakra-ui/react';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 import { NO_TAP_HIGHLIGHT } from '../constants';
 
 interface SidebarUtilityButtonProps {

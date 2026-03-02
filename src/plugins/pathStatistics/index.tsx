@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPathStatisticsSlice } from './slice';
-import { PathStatisticsPanel } from './PathStatisticsPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('pathStatistics', ['pathStatistics'], 'temporal');
+const PathStatisticsPanel = lazy(() =>
+  import('./PathStatisticsPanel').then((module) => ({ default: module.PathStatisticsPanel }))
+);
 
 export const pathStatisticsPlugin: PluginDefinition<CanvasStore> = {
   id: 'pathStatistics',

@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../canvasStore';
 import {
-  getCanvasModeMachine,
+  getInitialCanvasMode,
   transitionCanvasMode,
   type CanvasMode,
 } from '../../canvas/modes/CanvasModeMachine';
@@ -15,13 +15,11 @@ export type { BaseSlice } from './base/baseSliceTypes';
 export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
   const applyModeTransition = (requestedMode: string) => {
     const state = get() as CanvasStore;
-    const currentMode = (state.activePlugin ?? getCanvasModeMachine().initial) as CanvasMode;
-    const targetMode = (requestedMode || getCanvasModeMachine().initial) as CanvasMode;
+    const initialMode = getInitialCanvasMode();
+    const currentMode = (state.activePlugin ?? initialMode) as CanvasMode;
+    const targetMode = (requestedMode || initialMode) as CanvasMode;
 
-    const result = transitionCanvasMode(currentMode, {
-      type: 'ACTIVATE',
-      value: targetMode,
-    });
+    const result = transitionCanvasMode(currentMode, targetMode);
 
     if (!result.changed) {
       return;

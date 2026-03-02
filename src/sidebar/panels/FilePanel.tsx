@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { HStack, VStack, Input, FormLabel, Text, Box, useToast } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 
-import { logger } from '../../utils';
+import { logger } from '../../utils/logger';
 import { Panel } from '../../ui/Panel';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { useSvgImport } from '../../hooks/useSvgImport';

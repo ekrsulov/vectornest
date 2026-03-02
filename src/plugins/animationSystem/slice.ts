@@ -243,6 +243,10 @@ export const createAnimationSlice: AnimationSliceCreator = (set, get) => {
       chainDelays: new Map(),
       isWorkspaceOpen: false,
       isCanvasPreviewMode: false,
+      activeGizmos: new Map(),
+      focusedGizmoAnimationId: null,
+      gizmoEditMode: false,
+      draggingHandle: null,
     },
     animationSync: {
       chains: [],

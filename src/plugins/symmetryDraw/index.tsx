@@ -1,9 +1,9 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Sparkles } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSymmetryDrawSlice } from './slice';
-import { SymmetryDrawPanel } from './SymmetryDrawPanel';
 import { SymmetryOverlay } from './SymmetryOverlay';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 import { registerStateKeys } from '../../store/persistenceRegistry';
@@ -11,6 +11,9 @@ import { registerStateKeys } from '../../store/persistenceRegistry';
 registerStateKeys('symmetryDraw', ['symmetryDraw'], 'both');
 
 const symmetryDrawSliceFactory = createPluginSlice(createSymmetryDrawSlice);
+const SymmetryDrawPanel = React.lazy(() =>
+  import('./SymmetryDrawPanel').then((module) => ({ default: module.SymmetryDrawPanel }))
+);
 
 export const symmetryDrawPlugin: PluginDefinition<CanvasStore> = {
   id: 'symmetryDraw',

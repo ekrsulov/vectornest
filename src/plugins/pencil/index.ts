@@ -4,7 +4,6 @@ import { createPencilPluginSlice } from './slice';
 import { Pen } from 'lucide-react';
 import type { PencilPluginSlice } from './slice';
 import React from 'react';
-import { PencilPanel } from './PencilPanel';
 import { startPath, addPointToPath, finalizePath } from './actions';
 import type { Point } from '../../types';
 import { usePencilDrawingHook } from './hooks/usePencilDrawingHook';
@@ -22,6 +21,9 @@ type PencilPluginApi = {
 };
 
 const pencilSliceFactory = createPluginSlice(createPencilPluginSlice);
+const PencilPanel = React.lazy(() =>
+  import('./PencilPanel').then((module) => ({ default: module.PencilPanel }))
+);
 // Global listener flags and cleanup handles
 let listenersInstalled = false;
 // No manual store subscription required; helper handles auto-cleanup.
@@ -98,4 +100,3 @@ export const pencilPlugin: PluginDefinition<CanvasStore> = {
   expandablePanel: () => React.createElement(PencilPanel, { hideTitle: true }),
   sidebarPanels: [createToolPanel('pencil', PencilPanel)],
 };
-

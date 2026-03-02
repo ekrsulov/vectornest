@@ -2,7 +2,7 @@ import React from 'react';
 import { Tooltip } from '@chakra-ui/react';
 import type { TooltipProps } from '@chakra-ui/react';
 import { useCanvasStore } from '../store/canvasStore';
-import { useResponsive } from '../hooks';
+import { useResponsive } from '../hooks/useResponsive';
 
 const ConditionalTooltip: React.FC<TooltipProps> = ({ children, shouldWrapChildren = true, ...props }) => {
   const { isMobile } = useResponsive();

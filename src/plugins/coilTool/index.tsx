@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createCoilToolPluginSlice, type CoilToolPluginSlice } from './slice';
 import React from 'react';
-import { CoilToolPanel } from './CoilToolPanel';
 import { CoilToolOverlay } from './CoilToolOverlay';
 import { createCoilPath } from './coilUtils';
 import { logger } from '../../utils/logger';
+
+const CoilToolPanel = React.lazy(() =>
+    import('./CoilToolPanel').then((module) => ({ default: module.CoilToolPanel }))
+);
 
 export const coilToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'coilTool',

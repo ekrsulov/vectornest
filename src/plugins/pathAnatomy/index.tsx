@@ -1,14 +1,18 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { ScanSearch } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPathAnatomySlice } from './slice';
-import { PathAnatomyPanel } from './PathAnatomyPanel';
 import { PathAnatomyOverlay } from './PathAnatomyOverlay';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('pathAnatomy', ['pathAnatomy'], 'both');
+
+const PathAnatomyPanel = React.lazy(() =>
+  import('./PathAnatomyPanel').then((module) => ({ default: module.PathAnatomyPanel }))
+);
 
 export const pathAnatomyPlugin: PluginDefinition<CanvasStore> = {
   id: 'pathAnatomy',

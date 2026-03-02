@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { Zap } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createGlitchEffectSlice } from './slice';
-import { GlitchEffectPanel } from './GlitchEffectPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('glitchEffect', ['glitchEffect'], 'temporal');
+const GlitchEffectPanel = lazy(() =>
+  import('./GlitchEffectPanel').then((module) => ({ default: module.GlitchEffectPanel }))
+);
 
 const glitchEffectSliceFactory = createPluginSlice(createGlitchEffectSlice);
 

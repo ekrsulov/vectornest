@@ -6,9 +6,9 @@ import { createToolPanel } from '../../utils/pluginFactories';
 import { Shapes } from 'lucide-react';
 import { createShapePluginSlice } from './slice';
 import React from 'react';
-import { ShapePanel } from './ShapePanel';
 import { ShapePreview } from './ShapePreview';
-import { BlockingOverlay, FeedbackOverlay } from '../../overlays';
+import { BlockingOverlay } from '../../overlays/BlockingOverlay';
+import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
 import { createShape } from './actions';
 import type { Point, Viewport } from '../../types';
 import { getEffectiveShift } from '../../utils/effectiveShift';
@@ -16,6 +16,9 @@ import { ShapeCreationController } from './ShapeCreationController';
 import { useCanvasStore } from '../../store/canvasStore';
 
 const shapeSliceFactory = createPluginSlice(createShapePluginSlice);
+const ShapePanel = React.lazy(() =>
+  import('./ShapePanel').then((module) => ({ default: module.ShapePanel }))
+);
 const ShapePreviewWrapper: React.FC = () => {
   const shape = useCanvasStore(state => state.shape);
   const viewport = useCanvasStore(state => state.viewport);

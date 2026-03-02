@@ -130,6 +130,11 @@ export interface AnimationState {
   isWorkspaceOpen: boolean;
   /** When true, shows the canvas preview overlay for full-canvas animation preview */
   isCanvasPreviewMode: boolean;
+  /** Runtime-only gizmo session state. Not persisted or added to undo history. */
+  activeGizmos: Map<string, unknown>;
+  focusedGizmoAnimationId: string | null;
+  gizmoEditMode: boolean;
+  draggingHandle: { animationId: string; handleId: string } | null;
 }
 
 export interface AnimationPluginSlice {

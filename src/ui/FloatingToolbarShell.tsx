@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, type BoxProps } from '@chakra-ui/react';
-import { useThemeColors, useToolbarPositionStyles } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
+import { useToolbarPositionStyles } from '../hooks/useToolbarPositionStyles';
 import { zIndices } from '../theme/spacing';
 
 /** Position configuration for each toolbar type */

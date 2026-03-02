@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Box, Flex, IconButton } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { ArrangePanel } from '../panels/ArrangePanel';
-import { EditorPanel } from '../panels/EditorPanel';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useSidebarFooterHeight } from '../../hooks/useSidebarFooterHeight';
 import { useSidebarContext } from '../../contexts/SidebarContext';
+
+const EditorPanel = lazy(() =>
+  import('../panels/EditorPanel').then((module) => ({ default: module.EditorPanel }))
+);
 
 /**
  * Fixed footer section of the sidebar containing the ArrangePanel.
@@ -63,7 +66,9 @@ export const SidebarFooter: React.FC = () => {
       )}
 
       <Box px={2}>
-        <EditorPanel />
+        <Suspense fallback={null}>
+          <EditorPanel />
+        </Suspense>
       </Box>
 
     </Box>

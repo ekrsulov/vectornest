@@ -5,6 +5,7 @@ import type { Point, CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../../store/canvasStore';
 import { calculateSkewAngleFromDelta } from '../../../utils/advancedTransformUtils';
 import { computeTransformDeltas } from '../../../utils/animationTransformDelta';
+import { cloneValue } from '../../../utils/clone';
 import type { TransformationPluginSlice } from '../slice';
 
 type TransformationStore = CanvasStore & TransformationPluginSlice;
@@ -84,7 +85,7 @@ export const useAdvancedTransformControls = () => {
 
     return {
       animationTargetIds: collectAnimationTargetIds(state),
-      elementsBeforeTransform: JSON.parse(JSON.stringify(state.elements)),
+      elementsBeforeTransform: cloneValue(state.elements),
     };
   }, [collectAnimationTargetIds]);
 
@@ -161,7 +162,7 @@ export const useAdvancedTransformControls = () => {
       store.selectedSubpaths.forEach(({ elementId }: { elementId: string }) => {
         const element = store.elements.find(el => el.id === elementId);
         if (element) {
-          originalElements.set(elementId, JSON.parse(JSON.stringify(element)));
+          originalElements.set(elementId, cloneValue(element));
         }
       });
     } else {
@@ -169,7 +170,7 @@ export const useAdvancedTransformControls = () => {
       store.selectedIds.forEach(id => {
         const element = store.elements.find(el => el.id === id);
         if (element) {
-          originalElements.set(id, JSON.parse(JSON.stringify(element)));
+          originalElements.set(id, cloneValue(element));
 
           // If it's a group, save all descendants too
           if (element.type === 'group') {
@@ -180,7 +181,7 @@ export const useAdvancedTransformControls = () => {
                 childIds.forEach(childId => {
                   const child = store.elements.find(el => el.id === childId);
                   if (child) {
-                    originalElements.set(childId, JSON.parse(JSON.stringify(child)));
+                    originalElements.set(childId, cloneValue(child));
                     if (child.type === 'group') {
                       collectDescendants(childId);
                     }

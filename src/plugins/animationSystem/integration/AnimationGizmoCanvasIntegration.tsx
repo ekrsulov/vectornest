@@ -9,7 +9,7 @@
 	import React, { useCallback, useMemo, useEffect, useRef } from 'react';
 	import { useShallow } from 'zustand/react/shallow';
 	import { useCanvasStore, type CanvasStore } from '../../../store/canvasStore';
-	import { useGizmoContext } from '../gizmos/GizmoContext';
+	import { GizmoProvider, useGizmoContext } from '../gizmos/GizmoContext';
 	import { GizmoOverlay } from '../gizmos/GizmoOverlay';
 	import { useGizmoInteraction } from '../gizmos/GizmoInteractionHandler';
 	import { registerCoreGizmos } from '../gizmos';
@@ -224,7 +224,7 @@ interface AnimationGizmoOverlayProps {
  * Main overlay component for rendering animation gizmos on the canvas.
  * This component should be placed after the main canvas content
  * but within the same SVG or as an overlay.
- * NOTE: Requires GizmoProvider to be an ancestor (typically in App.tsx)
+ * NOTE: Mounts its own GizmoProvider because gizmo runtime is store-backed.
  */
 export const AnimationGizmoOverlay: React.FC<AnimationGizmoOverlayProps> = (props) => {
   // Ensure gizmos are registered
@@ -232,7 +232,9 @@ export const AnimationGizmoOverlay: React.FC<AnimationGizmoOverlayProps> = (prop
     initializeGizmoSystem();
   }, []);
   
-  // GizmoProvider is now at App level, so we just render the inner component directly
-  return <AnimationGizmoOverlayInner {...props} />;
+  return (
+    <GizmoProvider>
+      <AnimationGizmoOverlayInner {...props} />
+    </GizmoProvider>
+  );
 };
-

@@ -1,8 +1,12 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { pluginManager } from '../../utils/pluginManager';
-import { ConvertToPathPanel } from './ConvertToPathPanel';
 import { countConvertibleShapes } from './conversion';
+
+const ConvertToPathPanel = React.lazy(() =>
+  import('./ConvertToPathPanel').then((module) => ({ default: module.ConvertToPathPanel }))
+);
 
 export const convertToPathPlugin: PluginDefinition<CanvasStore> = {
   id: 'convertToPath',

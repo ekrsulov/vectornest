@@ -9,7 +9,7 @@ import {
   Input,
 } from '@chakra-ui/react';
 import { ChevronDown, Search } from 'lucide-react';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 interface CustomSelectProps {
   value: string;

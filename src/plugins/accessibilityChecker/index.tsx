@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { ShieldCheck } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createAccessibilityCheckerSlice } from './slice';
-import { AccessibilityCheckerPanel } from './AccessibilityCheckerPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('accessibilityChecker', ['accessibilityChecker'], 'temporal');
+
+const AccessibilityCheckerPanel = React.lazy(() =>
+  import('./AccessibilityCheckerPanel').then((module) => ({ default: module.AccessibilityCheckerPanel }))
+);
 
 export const accessibilityCheckerPlugin: PluginDefinition<CanvasStore> = {
   id: 'accessibilityChecker',

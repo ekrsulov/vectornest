@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import React from 'react';
 import type { PluginDefinition, SnapOverlayConfig } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { SnapStoreSlice } from '../../snap/types';
@@ -6,13 +7,26 @@ import { createToolPanel, createConditionalToolPanel } from '../../utils/pluginF
 import { MousePointerClick } from 'lucide-react';
 import { createEditPluginSlice } from './slice';
 import type { EditPluginSlice } from './slice';
-// no React import needed
-import { EditPanel } from './EditPanel';
 import { useCanvasStore, canvasStoreApi } from '../../store/canvasStore';
-import { BlockingOverlay } from '../../overlays';
+import { BlockingOverlay } from '../../overlays/BlockingOverlay';
 import { pluginManager } from '../../utils/pluginManager';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import type { InlineTextEditSlice } from '../nativeText/inlineEditSlice';
+import { EditPointsOverlay } from './EditPointsOverlay';
+import { EditFeedbackLayer } from './EditFeedbackLayer';
+import {
+  Trash2,
+  Grid3x3,
+  Move,
+  Combine,
+  SplitSquareVertical,
+} from 'lucide-react';
+import { extractEditablePoints, getControlPointAlignmentInfo } from '../../utils/pathParserUtils';
+import { registerEditDragHandlers } from './dragHandlers';
+
+const EditPanel = React.lazy(() =>
+  import('./EditPanel').then((module) => ({ default: module.EditPanel }))
+);
 
 /**
  * Get snap overlay configuration for edit mode (objectSnap).
@@ -49,18 +63,9 @@ const EditExpandablePanelWrapper: React.FC = () => {
 
   return <EditPanel activePlugin={activePlugin} />;
 };
-import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
-import { EditPointsOverlay } from './EditPointsOverlay';
-import { EditFeedbackLayer } from './EditFeedbackLayer';
-import {
-  Trash2,
-  Grid3x3,
-  Move,
-  Combine,
-  SplitSquareVertical,
-} from 'lucide-react';
-import { extractEditablePoints, getControlPointAlignmentInfo } from '../../utils/pathParserUtils';
-import { registerEditDragHandlers } from './dragHandlers';
+const ControlPointAlignmentPanel = React.lazy(() =>
+  import('./ControlPointAlignmentPanel').then((module) => ({ default: module.ControlPointAlignmentPanel }))
+);
 
 const editSliceFactory = createPluginSlice(createEditPluginSlice);
 export const editPlugin: PluginDefinition<CanvasStore> = {

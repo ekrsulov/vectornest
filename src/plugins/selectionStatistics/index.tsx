@@ -1,11 +1,15 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSelectionStatisticsSlice } from './slice';
-import { SelectionStatisticsPanel } from './SelectionStatisticsPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('selectionStatistics', ['selectionStatistics'], 'temporal');
+
+const SelectionStatisticsPanel = React.lazy(() =>
+  import('./SelectionStatisticsPanel').then((module) => ({ default: module.SelectionStatisticsPanel }))
+);
 
 export const selectionStatisticsPlugin: PluginDefinition<CanvasStore> = {
   id: 'selectionStatistics',

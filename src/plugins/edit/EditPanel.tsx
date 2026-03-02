@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { VStack, Box } from '@chakra-ui/react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
@@ -19,9 +19,9 @@ export const EditPanel: React.FC<EditPanelProps> = ({ activePlugin }) => {
       <VStack spacing={0} align="stretch">
         {/* Dynamically render contributed panels */}
         {contributedPanels.map((panel) => (
-          <React.Fragment key={panel.id}>
+          <Suspense key={panel.id} fallback={<Box py={4} />}>
             <panel.component />
-          </React.Fragment>
+          </Suspense>
         ))}
       </VStack>
     </Box>

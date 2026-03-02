@@ -1,21 +1,15 @@
 import { Canvas } from './canvas/Canvas';
-import { LeftSidebar } from './sidebar/LeftSidebar';
-import { Sidebar } from './sidebar/Sidebar';
-import { BottomActionBar } from './ui/BottomActionBar';
-import { ExpandableToolPanel } from './ui/ExpandableToolPanel';
-import { VirtualShiftButton } from './ui/VirtualShiftButton';
-import { GlobalOverlays } from './ui/GlobalOverlays';
-import { PluginProviders } from './ui/PluginProviders';
-import { UndoRedoControls } from './ui/UndoRedoControls';
 import './App.css';
 import type { CSSProperties } from 'react';
-import { useCallback, useEffect } from 'react';
+import { Suspense, lazy, useCallback, useEffect } from 'react';
 
 import { useSvgImport } from './hooks/useSvgImport';
 import { useColorModeSync } from './hooks/useColorModeSync';
 import { useIOSSupport } from './hooks/useIOSSupport';
 import { useCanvasStore } from './store/canvasStore';
 import { DEFAULT_MODE } from './constants';
+
+const AppChrome = lazy(() => import('./ui/AppChrome').then((module) => ({ default: module.AppChrome })));
 
 function App() {
   const { importSvgFiles } = useSvgImport();
@@ -70,38 +64,35 @@ function App() {
   }, [importSvgFiles]);
 
   return (
-    <PluginProviders>
+    <div
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      style={{
+        position: 'relative',
+        width: '100vw',
+        height: '100dvh',
+        overflow: 'hidden',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'touch',
+        touchAction: 'none',
+      } as CSSProperties}
+    >
       <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
         style={{
-          position: 'relative',
-          width: '100vw',
-          height: '100dvh',
-          overflow: 'hidden',
-          overscrollBehavior: 'none',
-          WebkitOverflowScrolling: 'touch',
-          touchAction: 'none',
-        } as CSSProperties}
+          width: '100%',
+          height: '100%',
+          touchAction: 'pan-x pan-y',
+        }}
       >
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            touchAction: 'pan-x pan-y',
-          }}
-        >
-          <Canvas />
-        </div>
-        {!isWithoutDistractionMode && <LeftSidebar />}
-        {!isWithoutDistractionMode && <Sidebar />}
-        {!isWithoutDistractionMode && <BottomActionBar />}
-        <UndoRedoControls />
-        <ExpandableToolPanel />
-        <VirtualShiftButton />
-        <GlobalOverlays isIOS={isIOS} />
+        <Canvas />
       </div>
-    </PluginProviders>
+      <Suspense fallback={null}>
+        <AppChrome
+          isIOS={isIOS}
+          isWithoutDistractionMode={isWithoutDistractionMode}
+        />
+      </Suspense>
+    </div>
   );
 }
 

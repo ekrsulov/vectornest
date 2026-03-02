@@ -4,7 +4,7 @@ import { accumulateBounds } from '../../utils/measurementUtils';
 import { transformCommands, calculateScaledStrokeWidth } from '../../utils/sharedTransformUtils';
 import { applyDistortTransform, applySkewXTransform, applySkewYTransform } from '../../utils/advancedTransformUtils';
 import { getGroupBounds } from '../../canvas/geometry/CanvasGeometryService';
-import { buildElementMap } from '../../utils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
 import { getAllElementsShareSameParentGroup } from '../basePluginDefinitions';
 import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';

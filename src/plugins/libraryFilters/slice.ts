@@ -5,7 +5,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { CanvasElement } from '../../types';
-import { buildElementMap } from '../../utils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 import { generateShortId } from '../../utils/idGenerator';
 import type { FilterDefinition } from './types';
 

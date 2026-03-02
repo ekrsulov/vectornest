@@ -3,16 +3,17 @@ import type { CanvasStore, CanvasStoreApi } from '../../store/canvasStore';
 import type {
   CanvasEventBus,
 } from '../../canvas/CanvasEventBusContext';
+import {
+  getInitialCanvasMode,
+  transitionCanvasMode,
+  type CanvasMode,
+} from '../../canvas/modes/CanvasModeMachine';
 import type { PluginContextManager } from '../plugins/PluginContextManager';
 import { LifecycleManager } from '../plugins/LifecycleManager';
 import {
   bootstrapStoreBinding,
   subscribeToStoreChanges,
 } from '../plugins/PluginStoreBindingApi';
-import {
-  handleActivePluginChange as handleActivePluginChangeFromStore,
-  syncModePresentation,
-} from '../plugins/PluginModeTransitionApi';
 import { applyEventBusBinding } from '../plugins/PluginEventBusBindingApi';
 import { PluginManagerBase } from './PluginManagerBase';
 
@@ -82,7 +83,22 @@ export abstract class PluginManagerStoreBindingCore extends PluginManagerBase {
       return;
     }
 
-    syncModePresentation(this.storeApi, this.registry, activePluginId);
+    const pluginDef = activePluginId ? this.registry.get(activePluginId) : undefined;
+    const isPathInteractionDisabled = pluginDef?.metadata.disablePathInteraction ?? false;
+    const pathCursorMode = pluginDef?.metadata.pathCursorMode ?? 'default';
+    const state = this.storeApi.getState();
+
+    if (
+      state.isPathInteractionDisabled === isPathInteractionDisabled &&
+      state.pathCursorMode === pathCursorMode
+    ) {
+      return;
+    }
+
+    this.storeApi.setState({
+      isPathInteractionDisabled,
+      pathCursorMode,
+    } as Partial<CanvasStore>);
   }
 
   private handleStoreActivePluginChange(
@@ -93,14 +109,52 @@ export abstract class PluginManagerStoreBindingCore extends PluginManagerBase {
       return;
     }
 
-    handleActivePluginChangeFromStore({
-      previousPlugin,
-      nextPlugin,
-      storeApi: this.storeApi,
-      registry: this.registry,
-      executeLifecycleAction: (actionId) => this.executeLifecycleAction(actionId),
-      getGlobalTransitionActions: () => this.getGlobalTransitionActions(),
+    this.syncModePresentationState(nextPlugin);
+    if (!nextPlugin) {
+      return;
+    }
+
+    const currentMode = (previousPlugin ?? getInitialCanvasMode()) as CanvasMode;
+    const targetMode = nextPlugin as CanvasMode;
+    const transitionResult = transitionCanvasMode(currentMode, targetMode);
+
+    if (!transitionResult.changed) {
+      return;
+    }
+
+    this.executeLifecycleAction(`onModeEnter:${nextPlugin}`);
+
+    const allActions = [
+      ...transitionResult.actions,
+      ...this.getGlobalTransitionActions(),
+    ];
+
+    allActions.forEach((actionId) => {
+      this.executeLifecycleAction(actionId);
+      this.executeBuiltInTransitionAction(actionId);
     });
+  }
+
+  private executeBuiltInTransitionAction(actionId: string): void {
+    if (!this.storeApi) {
+      return;
+    }
+
+    const state = this.storeApi.getState() as CanvasStore & {
+      clearSubpathSelection?: () => void;
+      clearSelectedCommands?: () => void;
+    };
+
+    switch (actionId) {
+      case 'clearSubpathSelection':
+        state.clearSubpathSelection?.();
+        break;
+      case 'clearSelectedCommands':
+        state.clearSelectedCommands?.();
+        break;
+      default:
+        break;
+    }
   }
 
   setEventBus(eventBus: CanvasEventBus | null): void {

@@ -1,8 +1,12 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { LayoutGrid } from 'lucide-react';
-import { GridDistributionPanel } from './GridDistributionPanel';
 import { GridDistributionOverlay } from './GridDistributionOverlay';
+
+const GridDistributionPanel = React.lazy(() =>
+  import('./GridDistributionPanel').then((module) => ({ default: module.GridDistributionPanel }))
+);
 
 export const gridDistributionPlugin: PluginDefinition<CanvasStore> = {
   id: 'gridDistribution',

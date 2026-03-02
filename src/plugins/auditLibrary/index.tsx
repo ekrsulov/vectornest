@@ -1,8 +1,11 @@
 import { ShieldCheck } from 'lucide-react';
+import { lazy } from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
-import { AuditLibraryPanel } from './AuditLibraryPanel';
+const AuditLibraryPanel = lazy(() =>
+  import('./AuditLibraryPanel').then((module) => ({ default: module.AuditLibraryPanel }))
+);
 
 export const auditLibraryPlugin: PluginDefinition<CanvasStore> = {
   id: 'auditLibrary',

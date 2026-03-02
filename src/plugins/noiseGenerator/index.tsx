@@ -1,15 +1,18 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Waves } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createNoiseGeneratorSlice } from './slice';
-import { NoiseGeneratorPanel } from './NoiseGeneratorPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 // Keep noise settings across undo/redo so users don't lose their configuration
 registerStateKeys('noiseGenerator', ['noiseGenerator'], 'temporal');
 
 const noiseGeneratorSliceFactory = createPluginSlice(createNoiseGeneratorSlice);
+const NoiseGeneratorPanel = React.lazy(() =>
+  import('./NoiseGeneratorPanel').then((module) => ({ default: module.NoiseGeneratorPanel }))
+);
 
 export const noiseGeneratorPlugin: PluginDefinition<CanvasStore> = {
   id: 'noiseGenerator',

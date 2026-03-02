@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Box, IconButton, type IconButtonProps } from '@chakra-ui/react';
 import type { LucideIcon } from 'lucide-react';
 import ConditionalTooltip from './ConditionalTooltip';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 import { NO_TAP_HIGHLIGHT } from '../constants';
 
 interface ToolbarIconButtonProps extends Omit<IconButtonProps, 'icon' | 'aria-label'> {

@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { Workflow } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createScatterAlongPathSlice } from './slice';
-import { ScatterAlongPathPanel } from './ScatterAlongPathPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('scatterAlongPath', ['scatterAlongPath'], 'temporal');
+const ScatterAlongPathPanel = lazy(() =>
+  import('./ScatterAlongPathPanel').then((module) => ({ default: module.ScatterAlongPathPanel }))
+);
 
 const scatterAlongPathSliceFactory = createPluginSlice(createScatterAlongPathSlice);
 

@@ -1,31 +1,20 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ChakraProvider, ColorModeScript } from '@chakra-ui/react'
 import './index.css'
 import App from './App.tsx'
-import DesignSystemPage from './design-system'
 import { theme } from './theme'
 import { pluginManager } from './utils/pluginManager'
-import { CORE_PLUGINS } from './plugins'
+import {
+  CORE_PLUGINS,
+  DEFERRED_PLUGIN_BATCHES,
+  getDeferredPluginBatchIdsForUiState,
+  type DeferredPluginBatchId,
+} from './plugins'
 import { canvasStoreApi } from './store/canvasStore'
 import { DEFAULT_TOOL } from './constants'
 
-pluginManager.setStoreApi(canvasStoreApi)
-
-// Set initial mode when canvas is empty
-const state = canvasStoreApi.getState();
-if (state.elements.length === 0) {
-  canvasStoreApi.setState({ activePlugin: DEFAULT_TOOL });
-}
-
-CORE_PLUGINS.forEach((plugin) => {
-  pluginManager.register(plugin)
-})
-
-// Conditionally expose test globals whenever we're not in production
-if (process.env.NODE_ENV !== 'production') {
-  import('./testing/testHelpers').then(({ exposeTestGlobals }) => exposeTestGlobals());
-}
+const DesignSystemPage = lazy(() => import('./design-system'))
 
 // Small helper to render the design system without a router
 const isDesignSystemRoute = () => {
@@ -35,12 +24,118 @@ const isDesignSystemRoute = () => {
   return pathname.startsWith('/design-system') || search.has('design-system');
 };
 
+const loadedDeferredPluginBatchIds = new Set<DeferredPluginBatchId>();
+const deferredPluginBatchPromises = new Map<DeferredPluginBatchId, Promise<void>>();
+
+const loadDeferredPluginBatch = (batchId: DeferredPluginBatchId): Promise<void> => {
+  if (loadedDeferredPluginBatchIds.has(batchId)) {
+    return Promise.resolve();
+  }
+
+  const existingPromise = deferredPluginBatchPromises.get(batchId);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const batch = DEFERRED_PLUGIN_BATCHES.find((entry) => entry.id === batchId);
+  if (!batch) {
+    return Promise.resolve();
+  }
+
+  const promise = batch.loadPlugins()
+    .then((plugins) => {
+      plugins.forEach((plugin) => {
+        pluginManager.register(plugin);
+      });
+      loadedDeferredPluginBatchIds.add(batchId);
+    })
+    .finally(() => {
+      deferredPluginBatchPromises.delete(batchId);
+    });
+
+  deferredPluginBatchPromises.set(batchId, promise);
+  return promise;
+};
+
+const ensureDeferredPluginsForVisiblePanels = () => {
+  const state = canvasStoreApi.getState();
+  const requiredBatchIds = getDeferredPluginBatchIdsForUiState(state);
+
+  requiredBatchIds.forEach((batchId) => {
+    void loadDeferredPluginBatch(batchId);
+  });
+};
+
+const scheduleDeferredPluginRegistration = () => {
+  const loadDeferredPlugins = async () => {
+    for (const batch of DEFERRED_PLUGIN_BATCHES) {
+      await loadDeferredPluginBatch(batch.id);
+    }
+  };
+
+  const startLoading = () => {
+    void loadDeferredPlugins();
+  };
+
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    window.requestIdleCallback(() => {
+      startLoading();
+    });
+    return;
+  }
+
+  setTimeout(startLoading, 0);
+};
+
+const designSystemRoute = isDesignSystemRoute();
+
+if (!designSystemRoute) {
+  pluginManager.setStoreApi(canvasStoreApi)
+
+  // Set initial mode when canvas is empty
+  const state = canvasStoreApi.getState();
+  if (state.elements.length === 0) {
+    canvasStoreApi.setState({ activePlugin: DEFAULT_TOOL });
+  }
+
+  CORE_PLUGINS.forEach((plugin) => {
+    pluginManager.register(plugin)
+  })
+
+  ensureDeferredPluginsForVisiblePanels();
+  canvasStoreApi.subscribe((state, previousState) => {
+    const relevantUiStateChanged =
+      state.activePlugin !== previousState.activePlugin ||
+      state.showFilePanel !== previousState.showFilePanel ||
+      state.showSettingsPanel !== previousState.showSettingsPanel ||
+      state.showLibraryPanel !== previousState.showLibraryPanel ||
+      state.leftSidebarActivePanel !== previousState.leftSidebarActivePanel;
+
+    if (!relevantUiStateChanged) {
+      return;
+    }
+
+    ensureDeferredPluginsForVisiblePanels();
+  });
+
+  scheduleDeferredPluginRegistration();
+
+  // Conditionally expose test globals whenever we're not in production
+  if (process.env.NODE_ENV !== 'production') {
+    import('./testing/testHelpers').then(({ exposeTestGlobals }) => exposeTestGlobals());
+  }
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found. Make sure there is an element with id="root" in your HTML.');
 }
 
-const RootApp = isDesignSystemRoute() ? <DesignSystemPage /> : <App />;
+const RootApp = designSystemRoute ? (
+  <Suspense fallback={null}>
+    <DesignSystemPage />
+  </Suspense>
+) : <App />;
 
 createRoot(rootElement).render(
   <StrictMode>

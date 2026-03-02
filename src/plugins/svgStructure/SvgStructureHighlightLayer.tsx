@@ -2,7 +2,7 @@ import React from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useFrozenElementsDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
-import { buildElementMap } from '../../utils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 import { getCanvasElementBounds } from '../../utils/canvasElementBounds';
 
 /**

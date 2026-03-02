@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createCornerRounderPluginSlice, type CornerRounderPluginSlice } from './slice';
 import React from 'react';
-import { CornerRounderPanel } from './CornerRounderPanel';
 import { CornerRounderOverlay } from './CornerRounderOverlay';
 import { roundCorners } from './cornerRounderUtils';
 import { logger } from '../../utils/logger';
+
+const CornerRounderPanel = React.lazy(() =>
+    import('./CornerRounderPanel').then((module) => ({ default: module.CornerRounderPanel }))
+);
 
 export const cornerRounderPlugin: PluginDefinition<CanvasStore> = {
     id: 'cornerRounder',

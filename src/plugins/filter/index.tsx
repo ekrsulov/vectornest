@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
+import React from 'react';
 import type { PluginDefinition, SvgDefsEditor } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Sparkle, X } from 'lucide-react';
-import { FilterPanel } from './FilterPanel';
 import { createFilterSlice, type FilterSlice } from './slice';
 import type { FilterDefinition, FilterType } from './filters';
 import { buildFilterDefinition } from './filters';
@@ -19,6 +19,9 @@ import { createPluginSlice } from '../../utils/pluginUtils';
 registerStateKeys('filter', ['filters', 'importedFilters'], 'persist');
 
 const filterSliceFactory = createPluginSlice(createFilterSlice);
+const FilterPanel = React.lazy(() =>
+  import('./FilterPanel').then((module) => ({ default: module.FilterPanel }))
+);
 
 const filterDefsEditor: SvgDefsEditor<CanvasStore> = {
   id: 'filters-editor',

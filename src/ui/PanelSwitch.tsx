@@ -1,6 +1,6 @@
 import React from 'react';
 import { Switch, type SwitchProps } from '@chakra-ui/react';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 export interface PanelSwitchProps extends Omit<SwitchProps, 'isChecked' | 'onChange'> {
   isChecked: boolean;

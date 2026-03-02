@@ -1,9 +1,13 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { Wand2 } from 'lucide-react';
 import { createPotracePluginSlice } from './slice';
-import { PotracePanel } from './PotracePanel';
+
+const PotracePanel = React.lazy(() =>
+  import('./PotracePanel').then((module) => ({ default: module.PotracePanel }))
+);
 
 const potraceSliceFactory = createPluginSlice(createPotracePluginSlice);
 export const potracePlugin: PluginDefinition<CanvasStore> = {
@@ -30,4 +34,3 @@ export const potracePlugin: PluginDefinition<CanvasStore> = {
     },
   ],
 };
-

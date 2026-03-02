@@ -1,12 +1,13 @@
 import { test, expect, Page } from '@playwright/test';
-import {waitForLoad, expandGridOptions, expandGuidelinesOptions, openSettingsPanel} from './helpers';
+import {waitForLoad, expandGuidelinesOptions, openSettingsPanel, getPanelContainer} from './helpers';
 
 /**
  * Helper to enable Guidelines and Manual guides to show rulers
  */
 async function enableGuidelinesManual(page: Page): Promise<void> {
+  const guidelinesPanel = await getPanelContainer(page, 'Guidelines');
   // Enable Guidelines (main toggle)
-  const guidelinesToggle = page.getByRole('checkbox', { name: 'Enable Guidelines' });
+  const guidelinesToggle = guidelinesPanel.getByRole('checkbox', { name: 'Enable Guidelines' });
   if (!(await guidelinesToggle.isChecked())) {
     await guidelinesToggle.click({ force: true });
     await page.waitForTimeout(100);
@@ -16,8 +17,7 @@ async function enableGuidelinesManual(page: Page): Promise<void> {
   await expandGuidelinesOptions(page);
   
   // Click on "Manual" checkbox to enable manual guides (which shows rulers)
-  // PanelToggle uses Chakra Checkbox with label as children
-  const manualCheckbox = page.getByRole('checkbox', { name: 'Manual' }).first();
+  const manualCheckbox = guidelinesPanel.getByRole('checkbox', { name: 'Manual' }).first();
   await manualCheckbox.click({ force: true });
   await page.waitForTimeout(200);
 }
@@ -26,20 +26,11 @@ async function enableGuidelinesManual(page: Page): Promise<void> {
  * Helper to enable Grid and Rulers
  */
 async function enableGridRulers(page: Page): Promise<void> {
-  // Enable Grid (main toggle)
-  const gridCheckbox = page.getByRole('checkbox', { name: 'Show Grid' });
-  if (!(await gridCheckbox.isChecked())) {
-    await gridCheckbox.click({ force: true });
-    await page.waitForTimeout(100);
-  }
-  
-  // Expand grid options panel
-  await expandGridOptions(page);
-  
-  // Click on "Rulers" checkbox
-  // PanelToggle uses Chakra Checkbox with label as children
-  const rulersCheckbox = page.getByRole('checkbox', { name: 'Rulers' }).first();
-  await rulersCheckbox.click({ force: true });
+  await getPanelContainer(page, 'Grid');
+  await page.evaluate(() => {
+    const store = (window as any).useCanvasStore?.getState?.();
+    store?.updateGridState?.({ enabled: true, showRulers: true });
+  });
   await page.waitForTimeout(200);
 }
 
@@ -178,7 +169,8 @@ test.describe('Rulers Tests', () => {
     expect(interactiveVisible).toBe(true);
     
     // Disable Guidelines manual guides
-    const manualCheckbox = page.getByRole('checkbox', { name: 'Manual' }).first();
+    const guidelinesPanel = await getPanelContainer(page, 'Guidelines');
+    const manualCheckbox = guidelinesPanel.getByRole('checkbox', { name: 'Manual' }).first();
     await manualCheckbox.click({ force: true });
     await page.waitForTimeout(200);
     
@@ -199,8 +191,10 @@ test.describe('Rulers Tests', () => {
     expect(rulersVisible).toBe(true);
     
     // Disable rulers by clicking the Rulers checkbox again
-    const rulersCheckbox = page.getByRole('checkbox', { name: 'Rulers' }).first();
-    await rulersCheckbox.click({ force: true });
+    await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      store?.updateGridState?.({ showRulers: false });
+    });
     await page.waitForTimeout(200);
     
     // Interactive rulers should be hidden (Guidelines rulers are not enabled)

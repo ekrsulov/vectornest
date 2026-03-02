@@ -11,11 +11,10 @@ import {
   useCallback,
   useMemo,
   useRef,
-  useState,
   type ReactNode,
 } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useCanvasStore, type CanvasStore } from '../../../store/canvasStore';
+import { canvasStoreApi, useCanvasStore, type CanvasStore } from '../../../store/canvasStore';
 import { animationGizmoRegistry } from './registry/GizmoRegistry';
 import type {
   GizmoState,
@@ -26,7 +25,7 @@ import type {
 import type { SVGAnimation, AnimationPluginSlice } from '../types';
 import type { CanvasElement, GroupElement, Point } from '../../../types';
 import type { Bounds } from '../../../utils/boundsUtils';
-import { formatToPrecision } from '../../../utils';
+import { formatToPrecision } from '../../../utils/numberUtils';
 import { elementContributionRegistry } from '../../../utils/elementContributionRegistry';
 import { getGroupBounds } from '../../../canvas/geometry/CanvasGeometryService';
 import { logger } from '../../../utils/logger';
@@ -67,6 +66,14 @@ export interface GizmoContextValue {
 }
 
 const GizmoContext = createContext<GizmoContextValue | null>(null);
+const EMPTY_ACTIVE_GIZMOS = new Map<string, GizmoState>();
+
+type GizmoRuntimeState = AnimationPluginSlice['animationState'] & {
+  activeGizmos: Map<string, GizmoState>;
+  focusedGizmoAnimationId: string | null;
+  gizmoEditMode: boolean;
+  draggingHandle: { animationId: string; handleId: string } | null;
+};
 
 // =============================================================================
 // Hook
@@ -108,16 +115,27 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
     elements,
     viewport,
     animationState,
+    activeGizmos,
+    focusedGizmoAnimationId,
+    gizmoEditMode,
+    draggingHandle,
     updateAnimation,
     precision,
   } = useCanvasStore(
     useShallow((state) => {
       const animSlice = state as CanvasStore & AnimationPluginSlice;
+      const runtimeState = animSlice.animationState as GizmoRuntimeState;
       return {
         animations: animSlice.animations ?? [],
         elements: state.elements,
         viewport: state.viewport,
         animationState: animSlice.animationState,
+        activeGizmos:
+          (runtimeState?.activeGizmos as Map<string, GizmoState> | undefined)
+          ?? EMPTY_ACTIVE_GIZMOS,
+        focusedGizmoAnimationId: runtimeState?.focusedGizmoAnimationId ?? null,
+        gizmoEditMode: runtimeState?.gizmoEditMode ?? false,
+        draggingHandle: runtimeState?.draggingHandle ?? null,
         updateAnimation: animSlice.updateAnimation,
         precision: state.settings.keyboardMovementPrecision,
       };
@@ -126,18 +144,38 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 
   const colorMode = useCanvasStore((state) => state.colorMode ?? 'light');
 
-  // Local gizmo state (could also be in Zustand if needed globally)
-  const [activeGizmos, setActiveGizmos] = useState<Map<string, GizmoState>>(new Map());
-  const [focusedGizmoAnimationId, setFocusedGizmoAnimationId] = useState<string | null>(null);
-  const [gizmoEditMode, setGizmoEditModeState] = useState(false);
-  const [draggingHandle, setDraggingHandle] = useState<{
-    animationId: string;
-    handleId: string;
-  } | null>(null);
-
   // Refs for drag state
   const dragStartRef = useRef<Point | null>(null);
   const dragCurrentRef = useRef<Point | null>(null);
+
+  const updateGizmoRuntimeState = useCallback(
+    (
+      updates:
+        | Partial<GizmoRuntimeState>
+        | ((current: GizmoRuntimeState) => Partial<GizmoRuntimeState>)
+    ) => {
+      canvasStoreApi.setState((state) => {
+        const current = (state as CanvasStore & AnimationPluginSlice).animationState as GizmoRuntimeState;
+        const nextPartial = typeof updates === 'function' ? updates(current) : updates;
+        return {
+          animationState: {
+            ...current,
+            ...nextPartial,
+          },
+        } as Partial<CanvasStore>;
+      });
+    },
+    []
+  );
+
+  const updateActiveGizmos = useCallback(
+    (updater: (previous: Map<string, GizmoState>) => Map<string, GizmoState>) => {
+      updateGizmoRuntimeState((current) => ({
+        activeGizmos: updater(current.activeGizmos ?? EMPTY_ACTIVE_GIZMOS),
+      }));
+    },
+    [updateGizmoRuntimeState]
+  );
 
   // Element map for quick lookups
   const elementMap = useMemo(() => {
@@ -243,49 +281,64 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 
       const gizmoState = definition.fromAnimation(animation, element);
 
-      setActiveGizmos((prev) => {
+      updateActiveGizmos((prev) => {
         const next = new Map(prev);
         next.set(animationId, gizmoState);
         return next;
       });
 
-      setFocusedGizmoAnimationId(animationId);
+      updateGizmoRuntimeState({ focusedGizmoAnimationId: animationId });
     },
-    [animationMap, elementMap, findElementForDefAnimation]
+    [animationMap, elementMap, findElementForDefAnimation, updateActiveGizmos, updateGizmoRuntimeState]
   );
 
   // Deactivate a gizmo
   const deactivateGizmo = useCallback((animationId: string) => {
-    setActiveGizmos((prev) => {
+    updateActiveGizmos((prev) => {
+      if (!prev.has(animationId)) {
+        return prev;
+      }
       const next = new Map(prev);
       next.delete(animationId);
       return next;
     });
 
-    setFocusedGizmoAnimationId((prev) => (prev === animationId ? null : prev));
-  }, []);
+    updateGizmoRuntimeState((current) => ({
+      focusedGizmoAnimationId:
+        current.focusedGizmoAnimationId === animationId
+          ? null
+          : current.focusedGizmoAnimationId,
+    }));
+  }, [updateActiveGizmos, updateGizmoRuntimeState]);
 
   // Deactivate all gizmos
   const deactivateAllGizmos = useCallback(() => {
-    setActiveGizmos(new Map());
-    setFocusedGizmoAnimationId(null);
-    setDraggingHandle(null);
-  }, []);
+    updateGizmoRuntimeState({
+      activeGizmos: new Map(),
+      focusedGizmoAnimationId: null,
+      draggingHandle: null,
+    });
+  }, [updateGizmoRuntimeState]);
 
   // Set gizmo edit mode
   const setGizmoEditMode = useCallback((enabled: boolean) => {
-    setGizmoEditModeState(enabled);
     if (!enabled) {
-      setActiveGizmos(new Map());
-      setFocusedGizmoAnimationId(null);
-      setDraggingHandle(null);
+      updateGizmoRuntimeState({
+        gizmoEditMode: false,
+        activeGizmos: new Map(),
+        focusedGizmoAnimationId: null,
+        draggingHandle: null,
+      });
+      return;
     }
-  }, []);
+
+    updateGizmoRuntimeState({ gizmoEditMode: true });
+  }, [updateGizmoRuntimeState]);
 
   // Update gizmo state
   const updateGizmoState = useCallback(
     (animationId: string, updates: Partial<GizmoState['props']>) => {
-      setActiveGizmos((prev) => {
+      updateActiveGizmos((prev) => {
         const gizmo = prev.get(animationId);
         if (!gizmo) return prev;
 
@@ -297,7 +350,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
         return next;
       });
     },
-    []
+    [updateActiveGizmos]
   );
 
   // Start drag interaction
@@ -305,10 +358,10 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
     (animationId: string, handleId: string, point: Point) => {
       dragStartRef.current = point;
       dragCurrentRef.current = point;
-      setDraggingHandle({ animationId, handleId });
+      updateGizmoRuntimeState({ draggingHandle: { animationId, handleId } });
 
       // Update gizmo interaction state
-      setActiveGizmos((prev) => {
+      updateActiveGizmos((prev) => {
         const gizmo = prev.get(animationId);
         if (!gizmo) return prev;
 
@@ -325,7 +378,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
         return next;
       });
     },
-    []
+    [updateActiveGizmos, updateGizmoRuntimeState]
   );
 
   // Update drag
@@ -527,7 +580,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 	      }
 
       // Reset interaction state
-      setActiveGizmos((prev) => {
+      updateActiveGizmos((prev) => {
         const next = new Map(prev);
         const g = next.get(animationId);
         if (g) {
@@ -547,7 +600,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 
     dragStartRef.current = null;
     dragCurrentRef.current = null;
-    setDraggingHandle(null);
+    updateGizmoRuntimeState({ draggingHandle: null });
 	  }, [
 	    draggingHandle,
 	    activeGizmos,
@@ -561,6 +614,8 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
 	    getElementBounds,
 	    updateGizmoState,
 	    updateAnimation,
+      updateActiveGizmos,
+      updateGizmoRuntimeState,
 	  ]);
 
   // Get render context for a gizmo
@@ -633,10 +688,10 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
       activateGizmo,
       deactivateGizmo,
       deactivateAllGizmos,
-      setFocusedGizmo: setFocusedGizmoAnimationId,
+      setFocusedGizmo: (animationId) => updateGizmoRuntimeState({ focusedGizmoAnimationId: animationId }),
       setGizmoEditMode,
       updateGizmoState,
-      focusGizmo: setFocusedGizmoAnimationId,
+      focusGizmo: (animationId) => updateGizmoRuntimeState({ focusedGizmoAnimationId: animationId }),
       updateGizmoProps: updateGizmoState,
 
       // Interaction
@@ -670,6 +725,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
       getAnimation,
       getElement,
       getElementBounds,
+      updateGizmoRuntimeState,
     ]
   );
 

@@ -84,6 +84,10 @@ const SymbolPreviewBox: React.FC<{
         restartKey: 0,
         chainDelays: new Map(),
         isCanvasPreviewMode: false,
+        activeGizmos: new Map(),
+        focusedGizmoAnimationId: null,
+        gizmoEditMode: false,
+        draggingHandle: null,
       };
       content = injectAnimationsIntoSymbolContent(
         content,
@@ -252,6 +256,10 @@ export const SymbolsPanel: React.FC = () => {
           restartKey: 0,
           chainDelays: new Map(),
           isCanvasPreviewMode: false,
+          activeGizmos: new Map(),
+          focusedGizmoAnimationId: null,
+          gizmoEditMode: false,
+          draggingHandle: null,
         };
     
     // Prefer rawContent if available

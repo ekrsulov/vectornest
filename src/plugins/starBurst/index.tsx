@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createStarBurstPluginSlice, type StarBurstPluginSlice } from './slice';
 import React from 'react';
-import { StarBurstPanel } from './StarBurstPanel';
 import { StarBurstOverlay } from './StarBurstOverlay';
 import { createStarBurst } from './starBurstUtils';
 import { logger } from '../../utils/logger';
+
+const StarBurstPanel = React.lazy(() =>
+    import('./StarBurstPanel').then((module) => ({ default: module.StarBurstPanel }))
+);
 
 export const starBurstPlugin: PluginDefinition<CanvasStore> = {
     id: 'starBurst',

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Box } from '@chakra-ui/react';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 import { useRulerInteractions, type RulerViewport } from '../hooks/useRulerInteractions';
 
 /** Standard ruler size in pixels */

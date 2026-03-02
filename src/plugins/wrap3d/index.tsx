@@ -5,7 +5,6 @@ import { createToolPanel } from '../../utils/pluginFactories';
 import { createWrap3DSlice } from './slice';
 import type { Wrap3DSlice } from './slice';
 import React from 'react';
-import { Wrap3DPanel } from './Wrap3DPanel';
 import { Wrap3DPreviewLayer } from './Wrap3DPreviewLayer';
 import { Box } from 'lucide-react';
 import { pluginManager } from '../../utils/pluginManager';
@@ -13,6 +12,9 @@ import { logger } from '../../utils/logger';
 import { selectionHasOnlyPaths } from '../../utils/selectionGuards';
 
 const wrap3dSliceFactory = createPluginSlice(createWrap3DSlice);
+const Wrap3DPanel = React.lazy(() =>
+  import('./Wrap3DPanel').then((module) => ({ default: module.Wrap3DPanel }))
+);
  
 export const wrap3dPlugin: PluginDefinition<CanvasStore> = {
   id: 'wrap3d',

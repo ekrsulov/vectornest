@@ -7,6 +7,7 @@ import { Play, Pause, Square, SkipBack, SkipForward, Trash2, Layers, ChevronDown
 import { useCanvasStore } from '../../store/canvasStore';
 import type { CanvasStore } from '../../store/canvasStore';
 import { GizmoToolbarCompact } from './gizmos/ui/GizmoToolbar';
+import { GizmoProvider } from './gizmos/GizmoContext';
 import type { AnimationPluginSlice, SVGAnimation } from './types';
 import { ensureChainDelays } from './chainUtils';
 import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
@@ -243,7 +244,9 @@ export const AnimationControlsPanel: React.FC = () => {
 
         {/* Gizmo Toolbar - shown when user expands via chevron */}
         {hasGizmos && showGizmos && (
-          <GizmoToolbarCompact />
+          <GizmoProvider>
+            <GizmoToolbarCompact />
+          </GizmoProvider>
         )}
       </VStack>
     </Panel>

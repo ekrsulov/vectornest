@@ -6,7 +6,7 @@
 import React from 'react'
 import { Flex, Heading, Box, Spacer, IconButton } from '@chakra-ui/react'
 import { ChevronDown, ChevronRight, Maximize2, Minimize2 } from 'lucide-react'
-import { useThemeColors } from '../hooks'
+import { useThemeColors } from '../hooks/useThemeColors'
 
 export interface PanelHeaderProps {
   /** Icon to display */

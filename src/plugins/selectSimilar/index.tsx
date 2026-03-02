@@ -1,7 +1,7 @@
+import React from 'react';
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Filter } from 'lucide-react';
-import { SelectSimilarPanel } from './SelectSimilarPanel';
 import { createSelectSimilarSlice } from './slice';
 
 const selectSimilarSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
@@ -12,6 +12,10 @@ const selectSimilarSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, ap
   );
   return { state: slice };
 };
+
+const SelectSimilarPanel = React.lazy(() =>
+  import('./SelectSimilarPanel').then((module) => ({ default: module.SelectSimilarPanel }))
+);
 
 export const selectSimilarPlugin: PluginDefinition<CanvasStore> = {
   id: 'select-similar',

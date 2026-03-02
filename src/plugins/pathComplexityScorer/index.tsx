@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { BrainCircuit } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createPathComplexityScorerSlice } from './slice';
-import { PathComplexityScorerPanel } from './PathComplexityScorerPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('pathComplexityScorer', ['pathComplexityScorer'], 'temporal');
+const PathComplexityScorerPanel = lazy(() =>
+  import('./PathComplexityScorerPanel').then((module) => ({ default: module.PathComplexityScorerPanel }))
+);
 
 export const pathComplexityScorerPlugin: PluginDefinition<CanvasStore> = {
   id: 'pathComplexityScorer',

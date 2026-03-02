@@ -2,6 +2,7 @@ import React from 'react';
 import type { CanvasLayerContext } from '../../types/plugins';
 import { pluginManager } from '../../utils/pluginManager';
 import type { CanvasLayerPlacement } from '../../types/ui-contributions';
+import { usePluginRegistrationVersion } from '../../hooks/usePluginRegistrationVersion';
 
 interface CanvasLayersProps {
   context: CanvasLayerContext;
@@ -9,7 +10,9 @@ interface CanvasLayersProps {
 }
 
 export const CanvasLayers: React.FC<CanvasLayersProps> = ({ context, placements }) => {
+  const registrationVersion = usePluginRegistrationVersion();
   const layers = pluginManager.getCanvasLayers();
+  void registrationVersion;
   const filteredLayers = placements?.length
     ? layers.filter((layer) => placements.includes(layer.placement ?? 'midground'))
     : layers;

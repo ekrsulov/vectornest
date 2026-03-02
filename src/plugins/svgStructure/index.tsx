@@ -1,9 +1,9 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { createToolPanel } from '../../utils/pluginFactories';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { GitBranch, FolderTree } from 'lucide-react';
-import { SvgStructurePanel } from './SvgStructurePanel';
 import {
   GroupEditorStructureContribution,
   GroupEditorStructureBadges
@@ -16,6 +16,9 @@ import { createSvgStructureSlice } from './slice';
 import { SvgStructureHighlightLayer } from './SvgStructureHighlightLayer';
 
 const svgStructureSliceFactory = createPluginSlice(createSvgStructureSlice);
+const SvgStructurePanel = lazy(() =>
+  import('./SvgStructurePanel').then((module) => ({ default: module.SvgStructurePanel }))
+);
 
 export const svgStructurePlugin: PluginDefinition<CanvasStore> = {
   id: 'svgStructure',

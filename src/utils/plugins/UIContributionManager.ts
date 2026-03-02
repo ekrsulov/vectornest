@@ -5,7 +5,6 @@
  * - Sidebar panels
  * - Canvas overlays
  * - Canvas layers
- * - Plugin providers (React context providers)
  * - Toolbar buttons
  * - Global overlays
  *
@@ -18,21 +17,11 @@
 import type React from 'react';
 import type {
   PluginDefinition,
-  PluginUIContribution,
   SidebarToolbarButtonContribution,
   PluginActionContribution,
 } from '../../types/plugins';
-import type { PanelConfig } from '../../types/panel';
 import type { CanvasStore } from '../../store/canvasStore';
 import { panelRegistry, initializePanelRegistry } from '../panelRegistry';
-
-/**
- * Registered provider with resolved ID
- */
-export interface RegisteredProvider {
-  id: string;
-  component: React.ComponentType<{ children: React.ReactNode }>;
-}
 
 /**
  * Registered overlay with resolved ID
@@ -47,6 +36,15 @@ export interface RegisteredOverlay {
     viewport: { zoom: number; panX: number; panY: number };
     canvasSize: { width: number; height: number };
     activePlugin: string | null;
+    selectedIds: string[];
+    selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
+    selectedCommands: Array<{ elementId: string; subpathIndex: number; commandIndex: number }>;
+    selectedElementsCount: number;
+    selectedSubpathsCount: number;
+    selectedCommandsCount: number;
+    totalElementsCount: number;
+    withoutDistractionMode: boolean;
+    state: Record<string, unknown>;
   }) => boolean;
 }
 
@@ -69,11 +67,6 @@ type PluginEnabledChecker = (pluginId: string) => boolean;
 type PluginGetter = () => PluginDefinition<CanvasStore>[];
 
 /**
- * Callback type for getting a single plugin by ID (O(1) lookup)
- */
-type PluginByIdGetter = (id: string) => PluginDefinition<CanvasStore> | undefined;
-
-/**
  * Callback type for getting store state
  */
 type StateGetter = () => CanvasStore | null;
@@ -84,20 +77,17 @@ type StateGetter = () => CanvasStore | null;
 export class UIContributionManager {
   private sidebarToolbarButtonContributions = new Map<string, SidebarToolbarButtonContribution[]>();
   private getPlugins: PluginGetter;
-  private getPluginById: PluginByIdGetter;
   private isPluginEnabled: PluginEnabledChecker;
   private getState: StateGetter;
 
   constructor(
     getPlugins: PluginGetter,
     isPluginEnabled: PluginEnabledChecker,
-    getState: StateGetter,
-    getPluginById: PluginByIdGetter
+    getState: StateGetter
   ) {
     this.getPlugins = getPlugins;
     this.isPluginEnabled = isPluginEnabled;
     this.getState = getState;
-    this.getPluginById = getPluginById;
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -154,15 +144,6 @@ export class UIContributionManager {
       .forEach(p => panelRegistry.unregister(p.key));
   }
 
-  /**
-   * Get panels for a specific tool/plugin
-   */
-  getPanels(toolName: string): PanelConfig[] {
-    if (!this.isPluginEnabled(toolName)) return [];
-    const plugin = this.getPluginById(toolName);
-    return plugin?.sidebarPanels ?? [];
-  }
-
   // ─────────────────────────────────────────────────────────────
   // Toolbar Button Management
   // ─────────────────────────────────────────────────────────────
@@ -201,26 +182,35 @@ export class UIContributionManager {
   // ─────────────────────────────────────────────────────────────
 
   /**
-   * Get overlays for a specific tool (non-global)
-   */
-  getOverlays(toolName: string): React.ComponentType<Record<string, unknown>>[] {
-    const plugin = this.getPluginById(toolName);
-    return plugin?.overlays
-      ?.filter((overlay: PluginUIContribution) => overlay.placement !== 'global')
-      .map((overlay: PluginUIContribution) => overlay.component as React.ComponentType<Record<string, unknown>>)
-      ?? [];
-  }
-
-  /**
    * Get all global overlays from all plugins
    */
   getGlobalOverlays(): RegisteredGlobalOverlay[] {
-    return this.getPlugins().flatMap((plugin) =>
-      (plugin.overlays?.filter((overlay) => overlay.placement === 'global') ?? []).map((overlay) => ({
+    const state = this.getState();
+    const activePlugin = state?.activePlugin ?? null;
+
+    return this.getPlugins().flatMap((plugin) => {
+      if (!this.isPluginEnabled(plugin.id)) {
+        return [];
+      }
+
+      return (plugin.overlays?.filter((overlay) => {
+        if (!overlay.condition) {
+          return true;
+        }
+
+        try {
+          return overlay.condition({
+            activePlugin,
+            state: (state ?? {}) as Record<string, unknown>,
+          });
+        } catch {
+          return false;
+        }
+      }) ?? []).map((overlay) => ({
         id: `${plugin.id}:${overlay.id}`,
         component: overlay.component as React.ComponentType<Record<string, unknown>>,
-      }))
-    );
+      }));
+    });
   }
 
   /**
@@ -235,14 +225,36 @@ export class UIContributionManager {
     const viewport = state.viewport;
     const canvasSize = state.canvasSize;
     const activePlugin = state.activePlugin ?? null;
+    const selectedIds = state.selectedIds ?? [];
+    const selectedSubpaths = state.selectedSubpaths ?? [];
+    const selectedCommands = state.selectedCommands ?? [];
+    const totalElementsCount = state.elements?.length ?? 0;
+    const withoutDistractionMode = Boolean(state.settings?.withoutDistractionMode);
 
     const plugins = this.getPlugins();
     for (const plugin of plugins) {
+      if (!this.isPluginEnabled(plugin.id)) {
+        continue;
+      }
+
       const overlays = plugin.canvasOverlays ?? [];
       for (const overlay of overlays) {
         // Check condition if provided
         if (overlay.condition) {
-          const ctx = { viewport, canvasSize, activePlugin };
+          const ctx = {
+            viewport,
+            canvasSize,
+            activePlugin,
+            selectedIds,
+            selectedSubpaths,
+            selectedCommands,
+            selectedElementsCount: selectedIds.length,
+            selectedSubpathsCount: selectedSubpaths.length,
+            selectedCommandsCount: selectedCommands.length,
+            totalElementsCount,
+            withoutDistractionMode,
+            state: state as Record<string, unknown>,
+          };
           try {
             if (!overlay.condition(ctx)) continue;
           } catch {
@@ -263,33 +275,6 @@ export class UIContributionManager {
   // ─────────────────────────────────────────────────────────────
   // Provider Management
   // ─────────────────────────────────────────────────────────────
-
-  /**
-   * Get all plugin providers (React context providers)
-   */
-  getPluginProviders(): RegisteredProvider[] {
-    const result: RegisteredProvider[] = [];
-    const state = this.getState();
-    const activePlugin = state?.activePlugin ?? null;
-
-    const plugins = this.getPlugins();
-    for (const plugin of plugins) {
-      const providers = plugin.providers ?? [];
-      for (const provider of providers) {
-        // Evaluate condition if provided
-        if (provider.condition) {
-          const ctx = { activePlugin };
-          if (!provider.condition(ctx)) continue;
-        }
-        result.push({
-          id: `${plugin.id}:${provider.id}`,
-          component: provider.component,
-        });
-      }
-    }
-
-    return result;
-  }
 
   // ─────────────────────────────────────────────────────────────
   // Action Management
@@ -332,8 +317,7 @@ export class UIContributionManager {
 export function createUIContributionManager(
   getPlugins: PluginGetter,
   isPluginEnabled: PluginEnabledChecker,
-  getState: StateGetter,
-  getPluginById: PluginByIdGetter
+  getState: StateGetter
 ): UIContributionManager {
-  return new UIContributionManager(getPlugins, isPluginEnabled, getState, getPluginById);
+  return new UIContributionManager(getPlugins, isPluginEnabled, getState);
 }

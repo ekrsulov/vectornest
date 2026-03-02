@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, HStack, Text, IconButton } from '@chakra-ui/react';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import type { FloatingContextMenuAction } from '../types/plugins';
-import { useThemeColors, NO_FOCUS_STYLES } from '../hooks';
+import { useThemeColors, NO_FOCUS_STYLES } from '../hooks/useThemeColors';
 import { NO_TAP_HIGHLIGHT } from '../constants';
 
 /**

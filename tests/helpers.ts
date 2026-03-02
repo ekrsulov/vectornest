@@ -212,18 +212,96 @@ async function isVisible(locator: Locator): Promise<boolean> {
   }
 }
 
+function getPanelHeaderLocator(page: Page, heading: string | RegExp): Locator {
+  return page.locator('[data-panel-header]').filter({
+    has: page.getByRole('heading', { name: heading }),
+  });
+}
+
+export async function firstVisible(locator: Locator): Promise<Locator> {
+  const count = await locator.count();
+  let bestVisible: { locator: Locator; x: number; y: number } | null = null;
+  let bestBoxed: { locator: Locator; x: number; y: number } | null = null;
+
+  for (let index = 0; index < count; index += 1) {
+    const candidate = locator.nth(index);
+    const box = await candidate.boundingBox().catch(() => null);
+    const visible = await isVisible(candidate);
+
+    if (box) {
+      const rankedCandidate = { locator: candidate, x: box.x, y: box.y };
+
+      if (
+        !bestBoxed ||
+        rankedCandidate.x > bestBoxed.x ||
+        (rankedCandidate.x === bestBoxed.x && rankedCandidate.y > bestBoxed.y)
+      ) {
+        bestBoxed = rankedCandidate;
+      }
+
+      if (
+        visible &&
+        (
+          !bestVisible ||
+          rankedCandidate.x > bestVisible.x ||
+          (rankedCandidate.x === bestVisible.x && rankedCandidate.y > bestVisible.y)
+        )
+      ) {
+        bestVisible = rankedCandidate;
+      }
+    }
+  }
+
+  if (bestVisible) {
+    return bestVisible.locator;
+  }
+
+  if (bestBoxed) {
+    return bestBoxed.locator;
+  }
+
+  return locator.first();
+}
+
+export async function getPanelContainer(page: Page, heading: string | RegExp): Promise<Locator> {
+  const panelHeader = await firstVisible(getPanelHeaderLocator(page, heading));
+  return panelHeader.locator('xpath=parent::*');
+}
+
 async function expandPanelIfCollapsed(page: Page, heading: string | RegExp): Promise<void> {
-  const panelHeading = page.getByRole('heading', { name: heading }).first();
-  if (await panelHeading.count() === 0) return;
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const panelHeaders = getPanelHeaderLocator(page, heading);
+    if (await panelHeaders.count() === 0) {
+      await page.waitForTimeout(50);
+      continue;
+    }
 
-  const headerContainer = panelHeading.locator('xpath=ancestor::div[1]');
-  const collapseToggle = headerContainer.getByRole('button', { name: /Expand panel|Collapse panel/i }).first();
-  if (await collapseToggle.count() === 0) return;
+    const panelHeader = await firstVisible(panelHeaders);
+    if (!(await isVisible(panelHeader))) {
+      await page.waitForTimeout(50);
+      continue;
+    }
 
-  const ariaLabel = await collapseToggle.getAttribute('aria-label');
-  if (ariaLabel?.toLowerCase().includes('expand')) {
-    await collapseToggle.click({ force: true });
-    await page.waitForTimeout(150);
+    const collapseToggles = panelHeader.locator('[data-panel-collapse-toggle]');
+    if (await collapseToggles.count() > 0) {
+      const collapseToggle = await firstVisible(collapseToggles);
+      const ariaLabel = await collapseToggle.getAttribute('aria-label');
+
+      if (ariaLabel === 'Expand panel') {
+        await collapseToggle.click({ force: true });
+        await page.waitForTimeout(150);
+      }
+      return;
+    }
+
+    const ariaExpanded = await panelHeader.getAttribute('aria-expanded');
+    const role = await panelHeader.getAttribute('role');
+
+    if (role === 'button' && ariaExpanded === 'false') {
+      await panelHeader.click({ force: true });
+      await page.waitForTimeout(150);
+    }
+    return;
   }
 }
 
@@ -231,14 +309,12 @@ async function expandPanelIfCollapsed(page: Page, heading: string | RegExp): Pro
  * Open settings panel. Supports both the old "Settings" and new "Prefs" labels.
  */
 export async function openSettingsPanel(page: Page): Promise<void> {
-  const settingsButton = page.locator('button[aria-label="Prefs"], button[aria-label="Settings"]').first();
+  const settingsButton = await firstVisible(
+    page.getByRole('button', { name: /Prefs|Settings/ })
+  );
   await settingsButton.waitFor({ state: 'visible', timeout: 5000 });
-
-  const configurationHeading = page.getByRole('heading', { name: 'Configuration' }).first();
-  if (await isVisible(configurationHeading)) return;
-
   await settingsButton.click({ force: true });
-  await expect(configurationHeading).toBeVisible({ timeout: 5000 });
+  await page.waitForTimeout(200);
 }
 
 /**
@@ -282,7 +358,7 @@ export async function expandGuidelinesOptions(page: Page): Promise<void> {
  */
 export async function expandSnapPointsOptions(page: Page): Promise<void> {
   // First enable snap points if not enabled
-  const snapPointsToggle = page.getByRole('checkbox', { name: 'Show Snap Points' });
+  const snapPointsToggle = await firstVisible(page.getByRole('checkbox', { name: 'Show Snap Points' }));
   const count = await snapPointsToggle.count();
   if (count > 0 && !(await snapPointsToggle.isChecked())) {
     await snapPointsToggle.click();

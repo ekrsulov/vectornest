@@ -22,7 +22,7 @@ import { getInitialAnimationAttributes } from '../animationSystem/renderAnimatio
 import type { AnimationState, SVGAnimation } from '../animationSystem/types';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { importUse } from './importer';
-import { UsePanel } from './UsePanel';
+import { cloneValue } from '../../utils/clone';
 
 // Register persistence
 registerStateKeys('use', [], 'persist');
@@ -31,6 +31,9 @@ registerStateKeys('use', [], 'persist');
 const useSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
   state: createUseSlice(set, get, api),
 });
+const UsePanel = React.lazy(() =>
+  import('./UsePanel').then((module) => ({ default: module.UsePanel }))
+);
 
 const multiplyMatrix = (m1: Matrix, m2: Matrix): Matrix => [
   m1[0] * m2[0] + m1[2] * m2[1],
@@ -706,7 +709,7 @@ const createUseContribution = (): ElementContribution => {
     renderThumbnail: (element) => <UseThumbnail element={element as UseElement} />,
     clone: (element) => ({
       ...element,
-      data: JSON.parse(JSON.stringify(element.data)),
+      data: cloneValue(element.data),
     }),
     serialize: (element) => {
       const id = element.id;

@@ -22,7 +22,6 @@ export type UIPlacement =
   | 'canvas-layer'       // SVG layers rendered inside the canvas
   | 'canvas-overlay'     // React components overlaid on canvas (outside SVG)
   | 'toolbar-button'     // Buttons in the sidebar toolbar
-  | 'provider'           // React context providers
   | 'global-overlay'     // Global overlays (modals, toasts, etc.)
   | 'expandable-panel'   // Bottom expandable panels
   | 'context-menu';      // Context menu contributions
@@ -55,16 +54,6 @@ export interface PluginCanvasOverlayContribution {
     canvasSize: { width: number; height: number };
   }>;
   condition?: (ctx: CanvasConditionContext) => boolean;
-}
-
-/**
- * Legacy/compat shape used by plugin registration for provider wrappers.
- * `plugin-ui.ts` re-exports this type to preserve existing plugin APIs.
- */
-export interface PluginProviderContribution {
-  id: string;
-  component: ComponentType<ProviderProps>;
-  condition?: (ctx: { activePlugin: string | null }) => boolean;
 }
 
 // ===== CONDITION CONTEXTS =====
@@ -125,6 +114,15 @@ export interface CanvasConditionContext {
   viewport: UIConditionContext['viewport'];
   canvasSize: UIConditionContext['canvasSize'];
   activePlugin: string | null;
+  selectedIds: UIConditionContext['selectedIds'];
+  selectedSubpaths: UIConditionContext['selectedSubpaths'];
+  selectedCommands: UIConditionContext['selectedCommands'];
+  selectedElementsCount: UIConditionContext['selectedElementsCount'];
+  selectedSubpathsCount: UIConditionContext['selectedSubpathsCount'];
+  selectedCommandsCount: UIConditionContext['selectedCommandsCount'];
+  totalElementsCount: UIConditionContext['totalElementsCount'];
+  withoutDistractionMode: boolean;
+  state: Record<string, unknown>;
 }
 
 // Re-export PanelConditionContext from the canonical location to avoid divergent copies.
@@ -264,23 +262,6 @@ export interface ToolbarButtonContribution extends Omit<BaseUIContribution<never
 }
 
 /**
- * Props passed to provider components.
- */
-export interface ProviderProps {
-  children: ReactNode;
-}
-
-/**
- * React provider contribution (wraps app or sections).
- */
-export interface ProviderContribution extends Omit<BaseUIContribution<ProviderProps>, 'placement' | 'condition'> {
-  placement: 'provider';
-
-  /** Condition for when to render the provider */
-  condition?: (ctx: { activePlugin: string | null }) => boolean;
-}
-
-/**
  * Expandable panel contribution (bottom panel).
  */
 export interface ExpandablePanelContribution extends Omit<BaseUIContribution<unknown>, 'placement'> {
@@ -306,7 +287,6 @@ export type UIContribution =
   | UnifiedCanvasLayerContribution
   | CanvasOverlayContribution
   | ToolbarButtonContribution
-  | ProviderContribution
   | ExpandablePanelContribution;
 
 // ===== TYPE GUARDS =====
@@ -345,15 +325,6 @@ export function isToolbarButtonContribution(
   contribution: UIContribution
 ): contribution is ToolbarButtonContribution {
   return contribution.placement === 'toolbar-button';
-}
-
-/**
- * Type guard for provider contributions.
- */
-export function isProviderContribution(
-  contribution: UIContribution
-): contribution is ProviderContribution {
-  return contribution.placement === 'provider';
 }
 
 // ===== HELPER FUNCTIONS =====

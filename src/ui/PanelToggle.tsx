@@ -1,6 +1,6 @@
 import React from 'react';
 import { Checkbox as ChakraCheckbox } from '@chakra-ui/react';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 export interface PanelToggleProps {
   isChecked: boolean;

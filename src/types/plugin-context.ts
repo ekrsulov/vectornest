@@ -148,4 +148,5 @@ export interface PluginHookContribution {
   id: string;
   hook: (context: PluginHooksContext) => void;
   global?: boolean;
+  when?: (state: Record<string, unknown>, context: PluginHooksContext) => boolean;
 }

@@ -3,8 +3,9 @@ import type { RefObject } from 'react';
 import { createListenerContext, installGlobalPluginListeners } from '../../utils/pluginListeners';
 import { useCanvasStore } from '../../store/canvasStore';
 // (useCanvasStore imported above)
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
 import { MIN_ZOOM, MAX_ZOOM } from '../../constants';
+import { PATH_DECIMAL_PRECISION } from '../../constants';
+import { formatToPrecision } from '../../utils/numberUtils';
 import { calculatePinchZoom, calculateGesturePan } from '../utils/touchGestureUtils';
 
 interface TouchInfo {

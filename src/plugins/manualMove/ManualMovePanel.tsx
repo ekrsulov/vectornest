@@ -4,7 +4,7 @@ import { Panel } from '../../ui/Panel';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { NumberInput } from '../../ui/NumberInput';
 import { useCanvasStore } from '../../store/canvasStore';
-import { buildElementMap } from '../../utils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
 import type { Command, CanvasElement, PathData } from '../../types';
 import { getGroupThumbnailCommands, buildNativeShapeThumbnailCommands } from '../../utils/selectPanelHelpers';

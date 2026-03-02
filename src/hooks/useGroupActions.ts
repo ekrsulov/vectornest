@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useCanvasStore } from '../store/canvasStore';
-import { buildElementMap } from '../utils';
+import { buildElementMap } from '../utils/elementMapUtils';
 import type { FloatingContextMenuAction } from '../types/plugins';
 import type { SelectionContextInfo } from '../types/selection';
 import {

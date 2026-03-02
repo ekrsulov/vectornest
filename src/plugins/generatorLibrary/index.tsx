@@ -1,8 +1,11 @@
 import { LayoutGrid } from 'lucide-react';
+import { lazy } from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
-import { GeneratorLibraryPanel } from './GeneratorLibraryPanel';
+const GeneratorLibraryPanel = lazy(() =>
+  import('./GeneratorLibraryPanel').then((module) => ({ default: module.GeneratorLibraryPanel }))
+);
 
 export const generatorLibraryPlugin: PluginDefinition<CanvasStore> = {
   id: 'generatorLibrary',

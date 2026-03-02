@@ -10,7 +10,6 @@ import type { MeasurePluginSlice, MeasurePluginActions, SnapInfo } from './slice
 import { useCanvasStore, canvasStoreApi } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { MeasureOverlay } from './MeasureOverlay';
-import { MeasureInfoPanel } from './MeasureInfoPanel';
 import { getSnapPointLabel } from '../../utils/snapPointUtils';
 import { screenDistance } from '../../utils/math';
 import { getEffectiveShift } from '../../utils/effectiveShift';
@@ -81,6 +80,9 @@ function getMeasureSnapOverlayConfig(): SnapOverlayConfig | null {
 }
 
 const measureSliceFactory = createPluginSlice(createMeasurePluginSlice);
+const MeasureInfoPanel = React.lazy(() =>
+  import('./MeasureInfoPanel').then((module) => ({ default: module.MeasureInfoPanel }))
+);
 
 // Global listener flags and cleanup handles (kept in the module scope)
 // _stopStoreSubscription is intentionally not used, cleanup is handled by returned functions.

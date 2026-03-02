@@ -34,8 +34,8 @@ import type { AnimationPreset } from '../animationLibrary/types';
 import { Panel } from '../../ui/Panel';
 import { PanelTextInput } from '../../ui/PanelTextInput';
 import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { SidebarPanelScopeContext } from '../../contexts/sidebarPanelState';
-import { useThemeColors } from '../../hooks';
 import type { UiSlice } from '../../store/slices/uiSlice';
 
 // Import slice types

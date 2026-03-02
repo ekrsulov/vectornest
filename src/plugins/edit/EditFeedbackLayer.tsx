@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useSnapStore } from '../../snap/store';
-import { FeedbackOverlay } from '../../overlays';
+import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
 import { useShallow } from 'zustand/react/shallow';
 import type { Point } from '../../types';
 import { getSnapPointLabel, type SnapPointType } from '../../utils/snapPointUtils';

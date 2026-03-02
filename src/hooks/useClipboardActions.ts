@@ -7,9 +7,9 @@ import {
   Clipboard,
 } from 'lucide-react';
 import { commandsToString } from '../utils/pathParserUtils';
-import { logger } from '../utils';
+import { logger } from '../utils/logger';
 import { duplicateElements } from '../utils/duplicationUtils';
-import { buildElementMap } from '../utils';
+import { buildElementMap } from '../utils/elementMapUtils';
 import { elementContributionRegistry } from '../utils/elementContributionRegistry';
 import type { FloatingContextMenuAction } from '../types/plugins';
 import { type SelectionContextInfo, isPointSelectionType } from '../types/selection';

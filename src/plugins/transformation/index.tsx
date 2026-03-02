@@ -6,16 +6,19 @@ import { SquareDashedMousePointer } from 'lucide-react';
 import { createTransformationPluginSlice } from './slice';
 import type { TransformationPluginSlice } from './slice';
 import React from 'react';
-import { TransformationPanel } from './TransformationPanel';
 import { TransformationOverlay } from './TransformationOverlay';
 import { TransformationFeedbackLayer } from './TransformationFeedbackLayer';
-import { BlockingOverlay } from '../../overlays';
+import { BlockingOverlay } from '../../overlays/BlockingOverlay';
 import { measureSubpathBounds } from '../../utils/measurementUtils';
 import type { PathData } from '../../types';
 import { useTransformationHook } from './hooks/useTransformationHook';
 import { useCanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import type { InlineTextEditSlice } from '../nativeText/inlineEditSlice';
+
+const TransformationPanel = React.lazy(() =>
+  import('./TransformationPanel').then((module) => ({ default: module.TransformationPanel }))
+);
 
 // Helper component to read transformation state for BlockingOverlay
 const TransformationBlockingOverlay: React.FC<{
@@ -74,6 +77,14 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
       id: 'transformation-controls',
       hook: useTransformationHook,
       global: true, // Execute regardless of active plugin
+      when: (state) => {
+        const casted = state as CanvasStore & TransformationPluginSlice;
+        return (
+          casted.activePlugin === 'transformation' ||
+          Boolean(casted.transformState?.isTransforming) ||
+          Boolean(casted.advancedTransformState?.isTransforming)
+        );
+      },
     },
   ],
   keyboardShortcuts: {

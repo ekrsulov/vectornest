@@ -7,11 +7,11 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createToolPanel } from '../../utils/pluginFactories';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import type { PluginImageElement as ImageElement } from './types';
-import { ImagePanel } from './ImagePanel';
 import { createImagePluginSlice } from './slice';
 import { ImageElementRenderer } from './ImageElementRenderer';
 import type { ElementContribution } from '../../utils/elementContributionRegistry';
 import { importImage } from './importer';
+import { cloneValue } from '../../utils/clone';
 
 type Matrix = [number, number, number, number, number, number];
 
@@ -68,6 +68,9 @@ const ensureMatrix = (data: { transformMatrix?: Matrix; transform?: { translateX
 const imageSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   return createPluginSlice(createImagePluginSlice)(set, get, api);
 };
+const ImagePanel = React.lazy(() =>
+  import('./ImagePanel').then((module) => ({ default: module.ImagePanel }))
+);
 
 const computeImageBounds = (data: ImageElement['data']) => {
   const { x, y, width, height, transformMatrix, transform } = data;
@@ -237,7 +240,7 @@ const imageElementContribution: ElementContribution<ImageElement> = {
   },
   clone: (element) => ({
     ...element,
-    data: JSON.parse(JSON.stringify(element.data)),
+    data: cloneValue(element.data),
   }),
   serialize: (element) => {
     const {

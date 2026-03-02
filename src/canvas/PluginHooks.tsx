@@ -1,9 +1,9 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import type { Point } from '../types';
-import type { PluginHooksContext } from '../types/plugins';
+import type { PluginHookContribution, PluginHooksContext } from '../types/plugins';
 import { pluginManager } from '../utils/pluginManager';
-import { logger } from '../utils/logger';
+import { usePluginRegistrationVersion } from '../hooks/usePluginRegistrationVersion';
 
 interface PluginHooksProps {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -15,54 +15,82 @@ interface PluginHooksProps {
   ) => void;
 }
 
-/** Always-called hook that validates hook count stability in dev mode. */
-function useDevHookCountGuard(label: string, count: number): void {
-  const hookCountRef = useRef(count);
-  if (import.meta.env.DEV && hookCountRef.current !== count) {
-    logger.warn(
-      `[PluginHooks] ${label} hook count changed from ${hookCountRef.current} to ${count}. This violates Rules of Hooks.`
-    );
-  }
-}
-
-/**
- * Dynamic hook renderer for plugins
- * Creates a component wrapper for each plugin's hooks to avoid React hooks rules violations
- */
-const PluginHooksWrapper = ({ pluginId, hooksContext }: { pluginId: string; hooksContext: PluginHooksContext }) => {
-  const pluginHooks = pluginManager.getPluginHooks(pluginId);
-
-  // Safe because key={activePlugin} forces remount when active plugin changes,
-  // guaranteeing a stable hook count per component instance.
-  useDevHookCountGuard(`Plugin "${pluginId}"`, pluginHooks.length);
-
-  pluginHooks.forEach(contribution => {
-    contribution.hook(hooksContext);
-  });
-
+const ActiveHookContribution = ({
+  contribution,
+  hooksContext,
+}: {
+  contribution: PluginHookContribution;
+  hooksContext: PluginHooksContext;
+}) => {
+  contribution.hook(hooksContext);
   return null;
 };
 
-/**
- * Global hooks renderer for plugins that need to run regardless of active tool
- * Executes hooks marked with `global: true` in their plugin definition
- */
+const HookContributionRenderer = ({
+  contribution,
+  hooksContext,
+}: {
+  contribution: PluginHookContribution;
+  hooksContext: PluginHooksContext;
+}) => {
+  const isActive = useCanvasStore((state) => contribution.when?.(state as Record<string, unknown>, hooksContext) ?? true);
+
+  if (!isActive) {
+    return null;
+  }
+
+  return (
+    <ActiveHookContribution
+      contribution={contribution}
+      hooksContext={hooksContext}
+    />
+  );
+};
+
+const PluginHooksWrapper = ({
+  pluginId,
+  hooksContext,
+}: {
+  pluginId: string;
+  hooksContext: PluginHooksContext;
+}) => {
+  const pluginHooks = pluginManager.getPluginHooks(pluginId);
+
+  return (
+    <>
+      {pluginHooks.map((contribution) => (
+        <HookContributionRenderer
+          key={`${pluginId}:${contribution.id}`}
+          contribution={contribution}
+          hooksContext={hooksContext}
+        />
+      ))}
+    </>
+  );
+};
+
 const GlobalPluginHooksWrapper = ({ hooksContext }: { hooksContext: PluginHooksContext }) => {
   const globalPluginHooks = pluginManager.getGlobalPluginHooks();
 
-  useDevHookCountGuard('Global plugin hooks', globalPluginHooks.length);
-
-  globalPluginHooks.forEach(contribution => {
-    contribution.hook(hooksContext);
-  });
-
-  return null;
+  return (
+    <>
+      {globalPluginHooks.map((contribution) => (
+        <HookContributionRenderer
+          key={`global:${contribution.id}`}
+          contribution={contribution}
+          hooksContext={hooksContext}
+        />
+      ))}
+    </>
+  );
 };
 
 export const PluginHooksRenderer = ({ svgRef, screenToCanvas, emitPointerEvent }: PluginHooksProps) => {
+  const registrationVersion = usePluginRegistrationVersion();
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const viewportZoom = useCanvasStore(state => state.viewport.zoom);
   const scaleStrokeWithZoom = useCanvasStore(state => state.settings.scaleStrokeWithZoom);
+  void registrationVersion;
 
   // Create context object to pass to hooks
   const hooksContext = useMemo<PluginHooksContext>(() => ({

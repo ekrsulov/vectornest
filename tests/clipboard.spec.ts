@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {getCanvas, getCanvasPaths, waitForLoad, expandClipboardPanel, createShape, modKey, selectTool} from './helpers';
+import {getCanvas, getCanvasPaths, waitForLoad, expandClipboardPanel, createShape, firstVisible, getPanelContainer, modKey, selectTool} from './helpers';
 
 // Extend window interface for Zustand store access in tests
 declare global {
@@ -169,9 +169,11 @@ test.describe.serial('Clipboard Plugin', () => {
     const copyButton = page.locator('button[aria-label="Copy (⌘C)"]');
     await copyButton.click();
     await page.waitForTimeout(200);
+    await expandClipboardPanel(page);
 
     // Should show a status message about copying
-    const statusText = page.getByText(/^Copied \d+ element/i).first();
+    const clipboardPanel = await getPanelContainer(page, 'Clipboard');
+    const statusText = await firstVisible(clipboardPanel.getByText(/^Copied \d+ element/i));
     await expect(statusText).toBeVisible();
   });
 

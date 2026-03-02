@@ -1,14 +1,18 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { Crosshair } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createIntersectionDetectorSlice } from './slice';
-import { IntersectionDetectorPanel } from './IntersectionDetectorPanel';
 import { IntersectionOverlay } from './IntersectionOverlay';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { createSettingsPanel } from '../../utils/pluginFactories';
 
 registerStateKeys('intersectionDetector', ['intersectionDetector'], 'temporal');
+
+const IntersectionDetectorPanel = React.lazy(() =>
+  import('./IntersectionDetectorPanel').then((module) => ({ default: module.IntersectionDetectorPanel }))
+);
 
 export const intersectionDetectorPlugin: PluginDefinition<CanvasStore> = {
   id: 'intersectionDetector',

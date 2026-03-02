@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createScallopToolPluginSlice, type ScallopToolPluginSlice } from './slice';
 import React from 'react';
-import { ScallopToolPanel } from './ScallopToolPanel';
 import { ScallopToolOverlay } from './ScallopToolOverlay';
 import { scallopElements } from './scallopUtils';
 import { logger } from '../../utils/logger';
+
+const ScallopToolPanel = React.lazy(() =>
+    import('./ScallopToolPanel').then((module) => ({ default: module.ScallopToolPanel }))
+);
 
 export const scallopToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'scallopTool',

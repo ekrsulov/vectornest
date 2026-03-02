@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createVoronoiDiagramSlice } from './slice';
-import { VoronoiDiagramPanel } from './VoronoiDiagramPanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { Hexagon } from 'lucide-react';
 
 registerStateKeys('voronoiDiagram', ['voronoiDiagram'], 'temporal');
+const VoronoiDiagramPanel = lazy(() =>
+  import('./VoronoiDiagramPanel').then((module) => ({ default: module.VoronoiDiagramPanel }))
+);
 
 export const voronoiDiagramPlugin: PluginDefinition<CanvasStore> = {
   id: 'voronoiDiagram',

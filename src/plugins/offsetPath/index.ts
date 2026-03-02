@@ -1,10 +1,13 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createOffsetPathSlice } from './slice';
-import { OffsetPathPanel } from './OffsetPathPanel';
 import { createPluginSlice } from '../../utils/pluginUtils';
 
 const offsetPathSliceFactory = createPluginSlice(createOffsetPathSlice);
+const OffsetPathPanel = React.lazy(() =>
+  import('./OffsetPathPanel').then((module) => ({ default: module.OffsetPathPanel }))
+);
 
 export const offsetPathPlugin: PluginDefinition<CanvasStore> = {
   id: 'offsetPath',

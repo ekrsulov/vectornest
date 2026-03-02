@@ -9,8 +9,9 @@ import {
   Box,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { useEnabledPlugins, useResponsive } from '../../hooks';
-import { logger, LogLevel } from '../../utils';
+import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
+import { useResponsive } from '../../hooks/useResponsive';
+import { logger, LogLevel } from '../../utils/logger';
 import { Panel } from '../../ui/Panel';
 import { pluginManager } from '../../utils/pluginManager';
 // No icon button here - we show text label instead

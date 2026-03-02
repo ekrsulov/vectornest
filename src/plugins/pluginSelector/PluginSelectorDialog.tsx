@@ -18,11 +18,13 @@ import { pluginManager } from '../../utils/pluginManager';
 import { PanelSwitch } from '../../ui/PanelSwitch';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import type { PluginSelectorSlice } from './slice';
+import { usePluginRegistrationVersion } from '../../hooks/usePluginRegistrationVersion';
 
 // Singleton pattern: track if an instance is already mounted
 let isMounted = false;
 
 export const PluginSelectorDialog: React.FC = () => {
+    const registrationVersion = usePluginRegistrationVersion();
     // Each instance tracks whether it's the "active" one
     const [isActiveInstance, setIsActiveInstance] = useState(false);
     
@@ -72,6 +74,7 @@ export const PluginSelectorDialog: React.FC = () => {
     const allPlugins = pluginManager.getAll().sort((a, b) =>
         a.metadata.label.localeCompare(b.metadata.label)
     );
+    void registrationVersion;
 
     // Filter plugins based on search term
     const filteredPlugins = allPlugins.filter(plugin =>

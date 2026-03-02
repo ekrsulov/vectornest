@@ -1,12 +1,15 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { lazy } from 'react';
 import { CircleDot } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createHalftoneSlice } from './slice';
-import { HalftonePanel } from './HalftonePanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('halftone', ['halftone'], 'temporal');
+const HalftonePanel = lazy(() =>
+  import('./HalftonePanel').then((module) => ({ default: module.HalftonePanel }))
+);
 
 const halftoneSliceFactory = createPluginSlice(createHalftoneSlice);
 

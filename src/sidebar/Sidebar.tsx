@@ -6,7 +6,7 @@ import { SidebarShell } from './components/SidebarShell';
 import { DEFAULT_MODE } from '../constants';
 import { pluginManager } from '../utils/pluginManager';
 import { SidebarContext, type SidebarContextValue } from '../contexts/SidebarContext';
-import { useResponsive } from '../hooks';
+import { useResponsive } from '../hooks/useResponsive';
 
 // Semantic tokens resolve dark/light automatically — no need for useColorModeValue
 const SIDEBAR_BG = 'surface.sidebar';

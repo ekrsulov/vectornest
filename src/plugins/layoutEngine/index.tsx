@@ -1,12 +1,16 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { LayoutGrid } from 'lucide-react';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createLayoutEngineSlice } from './slice';
-import { LayoutEnginePanel } from './LayoutEnginePanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('layoutEngine', ['layoutEngine'], 'temporal');
+
+const LayoutEnginePanel = React.lazy(() =>
+  import('./LayoutEnginePanel').then((module) => ({ default: module.LayoutEnginePanel }))
+);
 
 export const layoutEnginePlugin: PluginDefinition<CanvasStore> = {
   id: 'layoutEngine',

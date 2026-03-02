@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { Viewport } from '../../../types';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-import { MIN_ZOOM, MAX_ZOOM } from '../../../constants';
+import { MIN_ZOOM, MAX_ZOOM, PATH_DECIMAL_PRECISION } from '../../../constants';
+import { formatToPrecision } from '../../../utils/numberUtils';
 
 export interface ViewportSlice {
   // State

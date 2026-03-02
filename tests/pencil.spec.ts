@@ -4,9 +4,12 @@ import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expectToolEnabled} f
 test.describe('Pencil Drawing', () => {
   test('should draw with pencil tool', async ({ page }) => {
     await page.goto('/');
+    await waitForLoad(page);
 
     // Switch to pencil mode
     await selectTool(page, 'Pencil');
+    await page.waitForFunction(() => (window as any).useCanvasStore?.getState?.().activePlugin === 'pencil');
+    await page.waitForTimeout(150);
 
     // Get SVG canvas element
     const canvas = getCanvas(page);
@@ -83,6 +86,7 @@ test.describe('Pencil Drawing', () => {
 
     // Switch to pencil mode
     await selectTool(page, 'Pencil');
+    await page.waitForFunction(() => (window as any).useCanvasStore?.getState?.().activePlugin === 'pencil');
 
     // Check that pencil panel is visible
     await expect(page.getByRole('heading', { name: 'Pencil' })).toBeVisible();

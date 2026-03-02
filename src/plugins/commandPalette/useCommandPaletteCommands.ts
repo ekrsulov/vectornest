@@ -4,12 +4,12 @@
  * and panel listings from Gen, Audit, Prefs, and Lib tabs.
  */
 
-import { useMemo } from 'react';
-import { useEnabledPlugins } from '../../hooks';
+import { lazy, useMemo } from 'react';
+import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
 import { pluginManager } from '../../utils/pluginManager';
 import { useCanvasStore } from '../../store/canvasStore';
 import { commandRegistry } from './commandRegistry';
-import type { PaletteCommand } from './types';
+import type { PaletteCommand, PalettePanelComponent } from './types';
 import type { PluginPanelContribution } from '../../types/plugins';
 import { panelRegistry } from '../../utils/panelRegistry';
 import { useContextActions } from '../contextActions/useContextActions';
@@ -44,14 +44,16 @@ import {
   FolderTree,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
-import { FilePanel } from '../../sidebar/panels/FilePanel';
-import { EditorPanel } from '../../sidebar/panels/EditorPanel';
-import { SvgStructurePanel } from '../svgStructure/SvgStructurePanel';
-import { SourcePanel } from '../../plugins/source/SourcePanel';
-import { LlmAssistantSettingsPanel } from '../../plugins/llmAssistant/LlmAssistantSettingsPanel';
 import { ExportManager } from '../../utils/export/ExportManager';
 import { ImportManager } from '../../utils/import/ImportManager';
 import type { LlmAssistantSlice } from '../../plugins/llmAssistant/slice';
+
+const EditorPanel = lazy(() =>
+  import('../../sidebar/panels/EditorPanel').then((module) => ({ default: module.EditorPanel }))
+);
+
+const getRegisteredPanelComponent = (key: string): PalettePanelComponent | undefined =>
+  panelRegistry.get(key)?.component as PalettePanelComponent | undefined;
 
 /**
  * Collect panels contributed to a target plugin id via relatedPluginPanels.
@@ -66,7 +68,7 @@ function collectRelatedPanels(
   const panels: Array<{
     id: string;
     label: string;
-    component: ComponentType;
+    component: PalettePanelComponent;
     icon: ComponentType<{ size?: number }> | undefined;
     order: number;
   }> = [];
@@ -117,6 +119,10 @@ function collectRelatedPanels(
  * Commands for actions and panels in the File panel.
  */
 function collectFilePanelCommands(): PaletteCommand[] {
+  const filePanel = getRegisteredPanelComponent('file');
+  const sourcePanel = getRegisteredPanelComponent('source:source');
+  const llmAssistantSettingsPanel = getRegisteredPanelComponent('llmAssistant:llm-assistant-settings');
+
   return [
     {
       id: 'file-name',
@@ -124,7 +130,7 @@ function collectFilePanelCommands(): PaletteCommand[] {
       category: 'File',
       icon: FileText,
       execute: () => {},
-      panelComponent: FilePanel,
+      panelComponent: filePanel,
       panelLabel: 'File',
       keywords: ['name', 'document', 'title', 'rename', 'file'],
     },
@@ -183,7 +189,7 @@ function collectFilePanelCommands(): PaletteCommand[] {
       category: 'File',
       icon: SlidersHorizontal,
       execute: () => {},
-      panelComponent: FilePanel,
+      panelComponent: filePanel,
       panelLabel: 'File',
       keywords: ['advanced', 'options', 'import', 'export', 'padding', 'resize', 'frame'],
     },
@@ -204,7 +210,7 @@ function collectFilePanelCommands(): PaletteCommand[] {
       category: 'File',
       icon: FileCode,
       execute: () => {},
-      panelComponent: SourcePanel,
+      panelComponent: sourcePanel,
       panelLabel: 'SVG Source',
       keywords: ['source', 'svg', 'code', 'xml', 'raw', 'markup'],
     },
@@ -214,7 +220,7 @@ function collectFilePanelCommands(): PaletteCommand[] {
       category: 'File',
       icon: Bot,
       execute: () => {},
-      panelComponent: LlmAssistantSettingsPanel,
+      panelComponent: llmAssistantSettingsPanel,
       panelLabel: 'LLM Assistant',
       keywords: ['llm', 'assistant', 'ai', 'openai', 'gpt', 'api', 'configuration'],
     },
@@ -278,7 +284,7 @@ function collectSelectPanels(
       category: 'Select',
       icon: pluginIcon ?? MousePointer2,
       execute: () => {},
-      panelComponent: panel.component as ComponentType,
+      panelComponent: panel.component as PalettePanelComponent,
       panelLabel: label,
       panelCategory: needsHeader ? 'prefs' : undefined,
       keywords: ['select', 'selection', label.toLowerCase(), 'panel'],
@@ -346,7 +352,7 @@ function collectSettingsPanels(): PaletteCommand[] {
           category: 'Prefs',
           icon: pluginIcon ?? Settings,
           execute: () => {},
-          panelComponent: panel.component as ComponentType,
+          panelComponent: panel.component as PalettePanelComponent,
           panelLabel: label,
           panelCategory: 'prefs',
           keywords: ['settings', 'prefs', 'preferences', label.toLowerCase()],
@@ -571,17 +577,20 @@ export function useCommandPaletteCommands(): PaletteCommand[] {
     });
 
     // --- Struct panel (always available) ---
-    commands.push({
-      id: 'panel-struct',
-      label: 'Struct',
-      category: 'Select',
-      icon: FolderTree,
-      execute: () => {},
-      panelComponent: SvgStructurePanel as ComponentType,
-      panelLabel: 'Struct',
-      panelCategory: 'editor',
-      keywords: ['struct', 'structure', 'svg', 'tree', 'layers', 'hierarchy', 'groups', 'elements', 'panel'],
-    });
+    const structurePanel = getRegisteredPanelComponent('svgStructure:svgStructure');
+    if (structurePanel) {
+      commands.push({
+        id: 'panel-struct',
+        label: 'Struct',
+        category: 'Select',
+        icon: FolderTree,
+        execute: () => {},
+        panelComponent: structurePanel,
+        panelLabel: 'Struct',
+        panelCategory: 'editor',
+        keywords: ['struct', 'structure', 'svg', 'tree', 'layers', 'hierarchy', 'groups', 'elements', 'panel'],
+      });
+    }
 
     // --- Select mode panels (shown when elements are selected) ---
     {

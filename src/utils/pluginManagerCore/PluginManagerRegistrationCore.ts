@@ -7,7 +7,7 @@ import {
   type PluginRegistrationFlowDeps,
 } from '../plugins/PluginRegistrationFlow';
 import { isPluginEnabled } from '../plugins/PluginBehaviorApi';
-import { updateCanvasModeMachine } from '../../canvas/modes/CanvasModeMachine';
+import { updateCanvasModeDefinitions } from '../../canvas/modes/CanvasModeMachine';
 import { PluginManagerStoreBindingCore } from './PluginManagerStoreBindingCore';
 import type { PluginManagerOptions } from './PluginManagerBase';
 
@@ -19,7 +19,7 @@ export abstract class PluginManagerRegistrationCore extends PluginManagerStoreBi
     initialPlugins.forEach((plugin) => {
       registerPluginFlow(plugin, batchDeps);
     });
-    updateCanvasModeMachine(this.registry.getAll() as PluginDefinition[]);
+    updateCanvasModeDefinitions(this.registry.getAll() as PluginDefinition[]);
     this.shortcutManager.invalidateCache();
   }
 

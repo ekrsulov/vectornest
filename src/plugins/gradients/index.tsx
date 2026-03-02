@@ -10,7 +10,6 @@ import { paintTypeRegistry, type CustomPaint } from '../../utils/paintTypeRegist
 import { stylePresetRegistry, type Preset } from '../../utils/stylePresetRegistry';
 import { adjustStrokeForDarkMode } from '../../utils/fillAndStrokePresets';
 import { GradientPicker } from './GradientPicker';
-import { GradientsPanel } from './GradientsPanel';
 import React, { useLayoutEffect, useRef } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { collectUsedPaintIds } from '../../utils/paintUsageUtils';
@@ -73,6 +72,9 @@ const GradientSvgContent: React.FC<{ content: string; gradientKey?: string }> = 
 const gradientsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   return createPluginSlice(createGradientsSlice)(set, get, api);
 };
+const GradientsPanel = React.lazy(() =>
+  import('./GradientsPanel').then((module) => ({ default: module.GradientsPanel }))
+);
 
 const gradientDefsEditor: SvgDefsEditor<CanvasStore> = {
   id: 'gradients-editor',

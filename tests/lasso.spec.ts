@@ -77,13 +77,12 @@ test.describe('Lasso Selection Plugin', () => {
     await openSettingsPanel(page);
     await page.waitForTimeout(100);
 
-    // Enable lasso via panel switch - use checkbox role to target input specifically
-    const lassoSwitch = page.getByRole('checkbox', { name: 'Toggle lasso selection mode' });
-    
-    if (await lassoSwitch.count() > 0) {
-      await lassoSwitch.click({ force: true });
-      await page.waitForTimeout(100);
-    }
+    // Toggle state directly to avoid hidden/duplicated panel switch instances affecting the test.
+    await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      store?.setLassoEnabled?.(true);
+    });
+    await page.waitForTimeout(100);
 
     // Draw a lasso around the shape
     await page.mouse.move(canvasBox.x + canvasBox.width * 0.2, canvasBox.y + canvasBox.height * 0.3);

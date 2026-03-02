@@ -13,7 +13,7 @@ import type { StyleSlice } from '../../store/slices/features/styleSlice';
 type TextStore = CanvasStore & TextPluginSlice & StyleSlice;
 import { textToPathCommands } from '../../utils/textVectorizationUtils';
 import { extractSubpaths } from '../../utils/pathParserUtils';
-import { logger } from '../../utils';
+import { logger } from '../../utils/logger';
 
 /**
  * Add text converted to path

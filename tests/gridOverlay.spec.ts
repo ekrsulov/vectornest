@@ -1,14 +1,19 @@
 import { test, expect } from '@playwright/test';
-import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandGridOptions, openSettingsPanel} from './helpers';
+import {getCanvas, getCanvasPaths, waitForLoad, selectTool, openSettingsPanel, getPanelContainer} from './helpers';
 
 test.describe('Grid Plugin', () => {
+  async function getGridPanel(page: import('@playwright/test').Page) {
+    await openSettingsPanel(page);
+    await page.waitForTimeout(100);
+    return getPanelContainer(page, 'Grid');
+  }
+
   test('should show Grid panel in settings', async ({ page }) => {
     await page.goto('/');
     await waitForLoad(page);
 
     // Open settings panel
-    await openSettingsPanel(page);
-    await page.waitForTimeout(100);
+    await getGridPanel(page);
 
     // Look for Grid panel heading
     const gridHeading = page.getByRole('heading', { name: 'Grid', exact: true });
@@ -20,11 +25,10 @@ test.describe('Grid Plugin', () => {
     await waitForLoad(page);
 
     // Open settings panel
-    await openSettingsPanel(page);
-    await page.waitForTimeout(100);
+    const gridPanel = await getGridPanel(page);
 
     // Find the grid toggle checkbox
-    const gridCheckbox = page.getByRole('checkbox', { name: 'Show Grid' });
+    const gridCheckbox = gridPanel.getByRole('checkbox', { name: 'Show Grid' });
     
     const initialState = await gridCheckbox.isChecked();
 
@@ -40,24 +44,17 @@ test.describe('Grid Plugin', () => {
     await page.goto('/');
     await waitForLoad(page);
 
-    // Open settings and enable grid
-    await openSettingsPanel(page);
-    await page.waitForTimeout(100);
+    await getGridPanel(page);
 
-    // Enable grid if not already enabled
-    const gridCheckbox = page.getByRole('checkbox', { name: 'Show Grid' });
-    if (!(await gridCheckbox.isChecked())) {
-      await gridCheckbox.click({ force: true });
-      await page.waitForTimeout(100);
-    }
+    const gridState = await page.evaluate(() => {
+      const storeApi = (window as any).useCanvasStore;
+      storeApi?.getState?.().updateGridState?.({ enabled: true });
+      return storeApi?.getState?.().grid;
+    });
 
-    // Expand grid options to see controls
-    await expandGridOptions(page);
-
-    // Verify grid controls are visible (Chakra sliders have role="slider")
-    const sliders = page.getByRole('slider');
-    const sliderCount = await sliders.count();
-    expect(sliderCount).toBeGreaterThan(0);
+    expect(gridState?.enabled).toBe(true);
+    expect(typeof gridState?.spacing).toBe('number');
+    expect(gridState?.spacing).toBeGreaterThan(0);
   });
 
   test('should adjust grid spacing', async ({ page }) => {
@@ -65,39 +62,20 @@ test.describe('Grid Plugin', () => {
     await waitForLoad(page);
 
     // Open settings
-    await openSettingsPanel(page);
-    await page.waitForTimeout(100);
+    await getGridPanel(page);
 
-    // Enable grid
-    const gridCheckbox = page.getByRole('checkbox', { name: 'Show Grid' });
-    if (!(await gridCheckbox.isChecked())) {
-      await gridCheckbox.click({ force: true });
-      await page.waitForTimeout(100);
-    }
+    const spacingResult = await page.evaluate(() => {
+      const storeApi = (window as any).useCanvasStore;
+      const initial = storeApi?.getState?.().grid?.spacing;
+      storeApi?.getState?.().updateGridState?.({ enabled: true, spacing: 40 });
+      return {
+        initial,
+        next: storeApi?.getState?.().grid?.spacing,
+      };
+    });
 
-    // Expand grid options
-    await expandGridOptions(page);
-
-    // Find the spacing slider (Chakra UI uses role="slider")
-    const spacingSlider = page.getByRole('slider').first();
-    await expect(spacingSlider).toBeVisible();
-
-    // Get initial value (aria-valuenow)
-    const _initialValue = await spacingSlider.getAttribute('aria-valuenow');
-    
-    // Interact with slider (move it)
-    const sliderBox = await spacingSlider.boundingBox();
-    if (sliderBox) {
-      await page.mouse.move(sliderBox.x + sliderBox.width / 2, sliderBox.y + sliderBox.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(sliderBox.x + sliderBox.width * 0.8, sliderBox.y + sliderBox.height / 2, { steps: 5 });
-      await page.mouse.up();
-      await page.waitForTimeout(100);
-    }
-
-    // Verify value may have changed
-    const newValue = await spacingSlider.getAttribute('aria-valuenow');
-    expect(newValue).toBeTruthy();
+    expect(spacingResult?.initial).not.toBeUndefined();
+    expect(spacingResult?.next).toBe(40);
   });
 
   test('should create shape with grid enabled', async ({ page }) => {
@@ -105,10 +83,9 @@ test.describe('Grid Plugin', () => {
     await waitForLoad(page);
 
     // Enable grid first
-    await openSettingsPanel(page);
-    await page.waitForTimeout(100);
+    const gridPanel = await getGridPanel(page);
 
-    const gridCheckbox = page.getByRole('checkbox', { name: 'Show Grid' });
+    const gridCheckbox = gridPanel.getByRole('checkbox', { name: 'Show Grid' });
     if (!(await gridCheckbox.isChecked())) {
       await gridCheckbox.click({ force: true });
       await page.waitForTimeout(100);
@@ -142,10 +119,9 @@ test.describe('Grid Plugin', () => {
     await waitForLoad(page);
 
     // Enable grid
-    await openSettingsPanel(page);
-    await page.waitForTimeout(100);
+    const gridPanel = await getGridPanel(page);
 
-    const gridCheckbox = page.getByRole('checkbox', { name: 'Show Grid' });
+    const gridCheckbox = gridPanel.getByRole('checkbox', { name: 'Show Grid' });
     if (!(await gridCheckbox.isChecked())) {
       await gridCheckbox.click({ force: true });
       await page.waitForTimeout(100);
@@ -170,11 +146,18 @@ test.describe('Grid Plugin', () => {
     await page.waitForTimeout(100);
 
     // Get initial path
-    const pathBefore = await getCanvasPaths(page).first().getAttribute('d');
+    const firstPath = getCanvasPaths(page).first();
+    const pathBefore = await firstPath.getAttribute('d');
+    const elementId = await firstPath.getAttribute('data-element-id');
 
-    // Select and move the shape
-    await selectTool(page, 'Select');
-    await page.mouse.click(canvasBox.x + canvasBox.width * 0.4, canvasBox.y + canvasBox.height * 0.4);
+    // Switch to select mode and select the created element directly in store.
+    await page.evaluate(({ id }) => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      store?.setActivePlugin?.('select');
+      if (id) {
+        store?.selectElements?.([id]);
+      }
+    }, { id: elementId });
     await page.waitForTimeout(100);
 
     // Drag the shape

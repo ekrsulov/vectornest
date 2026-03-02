@@ -11,10 +11,10 @@
  */
 
 import { Palette } from 'lucide-react';
+import React from 'react';
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPaintsSlice } from './slice';
-import { PaintsPanel } from './PaintsPanel';
 
 const paintsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   const slice = createPaintsSlice(
@@ -24,6 +24,10 @@ const paintsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   );
   return { state: slice };
 };
+
+const PaintsPanel = React.lazy(() =>
+  import('./PaintsPanel').then((module) => ({ default: module.PaintsPanel }))
+);
 
 /**
  * Determine if the panel should show

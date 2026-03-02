@@ -3,8 +3,8 @@ import { Box, VStack, Divider, Menu, MenuButton, MenuList, MenuItem } from '@cha
 import ConditionalTooltip from './ConditionalTooltip';
 import { ChevronRight } from 'lucide-react';
 import type { FloatingContextMenuAction } from '../types/plugins';
-import { useThemeColors } from '../hooks';
-import { useResponsive, NO_FOCUS_STYLES, NO_FOCUS_STYLES_DEEP } from '../hooks';
+import { useResponsive } from '../hooks/useResponsive';
+import { useThemeColors, NO_FOCUS_STYLES, NO_FOCUS_STYLES_DEEP } from '../hooks/useThemeColors';
 import { FloatingContextMenuItem, FloatingContextMenuMobileSubmenu, renderMenuIcon, menuItemChakraStyleProps } from './FloatingContextMenuComponents';
 
 interface FloatingContextMenuProps {

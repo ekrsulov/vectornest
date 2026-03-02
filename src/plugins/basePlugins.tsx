@@ -8,14 +8,11 @@ import type { ElementMap } from '../canvas/geometry/CanvasGeometryService';
 import { getGroupBounds } from '../canvas/geometry/CanvasGeometryService';
 import { calculateMultiElementBounds } from '../utils/selectionBoundsUtils';
 import { getEffectiveShift } from '../utils/effectiveShift';
-import { buildElementMap } from '../utils';
-import { SelectionOverlay, BlockingOverlay } from '../overlays';
+import { buildElementMap } from '../utils/elementMapUtils';
+import { BlockingOverlay } from '../overlays/BlockingOverlay';
 import { useCanvasStore } from '../store/canvasStore';
 import { MousePointer } from 'lucide-react';
 import { useColorMode } from '@chakra-ui/react';
-import { EditorPanel } from '../sidebar/panels/EditorPanel';
-import { GroupTransformationOverlay } from './transformation/GroupTransformationOverlay';
-import { SelectionBboxTransformationOverlay } from './transformation/SelectionBboxTransformationOverlay';
 import { pluginManager } from '../utils/pluginManager';
 import { elementContributionRegistry } from '../utils/elementContributionRegistry';
 import { getAccumulatedTransformMatrix } from '../utils/elementTransformUtils';
@@ -36,6 +33,19 @@ type TransformationConfig = {
 };
 type TransformHandlerPointerDown = (e: React.PointerEvent, id: string, handler: string) => void;
 type TransformHandlerPointerUp = (e: React.PointerEvent) => void;
+
+const EditorPanel = React.lazy(() =>
+  import('../sidebar/panels/EditorPanel').then((module) => ({ default: module.EditorPanel }))
+);
+const SelectionOverlay = React.lazy(() =>
+  import('../overlays/SelectionOverlay').then((module) => ({ default: module.SelectionOverlay }))
+);
+const GroupTransformationOverlay = React.lazy(() =>
+  import('./transformation/GroupTransformationOverlay').then((module) => ({ default: module.GroupTransformationOverlay }))
+);
+const SelectionBboxTransformationOverlay = React.lazy(() =>
+  import('./transformation/SelectionBboxTransformationOverlay').then((module) => ({ default: module.SelectionBboxTransformationOverlay }))
+);
 
 const SelectionRectangleComponent: React.FC<{
   isSelecting: boolean;
@@ -525,15 +535,16 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
                 }
 
                 return (
-                  <SelectionOverlay
-                    key={`selection-${element.id}`}
-                    element={element}
-                    bounds={getElementBounds(element)}
-                    viewport={viewport}
-                    selectedSubpaths={selectedSubpaths}
-                    activePlugin={activePlugin}
-                    transformMatrix={getAccumulatedTransformMatrix(element.id, elMap)}
-                  />
+                  <React.Suspense key={`selection-${element.id}`} fallback={null}>
+                    <SelectionOverlay
+                      element={element}
+                      bounds={getElementBounds(element)}
+                      viewport={viewport}
+                      selectedSubpaths={selectedSubpaths}
+                      activePlugin={activePlugin}
+                      transformMatrix={getAccumulatedTransformMatrix(element.id, elMap)}
+                    />
+                  </React.Suspense>
                 );
               })}
           </>
@@ -633,15 +644,17 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
             const bounds = getGroupBounds(groupElement as GroupElement, elementMap, viewport);
             if (bounds && isFinite(bounds.minX)) {
               return (
-                <GroupTransformationOverlay
-                  group={groupElement as GroupElement}
-                  bounds={bounds}
-                  viewport={viewport}
-                  activePlugin={activePlugin}
-                  transformation={transformation}
-                  onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown!}
-                  onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp!}
-                />
+                <React.Suspense fallback={null}>
+                  <GroupTransformationOverlay
+                    group={groupElement as GroupElement}
+                    bounds={bounds}
+                    viewport={viewport}
+                    activePlugin={activePlugin}
+                    transformation={transformation}
+                    onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown!}
+                    onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp!}
+                  />
+                </React.Suspense>
               );
             }
           }
@@ -677,14 +690,16 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
 
           if (hasBounds && isFinite(minX)) {
             return (
-              <SelectionBboxTransformationOverlay
-                bounds={{ minX, minY, maxX, maxY }}
-                viewport={viewport}
-                activePlugin={activePlugin}
-                transformation={transformation}
-                onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown!}
-                onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp!}
-              />
+              <React.Suspense fallback={null}>
+                <SelectionBboxTransformationOverlay
+                  bounds={{ minX, minY, maxX, maxY }}
+                  viewport={viewport}
+                  activePlugin={activePlugin}
+                  transformation={transformation}
+                  onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown!}
+                  onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp!}
+                />
+              </React.Suspense>
             );
           }
         }
@@ -696,15 +711,17 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
             const bounds = getGroupBounds(element as GroupElement, elementMap, viewport);
             if (bounds && isFinite(bounds.minX)) {
               return (
-                <GroupTransformationOverlay
-                  group={element as GroupElement}
-                  bounds={bounds}
-                  viewport={viewport}
-                  activePlugin={activePlugin}
-                  transformation={transformation}
-                  onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown!}
-                  onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp!}
-                />
+                <React.Suspense fallback={null}>
+                  <GroupTransformationOverlay
+                    group={element as GroupElement}
+                    bounds={bounds}
+                    viewport={viewport}
+                    activePlugin={activePlugin}
+                    transformation={transformation}
+                    onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown!}
+                    onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp!}
+                  />
+                </React.Suspense>
               );
             }
           }
@@ -723,11 +740,13 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
       id: 'selection-blocking-overlay',
       placement: 'midground',
       render: ({ viewport, canvasSize, isSelecting }) => (
-        <BlockingOverlay
-          viewport={viewport}
-          canvasSize={canvasSize}
-          isActive={isSelecting}
-        />
+        <React.Suspense fallback={null}>
+          <BlockingOverlay
+            viewport={viewport}
+            canvasSize={canvasSize}
+            isActive={isSelecting}
+          />
+        </React.Suspense>
       ),
     },
   ],

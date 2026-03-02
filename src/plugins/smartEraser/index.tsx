@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createSmartEraserPluginSlice, type SmartEraserPluginSlice } from './slice';
 import React from 'react';
-import { SmartEraserPanel } from './SmartEraserPanel';
 import { SmartEraserOverlay } from './SmartEraserOverlay';
 import { eraseElementsWithPath } from './smartEraserUtils';
 import { logger } from '../../utils/logger';
+
+const SmartEraserPanel = React.lazy(() =>
+    import('./SmartEraserPanel').then((module) => ({ default: module.SmartEraserPanel }))
+);
 
 export const smartEraserPlugin: PluginDefinition<CanvasStore> = {
     id: 'smartEraser',

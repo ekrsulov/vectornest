@@ -10,7 +10,6 @@ import { PluginLayerManager } from '../plugins/PluginLayerManager';
 import { PluginInteractionManager } from '../plugins/PluginInteractionManager';
 import type { PluginContextManager } from '../plugins/PluginContextManager';
 import { LifecycleManager, createLifecycleManager } from '../plugins/LifecycleManager';
-import { createLifecycleCompatibilityAdapter } from '../plugins/LifecycleCompatibilityAdapter';
 import { BehaviorFlagsManager, createBehaviorFlagsManager } from '../plugins/BehaviorFlagsManager';
 import { UIContributionManager, createUIContributionManager } from '../plugins/UIContributionManager';
 import { ShortcutManager, createShortcutManager } from '../plugins/ShortcutManager';
@@ -34,7 +33,6 @@ export abstract class PluginManagerBase {
   protected interactionManager = new PluginInteractionManager();
   protected contextManager: PluginContextManager | null = null;
   protected lifecycleManager: LifecycleManager = createLifecycleManager();
-  protected lifecycleCompatibility = createLifecycleCompatibilityAdapter(this.lifecycleManager);
   protected behaviorFlagsManager: BehaviorFlagsManager<CanvasStore>;
   protected uiContributionManager: UIContributionManager;
   protected shortcutManager: ShortcutManager;
@@ -50,8 +48,6 @@ export abstract class PluginManagerBase {
   private registrationChangeListeners = new Set<() => void>();
 
   protected abstract createPluginContext(pluginId: string): PluginContextFull<CanvasStore>;
-  public abstract executeLifecycleAction(actionId: string): void;
-  public abstract getGlobalTransitionActions(): string[];
 
   constructor({ storeApi = null }: PluginManagerOptions = {}) {
     this.storeApi = storeApi;
@@ -66,8 +62,7 @@ export abstract class PluginManagerBase {
     this.uiContributionManager = createUIContributionManager(
       () => this.registry.getAll(),
       (id) => isPluginEnabled(this.storeApi, id),
-      () => this.storeApi?.getState() ?? null,
-      (id) => this.registry.get(id)
+      () => this.storeApi?.getState() ?? null
     );
 
     this.shortcutManager = createShortcutManager(
@@ -92,5 +87,21 @@ export abstract class PluginManagerBase {
     this.registrationChangeListeners.forEach((listener) => {
       try { listener(); } catch { /* swallow */ }
     });
+  }
+
+  public registerLifecycleAction(
+    actionId: string,
+    handler: () => void,
+    options?: { global?: boolean }
+  ): () => void {
+    return this.lifecycleManager.register(actionId, handler, options);
+  }
+
+  public executeLifecycleAction(actionId: string): void {
+    this.lifecycleManager.execute(actionId);
+  }
+
+  public getGlobalTransitionActions(): string[] {
+    return this.lifecycleManager.getGlobalTransitionActions();
   }
 }

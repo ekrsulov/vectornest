@@ -1,4 +1,4 @@
-import { updateCanvasModeMachine } from '../../canvas/modes/CanvasModeMachine';
+import { updateCanvasModeDefinitions } from '../../canvas/modes/CanvasModeMachine';
 import type { CanvasStore, CanvasStoreApi } from '../../store/canvasStore';
 import type {
   PluginContextFull,
@@ -103,7 +103,7 @@ export function registerPluginFlow(
   }
 
   if (!deps.skipModeMachineUpdate) {
-    updateCanvasModeMachine(deps.registry.getAll() as PluginDefinition[]);
+    updateCanvasModeDefinitions(deps.registry.getAll() as PluginDefinition[]);
   }
 
   if (deps.storeApi?.getState().activePlugin === plugin.id) {
@@ -134,6 +134,10 @@ export function unregisterPluginFlow(
   deps.registry.unregister(pluginId);
   deps.layerManager.unregister(pluginId);
   deps.interactionManager.unregister(pluginId);
+
+  if (!deps.skipModeMachineUpdate) {
+    updateCanvasModeDefinitions(deps.registry.getAll() as PluginDefinition[]);
+  }
 
   deps.pluginApis.delete(pluginId);
 

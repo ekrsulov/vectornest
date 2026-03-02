@@ -23,6 +23,7 @@ import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { StatusMessage } from '../../ui/PresetButtonGrid';
 import { SvgPreview } from '../../ui/SvgPreview';
 import { coordinatesFromAngle } from './linearGradientUtils';
+import { generateShortId } from '../../utils/idGenerator';
 import { randomHexColor, randomInt } from '../../utils/random';
 
 
@@ -259,7 +260,7 @@ export const GradientsPanel: React.FC = () => {
   }, [type, angle, stops, cx, cy, r, fx, fy, editingGradientId]);
 
   const handleAdd = () => {
-    const id = `grad-${Date.now()}`;
+    const id = generateShortId('grad');
     const newGradient: GradientDef = {
       id,
       name: 'New Gradient',

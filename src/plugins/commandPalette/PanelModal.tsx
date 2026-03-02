@@ -13,12 +13,13 @@ import { Box, Spinner, Portal } from '@chakra-ui/react';
 import { X } from 'lucide-react';
 import { useColorModeValue } from '@chakra-ui/react';
 import { NO_FOCUS_STYLES_DEEP } from '../../hooks/useThemeColors';
+import type { PalettePanelComponent } from './types';
 
 interface PanelModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  PanelComponent: React.ComponentType;
+  PanelComponent: PalettePanelComponent;
   /** When true (prefs panels), shows the Panel's own header (with switch) and hides the chevron */
   isPrefsPanel?: boolean;
   /** When true, the panel manages its own collapse state — do not force Collapses open */

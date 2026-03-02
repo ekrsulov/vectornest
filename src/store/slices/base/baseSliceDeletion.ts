@@ -1,7 +1,7 @@
 import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { runCleanupHooks } from '../../cleanupHookRegistry';
-import { buildElementMap } from '../../../utils';
+import { buildElementMap } from '../../../utils/elementMapUtils';
 import { safeChildIdsFromElement, collectGroupDescendants } from '../../../utils/groupTraversalUtils';
 
 interface GroupCollapseInfo {

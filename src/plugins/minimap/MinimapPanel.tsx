@@ -3,7 +3,7 @@ import { Box, Flex, useColorModeValue } from '@chakra-ui/react';
 import type { Bounds } from '../../utils/boundsUtils';
 import type { CanvasElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
-import { useSidebarLayout } from '../../hooks';
+import { useSidebarLayout } from '../../hooks/useSidebarLayout';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import type { PluginSelectorSlice } from '../pluginSelector/slice';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';

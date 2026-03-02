@@ -4,10 +4,13 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createRoughenToolPluginSlice, type RoughenToolPluginSlice } from './slice';
 import React from 'react';
-import { RoughenToolPanel } from './RoughenToolPanel';
 import { RoughenToolOverlay } from './RoughenToolOverlay';
 import { roughenElements } from './roughenUtils';
 import { logger } from '../../utils/logger';
+
+const RoughenToolPanel = React.lazy(() =>
+    import('./RoughenToolPanel').then((module) => ({ default: module.RoughenToolPanel }))
+);
 
 export const roughenToolPlugin: PluginDefinition<CanvasStore> = {
     id: 'roughenTool',

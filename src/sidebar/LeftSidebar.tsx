@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useCanvasStore } from '../store/canvasStore';
-import { useResponsive } from '../hooks';
+import { useResponsive } from '../hooks/useResponsive';
 import { SidebarPanelScopeProvider } from '../contexts/SidebarPanelStateContext';
 import { LeftSidebarContent } from './components/LeftSidebarContent';
 import { SidebarShell } from './components/SidebarShell';

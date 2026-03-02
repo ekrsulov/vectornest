@@ -1,14 +1,17 @@
+import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { createWireframePluginSlice } from './slice';
 import type { WireframePluginSlice } from './slice';
-import { WireframePanel } from './WireframePanel';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 
 registerStateKeys('wireframe', ['wireframe'], 'temporal');
 
 const wireframeSliceFactory = createPluginSlice(createWireframePluginSlice);
+const WireframePanel = React.lazy(() =>
+  import('./WireframePanel').then((module) => ({ default: module.WireframePanel }))
+);
 const hasWireframeSlice = (state: unknown): state is WireframePluginSlice => {
   return Boolean(state && typeof state === 'object' && 'wireframe' in (state as Record<string, unknown>));
 };
@@ -91,4 +94,3 @@ export const wireframePlugin: PluginDefinition<CanvasStore> = {
     },
   ],
 };
-

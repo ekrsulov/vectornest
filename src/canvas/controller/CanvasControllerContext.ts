@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { CanvasElement } from '../../types';
-import { buildElementMap } from '../../utils';
+import { buildElementMap } from '../../utils/elementMapUtils';
 
 type CanvasControllerDataKeys =
   | 'elements'
@@ -156,4 +156,3 @@ export const useCanvasControllerActions = (): CanvasControllerActions => {
   }
   return actions;
 };
-

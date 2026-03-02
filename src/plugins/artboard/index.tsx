@@ -1,13 +1,17 @@
+import React from 'react';
 import type { PluginDefinition, PluginSliceFactory, CanvasLayerContribution } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createArtboardSlice, type ArtboardSlice } from './slice';
-import { ArtboardPanel } from './ArtboardPanel';
 import { ArtboardLayer } from './ArtboardLayer';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { isMonoColor, transformMonoColor } from '../../utils/colorModeSyncUtils';
 
 // Register persistence keys
 registerStateKeys('artboard', ['artboard'], 'both');
+
+const ArtboardPanel = React.lazy(() =>
+  import('./ArtboardPanel').then((module) => ({ default: module.ArtboardPanel }))
+);
 
 /** Artboard slice factory */
 const artboardSliceFactory: PluginSliceFactory<CanvasStore> = (set, _get, _api) => {

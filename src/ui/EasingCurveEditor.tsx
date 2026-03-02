@@ -9,7 +9,7 @@
 
 import React, { useCallback, useRef, useEffect, useMemo } from 'react';
 import { Box, VStack, Text, Flex } from '@chakra-ui/react';
-import { useThemeColors } from '../hooks';
+import { useThemeColors } from '../hooks/useThemeColors';
 import { CustomSelect } from './CustomSelect';
 import { EASING_PRESETS } from './easingPresets';
 import type { CubicBezierPoints } from './easingPresets';

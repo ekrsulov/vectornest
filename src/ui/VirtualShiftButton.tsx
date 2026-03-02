@@ -3,7 +3,9 @@ import { Box, IconButton } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
-import { useThemeColors, useSidebarLayout, useResponsive } from '../hooks';
+import { useResponsive } from '../hooks/useResponsive';
+import { useSidebarLayout } from '../hooks/useSidebarLayout';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 /**
  * VirtualShiftButton - Mobile-only button for virtual shift key

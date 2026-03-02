@@ -14,6 +14,10 @@ import {
   getActiveArtboardBounds,
   hasActiveArtboardForFit,
 } from '../../utils/artboardViewportFitUtils';
+import {
+  fitViewportToSelection,
+  hasSelectionForFit,
+} from '../../utils/selectionViewportFitUtils';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface MinimapPanelProps {
@@ -258,6 +262,10 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
   const handleZoomIn = useCallback(() => handleZoom(ZOOM_FACTOR), [handleZoom]);
   const handleZoomOut = useCallback(() => handleZoom(1 / ZOOM_FACTOR), [handleZoom]);
   const hasActiveArtboard = useMemo(() => hasActiveArtboardForFit(artboard), [artboard]);
+  const hasSelectionToFit = useMemo(
+    () => hasSelectionForFit(elements, selectedIds),
+    [elements, selectedIds]
+  );
   const handleFitArtboard = useCallback(() => {
     const nextViewport = fitViewportToActiveArtboard({
       viewport,
@@ -269,6 +277,18 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
     }
     setViewport(nextViewport);
   }, [artboard, canvasSize, setViewport, viewport]);
+  const handleFitSelection = useCallback(() => {
+    const nextViewport = fitViewportToSelection({
+      viewport,
+      canvasSize,
+      elements,
+      selectedIds,
+    });
+    if (!nextViewport) {
+      return;
+    }
+    setViewport(nextViewport);
+  }, [canvasSize, elements, selectedIds, setViewport, viewport]);
 
   const handleViewportUpdate = useCallback(
     (centerX: number, centerY: number) => {
@@ -498,6 +518,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onResetZoom={resetZoom}
+          hasSelectionToFit={hasSelectionToFit}
+          onFitSelection={handleFitSelection}
           hasActiveArtboard={hasActiveArtboard}
           onFitArtboard={handleFitArtboard}
         />
@@ -534,6 +556,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onResetZoom={resetZoom}
+        hasSelectionToFit={hasSelectionToFit}
+        onFitSelection={handleFitSelection}
         hasActiveArtboard={hasActiveArtboard}
         onFitArtboard={handleFitArtboard}
       />

@@ -6,6 +6,7 @@ import {
   ZoomOut,
   Maximize2,
   Maximize,
+  Target,
   MousePointer,
   PenTool,
   Wrench,
@@ -28,6 +29,10 @@ import {
   fitViewportToActiveArtboard,
   hasActiveArtboardForFit,
 } from '../utils/artboardViewportFitUtils';
+import {
+  fitViewportToSelection,
+  hasSelectionForFit,
+} from '../utils/selectionViewportFitUtils';
 
 /**
  * BottomActionBar - Undo/Redo, Zoom controls, and context menu
@@ -49,6 +54,8 @@ export const BottomActionBar: React.FC = () => {
     viewport,
     canvasSize,
     artboard,
+    elements,
+    selectedIds,
     activeMode,
     setMode,
     viewportZoom,
@@ -63,6 +70,8 @@ export const BottomActionBar: React.FC = () => {
       viewport: state.viewport,
       canvasSize: state.canvasSize,
       artboard: state.artboard,
+      elements: state.elements,
+      selectedIds: state.selectedIds,
       activeMode: state.activePlugin,
       setMode: state.setMode,
       viewportZoom: state.viewport.zoom,
@@ -91,6 +100,10 @@ export const BottomActionBar: React.FC = () => {
   const currentZoom = useMemo(() => Math.round((viewportZoom as number) * 100), [viewportZoom]);
   const isZoomDifferent = currentZoom !== 100;
   const hasActiveArtboard = useMemo(() => hasActiveArtboardForFit(artboard), [artboard]);
+  const hasSelectionToFit = useMemo(
+    () => hasSelectionForFit(elements, selectedIds),
+    [elements, selectedIds]
+  );
 
   const zoomFactor = 1.2;
   const zoomFromCenter = (factor: number) => {
@@ -108,6 +121,18 @@ export const BottomActionBar: React.FC = () => {
     }
     setViewport(nextViewport);
   }, [artboard, canvasSize, setViewport, viewport]);
+  const fitSelectionToViewport = useCallback(() => {
+    const nextViewport = fitViewportToSelection({
+      viewport,
+      canvasSize,
+      elements,
+      selectedIds,
+    });
+    if (!nextViewport) {
+      return;
+    }
+    setViewport(nextViewport);
+  }, [canvasSize, elements, selectedIds, setViewport, viewport]);
 
   // Helper to get tools for a group
   const getToolsForGroup = useCallback((groupName: string) => {
@@ -258,6 +283,7 @@ export const BottomActionBar: React.FC = () => {
                 tools={[
                   { id: 'zoom-in', label: 'Zoom In', icon: ZoomIn },
                   { id: 'zoom-out', label: 'Zoom Out', icon: ZoomOut },
+                  { id: 'zoom-selection', label: 'Zoom to Selection', icon: Target, isDisabled: !hasSelectionToFit },
                   ...(hasActiveArtboard
                     ? [{ id: 'fit-artboard', label: 'Fit Artboard', icon: Maximize }]
                     : []),
@@ -267,6 +293,7 @@ export const BottomActionBar: React.FC = () => {
                 onToolSelect={(id) => {
                   if (id === 'zoom-in') zoomFromCenter(zoomFactor);
                   if (id === 'zoom-out') zoomFromCenter(1 / zoomFactor);
+                  if (id === 'zoom-selection') fitSelectionToViewport();
                   if (id === 'fit-artboard') fitArtboardToViewport();
                   if (id === 'reset-zoom') resetZoom();
                 }}

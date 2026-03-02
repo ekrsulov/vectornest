@@ -15,7 +15,8 @@ import {
     ZoomOut,
     Maximize2,
     Minimize,
-    Maximize
+    Maximize,
+    Target,
 } from 'lucide-react';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
@@ -27,6 +28,8 @@ interface MinimapTopBarProps {
     onZoomIn: () => void;
     onZoomOut: () => void;
     onResetZoom: () => void;
+    hasSelectionToFit: boolean;
+    onFitSelection: () => void;
     hasActiveArtboard: boolean;
     onFitArtboard: () => void;
 }
@@ -38,6 +41,8 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
     onZoomIn,
     onZoomOut,
     onResetZoom,
+    hasSelectionToFit,
+    onFitSelection,
     hasActiveArtboard,
     onFitArtboard,
 }) => {
@@ -126,6 +131,9 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
                             <MenuItem icon={<ZoomOut size={16} />} onClick={onZoomOut} {...menuItemProps}>
                                 Zoom Out
                             </MenuItem>
+                            <MenuItem icon={<Target size={16} />} onClick={onFitSelection} isDisabled={!hasSelectionToFit} {...menuItemProps}>
+                                Zoom to Selection
+                            </MenuItem>
                             {hasActiveArtboard && (
                                 <MenuItem icon={<Maximize size={16} />} onClick={onFitArtboard} {...menuItemProps}>
                                     Fit Artboard
@@ -178,6 +186,9 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
                     </MenuButton>
                     <Portal>
                         <MenuList {...menuListProps}>
+                            <MenuItem icon={<Target size={16} />} onClick={onFitSelection} isDisabled={!hasSelectionToFit} {...menuItemProps}>
+                                Zoom to Selection
+                            </MenuItem>
                             {hasActiveArtboard && (
                                 <MenuItem icon={<Maximize size={16} />} onClick={onFitArtboard} {...menuItemProps}>
                                     Fit Artboard

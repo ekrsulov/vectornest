@@ -9,22 +9,22 @@ import {
 import type { FloatingContextMenuAction } from '../../types/plugins';
 
 interface BuildMultiSelectionActionsParams {
-  selectedIds: string[];
-  hasGroupsInSelection: (ids: string[]) => boolean;
+  selectedIdsCount: number;
+  hasGroupsInSelection: boolean;
   createGroupFromSelection: () => void;
   ungroupSelectedGroups: () => void;
   handleLockSelected: () => void;
   handleHideSelected: () => void;
-  hasHiddenElements: () => boolean;
+  hasHiddenElements: boolean;
   showAllElements?: () => void;
-  hasLockedElements: () => boolean;
+  hasLockedElements: boolean;
   unlockAllElements?: () => void;
 }
 
 interface BuildGroupActionsParams {
   groupId: string;
-  isGroupHidden: (groupId: string) => boolean;
-  isGroupLocked: (groupId: string) => boolean;
+  isGroupHidden: boolean;
+  isGroupLocked: boolean;
   ungroupGroupById: (groupId: string) => void;
   toggleGroupLock: (groupId: string) => void;
   toggleGroupVisibility: (groupId: string) => void;
@@ -32,16 +32,16 @@ interface BuildGroupActionsParams {
 
 interface BuildElementActionsParams {
   elementId: string;
-  selectedIds: string[];
-  isElementHidden: (id: string) => boolean;
-  isElementLocked: (id: string) => boolean;
+  selectedIdsCount: number;
+  isElementHidden: boolean;
+  isElementLocked: boolean;
   createGroupFromSelection: () => void;
   toggleElementLock: (id: string) => void;
   toggleElementVisibility: (id: string) => void;
 }
 
 export const buildMultiSelectionActions = ({
-  selectedIds,
+  selectedIdsCount,
   hasGroupsInSelection,
   createGroupFromSelection,
   ungroupSelectedGroups,
@@ -58,11 +58,11 @@ export const buildMultiSelectionActions = ({
       label: 'Group',
       icon: GroupIcon,
       onClick: () => createGroupFromSelection(),
-      isDisabled: selectedIds.length < 2,
+      isDisabled: selectedIdsCount < 2,
     },
   ];
 
-  if (hasGroupsInSelection(selectedIds)) {
+  if (hasGroupsInSelection) {
     actions.push({
       id: 'ungroup',
       label: 'Ungroup',
@@ -86,7 +86,7 @@ export const buildMultiSelectionActions = ({
     }
   );
 
-  if (hasHiddenElements()) {
+  if (hasHiddenElements) {
     actions.push({
       id: 'show-all',
       label: 'Show All',
@@ -95,7 +95,7 @@ export const buildMultiSelectionActions = ({
     });
   }
 
-  if (hasLockedElements()) {
+  if (hasLockedElements) {
     actions.push({
       id: 'unlock-all',
       label: 'Unlock All',
@@ -115,27 +115,24 @@ export const buildGroupContextActions = ({
   toggleGroupLock,
   toggleGroupVisibility,
 }: BuildGroupActionsParams): FloatingContextMenuAction[] => {
-  const isHidden = isGroupHidden(groupId);
-  const isLocked = isGroupLocked(groupId);
-
   return [
     {
       id: 'ungroup',
       label: 'Ungroup',
       icon: UngroupIcon,
       onClick: () => ungroupGroupById(groupId),
-      isDisabled: isLocked,
+      isDisabled: isGroupLocked,
     },
     {
       id: 'lock',
-      label: isLocked ? 'Unlock' : 'Lock',
-      icon: isLocked ? Unlock : Lock,
+      label: isGroupLocked ? 'Unlock' : 'Lock',
+      icon: isGroupLocked ? Unlock : Lock,
       onClick: () => toggleGroupLock(groupId),
     },
     {
       id: 'visibility',
-      label: isHidden ? 'Show' : 'Hide',
-      icon: isHidden ? Eye : EyeOff,
+      label: isGroupHidden ? 'Show' : 'Hide',
+      icon: isGroupHidden ? Eye : EyeOff,
       onClick: () => toggleGroupVisibility(groupId),
     },
   ];
@@ -143,34 +140,31 @@ export const buildGroupContextActions = ({
 
 export const buildElementContextActions = ({
   elementId,
-  selectedIds,
+  selectedIdsCount,
   isElementHidden,
   isElementLocked,
   createGroupFromSelection,
   toggleElementLock,
   toggleElementVisibility,
 }: BuildElementActionsParams): FloatingContextMenuAction[] => {
-  const isHidden = isElementHidden(elementId);
-  const isLocked = isElementLocked(elementId);
-
   return [
     {
       id: 'group',
       label: 'Group',
       icon: GroupIcon,
       onClick: () => createGroupFromSelection(),
-      isDisabled: selectedIds.length < 2,
+      isDisabled: selectedIdsCount < 2,
     },
     {
       id: 'lock',
-      label: isLocked ? 'Unlock' : 'Lock',
-      icon: isLocked ? Unlock : Lock,
+      label: isElementLocked ? 'Unlock' : 'Lock',
+      icon: isElementLocked ? Unlock : Lock,
       onClick: () => toggleElementLock(elementId),
     },
     {
       id: 'visibility',
-      label: isHidden ? 'Show' : 'Hide',
-      icon: isHidden ? Eye : EyeOff,
+      label: isElementHidden ? 'Show' : 'Hide',
+      icon: isElementHidden ? Eye : EyeOff,
       onClick: () => toggleElementVisibility(elementId),
     },
   ];

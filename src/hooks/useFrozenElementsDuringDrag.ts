@@ -3,6 +3,12 @@ import { useCanvasStore } from '../store/canvasStore';
 import type { CanvasElement } from '../types';
 
 type CanvasStoreState = ReturnType<typeof useCanvasStore.getState>;
+type DragEndUpdateGuard<T> = (params: {
+  previousValue: T;
+  nextValue: T;
+  previousState: CanvasStoreState;
+  nextState: CanvasStoreState;
+}) => boolean;
 
 /** Shape of drag-related state fields from various plugin slices. */
 interface DragRelatedState {
@@ -31,17 +37,22 @@ const isDragInteractionActive = (state: CanvasStoreState): boolean => {
 
 export const useFrozenCanvasStoreValueDuringDrag = <T>(
   selector: (state: CanvasStoreState) => T,
-  isEqual: (a: T, b: T) => boolean = Object.is
+  isEqual: (a: T, b: T) => boolean = Object.is,
+  shouldUpdateAfterDrag?: DragEndUpdateGuard<T>
 ): T => {
-  const cachedValueRef = useRef<T>(selector(useCanvasStore.getState()));
+  const initialState = useCanvasStore.getState();
+  const cachedValueRef = useRef<T>(selector(initialState));
+  const baselineStateRef = useRef<CanvasStoreState>(initialState);
   const wasDraggingRef = useRef(false);
 
   // Use refs for selector/isEqual to keep the subscription stable
   const selectorRef = useRef(selector);
   const isEqualRef = useRef(isEqual);
+  const shouldUpdateAfterDragRef = useRef(shouldUpdateAfterDrag);
   useEffect(() => {
     selectorRef.current = selector;
     isEqualRef.current = isEqual;
+    shouldUpdateAfterDragRef.current = shouldUpdateAfterDrag;
   });
 
   const subscribe = useCallback(
@@ -59,7 +70,25 @@ export const useFrozenCanvasStoreValueDuringDrag = <T>(
 
         const nextValue = selectorRef.current(state);
         const previousValue = cachedValueRef.current;
+        const previousState = baselineStateRef.current;
+        const endedDragging = wasDraggingRef.current;
         wasDraggingRef.current = false;
+
+        if (
+          endedDragging &&
+          shouldUpdateAfterDragRef.current &&
+          !shouldUpdateAfterDragRef.current({
+            previousValue,
+            nextValue,
+            previousState,
+            nextState: state,
+          })
+        ) {
+          baselineStateRef.current = state;
+          return;
+        }
+
+        baselineStateRef.current = state;
 
         if (isEqualRef.current(previousValue, nextValue)) {
           return;

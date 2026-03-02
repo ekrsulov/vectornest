@@ -27,34 +27,40 @@ const modeOptions = [
 ];
 
 export const PathStitchPanel: React.FC = () => {
-  const { stitchState, update, selectedIds, elements, addElement } = useCanvasStore(
+  const { stitchState, update, addElement } = useCanvasStore(
     useShallow((state) => {
       const s = state as CombinedStore;
       return {
         stitchState: s.pathStitch,
         update: s.updatePathStitchState,
-        selectedIds: s.selectedIds,
-        elements: s.elements,
         addElement: s.addElement,
       };
     })
   );
+  const selectedPathCount = useCanvasStore((state) => {
+    let count = 0;
+    for (const id of state.selectedIds) {
+      const element = state.elements.find((entry) => entry.id === id);
+      if (element?.type === 'path') {
+        count += 1;
+      }
+    }
+    return count;
+  });
 
   if (!stitchState || !update) return null;
 
   const { stitchStyle, stitchWidth, spacing, density, connectionMode } = stitchState;
-
-  const elArr = elements as CanvasElement[];
-  const selectedPaths: CanvasElement[] = [];
-  for (const id of selectedIds ?? []) {
-    const found = elArr.find((e) => e.id === id);
-    if (found && found.type === 'path') selectedPaths.push(found);
-  }
-
-  const canApply = selectedPaths.length >= 2;
+  const canApply = selectedPathCount >= 2;
 
   const handleApply = () => {
     if (!canApply) return;
+
+    const { selectedIds, elements } = useCanvasStore.getState();
+    const selectedPaths = (elements as CanvasElement[]).filter(
+      (element) => selectedIds.includes(element.id) && element.type === 'path'
+    );
+    if (selectedPaths.length < 2) return;
 
     // Generate stitches between consecutive pairs
     for (let i = 0; i < selectedPaths.length - 1; i++) {

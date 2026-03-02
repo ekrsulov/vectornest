@@ -10,14 +10,14 @@ import { Panel } from '../../../ui/Panel';
 import { SliderControl } from '../../../ui/SliderControl';
 import { PanelStyledButton } from '../../../ui/PanelStyledButton';
 import { SectionHeader } from '../../../ui/SectionHeader';
-import { useCanvasStore } from '../../../store/canvasStore';
 import type { CanvasStore } from '../../../store/canvasStore';
 import type { AnimationPluginSlice, SVGAnimation } from '../../animationSystem/types';
 import {
   computeStaggerDelays,
   computeSequentialChainDelays,
 } from '../utils/staggerCalculator';
-import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
+import { useFrozenCanvasStoreValueDuringDrag } from '../../../hooks/useFrozenElementsDuringDrag';
 
 const AUTO_BATCH_CHAIN_NAME = 'Batch Actions (Auto)';
 
@@ -62,7 +62,7 @@ export const BatchActions: React.FC = () => {
     processAnimationEvents,
     removeAnimation,
     playAnimations,
-  } = useCanvasStore(useShallow(selectBatchState));
+  } = useFrozenCanvasStoreValueDuringDrag(selectBatchState, shallow);
 
   const [staggerInterval, setStaggerInterval] = useState(0.2);
 

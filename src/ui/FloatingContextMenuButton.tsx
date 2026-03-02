@@ -8,6 +8,7 @@ import { FloatingContextMenu } from './FloatingContextMenu';
 import { useFloatingContextMenuActions } from '../hooks/useFloatingContextMenuActions';
 import { useSelectionContext } from '../hooks/useSelectionContext';
 import { NO_FOCUS_STYLES_DEEP } from '../hooks/useThemeColors';
+import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { useCanvasStore } from '../store/canvasStore';
 import { pluginManager } from '../utils/pluginManager';
 
@@ -22,11 +23,11 @@ export const FloatingContextMenuButton: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Get selection state - combined into a single subscription
-  const { selectedIds, selectedCommands, selectedSubpaths } = useCanvasStore(
+  const { selectedIdsCount, selectedCommandsCount, selectedSubpathsCount } = useCanvasStore(
     useShallow(state => ({
-      selectedIds: state.selectedIds,
-      selectedCommands: state.selectedCommands,
-      selectedSubpaths: state.selectedSubpaths,
+      selectedIdsCount: state.selectedIds.length,
+      selectedCommandsCount: state.selectedCommands?.length ?? 0,
+      selectedSubpathsCount: state.selectedSubpaths?.length ?? 0,
     }))
   );
 
@@ -51,14 +52,14 @@ export const FloatingContextMenuButton: React.FC = () => {
 
   // Count selected items for badge - depends on active plugin's selection mode
   const selectionCount = useMemo(() => {
-    if (selectionMode === 'subpaths' && selectedSubpaths && selectedSubpaths.length > 0) {
-      return selectedSubpaths.length;
+    if (selectionMode === 'subpaths' && selectedSubpathsCount > 0) {
+      return selectedSubpathsCount;
     }
-    if (selectionMode === 'commands' && selectedCommands && selectedCommands.length > 0) {
-      return selectedCommands.length;
+    if (selectionMode === 'commands' && selectedCommandsCount > 0) {
+      return selectedCommandsCount;
     }
-    return selectedIds.length;
-  }, [selectionMode, selectedIds, selectedCommands, selectedSubpaths]);
+    return selectedIdsCount;
+  }, [selectionMode, selectedCommandsCount, selectedIdsCount, selectedSubpathsCount]);
 
   const handleActionClick = (actionFn?: () => void) => {
     if (actionFn) {
@@ -80,50 +81,56 @@ export const FloatingContextMenuButton: React.FC = () => {
 
   if (isPlaying) {
     return (
-      <ToolbarIconButton
-        icon={Square}
-        label="Stop Animations"
-        onClick={() => stopAnimations?.()}
-      />
+      <Box position="relative" display="inline-flex">
+        <ToolbarIconButton
+          icon={Square}
+          label="Stop Animations"
+          onClick={() => stopAnimations?.()}
+        />
+        <RenderCountBadgeWrapper componentName="FloatingContextMenuButton" position="top-right" />
+      </Box>
     );
   }
 
   return (
-    <Popover
-      isOpen={isOpen}
-      onClose={() => setIsOpen(false)}
-      placement="top-end"
-      closeOnBlur={true}
-      closeOnEsc={true}
-    >
-      <PopoverTrigger>
-        <Box>
-          <ToolbarIconButton
-            icon={MoreVertical}
-            label="Actions"
-            onClick={() => setIsOpen(!isOpen)}
-            isDisabled={!isEnabled}
-            counter={selectionCount > 0 ? selectionCount : undefined}
-          />
-        </Box>
-      </PopoverTrigger>
-      <PopoverContent
-        width="auto"
-        border="none"
-        boxShadow="none"
-        bg="transparent"
-        _focus={{ outline: 'none', boxShadow: 'none' }}
-        _focusVisible={{ outline: 'none', boxShadow: 'none' }}
-        sx={{
-          ...NO_FOCUS_STYLES_DEEP,
-          '& > *': { outline: 'none !important' },
-        }}
+    <Box position="relative" display="inline-flex">
+      <Popover
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        placement="top-end"
+        closeOnBlur={true}
+        closeOnEsc={true}
       >
-        <FloatingContextMenu
-          actions={wrappedActions}
-          isOpen={isOpen}
-        />
-      </PopoverContent>
-    </Popover>
+        <PopoverTrigger>
+          <Box>
+            <ToolbarIconButton
+              icon={MoreVertical}
+              label="Actions"
+              onClick={() => setIsOpen(!isOpen)}
+              isDisabled={!isEnabled}
+              counter={selectionCount > 0 ? selectionCount : undefined}
+            />
+          </Box>
+        </PopoverTrigger>
+        <PopoverContent
+          width="auto"
+          border="none"
+          boxShadow="none"
+          bg="transparent"
+          _focus={{ outline: 'none', boxShadow: 'none' }}
+          _focusVisible={{ outline: 'none', boxShadow: 'none' }}
+          sx={{
+            ...NO_FOCUS_STYLES_DEEP,
+            '& > *': { outline: 'none !important' },
+          }}
+        >
+          <FloatingContextMenu
+            actions={wrappedActions}
+            isOpen={isOpen}
+          />
+        </PopoverContent>
+      </Popover>
+      <RenderCountBadgeWrapper componentName="FloatingContextMenuButton" position="top-right" />
+    </Box>
   );
 };

@@ -80,7 +80,7 @@ export const DEFERRED_PLUGIN_LOADERS: Array<() => Promise<PluginDefinition<Canva
 
 type DeferredUiState = Pick<
   CanvasStore,
-  'activePlugin' | 'showFilePanel' | 'showSettingsPanel' | 'showLibraryPanel' | 'leftSidebarActivePanel'
+  'activePlugin' | 'showFilePanel' | 'showSettingsPanel' | 'showLibraryPanel' | 'leftSidebarActivePanel' | 'selectedIds'
 >;
 
 export const getDeferredPluginBatchIdsForUiState = (
@@ -108,6 +108,10 @@ export const getDeferredPluginBatchIdsForUiState = (
 
   if (state.leftSidebarActivePanel === 'animLibrary') {
     required.add('utility');
+  }
+
+  if (state.activePlugin === 'select' && (state.selectedIds?.length ?? 0) > 0) {
+    required.add('longTail');
   }
 
   switch (state.activePlugin) {

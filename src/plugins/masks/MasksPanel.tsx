@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Text, useColorModeValue } from '@chakra-ui/react';
+import { shallow } from 'zustand/shallow';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { GroupElement, CanvasElement } from '../../types';
 import type { MasksSlice, MaskDefinition } from './types';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
-import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
 import { useFrozenCanvasStoreValueDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
-import { canvasStoreApi, useCanvasStore } from '../../store/canvasStore';
+import { canvasStoreApi } from '../../store/canvasStore';
 import { LibraryPanelHelper } from '../../ui/LibraryPanelHelper';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { PanelTextInput } from '../../ui/PanelTextInput';
@@ -20,6 +20,7 @@ import { elementContributionRegistry } from '../../utils/elementContributionRegi
 import { useTransientActionFeedback } from '../../hooks/useTransientActionFeedback';
 
 const EMPTY_MASKS: MaskDefinition[] = [];
+const EMPTY_ANIMATIONS: SVGAnimation[] = [];
 
 /** Recursively collect all descendant element IDs from a group */
 const collectGroupDescendants = (
@@ -412,6 +413,7 @@ const MaskPreviewBox: React.FC<{
 
 const selectMasksPanelState = (state: CanvasStore) => {
   const slice = state as CanvasStore & MasksSlice;
+  const animSlice = state as CanvasStore & AnimationPluginSlice;
   const selectedIds = state.selectedIds;
   const hasSelection = selectedIds.length > 0;
 
@@ -434,6 +436,7 @@ const selectMasksPanelState = (state: CanvasStore) => {
   }
 
   return {
+    masks: slice.masks ?? EMPTY_MASKS,
     createMask: slice.createMaskFromSelection,
     assignMask: slice.assignMaskToSelection,
     clearMask: slice.clearMaskFromSelection,
@@ -445,15 +448,13 @@ const selectMasksPanelState = (state: CanvasStore) => {
     selectedMaskIdFromSelection,
     selectedFromSearch: slice.selectedFromSearch ?? null,
     selectFromSearch: slice.selectFromSearch,
+    animations: animSlice.animations ?? EMPTY_ANIMATIONS,
   };
 };
 
 export const MasksPanel: React.FC = () => {
-  const masks = useFrozenCanvasStoreValueDuringDrag(
-    useCallback((state) => (state as CanvasStore & MasksSlice).masks ?? EMPTY_MASKS, [])
-  );
-
   const {
+    masks,
     createMask,
     assignMask,
     clearMask,
@@ -465,7 +466,8 @@ export const MasksPanel: React.FC = () => {
     selectedMaskIdFromSelection,
     selectedFromSearch,
     selectFromSearch,
-  } = useShallowCanvasSelector(selectMasksPanelState);
+    animations,
+  } = useFrozenCanvasStoreValueDuringDrag(selectMasksPanelState, shallow);
 
   const items = useMemo(() => masks.map((m) => ({ ...m, name: m.name ?? m.id })), [masks]);
 
@@ -504,14 +506,6 @@ export const MasksPanel: React.FC = () => {
   const activeMask = useMemo(
     () => items.find((mask) => mask.id === activeMaskId) ?? null,
     [activeMaskId, items]
-  );
-
-  // Get animations from the store (for preview)
-  const animations = useCanvasStore(
-    useCallback((state) => {
-      const animState = state as unknown as AnimationPluginSlice;
-      return animState.animations ?? [];
-    }, [])
   );
 
   // Generate SVG content for the mask

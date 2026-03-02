@@ -35,25 +35,37 @@ const spacingOptions = [
 ];
 
 export const SmartDistributePanel: React.FC = () => {
-  const { state, update, selectedIds, elements, updateElement } = useCanvasStore(
+  const { state, update, updateElement } = useCanvasStore(
     useShallow((s) => {
       const st = s as DistributeStore;
       return {
         state: st.smartDistribute,
         update: st.updateSmartDistributeState,
-        selectedIds: s.selectedIds,
-        elements: s.elements,
         updateElement: s.updateElement,
       };
     })
   );
+  const selectedPathCount = useCanvasStore((store) => {
+    let count = 0;
+    for (const id of store.selectedIds) {
+      const element = store.elements.find((entry) => entry.id === id);
+      if (element?.type === 'path') {
+        count += 1;
+      }
+    }
+    return count;
+  });
 
   const handleDistribute = useCallback(() => {
-    if (!state || selectedIds.length < 2) return;
+    if (!state) return;
+
+    const { selectedIds, elements } = useCanvasStore.getState();
+    if (selectedIds.length < 2) return;
 
     const selectedEls = elements.filter((el: CanvasElement) =>
       selectedIds.includes(el.id) && el.type === 'path'
     );
+    if (selectedEls.length < 2) return;
 
     const deltas = computeDistribution(selectedEls, {
       mode: state.mode,
@@ -94,7 +106,7 @@ export const SmartDistributePanel: React.FC = () => {
 
       updateElement(el.id, { data: { ...el.data, subPaths: newSubPaths } });
     }
-  }, [state, selectedIds, elements, updateElement]);
+  }, [state, updateElement]);
 
   if (!state || !update) return null;
 
@@ -176,14 +188,14 @@ export const SmartDistributePanel: React.FC = () => {
 
       <PanelStyledButton
         onClick={handleDistribute}
-        isDisabled={selectedIds.length < 2}
+        isDisabled={selectedPathCount < 2}
         size="sm"
         width="full"
       >
-        Distribute ({selectedIds.length} elements)
+        Distribute ({selectedPathCount} elements)
       </PanelStyledButton>
 
-      {selectedIds.length < 2 && (
+      {selectedPathCount < 2 && (
         <Text fontSize="xs" color="gray.500" px={2} py={1}>
           Select at least 2 elements to distribute
         </Text>

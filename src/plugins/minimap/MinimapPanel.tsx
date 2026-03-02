@@ -16,12 +16,11 @@ import {
 } from '../../utils/artboardViewportFitUtils';
 import {
   fitViewportToSelection,
-  hasSelectionForFit,
 } from '../../utils/selectionViewportFitUtils';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface MinimapPanelProps {
-  // No props needed - component reads all state from store
+interface MinimapOverlayProps {
+  onToggleMinimize: () => void;
+  rightOffset: string;
 }
 
 interface DragState {
@@ -141,7 +140,84 @@ const worldToMinimap = (value: number, scale: number, offset: number): number =>
 
 const minimapToWorld = (value: number, scale: number, offset: number): number => (value - offset) / scale;
 
-export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
+const MinimizedMinimapPanel: React.FC<MinimapOverlayProps> = ({
+  onToggleMinimize,
+  rightOffset,
+}) => {
+  const currentZoom = useCanvasStore((state) => Math.round(state.viewport.zoom * 100));
+  const hasSelectionToFit = useCanvasStore((state) => state.selectedIds.length > 0);
+  const hasActiveArtboard = useCanvasStore((state) => hasActiveArtboardForFit(state.artboard));
+
+  const handleZoom = useCallback((factor: number) => {
+    const center = getCanvasCenter();
+    useCanvasStore.getState().zoom(factor, center?.x, center?.y);
+  }, []);
+
+  const handleZoomIn = useCallback(() => handleZoom(1.2), [handleZoom]);
+  const handleZoomOut = useCallback(() => handleZoom(1 / 1.2), [handleZoom]);
+
+  const handleResetZoom = useCallback(() => {
+    useCanvasStore.getState().resetZoom();
+  }, []);
+
+  const handleFitSelection = useCallback(() => {
+    const state = useCanvasStore.getState();
+    const nextViewport = fitViewportToSelection({
+      viewport: state.viewport,
+      canvasSize: state.canvasSize,
+      elements: state.elements,
+      selectedIds: state.selectedIds,
+    });
+    if (!nextViewport) {
+      return;
+    }
+    state.setViewport(nextViewport);
+  }, []);
+
+  const handleFitArtboard = useCallback(() => {
+    const state = useCanvasStore.getState();
+    const nextViewport = fitViewportToActiveArtboard({
+      viewport: state.viewport,
+      canvasSize: state.canvasSize,
+      artboard: state.artboard,
+    });
+    if (!nextViewport) {
+      return;
+    }
+    state.setViewport(nextViewport);
+  }, []);
+
+  return (
+    <Box
+      position="fixed"
+      bottom={MINIMAP_MINIMIZED_BOTTOM}
+      right={rightOffset}
+      zIndex={100}
+      display={{ base: 'none', md: 'block' }}
+      transition="right 0.2s ease"
+      data-testid="minimap-minimized"
+    >
+      <MinimapTopBar
+        isMinimized
+        onToggleMinimize={onToggleMinimize}
+        currentZoom={currentZoom}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onResetZoom={handleResetZoom}
+        hasSelectionToFit={hasSelectionToFit}
+        onFitSelection={handleFitSelection}
+        hasActiveArtboard={hasActiveArtboard}
+        onFitArtboard={handleFitArtboard}
+      />
+      <RenderCountBadgeWrapper componentName="MinimapPanel" position="top-right" />
+    </Box>
+  );
+};
+
+const ExpandedMinimapPanel: React.FC<MinimapOverlayProps> = ({
+  onToggleMinimize,
+  rightOffset,
+}) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const clipPathId = useId();
   const lastClickRef = useRef<{ elementId: string; time: number } | null>(null);
@@ -166,32 +242,15 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
     offset: { x: 0, y: 0 },
   });
 
-  const [isMinimized, setIsMinimized] = useState(true);
-
-  // Get state from store
   const elements = useCanvasStore((state) => state.elements);
   const viewport = useCanvasStore((state) => state.viewport);
   const setViewport = useCanvasStore((state) => state.setViewport);
   const zoomAction = useCanvasStore((state) => state.zoom);
   const resetZoom = useCanvasStore((state) => state.resetZoom);
   const isElementHidden = useCanvasStore((state) => state.isElementHidden);
-  const showMinimap = useCanvasStore((state) => state.settings.showMinimap);
-  const isWithoutDistractionMode = useCanvasStore(
-    (state) => Boolean(state.settings.withoutDistractionMode)
-  );
-  const enabledPlugins = useCanvasStore(
-    (state) => (state as unknown as PluginSelectorSlice).pluginSelector.enabledPlugins
-  );
-  const isMinimapPluginEnabled = enabledPlugins.length === 0 || enabledPlugins.includes('minimap');
-  const shouldShowMinimap = showMinimap && isMinimapPluginEnabled && !isWithoutDistractionMode;
   const selectedIds = useCanvasStore((state) => state.selectedIds);
   const canvasSize = useCanvasStore((state) => state.canvasSize);
   const artboard = useCanvasStore((state) => state.artboard);
-  const {
-    sidebarWidth,
-    isSidebarPinned,
-    isSidebarOpen,
-  } = useSidebarLayout();
 
   // Helper to calculate bounds for any renderable element
   const getElementBounds = useCallback((element: CanvasElement, map?: Map<string, CanvasElement>): Bounds | null => {
@@ -262,10 +321,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
   const handleZoomIn = useCallback(() => handleZoom(ZOOM_FACTOR), [handleZoom]);
   const handleZoomOut = useCallback(() => handleZoom(1 / ZOOM_FACTOR), [handleZoom]);
   const hasActiveArtboard = useMemo(() => hasActiveArtboardForFit(artboard), [artboard]);
-  const hasSelectionToFit = useMemo(
-    () => hasSelectionForFit(elements, selectedIds),
-    [elements, selectedIds]
-  );
+  const hasSelectionToFit = selectedIds.length > 0;
   const handleFitArtboard = useCallback(() => {
     const nextViewport = fitViewportToActiveArtboard({
       viewport,
@@ -480,7 +536,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
     }
   }, [dragState, resetDragState]);
 
-  if (!shouldShowMinimap || !minimapMetrics) {
+  if (!minimapMetrics) {
     return null;
   }
 
@@ -500,41 +556,13 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
     }
     : null;
 
-  if (isMinimized) {
-    return (
-      <Box
-        position="fixed"
-        bottom={MINIMAP_MINIMIZED_BOTTOM}
-        right={`${MINIMAP_MARGIN + (isSidebarPinned || isSidebarOpen ? sidebarWidth : 0)}px`}
-        zIndex={100}
-        display={{ base: 'none', md: 'block' }}
-        transition="right 0.2s ease"
-        data-testid="minimap-minimized"
-      >
-        <MinimapTopBar
-          isMinimized={isMinimized}
-          onToggleMinimize={() => setIsMinimized(!isMinimized)}
-          currentZoom={currentZoom}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onResetZoom={resetZoom}
-          hasSelectionToFit={hasSelectionToFit}
-          onFitSelection={handleFitSelection}
-          hasActiveArtboard={hasActiveArtboard}
-          onFitArtboard={handleFitArtboard}
-        />
-        <RenderCountBadgeWrapper componentName="MinimapPanel" position="top-right" />
-      </Box>
-    );
-  }
-
   return (
     <Flex
       direction="column"
       data-testid="minimap-container"
       position="fixed"
       bottom={`${MINIMAP_MARGIN}px`}
-      right={`${MINIMAP_MARGIN + (isSidebarPinned || isSidebarOpen ? sidebarWidth : 0)}px`}
+      right={rightOffset}
       width={`${minimapSize.width}px`}
       height={`${minimapSize.height + TOP_BAR_HEIGHT}px`}
       borderTopRadius="2xl"
@@ -550,8 +578,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
       display={{ base: 'none', md: 'flex' }}
     >
       <MinimapTopBar
-        isMinimized={isMinimized}
-        onToggleMinimize={() => setIsMinimized(!isMinimized)}
+        isMinimized={false}
+        onToggleMinimize={onToggleMinimize}
         currentZoom={currentZoom}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
@@ -671,5 +699,48 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
       </Box>
       <RenderCountBadgeWrapper componentName="MinimapPanel" position="top-right" />
     </Flex>
+  );
+};
+
+export const MinimapPanel: React.FC = () => {
+  const [isMinimized, setIsMinimized] = useState(true);
+  const showMinimap = useCanvasStore((state) => state.settings.showMinimap);
+  const isWithoutDistractionMode = useCanvasStore(
+    (state) => Boolean(state.settings.withoutDistractionMode)
+  );
+  const isMinimapPluginEnabled = useCanvasStore((state) => {
+    const enabledPlugins = ((state as unknown as PluginSelectorSlice).pluginSelector?.enabledPlugins) ?? [];
+    return enabledPlugins.length === 0 || enabledPlugins.includes('minimap');
+  });
+  const {
+    sidebarWidth,
+    isSidebarPinned,
+    isSidebarOpen,
+  } = useSidebarLayout();
+
+  const shouldShowMinimap = showMinimap && isMinimapPluginEnabled && !isWithoutDistractionMode;
+  const rightOffset = `${MINIMAP_MARGIN + (isSidebarPinned || isSidebarOpen ? sidebarWidth : 0)}px`;
+  const handleToggleMinimize = useCallback(() => {
+    setIsMinimized((value) => !value);
+  }, []);
+
+  if (!shouldShowMinimap) {
+    return null;
+  }
+
+  if (isMinimized) {
+    return (
+      <MinimizedMinimapPanel
+        onToggleMinimize={handleToggleMinimize}
+        rightOffset={rightOffset}
+      />
+    );
+  }
+
+  return (
+    <ExpandedMinimapPanel
+      onToggleMinimize={handleToggleMinimize}
+      rightOffset={rightOffset}
+    />
   );
 };

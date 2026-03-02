@@ -9,7 +9,6 @@ import { Plus, ChevronDown, ChevronRight, ChevronsDown, ChevronsUp } from 'lucid
 import { Panel } from '../../../ui/Panel';
 import { PanelActionButton } from '../../../ui/PanelActionButton';
 import { PathThumbnail } from '../../../ui/PathThumbnail';
-import { useCanvasStore } from '../../../store/canvasStore';
 import type { CanvasStore } from '../../../store/canvasStore';
 import type { CanvasElement, Command } from '../../../types';
 import type { AnimationPluginSlice, SVGAnimation } from '../../animationSystem/types';
@@ -20,26 +19,21 @@ import { MiniTimeline } from './MiniTimeline';
 import { useAnimationDiscovery } from '../hooks/useAnimationDiscovery';
 import { ensureChainDelays } from '../../animationSystem/chainUtils';
 import { getItemThumbnailData, buildNativeShapeThumbnailCommands, getGroupThumbnailCommands } from '../../../utils/selectPanelHelpers';
-import { useGizmoContextOptional } from '../../animationSystem/gizmos/GizmoContext';
+import { useAnimationGizmoControls } from '../../animationSystem/gizmos/GizmoContext';
 import { animationGizmoRegistry } from '../../animationSystem/gizmos/registry/GizmoRegistry';
-import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
 import { getAnimationMapGroupKey } from '../utils/groupKeys';
+import { useFrozenCanvasStoreValueDuringDrag } from '../../../hooks/useFrozenElementsDuringDrag';
 
 const EMPTY_CHAIN_DELAYS = new Map<string, number>();
 
 interface AnimationMapStoreSlice {
   selectedAnimationId: string | null;
   expandedGroups: string[];
-  editorMode: string;
   updateAnimationManagerState: AnimationManagerSlice['updateAnimationManagerState'];
   animations: SVGAnimation[];
   removeAnimation: AnimationPluginSlice['removeAnimation'];
   addAnimation: AnimationPluginSlice['addAnimation'];
-  updateAnimation: AnimationPluginSlice['updateAnimation'];
-  calculateChainDelays: AnimationPluginSlice['calculateChainDelays'];
-  currentTime: number;
-  runtimeChainDelays: AnimationPluginSlice['animationState']['chainDelays'];
-  setAnimationTime: AnimationPluginSlice['setAnimationTime'];
   selectedIds: string[];
   elements: CanvasElement[];
   selectElements: CanvasStore['selectElements'];
@@ -51,20 +45,111 @@ const selectMapState = (state: CanvasStore): AnimationMapStoreSlice => {
   return {
     selectedAnimationId: mSlice.animationManager?.selectedAnimationId ?? null,
     expandedGroups: mSlice.animationManager?.expandedGroups ?? [],
-    editorMode: mSlice.animationManager?.editorMode ?? 'idle',
     updateAnimationManagerState: mSlice.updateAnimationManagerState,
     animations: aSlice.animations ?? [],
     removeAnimation: aSlice.removeAnimation,
     addAnimation: aSlice.addAnimation,
-    updateAnimation: aSlice.updateAnimation,
-    calculateChainDelays: aSlice.calculateChainDelays,
-    currentTime: aSlice.animationState?.currentTime ?? 0,
-    runtimeChainDelays: aSlice.animationState?.chainDelays ?? EMPTY_CHAIN_DELAYS,
-    setAnimationTime: aSlice.setAnimationTime,
     selectedIds: state.selectedIds,
     elements: state.elements,
     selectElements: state.selectElements,
   };
+};
+
+interface MiniTimelineStoreSlice {
+  animations: SVGAnimation[];
+  calculateChainDelays: AnimationPluginSlice['calculateChainDelays'];
+  currentTime: number;
+  runtimeChainDelays: AnimationPluginSlice['animationState']['chainDelays'];
+  selectedAnimationId: string | null;
+  setAnimationTime: AnimationPluginSlice['setAnimationTime'];
+  updateAnimation: AnimationPluginSlice['updateAnimation'];
+}
+
+const selectMiniTimelineState = (state: CanvasStore): MiniTimelineStoreSlice => {
+  const aSlice = state as unknown as AnimationPluginSlice;
+  const mSlice = state as unknown as AnimationManagerSlice;
+  return {
+    animations: aSlice.animations ?? [],
+    calculateChainDelays: aSlice.calculateChainDelays,
+    currentTime: aSlice.animationState?.currentTime ?? 0,
+    runtimeChainDelays: aSlice.animationState?.chainDelays ?? EMPTY_CHAIN_DELAYS,
+    selectedAnimationId: mSlice.animationManager?.selectedAnimationId ?? null,
+    setAnimationTime: aSlice.setAnimationTime,
+    updateAnimation: aSlice.updateAnimation,
+  };
+};
+
+const MiniTimelineSection: React.FC<{
+  discovered: DiscoveredElementAnimations[];
+  onSelectAnimation: (id: string) => void;
+}> = ({ discovered, onSelectAnimation }) => {
+  const {
+    animations,
+    calculateChainDelays,
+    currentTime,
+    runtimeChainDelays,
+    selectedAnimationId,
+    setAnimationTime,
+    updateAnimation,
+  } = useFrozenCanvasStoreValueDuringDrag(selectMiniTimelineState, shallow);
+
+  const chainDelays = useMemo(() => {
+    const runtimeDelays = ensureChainDelays(runtimeChainDelays);
+    const computedDelays = calculateChainDelays
+      ? calculateChainDelays()
+      : new Map<string, number>();
+    return new Map<string, number>([
+      ...computedDelays,
+      ...runtimeDelays,
+    ]);
+  }, [runtimeChainDelays, calculateChainDelays]);
+
+  const allDiscoveredAnimations = useMemo(() => {
+    const result: SVGAnimation[] = [];
+    for (const el of discovered) {
+      for (const group of el.groups) {
+        for (const anim of group.animations) {
+          if (!result.some((a) => a.id === anim.id)) {
+            result.push(anim);
+          }
+        }
+      }
+    }
+    return result;
+  }, [discovered]);
+
+  const handleScrub = useCallback(
+    (time: number) => {
+      setAnimationTime?.(time);
+    },
+    [setAnimationTime],
+  );
+
+  if (allDiscoveredAnimations.length === 0) {
+    return null;
+  }
+
+  return (
+    <Box mt={1}>
+      <MiniTimeline
+        animations={allDiscoveredAnimations}
+        currentTime={currentTime}
+        selectedAnimationId={selectedAnimationId}
+        onSelectAnimation={(id) => {
+          onSelectAnimation(id);
+          const anim = animations.find((item) => item.id === id);
+          if (anim && anim.calcMode !== 'spline' && !anim.keySplines) {
+            updateAnimation?.(id, {
+              calcMode: 'spline',
+              keySplines: '0.250 0.100 0.250 1.000',
+            });
+          }
+        }}
+        onScrub={handleScrub}
+        chainDelays={chainDelays}
+      />
+    </Box>
+  );
 };
 
 export const AnimationMap: React.FC = () => {
@@ -75,16 +160,18 @@ export const AnimationMap: React.FC = () => {
     animations,
     removeAnimation,
     addAnimation,
-    updateAnimation,
-    calculateChainDelays,
-    currentTime,
-    runtimeChainDelays,
-    setAnimationTime,
     selectedIds,
     elements,
     selectElements,
-  } = useCanvasStore(useShallow(selectMapState));
-  const gizmoContext = useGizmoContextOptional();
+  } = useFrozenCanvasStoreValueDuringDrag(selectMapState, shallow);
+  const {
+    activeGizmos,
+    gizmoEditMode,
+    activateGizmo,
+    deactivateGizmo,
+    deactivateAllGizmos,
+    setGizmoEditMode,
+  } = useAnimationGizmoControls();
 
   const elementMap = useMemo(() => {
     const map = new Map<string, CanvasElement>();
@@ -112,39 +199,13 @@ export const AnimationMap: React.FC = () => {
   );
 
   const activeGizmoAnimationId = useMemo(() => {
-    if (!gizmoContext || !gizmoContext.gizmoEditMode || gizmoContext.activeGizmos.size === 0) {
+    if (!gizmoEditMode || activeGizmos.size === 0) {
       return null;
     }
-    return Array.from(gizmoContext.activeGizmos.keys())[0] ?? null;
-  }, [gizmoContext]);
-
-  const chainDelays = useMemo(() => {
-    const runtimeDelays = ensureChainDelays(runtimeChainDelays);
-    const computedDelays = calculateChainDelays
-      ? calculateChainDelays()
-      : new Map<string, number>();
-    return new Map<string, number>([
-      ...computedDelays,
-      ...runtimeDelays,
-    ]);
-  }, [runtimeChainDelays, calculateChainDelays]);
+    return Array.from(activeGizmos.keys())[0] ?? null;
+  }, [activeGizmos, gizmoEditMode]);
 
   const discovered = useAnimationDiscovery();
-
-  // All animations flat for the mini timeline
-  const allDiscoveredAnimations = useMemo(() => {
-    const result: SVGAnimation[] = [];
-    for (const el of discovered) {
-      for (const group of el.groups) {
-        for (const anim of group.animations) {
-          if (!result.some((a) => a.id === anim.id)) {
-            result.push(anim);
-          }
-        }
-      }
-    }
-    return result;
-  }, [discovered]);
 
   const handleSelectAnimation = useCallback(
     (id: string) => {
@@ -156,27 +217,12 @@ export const AnimationMap: React.FC = () => {
     [updateAnimationManagerState],
   );
 
-  /** Select from timeline: also ensure calcMode is 'spline' with default keySplines */
-  const handleTimelineSelectAnimation = useCallback(
-    (id: string) => {
-      handleSelectAnimation(id);
-      const anim = animations.find((a) => a.id === id);
-      if (anim && anim.calcMode !== 'spline' && !anim.keySplines) {
-        updateAnimation?.(id, {
-          calcMode: 'spline',
-          keySplines: '0.250 0.100 0.250 1.000',
-        });
-      }
-    },
-    [handleSelectAnimation, animations, updateAnimation],
-  );
-
   const handleDeleteAnimation = useCallback(
     (id: string) => {
-      if (gizmoContext?.activeGizmos.has(id)) {
-        gizmoContext.deactivateGizmo(id);
-        if (gizmoContext.activeGizmos.size <= 1) {
-          gizmoContext.setGizmoEditMode(false);
+      if (activeGizmos.has(id)) {
+        deactivateGizmo(id);
+        if (activeGizmos.size <= 1) {
+          setGizmoEditMode(false);
         }
       }
       removeAnimation?.(id);
@@ -187,7 +233,14 @@ export const AnimationMap: React.FC = () => {
         });
       }
     },
-    [gizmoContext, removeAnimation, selectedAnimationId, updateAnimationManagerState],
+    [
+      activeGizmos,
+      deactivateGizmo,
+      removeAnimation,
+      selectedAnimationId,
+      setGizmoEditMode,
+      updateAnimationManagerState,
+    ],
   );
 
   const handleDuplicateAnimation = useCallback(
@@ -219,21 +272,18 @@ export const AnimationMap: React.FC = () => {
 
   const handleToggleGizmo = useCallback(
     (animationId: string) => {
-      if (!gizmoContext) return;
-
       const animation = animations.find((a) => a.id === animationId);
       if (!animation || !hasGizmoForAnimation(animation)) return;
 
       const targetElement = elementMap.get(animation.targetElementId);
       if (!targetElement) return;
 
-      const isCurrentlyActive =
-        gizmoContext.gizmoEditMode && gizmoContext.activeGizmos.has(animationId);
+      const isCurrentlyActive = gizmoEditMode && activeGizmos.has(animationId);
 
       if (isCurrentlyActive) {
-        gizmoContext.deactivateGizmo(animationId);
-        if (gizmoContext.activeGizmos.size <= 1) {
-          gizmoContext.setGizmoEditMode(false);
+        deactivateGizmo(animationId);
+        if (activeGizmos.size <= 1) {
+          setGizmoEditMode(false);
         }
         return;
       }
@@ -243,30 +293,28 @@ export const AnimationMap: React.FC = () => {
         selectElements?.([targetElement.id]);
       }
 
-      gizmoContext.deactivateAllGizmos();
-      gizmoContext.activateGizmo(animationId);
-      gizmoContext.setGizmoEditMode(true);
+      deactivateAllGizmos();
+      activateGizmo(animationId);
+      setGizmoEditMode(true);
       updateAnimationManagerState?.({
         selectedAnimationId: animationId,
         editorMode: 'editing',
       });
     },
     [
+      activateGizmo,
+      activeGizmos,
       animations,
+      deactivateAllGizmos,
+      deactivateGizmo,
       elementMap,
-      gizmoContext,
+      gizmoEditMode,
       hasGizmoForAnimation,
       selectedIds,
       selectElements,
+      setGizmoEditMode,
       updateAnimationManagerState,
     ],
-  );
-
-  const handleScrub = useCallback(
-    (time: number) => {
-      setAnimationTime?.(time);
-    },
-    [setAnimationTime],
   );
 
   const totalAnimCount = discovered.reduce((sum, el) => sum + el.totalCount, 0);
@@ -376,19 +424,10 @@ export const AnimationMap: React.FC = () => {
           />
         ))}
 
-        {/* Mini Timeline */}
-        {allDiscoveredAnimations.length > 0 && (
-          <Box mt={1}>
-            <MiniTimeline
-              animations={allDiscoveredAnimations}
-              currentTime={currentTime}
-              selectedAnimationId={selectedAnimationId}
-              onSelectAnimation={handleTimelineSelectAnimation}
-              onScrub={handleScrub}
-              chainDelays={chainDelays}
-            />
-          </Box>
-        )}
+        <MiniTimelineSection
+          discovered={discovered}
+          onSelectAnimation={handleSelectAnimation}
+        />
       </VStack>
     </Panel>
   );

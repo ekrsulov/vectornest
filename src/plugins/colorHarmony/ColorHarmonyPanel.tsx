@@ -168,14 +168,12 @@ const HarmonyWheel: React.FC<{
 };
 
 export const ColorHarmonyPanel: React.FC = () => {
-  const { state, update, selectedIds, elements, updateElement } = useCanvasStore(
+  const { state, update, updateElement } = useCanvasStore(
     useShallow((s) => {
       const st = s as HarmonyStore;
       return {
         state: st.colorHarmony,
         update: st.updateColorHarmonyState,
-        selectedIds: s.selectedIds,
-        elements: s.elements,
         updateElement: s.updateElement,
       };
     })
@@ -190,7 +188,10 @@ export const ColorHarmonyPanel: React.FC = () => {
   }, [state]);
 
   const handleApply = useCallback(() => {
-    if (!state || selectedIds.length === 0 || colors.length === 0) return;
+    if (!state || colors.length === 0) return;
+
+    const { selectedIds, elements } = useCanvasStore.getState();
+    if (selectedIds.length === 0) return;
 
     const selectedEls = elements.filter((el: CanvasElement) =>
       selectedIds.includes(el.id) && el.type === 'path'
@@ -212,7 +213,7 @@ export const ColorHarmonyPanel: React.FC = () => {
         }
       }
     });
-  }, [state, selectedIds, elements, colors, updateElement]);
+  }, [state, colors, updateElement]);
 
   const handleReset = useCallback(() => {
     update({ ...defaultColorHarmonyState });

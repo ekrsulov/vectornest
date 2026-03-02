@@ -29,10 +29,7 @@ import {
   fitViewportToActiveArtboard,
   hasActiveArtboardForFit,
 } from '../utils/artboardViewportFitUtils';
-import {
-  fitViewportToSelection,
-  hasSelectionForFit,
-} from '../utils/selectionViewportFitUtils';
+import { fitViewportToSelection } from '../utils/selectionViewportFitUtils';
 
 /**
  * BottomActionBar - Undo/Redo, Zoom controls, and context menu
@@ -46,38 +43,21 @@ export const BottomActionBar: React.FC = () => {
   // Get effective sidebar width using consolidated hook
   const { effectiveSidebarWidth, effectiveLeftSidebarWidth } = useSidebarLayout();
 
-  // Get canvas state
   const {
-    zoom,
-    resetZoom,
-    setViewport,
-    viewport,
-    canvasSize,
-    artboard,
-    elements,
-    selectedIds,
     activeMode,
-    setMode,
     viewportZoom,
     lastUsedToolByGroup,
-    updateLastUsedTool,
     showMinimap,
+    hasActiveArtboard,
+    selectedIdsKey,
   } = useCanvasStore(
     useShallow((state) => ({
-      zoom: state.zoom,
-      resetZoom: state.resetZoom,
-      setViewport: state.setViewport,
-      viewport: state.viewport,
-      canvasSize: state.canvasSize,
-      artboard: state.artboard,
-      elements: state.elements,
-      selectedIds: state.selectedIds,
       activeMode: state.activePlugin,
-      setMode: state.setMode,
       viewportZoom: state.viewport.zoom,
       lastUsedToolByGroup: state.lastUsedToolByGroup,
-      updateLastUsedTool: state.updateLastUsedTool,
       showMinimap: state.settings.showMinimap,
+      hasActiveArtboard: hasActiveArtboardForFit(state.artboard),
+      selectedIdsKey: state.selectedIds.join('|'),
     }))
   );
 
@@ -96,43 +76,40 @@ export const BottomActionBar: React.FC = () => {
   const visibleToolIds = useVisibleToolIds();
   const disabledToolIds = useDisabledToolIds();
 
-  // Calculate current zoom percentage - memoize based only on zoom value
-  const currentZoom = useMemo(() => Math.round((viewportZoom as number) * 100), [viewportZoom]);
+  const currentZoom = Math.round((viewportZoom as number) * 100);
   const isZoomDifferent = currentZoom !== 100;
-  const hasActiveArtboard = useMemo(() => hasActiveArtboardForFit(artboard), [artboard]);
-  const hasSelectionToFit = useMemo(
-    () => hasSelectionForFit(elements, selectedIds),
-    [elements, selectedIds]
-  );
+  const hasSelectionToFit = selectedIdsKey.length > 0;
 
   const zoomFactor = 1.2;
   const zoomFromCenter = (factor: number) => {
     const center = getCanvasCenter();
-    zoom(factor, center?.x, center?.y);
+    useCanvasStore.getState().zoom(factor, center?.x, center?.y);
   };
   const fitArtboardToViewport = useCallback(() => {
+    const state = useCanvasStore.getState();
     const nextViewport = fitViewportToActiveArtboard({
-      viewport,
-      canvasSize,
-      artboard,
+      viewport: state.viewport,
+      canvasSize: state.canvasSize,
+      artboard: state.artboard,
     });
     if (!nextViewport) {
       return;
     }
-    setViewport(nextViewport);
-  }, [artboard, canvasSize, setViewport, viewport]);
+    state.setViewport(nextViewport);
+  }, []);
   const fitSelectionToViewport = useCallback(() => {
+    const state = useCanvasStore.getState();
     const nextViewport = fitViewportToSelection({
-      viewport,
-      canvasSize,
-      elements,
-      selectedIds,
+      viewport: state.viewport,
+      canvasSize: state.canvasSize,
+      elements: state.elements,
+      selectedIds: state.selectedIds,
     });
     if (!nextViewport) {
       return;
     }
-    setViewport(nextViewport);
-  }, [canvasSize, elements, selectedIds, setViewport, viewport]);
+    state.setViewport(nextViewport);
+  }, []);
 
   // Helper to get tools for a group
   const getToolsForGroup = useCallback((groupName: string) => {
@@ -168,11 +145,12 @@ export const BottomActionBar: React.FC = () => {
 
   // Handler that updates last used tool and activates the mode
   const handleToolSelect = useCallback((group: 'basic' | 'creation' | 'advanced' | null, toolId: string) => {
+    const state = useCanvasStore.getState();
     if (group) {
-      updateLastUsedTool(group, toolId);
+      state.updateLastUsedTool(group, toolId);
     }
-    setMode(toolId);
-  }, [setMode, updateLastUsedTool]);
+    state.setMode(toolId);
+  }, []);
 
   // Helper to get active tool in a group
   type ToolIcon = LucideIcon | React.ComponentType<{ size?: number }>;
@@ -295,7 +273,7 @@ export const BottomActionBar: React.FC = () => {
                   if (id === 'zoom-out') zoomFromCenter(1 / zoomFactor);
                   if (id === 'zoom-selection') fitSelectionToViewport();
                   if (id === 'fit-artboard') fitArtboardToViewport();
-                  if (id === 'reset-zoom') resetZoom();
+                  if (id === 'reset-zoom') useCanvasStore.getState().resetZoom();
                 }}
                 counter={isZoomDifferent ? `${currentZoom}%` : undefined}
               />

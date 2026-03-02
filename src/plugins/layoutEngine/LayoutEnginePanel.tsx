@@ -23,21 +23,32 @@ const MODE_OPTIONS: { value: LayoutMode; label: string }[] = [
 ];
 
 export const LayoutEnginePanel: React.FC = () => {
-  const { state, update, selectedIds, elements, updateElement } = useCanvasStore(
+  const { state, update, updateElement } = useCanvasStore(
     useShallow((s) => {
       const st = s as LayoutStore;
       return {
         state: st.layoutEngine,
         update: st.updateLayoutEngineState,
-        selectedIds: s.selectedIds,
-        elements: s.elements,
         updateElement: s.updateElement,
       };
     })
   );
+  const selectedPathCount = useCanvasStore((state) => {
+    let count = 0;
+    for (const id of state.selectedIds) {
+      const element = state.elements.find((entry) => entry.id === id);
+      if (element?.type === 'path') {
+        count += 1;
+      }
+    }
+    return count;
+  });
 
   const handleApply = useCallback(() => {
-    if (!state || selectedIds.length < 2) return;
+    if (!state) return;
+
+    const { selectedIds, elements } = useCanvasStore.getState();
+    if (selectedIds.length < 2) return;
 
     const selectedEls = elements.filter((el: CanvasElement) =>
       selectedIds.includes(el.id)
@@ -113,11 +124,11 @@ export const LayoutEnginePanel: React.FC = () => {
         updateElement(el.id, { data: { ...el.data, subPaths: newSubPaths } });
       }
     });
-  }, [state, selectedIds, elements, updateElement]);
+  }, [state, updateElement]);
 
   if (!state || !update) return null;
 
-  const hasSelection = selectedIds.length >= 2;
+  const hasSelection = selectedPathCount >= 2;
 
   return (
     <Panel

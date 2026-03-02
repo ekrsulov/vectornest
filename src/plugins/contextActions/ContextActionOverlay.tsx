@@ -18,6 +18,7 @@ import { useToolbarPositionStyles } from '../../hooks/useToolbarPositionStyles';
 import { NO_FOCUS_STYLES_DEEP } from '../../hooks/useThemeColors';
 import type { CanvasOverlayProps } from '../../types/ui-contributions';
 import { useCanvasStore } from '../../store/canvasStore';
+import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 
 /** Minimum distance from viewport edges */
@@ -532,7 +533,7 @@ const DesktopContextBar: React.FC<{
   if (totalActions === 0) return null;
 
   return (
-    <HStack
+    <Box
       position="fixed"
       top={`${EDGE_PADDING}px`}
       left={left}
@@ -541,37 +542,38 @@ const DesktopContextBar: React.FC<{
       marginLeft="auto"
       marginRight="auto"
       width="fit-content"
-      bg={toolbar.bg}
-      borderRadius="full"
-      border="none"
-      boxShadow="none"
-      px={1}
-      py={0.5}
-      spacing={0}
-      overflow="hidden"
       zIndex={900}
       pointerEvents="auto"
-      sx={{
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        backdropFilter: 'blur(10px)',
-        transition: 'opacity 0.15s ease',
-        ...NO_FOCUS_STYLES_DEEP,
-      }}
     >
-      {/* Direct actions */}
-      {directActions.map((action, index) => (
-        <QuickActionButton key={directActionKeys[index]} action={action} isMobile={false} />
-      ))}
-
-      {/* Separator between direct actions and groups */}
-      {directActions.length > 0 && groups.length > 0 && <ActionSeparator />}
-
-      {/* Group actions with dropdowns */}
-      {groups.map((group, index) => (
-        <GroupActionButton key={groupKeys[index]} group={group} isMobile={false} />
-      ))}
-    </HStack>
+      <Box position="relative" width="fit-content">
+        <HStack
+          bg={toolbar.bg}
+          borderRadius="full"
+          border="none"
+          boxShadow="none"
+          px={1}
+          py={0.5}
+          spacing={0}
+          overflow="hidden"
+          sx={{
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            backdropFilter: 'blur(10px)',
+            transition: 'opacity 0.15s ease',
+            ...NO_FOCUS_STYLES_DEEP,
+          }}
+        >
+          {directActions.map((action, index) => (
+            <QuickActionButton key={directActionKeys[index]} action={action} isMobile={false} />
+          ))}
+          {directActions.length > 0 && groups.length > 0 && <ActionSeparator />}
+          {groups.map((group, index) => (
+            <GroupActionButton key={groupKeys[index]} group={group} isMobile={false} />
+          ))}
+        </HStack>
+        <RenderCountBadgeWrapper componentName="ContextBar" position="top-right" />
+      </Box>
+    </Box>
   );
 });
 DesktopContextBar.displayName = 'DesktopContextBar';
@@ -591,40 +593,46 @@ const MobileContextBar: React.FC<{
   if (totalActions === 0) return null;
 
   return (
-    <HStack
+    <Box
       position="fixed"
       top={`${EDGE_PADDING}px`}
       left="50%"
       transform="translateX(-50%)"
-      bg={toolbar.bg}
-      borderRadius="full"
-      borderWidth={toolbar.borderWidth}
-      borderColor={toolbar.borderColor}
-      boxShadow="none"
-      px={1}
-      py={0.5}
-      spacing={0}
       zIndex={899}
       pointerEvents="auto"
-      maxW={MOBILE_MAX_W}
-      sx={{
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        backdropFilter: 'blur(10px)',
-        overflowX: 'auto',
-        scrollbarWidth: 'none',
-        '&::-webkit-scrollbar': { display: 'none' },
-        ...NO_FOCUS_STYLES_DEEP,
-      }}
     >
-      {directActions.map((action, index) => (
-        <QuickActionButton key={directActionKeys[index]} action={action} isMobile={true} />
-      ))}
-      {directActions.length > 0 && groups.length > 0 && <ActionSeparator />}
-      {groups.map((group, index) => (
-        <GroupActionButton key={groupKeys[index]} group={group} isMobile={true} />
-      ))}
-    </HStack>
+      <Box position="relative" maxW={MOBILE_MAX_W}>
+        <HStack
+          bg={toolbar.bg}
+          borderRadius="full"
+          borderWidth={toolbar.borderWidth}
+          borderColor={toolbar.borderColor}
+          boxShadow="none"
+          px={1}
+          py={0.5}
+          spacing={0}
+          maxW={MOBILE_MAX_W}
+          sx={{
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            backdropFilter: 'blur(10px)',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
+            ...NO_FOCUS_STYLES_DEEP,
+          }}
+        >
+          {directActions.map((action, index) => (
+            <QuickActionButton key={directActionKeys[index]} action={action} isMobile={true} />
+          ))}
+          {directActions.length > 0 && groups.length > 0 && <ActionSeparator />}
+          {groups.map((group, index) => (
+            <GroupActionButton key={groupKeys[index]} group={group} isMobile={true} />
+          ))}
+        </HStack>
+        <RenderCountBadgeWrapper componentName="ContextBar" position="top-right" />
+      </Box>
+    </Box>
   );
 });
 MobileContextBar.displayName = 'MobileContextBar';

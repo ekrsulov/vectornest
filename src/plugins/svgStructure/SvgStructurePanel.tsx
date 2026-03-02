@@ -41,7 +41,7 @@ import { formatToPrecision } from '../../utils/numberUtils';
 import { pluginManager } from '../../utils/pluginManager';
 import type { RegisteredSvgDefsEditor } from '../../utils/svgDefsEditorRegistry';
 import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
-import { useFrozenCanvasStoreValueDuringDrag, useFrozenElementsDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
+import { useFrozenCanvasStoreValueDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { getGroupBounds } from '../../canvas/geometry/CanvasGeometryService';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
@@ -142,6 +142,11 @@ type AnimationTargetKey =
   | `child:filter:${string}:${number}`
   | `child:symbol:${string}:${number}`;
 
+interface AnimatedElementSummary {
+  directAnimatedElementIdsKey: string;
+  indirectAnimatedElementIdsKey: string;
+}
+
 // Animation tags are no longer skipped - they can be viewed and edited
 const SKIPPED_TAGS = new Set<string>();
 
@@ -198,6 +203,115 @@ const toSnapshot = (node: SvgTreeNode): SvgStructureNodeSnapshot => ({
   childIndex: node.childIndex,
   attributes: node.attributes,
 });
+
+const findNodeByKey = (node: SvgTreeNode, key: string): SvgTreeNode | null => {
+  if (node.key === key) {
+    return node;
+  }
+
+  for (const child of node.children) {
+    const match = findNodeByKey(child, key);
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+};
+
+const collectCanvasElementIdsFromNode = (node: SvgTreeNode, acc: Set<string>): void => {
+  const elementId = node.canvasElement?.id ?? node.dataElementId ?? null;
+  if (elementId) {
+    acc.add(elementId);
+  }
+
+  node.children.forEach((child) => collectCanvasElementIdsFromNode(child, acc));
+};
+
+const hasTrackedElementsChanged = (
+  previousState: CanvasStore,
+  nextState: CanvasStore,
+  trackedIds: Set<string>
+): boolean => {
+  if (trackedIds.size === 0) {
+    return false;
+  }
+
+  const previousById = new Map(previousState.elements.map((element) => [element.id, element]));
+  const nextById = new Map(nextState.elements.map((element) => [element.id, element]));
+
+  for (const id of trackedIds) {
+    if (previousById.get(id) !== nextById.get(id)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const selectAnimatedElementSummary = (state: CanvasStore): AnimatedElementSummary => {
+  const animations = (state as CanvasStore & AnimationPluginSlice).animations ?? [];
+  const elements = state.elements ?? [];
+  const elementMap = buildElementMap(elements);
+  const direct = new Set<string>();
+  const indirect = new Set<string>();
+
+  animations.forEach((anim) => {
+    if (anim.targetElementId && elementMap.has(anim.targetElementId)) {
+      direct.add(anim.targetElementId);
+    }
+  });
+
+  elements.forEach((element) => {
+    const referencedIds = getReferencedIds(element);
+    if (referencedIds.length === 0) {
+      return;
+    }
+
+    const referencedIdSet = new Set(referencedIds);
+
+    for (const anim of animations) {
+      if (anim.targetElementId === element.id) {
+        continue;
+      }
+
+      const matchesReferencedTarget =
+        referencedIdSet.has(anim.targetElementId) ||
+        (anim.gradientTargetId ? referencedIdSet.has(anim.gradientTargetId) : false) ||
+        (anim.patternTargetId ? referencedIdSet.has(anim.patternTargetId) : false) ||
+        (anim.clipPathTargetId ? referencedIdSet.has(anim.clipPathTargetId) : false) ||
+        (anim.filterTargetId ? referencedIdSet.has(anim.filterTargetId) : false) ||
+        (anim.maskTargetId ? referencedIdSet.has(anim.maskTargetId) : false) ||
+        (anim.markerTargetId ? referencedIdSet.has(anim.markerTargetId) : false) ||
+        (anim.symbolTargetId ? referencedIdSet.has(anim.symbolTargetId) : false);
+
+      if (matchesReferencedTarget) {
+        indirect.add(element.id);
+        break;
+      }
+
+      const isTransitive = Boolean(
+        anim.gradientTargetId ||
+          anim.patternTargetId ||
+          anim.clipPathTargetId ||
+          anim.filterTargetId ||
+          anim.maskTargetId ||
+          anim.markerTargetId ||
+          anim.symbolTargetId
+      );
+
+      if (isTransitive && anim.previewElementId === element.id) {
+        indirect.add(element.id);
+        break;
+      }
+    }
+  });
+
+  return {
+    directAnimatedElementIdsKey: Array.from(direct).sort().join('\u0001'),
+    indirectAnimatedElementIdsKey: Array.from(indirect).sort().join('\u0001'),
+  };
+};
 
 const fallbackDeleteDefsNode = (node: SvgStructureNodeSnapshot, store: CanvasStore): boolean => {
   const defsId = node.defsOwnerId ?? node.idAttribute ?? null;
@@ -1315,11 +1429,37 @@ const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
   );
 };
 
-export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) => {
-  const elements = useFrozenElementsDuringDrag();
+const SvgStructurePanelComponent: React.FC<PanelComponentProps> = ({ panelKey }) => {
+  const activeDetailElementIdsRef = useRef<Set<string>>(new Set());
+  const isPanelVisibleRef = useRef(false);
+  const elements = useFrozenCanvasStoreValueDuringDrag(
+    useCallback((state) => state.elements, []),
+    Object.is,
+    useCallback(({
+      previousState,
+      nextState,
+    }: {
+      previousState: CanvasStore;
+      nextState: CanvasStore;
+    }) => {
+      if (!isPanelVisibleRef.current) {
+        return false;
+      }
+
+      return hasTrackedElementsChanged(
+        previousState,
+        nextState,
+        activeDetailElementIdsRef.current
+      );
+    }, [])
+  );
   const elementMap = useMemo(() => buildElementMap(elements), [elements]);
-  const animations = useCanvasStore(
-    useShallow((state) => (state as CanvasStore & AnimationPluginSlice).animations ?? [])
+  const {
+    directAnimatedElementIdsKey,
+    indirectAnimatedElementIdsKey,
+  } = useFrozenCanvasStoreValueDuringDrag(
+    useCallback(selectAnimatedElementSummary, []),
+    shallow
   );
 
   const enabledPlugins = useEnabledPlugins();
@@ -1460,9 +1600,34 @@ export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) =
   const lastDetailKeyRef = useRef<string | null>(rememberedNodeKey);
   const nodeListRef = useRef<HTMLDivElement | null>(null);
 
+  const activeDetailElementIds = useMemo(() => {
+    if (!tree || detailExpandedKeys.size === 0) {
+      return new Set<string>();
+    }
+
+    const ids = new Set<string>();
+    detailExpandedKeys.forEach((key) => {
+      const node = findNodeByKey(tree, key);
+      if (!node) {
+        return;
+      }
+      collectCanvasElementIdsFromNode(node, ids);
+    });
+
+    return ids;
+  }, [detailExpandedKeys, tree]);
+
   useEffect(() => {
     lastDetailKeyRef.current = rememberedNodeKey;
   }, [rememberedNodeKey]);
+
+  useEffect(() => {
+    activeDetailElementIdsRef.current = activeDetailElementIds;
+  }, [activeDetailElementIds]);
+
+  useEffect(() => {
+    isPanelVisibleRef.current = isPanelVisible;
+  }, [isPanelVisible]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1521,59 +1686,14 @@ export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) =
     return acc;
   }, [collectDescendants, selectedIds]);
 
-  const { directAnimatedElementIds, indirectAnimatedElementIds } = useMemo(() => {
-    const direct = new Set<string>();
-    const indirect = new Set<string>();
-
-    animations.forEach((anim) => {
-      if (anim.targetElementId && elementMap.has(anim.targetElementId)) {
-        direct.add(anim.targetElementId);
-      }
-    });
-
-    elements.forEach((element) => {
-      const referencedIds = getReferencedIds(element);
-      if (referencedIds.length === 0) return;
-
-      const referencedIdSet = new Set(referencedIds);
-
-      for (const anim of animations) {
-        if (anim.targetElementId === element.id) continue;
-
-        const matchesReferencedTarget =
-          referencedIdSet.has(anim.targetElementId) ||
-          (anim.gradientTargetId ? referencedIdSet.has(anim.gradientTargetId) : false) ||
-          (anim.patternTargetId ? referencedIdSet.has(anim.patternTargetId) : false) ||
-          (anim.clipPathTargetId ? referencedIdSet.has(anim.clipPathTargetId) : false) ||
-          (anim.filterTargetId ? referencedIdSet.has(anim.filterTargetId) : false) ||
-          (anim.maskTargetId ? referencedIdSet.has(anim.maskTargetId) : false) ||
-          (anim.markerTargetId ? referencedIdSet.has(anim.markerTargetId) : false) ||
-          (anim.symbolTargetId ? referencedIdSet.has(anim.symbolTargetId) : false);
-
-        if (matchesReferencedTarget) {
-          indirect.add(element.id);
-          break;
-        }
-
-        const isTransitive = Boolean(
-          anim.gradientTargetId ||
-            anim.patternTargetId ||
-            anim.clipPathTargetId ||
-            anim.filterTargetId ||
-            anim.maskTargetId ||
-            anim.markerTargetId ||
-            anim.symbolTargetId
-        );
-
-        if (isTransitive && anim.previewElementId === element.id) {
-          indirect.add(element.id);
-          break;
-        }
-      }
-    });
-
-    return { directAnimatedElementIds: direct, indirectAnimatedElementIds: indirect };
-  }, [animations, elementMap, elements]);
+  const directAnimatedElementIds = useMemo(
+    () => new Set(directAnimatedElementIdsKey ? directAnimatedElementIdsKey.split('\u0001') : []),
+    [directAnimatedElementIdsKey]
+  );
+  const indirectAnimatedElementIds = useMemo(
+    () => new Set(indirectAnimatedElementIdsKey ? indirectAnimatedElementIdsKey.split('\u0001') : []),
+    [indirectAnimatedElementIdsKey]
+  );
 
   const buildNode = useCallback(
     (
@@ -1999,3 +2119,5 @@ export const SvgStructurePanel: React.FC<PanelComponentProps> = ({ panelKey }) =
     </Panel>
   );
 };
+
+export const SvgStructurePanel = React.memo(SvgStructurePanelComponent);

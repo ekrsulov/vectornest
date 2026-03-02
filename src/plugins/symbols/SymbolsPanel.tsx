@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Box, useColorModeValue } from '@chakra-ui/react';
+import { shallow } from 'zustand/shallow';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { SymbolPluginSlice, SymbolDefinition } from './slice';
 import type { AnimationPluginSlice } from '../animationSystem/types';
@@ -8,7 +9,7 @@ import { injectAnimationsIntoSymbolContent } from './index';
 import { PanelTextInput } from '../../ui/PanelTextInput';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SymbolItemCard } from './SymbolItemCard';
-import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
+import { useFrozenCanvasStoreValueDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
 import { LibraryPanelHelper } from '../../ui/LibraryPanelHelper';
 import { createCircleCommands, createDiamondCommands, createHeartCommands, createTriangleCommands } from '../../utils/ShapeFactory';
 import { CompactFieldRow } from '../../ui/CompactFieldRow';
@@ -21,6 +22,45 @@ import type { SVGAnimation, AnimationState } from '../animationSystem/types';
 
 const EMPTY_SYMBOLS: SymbolDefinition[] = [];
 const EMPTY_ANIMATIONS: SVGAnimation[] = [];
+const EMPTY_CHAIN_DELAY_SIGNATURE = '';
+const PREVIEW_SYMBOL_ANIMATION_STATE: AnimationState = {
+  isPlaying: true,
+  hasPlayed: true,
+  isWorkspaceOpen: true,
+  currentTime: 0,
+  startTime: null,
+  playbackRate: 1,
+  restartKey: 0,
+  chainDelays: new Map(),
+  isCanvasPreviewMode: false,
+  activeGizmos: new Map(),
+  focusedGizmoAnimationId: null,
+  gizmoEditMode: false,
+  draggingHandle: null,
+};
+
+const buildNormalizedChainDelaySignature = (
+  animations: SVGAnimation[],
+  persistedChainDelays: Map<string, number> | undefined,
+  calculateChainDelays: (() => Map<string, number>) | undefined
+): string => {
+  const computedChainDelays = calculateChainDelays ? calculateChainDelays() : new Map<string, number>();
+  const merged = new Map<string, number>([
+    ...computedChainDelays,
+    ...(persistedChainDelays ? ensureChainDelays(persistedChainDelays) : new Map<string, number>()),
+  ]);
+
+  if (merged.size === 0) {
+    return EMPTY_CHAIN_DELAY_SIGNATURE;
+  }
+
+  const validAnimationIds = new Set(animations.map((animation) => animation.id));
+  return Array.from(merged.entries())
+    .filter(([animationId]) => validAnimationIds.has(animationId))
+    .sort(([leftId], [rightId]) => leftId.localeCompare(rightId))
+    .map(([animationId, delay]) => `${animationId}\u0000${delay}`)
+    .join('\u0001');
+};
 
 const selectSymbolsPanelState = (state: CanvasStore) => {
   const slice = state as CanvasStore & SymbolPluginSlice;
@@ -50,7 +90,11 @@ const selectSymbolsPanelState = (state: CanvasStore) => {
     selectedFromSearch: slice.selectedFromSearch ?? null,
     selectFromSearch: slice.selectFromSearch,
     animations: animSlice.animations ?? EMPTY_ANIMATIONS,
-    animationState: animSlice.animationState,
+    chainDelaySignature: buildNormalizedChainDelaySignature(
+      animSlice.animations ?? EMPTY_ANIMATIONS,
+      animSlice.animationState?.chainDelays,
+      animSlice.calculateChainDelays
+    ),
   };
 };
 
@@ -58,7 +102,6 @@ const selectSymbolsPanelState = (state: CanvasStore) => {
 const SymbolPreviewBox: React.FC<{
   symbol: SymbolDefinition;
   animations: SVGAnimation[];
-  animationState?: AnimationState;
 }> = ({ symbol, animations }) => {
   const bgColor = useColorModeValue('gray.100', 'gray.700');
   const checkerLight = useColorModeValue('#e2e2e2', '#4a4a4a');
@@ -73,28 +116,12 @@ const SymbolPreviewBox: React.FC<{
       let content = match ? match[1] : symbol.rawContent;
       
       // Inject animations from the store into the content for preview
-      // Use empty chainDelays and a permissive animation state
-      const previewAnimState: AnimationState = {
-        isPlaying: true,
-        hasPlayed: true,
-        isWorkspaceOpen: true,
-        currentTime: 0,
-        startTime: null,
-        playbackRate: 1,
-        restartKey: 0,
-        chainDelays: new Map(),
-        isCanvasPreviewMode: false,
-        activeGizmos: new Map(),
-        focusedGizmoAnimationId: null,
-        gizmoEditMode: false,
-        draggingHandle: null,
-      };
       content = injectAnimationsIntoSymbolContent(
         content,
         symbol.id,
         animations,
         new Map(),
-        previewAnimState,
+        PREVIEW_SYMBOL_ANIMATION_STATE,
         'preview-' // Prefix to avoid ID conflicts
       );
       return content;
@@ -190,7 +217,7 @@ const SymbolPreviewBox: React.FC<{
   );
 };
 
-export const SymbolsPanel: React.FC = () => {
+const SymbolsPanelComponent: React.FC = () => {
   const {
     symbols,
     createSymbol,
@@ -204,8 +231,8 @@ export const SymbolsPanel: React.FC = () => {
     selectedFromSearch,
     selectFromSearch,
     animations,
-    animationState,
-  } = useShallowCanvasSelector(selectSymbolsPanelState);
+    chainDelaySignature,
+  } = useFrozenCanvasStoreValueDuringDrag(selectSymbolsPanelState, shallow);
 
   const detailsRef = React.useRef<HTMLDivElement | null>(null);
   const [detailsFlashKey, setDetailsFlashKey] = useState<string | number | null>(null);
@@ -234,33 +261,21 @@ export const SymbolsPanel: React.FC = () => {
     () => symbols.find((symbol) => symbol.id === activeSymbolId) ?? null,
     [activeSymbolId, symbols]
   );
+  const chainDelays = useMemo(
+    () => new Map(
+      chainDelaySignature
+        ? chainDelaySignature.split('\u0001').map((entry) => {
+          const [animationId, delay] = entry.split('\u0000');
+          return [animationId, Number(delay)] as const;
+        })
+        : []
+    ),
+    [chainDelaySignature]
+  );
 
   // Generate SVG content for the symbol with animations injected
   const symbolSvgContent = useMemo(() => {
     if (!activeSymbol) return '';
-    
-    // Prepare chain delays for animation injection
-    const chainDelays = animationState?.chainDelays 
-      ? ensureChainDelays(animationState.chainDelays) 
-      : new Map<string, number>();
-    // Always allow animations in editor view
-    const previewAnimState: AnimationState = animationState
-      ? { ...animationState, isWorkspaceOpen: true }
-      : {
-          isPlaying: false,
-          hasPlayed: false,
-          isWorkspaceOpen: true,
-          currentTime: 0,
-          startTime: null,
-          playbackRate: 1,
-          restartKey: 0,
-          chainDelays: new Map(),
-          isCanvasPreviewMode: false,
-          activeGizmos: new Map(),
-          focusedGizmoAnimationId: null,
-          gizmoEditMode: false,
-          draggingHandle: null,
-        };
     
     // Prefer rawContent if available
     if (activeSymbol.rawContent) {
@@ -270,7 +285,7 @@ export const SymbolsPanel: React.FC = () => {
         activeSymbol.id,
         animations,
         chainDelays,
-        previewAnimState
+        PREVIEW_SYMBOL_ANIMATION_STATE
       );
       return contentWithAnims;
     }
@@ -282,7 +297,7 @@ export const SymbolsPanel: React.FC = () => {
     return `<svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
   <path d="${d}" fill="${pathData.fillColor || '#000'}" fill-opacity="${pathData.fillOpacity ?? 1}" stroke="${pathData.strokeColor || 'none'}" stroke-width="${pathData.strokeWidth || 0}"/>
 </svg>`;
-  }, [activeSymbol, animations, animationState]);
+  }, [activeSymbol, animations, chainDelays]);
 
   const handleSvgChange = useCallback((newContent: string) => {
     if (!activeSymbolId || !updateSymbol) return;
@@ -372,7 +387,6 @@ export const SymbolsPanel: React.FC = () => {
             <SymbolPreviewBox 
               symbol={activeSymbol} 
               animations={animations}
-              animationState={animationState}
             />
             <SvgEditor
               content={symbolSvgContent}
@@ -414,3 +428,5 @@ export const SymbolsPanel: React.FC = () => {
     />
   );
 };
+
+export const SymbolsPanel = React.memo(SymbolsPanelComponent);

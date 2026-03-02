@@ -4,12 +4,12 @@
  */
 
 import { useMemo } from 'react';
-import { useCanvasStore } from '../../../store/canvasStore';
 import type { CanvasStore } from '../../../store/canvasStore';
 import type { AnimationPluginSlice } from '../../animationSystem/types';
 import type { DiscoveredElementAnimations } from '../types';
 import { discoverAnimationsForSelection } from '../utils/animationDiscovery';
-import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
+import { useFrozenCanvasStoreValueDuringDrag } from '../../../hooks/useFrozenElementsDuringDrag';
 
 interface DiscoveryStoreSlice {
   selectedIds: string[];
@@ -57,7 +57,7 @@ export function useAnimationDiscovery(): DiscoveredElementAnimations[] {
     masks,
     markers,
     symbols,
-  } = useCanvasStore(useShallow(selectDiscoveryState));
+  } = useFrozenCanvasStoreValueDuringDrag(selectDiscoveryState, shallow);
 
   return useMemo(() => {
     if (selectedIds.length === 0 || animations.length === 0) return [];

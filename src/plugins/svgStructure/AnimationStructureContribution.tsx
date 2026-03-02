@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Badge, Box, Collapse, HStack, VStack, Text } from '@chakra-ui/react';
 import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { AnimationCard } from './components/AnimationCard';
@@ -9,7 +10,7 @@ import type { SvgStructureContributionProps } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
 import type { AnimationSelectValue } from '../animationSystem/animationPresets';
-import { useCanvasStore } from '../../store/canvasStore';
+import { canvasStoreApi, useCanvasStore } from '../../store/canvasStore';
 import { getReferencedIds } from '../../utils/referenceUtils';
 import type { CanvasElement, GroupElement, GroupData, Viewport } from '../../types';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
@@ -17,6 +18,7 @@ import type { Bounds } from '../../utils/boundsUtils';
 import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
 import { inverseMatrix, applyToPoint } from '../../utils/matrixUtils';
 import { generateShortId } from '../../utils/idGenerator';
+import { useFrozenCanvasStoreValueDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
 
 const PRESET_OPTIONS: { value: AnimationSelectValue; label: string }[] = [
   { value: 'fadeIn', label: 'Fade in' },
@@ -29,6 +31,11 @@ const PRESET_OPTIONS: { value: AnimationSelectValue; label: string }[] = [
 ];
 
 const generateAnimationId = () => generateShortId('anim');
+
+interface AnimationContributionSnapshot {
+  elements: CanvasElement[];
+  animations: SVGAnimation[];
+}
 
 /**
  * Check if an element has its own transform (transformMatrix or legacy transform object).
@@ -196,6 +203,154 @@ const detectDefsType = (defsOwnerId: string, tagName: string): 'gradient' | 'pat
   return 'pattern';
 };
 
+const getContributionTargetId = (node: SvgStructureContributionProps<CanvasStore>['node']): string | null => {
+  const isDefContainerTag = DEF_CONTAINER_TAGS.has(node.tagName);
+  const isDefsChild = Boolean(
+    node.isDefs &&
+    node.defsOwnerId &&
+    node.childIndex !== undefined &&
+    !isDefContainerTag
+  );
+
+  if (isDefsChild) {
+    return node.defsOwnerId ?? null;
+  }
+
+  return node.dataElementId ?? node.idAttribute ?? null;
+};
+
+const buildContributionElementMap = (elements: CanvasElement[]): Map<string, CanvasElement> => (
+  new Map(elements.map((element) => [element.id, element]))
+);
+
+const collectElementTargetsFromMap = (
+  element: CanvasElement | undefined,
+  elementMap: Map<string, CanvasElement>,
+  acc: Set<string>
+): void => {
+  if (!element) return;
+  if (acc.has(element.id)) return;
+  acc.add(element.id);
+
+  const referenced = getReferencedIds(element) ?? [];
+  referenced.forEach((id) => acc.add(id));
+
+  if (element.type === 'group') {
+    const childIds = ((element as GroupElement).data.childIds ?? []) as string[];
+    childIds.forEach((childId) => {
+      collectElementTargetsFromMap(elementMap.get(childId), elementMap, acc);
+    });
+  }
+};
+
+const getTargetIdsForNode = (
+  node: SvgStructureContributionProps<CanvasStore>['node'],
+  elementMap: Map<string, CanvasElement>
+): Set<string> => {
+  const targetId = getContributionTargetId(node);
+  const ids = new Set<string>();
+
+  if (!targetId) {
+    return ids;
+  }
+
+  const base = elementMap.get(targetId);
+  if (base) {
+    collectElementTargetsFromMap(base, elementMap, ids);
+  } else {
+    ids.add(targetId);
+  }
+
+  return ids;
+};
+
+const getMatchingAnimationsForNode = (
+  node: SvgStructureContributionProps<CanvasStore>['node'],
+  elements: CanvasElement[],
+  animations: SVGAnimation[]
+): SVGAnimation[] => {
+  const isDefContainerTag = DEF_CONTAINER_TAGS.has(node.tagName);
+  const isDefsChild = Boolean(
+    node.isDefs &&
+    node.defsOwnerId &&
+    node.childIndex !== undefined &&
+    !isDefContainerTag
+  );
+  const targetId = getContributionTargetId(node);
+  if (!targetId) {
+    return [];
+  }
+
+  if (isDefsChild && node.defsOwnerId && node.childIndex !== undefined) {
+    return animations.filter((anim) =>
+      matchesDefsChildTarget(anim, node.defsOwnerId as string, node.childIndex as number, node.tagName)
+    );
+  }
+
+  const isDefElement = node.isDefs && node.idAttribute && isDefContainerTag;
+  if (isDefElement && node.idAttribute) {
+    return animations.filter((anim) =>
+      matchesDefElementTarget(anim, node.idAttribute as string, node.tagName)
+    );
+  }
+
+  const targetIds = Array.from(getTargetIdsForNode(node, buildContributionElementMap(elements)));
+  return animations.filter((anim) => targetIds.some((id) => matchesAnimationTarget(anim, id)));
+};
+
+const haveMatchingAnimationsChanged = (
+  node: SvgStructureContributionProps<CanvasStore>['node'],
+  previousValue: AnimationContributionSnapshot,
+  nextValue: AnimationContributionSnapshot
+): boolean => {
+  const previousAnimations = getMatchingAnimationsForNode(
+    node,
+    previousValue.elements,
+    previousValue.animations
+  );
+  const nextAnimations = getMatchingAnimationsForNode(
+    node,
+    nextValue.elements,
+    nextValue.animations
+  );
+
+  if (previousAnimations.length !== nextAnimations.length) {
+    return true;
+  }
+
+  return previousAnimations.some((animation, index) => animation !== nextAnimations[index]);
+};
+
+const haveTrackedElementsChanged = (
+  node: SvgStructureContributionProps<CanvasStore>['node'],
+  previousElements: CanvasElement[],
+  nextElements: CanvasElement[]
+): boolean => {
+  const previousElementMap = buildContributionElementMap(previousElements);
+  const nextElementMap = buildContributionElementMap(nextElements);
+  const trackedIds = getTargetIdsForNode(node, nextElementMap);
+
+  if (trackedIds.size === 0) {
+    return false;
+  }
+
+  for (const id of trackedIds) {
+    if (previousElementMap.get(id) !== nextElementMap.get(id)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const selectAnimationContributionSnapshot = (state: CanvasStore): AnimationContributionSnapshot => {
+  const animationState = state as CanvasStore & AnimationPluginSlice;
+  return {
+    elements: state.elements,
+    animations: animationState.animations ?? [],
+  };
+};
+
 export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContributionProps<CanvasStore>> = ({ node }) => {
   // For regular elements: use dataElementId or idAttribute
   // For defs children: use defsOwnerId + childIndex
@@ -213,17 +368,36 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
     }
     return node.dataElementId ?? node.idAttribute ?? null;
   }, [isDefsChild, node.dataElementId, node.defsOwnerId, node.idAttribute]);
-  const elements = useCanvasStore((state) => state.elements);
+  const { elements, animations } = useFrozenCanvasStoreValueDuringDrag(
+    useCallback(selectAnimationContributionSnapshot, []),
+    shallow,
+    useCallback(
+      ({ previousValue, nextValue }: {
+        previousValue: AnimationContributionSnapshot;
+        nextValue: AnimationContributionSnapshot;
+      }) => (
+        haveTrackedElementsChanged(node, previousValue.elements, nextValue.elements) ||
+        haveMatchingAnimationsChanged(node, previousValue, nextValue)
+      ),
+      [node]
+    )
+  );
 
-  // Store functions for adding/updating elements (needed for wrapping elements in groups)
-  const addElement = useCanvasStore((state) => state.addElement);
-  const updateElement = useCanvasStore((state) => state.updateElement);
-
-  const { animations, addAnimation, updateAnimation, removeAnimation, createFadeAnimation, createMoveAnimation, createPathDrawAnimation } = useCanvasStore(
+  const {
+    addElement,
+    updateElement,
+    addAnimation,
+    updateAnimation,
+    removeAnimation,
+    createFadeAnimation,
+    createMoveAnimation,
+    createPathDrawAnimation,
+  } = useCanvasStore(
     useShallow((state) => {
       const slice = state as CanvasStore & AnimationPluginSlice;
       return {
-        animations: slice.animations ?? [],
+        addElement: state.addElement,
+        updateElement: state.updateElement,
         addAnimation: slice.addAnimation,
         updateAnimation: slice.updateAnimation,
         removeAnimation: slice.removeAnimation,
@@ -400,8 +574,6 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
   const [customRotate, setCustomRotate] = useState<'auto' | 'auto-reverse' | string>('auto');
   const [customTransformType, setCustomTransformType] = useState<'translate' | 'scale' | 'rotate' | 'skewX' | 'skewY'>('translate');
 
-  const viewport = useCanvasStore((state) => state.viewport);
-
   /**
    * Get all descendant elements from an element (including the element itself).
    * Works for any element type (path, use, nativeShape, nativeText, image, group).
@@ -567,6 +739,7 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
       const applyRotate = () => {
         const elements = getDescendantElements(targetId);
         if (elements.length === 0) return;
+        const viewport = canvasStoreApi.getState().viewport;
 
         // Check if the target element has its own transform
         // If so, wrap it in a group to ensure animations work correctly
@@ -621,6 +794,7 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
       const applyPulse = () => {
         const elements = getDescendantElements(targetId);
         if (elements.length === 0) return;
+        const viewport = canvasStoreApi.getState().viewport;
 
         // Check if the target element has its own transform
         // If so, wrap it in a group to ensure animations work correctly
@@ -689,6 +863,7 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
       const applyPopIn = () => {
         const elements = getDescendantElements(targetId);
         if (elements.length === 0) return;
+        const viewport = canvasStoreApi.getState().viewport;
 
         // Check if the target element has its own transform
         // If so, wrap it in a group to ensure animations work correctly
@@ -811,7 +986,7 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
       setShowDetails(true);
       setShowPresetPicker(false);
     },
-    [addAnimation, calculateBoundsFromElements, createFadeAnimation, createMoveAnimation, createPathDrawAnimation, elementMap, getDescendantElements, getElementPaths, targetId, viewport, wrapElementInGroup]
+    [addAnimation, calculateBoundsFromElements, createFadeAnimation, createMoveAnimation, createPathDrawAnimation, elementMap, getDescendantElements, getElementPaths, targetId, wrapElementInGroup]
   );
 
   const handleConfirmPreset = useCallback(() => {

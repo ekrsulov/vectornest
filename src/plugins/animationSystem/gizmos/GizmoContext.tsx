@@ -67,6 +67,15 @@ export interface GizmoContextValue {
   getElementBounds: (elementId: string) => Bounds | null;
 }
 
+export interface AnimationGizmoControlsValue {
+  activeGizmos: Map<string, GizmoState>;
+  gizmoEditMode: boolean;
+  activateGizmo: (animationId: string) => void;
+  deactivateGizmo: (animationId: string) => void;
+  deactivateAllGizmos: () => void;
+  setGizmoEditMode: (enabled: boolean) => void;
+}
+
 const GizmoContext = createContext<GizmoContextValue | null>(null);
 const EMPTY_ACTIVE_GIZMOS = new Map<string, GizmoState>();
 
@@ -77,6 +86,71 @@ type GizmoRuntimeState = AnimationPluginSlice['animationState'] & {
   focusedGizmoAnimationId: string | null;
   gizmoEditMode: boolean;
   draggingHandle: { animationId: string; handleId: string } | null;
+};
+
+const getGizmoRuntimeState = (
+  state: CanvasStore & AnimationPluginSlice
+): GizmoRuntimeState => {
+  const runtimeState = state.animationState as GizmoRuntimeState | undefined;
+  return {
+    ...(runtimeState ?? {}),
+    activeGizmos:
+      (runtimeState?.activeGizmos as Map<string, GizmoState> | undefined)
+      ?? EMPTY_ACTIVE_GIZMOS,
+    focusedGizmoAnimationId: runtimeState?.focusedGizmoAnimationId ?? null,
+    gizmoEditMode: runtimeState?.gizmoEditMode ?? false,
+    draggingHandle: runtimeState?.draggingHandle ?? null,
+  } as GizmoRuntimeState;
+};
+
+const updateGizmoRuntimeStateInStore = (
+  updates:
+    | Partial<GizmoRuntimeState>
+    | ((current: GizmoRuntimeState) => Partial<GizmoRuntimeState>)
+) => {
+  canvasStoreApi.setState((state) => {
+    const current = getGizmoRuntimeState(state as CanvasStore & AnimationPluginSlice);
+    const nextPartial = typeof updates === 'function' ? updates(current) : updates;
+    return {
+      animationState: {
+        ...current,
+        ...nextPartial,
+      },
+    } as Partial<CanvasStore>;
+  });
+};
+
+const updateActiveGizmosInStore = (
+  updater: (previous: Map<string, GizmoState>) => Map<string, GizmoState>
+) => {
+  updateGizmoRuntimeStateInStore((current) => ({
+    activeGizmos: updater(current.activeGizmos ?? EMPTY_ACTIVE_GIZMOS),
+  }));
+};
+
+const findElementForDefAnimationInElements = (
+  animation: SVGAnimation,
+  elements: CanvasElement[]
+): CanvasElement | undefined => {
+  const anim = animation as unknown as Record<string, unknown>;
+  const defId = anim.filterTargetId ?? anim.gradientTargetId ?? anim.patternTargetId ??
+    anim.maskTargetId ?? anim.clipPathTargetId ?? anim.markerTargetId;
+  if (typeof defId !== 'string') return undefined;
+
+  for (const el of elements) {
+    const data = el.data as Record<string, unknown> | undefined;
+    if (!data) continue;
+    if (data.filterId === defId) return el;
+    if (data.maskId === defId) return el;
+    if (data.clipPathId === defId || data.clipPathTemplateId === defId) return el;
+    if (data.markerStart === defId || data.markerMid === defId || data.markerEnd === defId) return el;
+    for (const key of ['fillColor', 'strokeColor']) {
+      const value = data[key];
+      if (typeof value === 'string' && value === `url(#${defId})`) return el;
+    }
+  }
+
+  return undefined;
 };
 
 // =============================================================================
@@ -98,6 +172,108 @@ export function useGizmoContext(): GizmoContextValue {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useGizmoContextOptional(): GizmoContextValue | null {
   return useContext(GizmoContext);
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAnimationGizmoControls(): AnimationGizmoControlsValue {
+  const { activeGizmos, gizmoEditMode } = useCanvasStore(
+    useShallow((state) => {
+      const animSlice = state as CanvasStore & AnimationPluginSlice;
+      const runtimeState = getGizmoRuntimeState(animSlice);
+      return {
+        activeGizmos: runtimeState.activeGizmos,
+        gizmoEditMode: runtimeState.gizmoEditMode,
+      };
+    })
+  );
+
+  const activateGizmo = useCallback((animationId: string) => {
+    const state = canvasStoreApi.getState() as CanvasStore & AnimationPluginSlice;
+    const animation = (state.animations ?? []).find((item) => item.id === animationId);
+    if (!animation) {
+      logger.warn(`[GizmoContext] Animation not found: ${animationId}`);
+      return;
+    }
+
+    const element = state.elements.find((item) => item.id === animation.targetElementId)
+      ?? findElementForDefAnimationInElements(animation, state.elements);
+    if (!element) {
+      logger.warn(`[GizmoContext] Element not found: ${animation.targetElementId}`);
+      return;
+    }
+
+    const definition = animationGizmoRegistry.findForAnimation(animation, element);
+    if (!definition) {
+      logger.warn(`[GizmoContext] No gizmo found for animation: ${animationId}`);
+      return;
+    }
+
+    updateActiveGizmosInStore((previous) => {
+      const next = new Map(previous);
+      next.set(animationId, definition.fromAnimation(animation, element));
+      return next;
+    });
+    updateGizmoRuntimeStateInStore({ focusedGizmoAnimationId: animationId });
+  }, []);
+
+  const deactivateGizmo = useCallback((animationId: string) => {
+    updateActiveGizmosInStore((previous) => {
+      if (!previous.has(animationId)) {
+        return previous;
+      }
+      const next = new Map(previous);
+      next.delete(animationId);
+      return next;
+    });
+
+    updateGizmoRuntimeStateInStore((current) => ({
+      focusedGizmoAnimationId:
+        current.focusedGizmoAnimationId === animationId
+          ? null
+          : current.focusedGizmoAnimationId,
+    }));
+  }, []);
+
+  const deactivateAllGizmos = useCallback(() => {
+    updateGizmoRuntimeStateInStore({
+      activeGizmos: new Map(),
+      focusedGizmoAnimationId: null,
+      draggingHandle: null,
+    });
+  }, []);
+
+  const setGizmoEditMode = useCallback((enabled: boolean) => {
+    if (!enabled) {
+      updateGizmoRuntimeStateInStore({
+        gizmoEditMode: false,
+        activeGizmos: new Map(),
+        focusedGizmoAnimationId: null,
+        draggingHandle: null,
+      });
+      return;
+    }
+
+    updateGizmoRuntimeStateInStore({ gizmoEditMode: true });
+  }, []);
+
+  return useMemo(
+    () => ({
+      activeGizmos,
+      gizmoEditMode,
+      activateGizmo,
+      deactivateGizmo,
+      deactivateAllGizmos,
+      setGizmoEditMode,
+    }),
+    [
+      activeGizmos,
+      gizmoEditMode,
+      activateGizmo,
+      deactivateGizmo,
+      deactivateAllGizmos,
+      setGizmoEditMode,
+    ]
+  );
 }
 
 // =============================================================================
@@ -222,26 +398,7 @@ export function GizmoProvider({ children }: GizmoProviderProps): React.ReactElem
    */
   const findElementForDefAnimation = useCallback(
     (animation: SVGAnimation): CanvasElement | undefined => {
-      const anim = animation as unknown as Record<string, unknown>;
-      const defId = anim.filterTargetId ?? anim.gradientTargetId ?? anim.patternTargetId ??
-        anim.maskTargetId ?? anim.clipPathTargetId ?? anim.markerTargetId;
-      if (typeof defId !== 'string') return undefined;
-
-      // Search for an element that references this def ID
-      for (const el of elements) {
-        const data = el.data as Record<string, unknown> | undefined;
-        if (!data) continue;
-        if (data.filterId === defId) return el;
-        if (data.maskId === defId) return el;
-        if (data.clipPathId === defId || data.clipPathTemplateId === defId) return el;
-        if (data.markerStart === defId || data.markerMid === defId || data.markerEnd === defId) return el;
-        // Check fill/stroke url() references for gradients/patterns
-        for (const key of ['fillColor', 'strokeColor']) {
-          const val = data[key];
-          if (typeof val === 'string' && val === `url(#${defId})`) return el;
-        }
-      }
-      return undefined;
+      return findElementForDefAnimationInElements(animation, elements);
     },
     [elements]
   );

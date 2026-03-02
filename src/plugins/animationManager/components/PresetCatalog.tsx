@@ -25,7 +25,8 @@ import { FILTER_PRESETS } from '../../animationLibrary/presets/filterPresets';
 import { TEXT_PRESETS } from '../../animationLibrary/presets/textPresets';
 import { ADVANCED_PRESETS } from '../../animationLibrary/presets/advancedPresets';
 import type { AnimationPreset } from '../../animationLibrary/types';
-import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
+import { useFrozenCanvasStoreValueDuringDrag } from '../../../hooks/useFrozenElementsDuringDrag';
 
 // ─── Preset Categories ──────────────────────────────────────────────────────
 
@@ -120,7 +121,7 @@ export const PresetCatalog: React.FC = () => {
     updateAnimationManagerState,
     selectedIds,
     applyPresetToSelection,
-  } = useCanvasStore(useShallow(selectCatalogState));
+  } = useFrozenCanvasStoreValueDuringDrag(selectCatalogState, shallow);
 
   const { input } = useThemeColors();
   const { colorMode } = useColorMode();

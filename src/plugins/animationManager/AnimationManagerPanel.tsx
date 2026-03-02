@@ -22,14 +22,14 @@ import { Panel } from '../../ui/Panel';
 import { PanelActionButton } from '../../ui/PanelActionButton';
 import { SliderControl } from '../../ui/SliderControl';
 import { PanelSwitch } from '../../ui/PanelSwitch';
-import { useCanvasStore } from '../../store/canvasStore';
 import type { CanvasStore } from '../../store/canvasStore';
-import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
 
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
 import type { AnimationManagerSlice } from './types';
 import { GizmoToolbarCompact } from '../animationSystem/gizmos/ui/GizmoToolbar';
 import { GizmoProvider } from '../animationSystem/gizmos/GizmoContext';
+import { useFrozenCanvasStoreValueDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
 
 import { AnimationMap } from './components/AnimationMap';
 import { AnimationEditor } from './components/AnimationEditor';
@@ -44,18 +44,9 @@ interface PanelStoreSlice {
   selectedIds: string[];
   selectedAnimationId: string | null;
   animations: SVGAnimation[];
-  // Playback
-  isPlaying: boolean;
-  currentTime: number;
   // Animation manager state
   autoPlayOnEdit: boolean;
   defaultDuration: number;
-  editorMode: 'idle' | 'editing' | 'creating';
-  // Animation system actions
-  playAnimations: AnimationPluginSlice['playAnimations'];
-  pauseAnimations: AnimationPluginSlice['pauseAnimations'];
-  stopAnimations: AnimationPluginSlice['stopAnimations'];
-  setAnimationTime: AnimationPluginSlice['setAnimationTime'];
   // Manager actions
   updateAnimationManagerState: AnimationManagerSlice['updateAnimationManagerState'];
 }
@@ -68,16 +59,30 @@ const selectPanelState = (state: CanvasStore): PanelStoreSlice => {
     selectedIds: state.selectedIds,
     selectedAnimationId: mgr?.selectedAnimationId ?? null,
     animations: aSlice.animations ?? [],
-    isPlaying: aSlice.animationState?.isPlaying ?? false,
-    currentTime: aSlice.animationState?.currentTime ?? 0,
     autoPlayOnEdit: mgr?.autoPlayOnEdit ?? false,
     defaultDuration: mgr?.defaultDuration ?? 1.5,
-    editorMode: mgr?.editorMode ?? 'idle',
+    updateAnimationManagerState: mSlice.updateAnimationManagerState,
+  };
+};
+
+interface PlaybackStoreSlice {
+  isPlaying: boolean;
+  currentTime: number;
+  playAnimations: AnimationPluginSlice['playAnimations'];
+  pauseAnimations: AnimationPluginSlice['pauseAnimations'];
+  stopAnimations: AnimationPluginSlice['stopAnimations'];
+  setAnimationTime: AnimationPluginSlice['setAnimationTime'];
+}
+
+const selectPlaybackState = (state: CanvasStore): PlaybackStoreSlice => {
+  const aSlice = state as unknown as AnimationPluginSlice;
+  return {
+    isPlaying: aSlice.animationState?.isPlaying ?? false,
+    currentTime: aSlice.animationState?.currentTime ?? 0,
     playAnimations: aSlice.playAnimations,
     pauseAnimations: aSlice.pauseAnimations,
     stopAnimations: aSlice.stopAnimations,
     setAnimationTime: aSlice.setAnimationTime,
-    updateAnimationManagerState: mSlice.updateAnimationManagerState,
   };
 };
 
@@ -123,7 +128,6 @@ const SettingsSection: React.FC<{
 
 const PlaybackControls: React.FC<{
   isPlaying: boolean;
-  currentTime: number;
   onPlayPause: () => void;
   onStop: () => void;
   onSkip: (delta: number) => void;
@@ -158,25 +162,60 @@ const PlaybackControls: React.FC<{
   );
 };
 
-/* ------------------------------------------------------------------ */
-/*  Main Panel                                                         */
-/* ------------------------------------------------------------------ */
-
-export const AnimationManagerPanel: React.FC = () => {
+const PlaybackControlsContainer: React.FC = () => {
   const {
-    selectedIds,
-    selectedAnimationId,
-    animations,
     isPlaying,
     currentTime,
-    autoPlayOnEdit,
-    defaultDuration,
     playAnimations,
     pauseAnimations,
     stopAnimations,
     setAnimationTime,
+  } = useFrozenCanvasStoreValueDuringDrag(selectPlaybackState, shallow);
+
+  const handlePlayPause = useCallback(() => {
+    if (isPlaying) {
+      pauseAnimations?.();
+    } else {
+      playAnimations?.();
+    }
+  }, [isPlaying, pauseAnimations, playAnimations]);
+
+  const handleStop = useCallback(() => {
+    stopAnimations?.();
+  }, [stopAnimations]);
+
+  const handleSkip = useCallback(
+    (delta: number) => {
+      if (!setAnimationTime) return;
+      const next = Math.max(0, currentTime + delta);
+      setAnimationTime(next);
+    },
+    [currentTime, setAnimationTime],
+  );
+
+  return (
+    <PlaybackControls
+      isPlaying={isPlaying}
+      onPlayPause={handlePlayPause}
+      onStop={handleStop}
+      onSkip={handleSkip}
+    />
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  Main Panel                                                         */
+/* ------------------------------------------------------------------ */
+
+const AnimationManagerPanelComponent: React.FC = () => {
+  const {
+    selectedIds,
+    selectedAnimationId,
+    animations,
+    autoPlayOnEdit,
+    defaultDuration,
     updateAnimationManagerState,
-  } = useCanvasStore(useShallow(selectPanelState));
+  } = useFrozenCanvasStoreValueDuringDrag(selectPanelState, shallow);
 
   // Clear editor when canvas selection changes
   const prevSelectedIdsRef = useRef(selectedIds);
@@ -203,27 +242,6 @@ export const AnimationManagerPanel: React.FC = () => {
     }
   }, [selectedIds, selectedAnimationId, animations, updateAnimationManagerState]);
 
-  const handlePlayPause = useCallback(() => {
-    if (isPlaying) {
-      pauseAnimations?.();
-    } else {
-      playAnimations?.();
-    }
-  }, [isPlaying, pauseAnimations, playAnimations]);
-
-  const handleStop = useCallback(() => {
-    stopAnimations?.();
-  }, [stopAnimations]);
-
-  const handleSkip = useCallback(
-    (delta: number) => {
-      if (!setAnimationTime) return;
-      const next = Math.max(0, currentTime + delta);
-      setAnimationTime(next);
-    },
-    [currentTime, setAnimationTime],
-  );
-
   // Empty state when nothing selected
   if (selectedIds.length === 0) {
     return (
@@ -246,13 +264,7 @@ export const AnimationManagerPanel: React.FC = () => {
           isCollapsible
           defaultOpen
           headerActions={
-            <PlaybackControls
-              isPlaying={isPlaying}
-              currentTime={currentTime}
-              onPlayPause={handlePlayPause}
-              onStop={handleStop}
-              onSkip={handleSkip}
-            />
+            <PlaybackControlsContainer />
           }
         >
           <SettingsSection
@@ -280,3 +292,5 @@ export const AnimationManagerPanel: React.FC = () => {
     </GizmoProvider>
   );
 };
+
+export const AnimationManagerPanel = React.memo(AnimationManagerPanelComponent);

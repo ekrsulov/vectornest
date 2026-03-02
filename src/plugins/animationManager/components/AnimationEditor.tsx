@@ -15,7 +15,6 @@ import { PanelStyledButton } from '../../../ui/PanelStyledButton';
 import { PanelTextInput } from '../../../ui/PanelTextInput';
 import { AnimationCard } from '../../../ui/AnimationCard';
 
-import { useCanvasStore } from '../../../store/canvasStore';
 import type { CanvasStore } from '../../../store/canvasStore';
 import type { SVGAnimation, AnimationPluginSlice, AnimationType } from '../../animationSystem/types';
 import type { AnimationManagerSlice, EditorMode } from '../types';
@@ -23,7 +22,9 @@ import {
   getAnimationTypeOptions,
   getAttributeOptionsForType,
 } from '../../../ui/animationAttributeOptions';
-import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/shallow';
+import { useCanvasStore } from '../../../store/canvasStore';
+import { useFrozenCanvasStoreValueDuringDrag } from '../../../hooks/useFrozenElementsDuringDrag';
 
 // ─── Store Selector ─────────────────────────────────────────────────────────
 
@@ -77,7 +78,7 @@ export const AnimationEditor: React.FC = () => {
     removeAnimation,
     playAnimations,
     selectedIds,
-  } = useCanvasStore(useShallow(selectEditorState));
+  } = useFrozenCanvasStoreValueDuringDrag(selectEditorState, shallow);
 
   // Draft state for creating new animations
   const [draftType, setDraftType] = useState<AnimationType>('animate');

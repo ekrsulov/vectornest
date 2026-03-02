@@ -11,14 +11,11 @@ import {
 } from './groupActions/groupActionContextBuilders';
 import {
   findTopMostGroupForElementInMap,
-  hasGroupsInSelectionFromMap,
-  hasHiddenElementsInState,
-  hasLockedElementsInState,
   isGroupHiddenInMap,
   isGroupLockedInMap,
   processContextSelectedElements,
 } from './groupActions/groupActionHelpers';
-import type { GroupActionHelpers, GroupActionStoreSlice } from './groupActions/groupActionTypes';
+import type { GroupActionHelpers } from './groupActions/groupActionTypes';
 
 /**
  * Hook that provides group-related actions for the floating context menu.
@@ -28,11 +25,14 @@ export function useGroupActions(context: SelectionContextInfo | null): {
   actions: FloatingContextMenuAction[];
   helpers: GroupActionHelpers;
 } {
+  const multiselectionIds = useMemo(
+    () => (context?.type === 'multiselection' ? context.elementIds ?? [] : []),
+    [context]
+  );
+  const groupId = context?.type === 'group' ? context.groupId ?? null : null;
+
   const {
-    elements,
-    selectedIds,
-    hiddenElementIds,
-    lockedElementIds,
+    selectedIdsCount,
     isElementHidden: checkElementHidden,
     isElementLocked: checkElementLocked,
     createGroupFromSelection,
@@ -45,11 +45,8 @@ export function useGroupActions(context: SelectionContextInfo | null): {
     showAllElements,
     unlockAllElements,
   } = useCanvasStore(
-    useShallow((state): GroupActionStoreSlice => ({
-      elements: state.elements,
-      selectedIds: state.selectedIds,
-      hiddenElementIds: state.hiddenElementIds,
-      lockedElementIds: state.lockedElementIds,
+    useShallow((state) => ({
+      selectedIdsCount: state.selectedIds.length,
       isElementHidden: state.isElementHidden,
       isElementLocked: state.isElementLocked,
       createGroupFromSelection: state.createGroupFromSelection,
@@ -64,46 +61,94 @@ export function useGroupActions(context: SelectionContextInfo | null): {
     }))
   );
 
-  const elementMap = useMemo(() => buildElementMap(elements), [elements]);
-
-  const hasHiddenElements = useCallback(
-    () => hasHiddenElementsInState(hiddenElementIds, elements),
-    [hiddenElementIds, elements]
+  const hasGroupsInSelection = useCanvasStore(
+    useCallback((state) => {
+      if (multiselectionIds.length === 0) {
+        return false;
+      }
+      const selectedIdSet = new Set(multiselectionIds);
+      for (const entry of state.elements) {
+        if (selectedIdSet.has(entry.id) && entry.type === 'group') {
+          return true;
+        }
+      }
+      return false;
+    }, [multiselectionIds])
   );
 
-  const hasLockedElements = useCallback(
-    () => hasLockedElementsInState(lockedElementIds, elements),
-    [lockedElementIds, elements]
+  const hasHiddenElements = useCanvasStore((state) => (
+    (state.hiddenElementIds?.length ?? 0) > 0 ||
+    state.elements.some((entry) => entry.type === 'group' && Boolean(entry.data.isHidden))
+  ));
+
+  const hasLockedElements = useCanvasStore((state) => (
+    (state.lockedElementIds?.length ?? 0) > 0 ||
+    state.elements.some((entry) => entry.type === 'group' && Boolean(entry.data.isLocked))
+  ));
+
+  const isCurrentGroupHidden = useCanvasStore(
+    useCallback((state) => {
+      if (!groupId) {
+        return false;
+      }
+      const currentGroup = state.elements.find((entry) => entry.id === groupId);
+      return currentGroup?.type === 'group' ? Boolean(currentGroup.data.isHidden) : false;
+    }, [groupId])
   );
 
-  const isElementHidden = useCallback((id: string) => checkElementHidden?.(id) ?? false, [checkElementHidden]);
-  const isElementLocked = useCallback((id: string) => checkElementLocked?.(id) ?? false, [checkElementLocked]);
+  const isCurrentGroupLocked = useCanvasStore(
+    useCallback((state) => {
+      if (!groupId) {
+        return false;
+      }
+      const currentGroup = state.elements.find((entry) => entry.id === groupId);
+      return currentGroup?.type === 'group' ? Boolean(currentGroup.data.isLocked) : false;
+    }, [groupId])
+  );
+
+  const isElementHidden = useCallback(
+    (id: string) => checkElementHidden?.(id) ?? false,
+    [checkElementHidden]
+  );
+  const isElementLocked = useCallback(
+    (id: string) => checkElementLocked?.(id) ?? false,
+    [checkElementLocked]
+  );
+
+  const getElementMap = useCallback(() => buildElementMap(useCanvasStore.getState().elements), []);
 
   const isGroupHidden = useCallback(
-    (groupId: string) => isGroupHiddenInMap(elementMap, groupId),
-    [elementMap]
+    (targetGroupId: string) => isGroupHiddenInMap(getElementMap(), targetGroupId),
+    [getElementMap]
   );
 
   const isGroupLocked = useCallback(
-    (groupId: string) => isGroupLockedInMap(elementMap, groupId),
-    [elementMap]
+    (targetGroupId: string) => isGroupLockedInMap(getElementMap(), targetGroupId),
+    [getElementMap]
   );
 
-  const hasGroupsInSelection = useCallback(
-    (ids: string[]) => hasGroupsInSelectionFromMap(elementMap, ids),
-    [elementMap]
-  );
+  const hasGroupsInSelectionHelper = useCallback((ids: string[]) => {
+    const selectedIdSet = new Set(ids);
+    for (const entry of useCanvasStore.getState().elements) {
+      if (selectedIdSet.has(entry.id) && entry.type === 'group') {
+        return true;
+      }
+    }
+    return false;
+  }, []);
 
-  const findTopMostGroupForElement = useCallback(
-    (elementId: string) => findTopMostGroupForElementInMap(elementMap, elementId),
-    [elementMap]
-  );
+  const findTopMostGroupForElement = useCallback((targetElementId: string) => {
+    return findTopMostGroupForElementInMap(getElementMap(), targetElementId);
+  }, [getElementMap]);
 
   const processSelectedElements = useCallback(
     (action: (id: string, type: 'group' | 'element') => void) => {
-      processContextSelectedElements(context, elementMap, findTopMostGroupForElement, action);
+      const elementMap = getElementMap();
+      const findTopMost = (targetElementId: string) =>
+        findTopMostGroupForElementInMap(elementMap, targetElementId);
+      processContextSelectedElements(context, elementMap, findTopMost, action);
     },
-    [context, elementMap, findTopMostGroupForElement]
+    [context, getElementMap]
   );
 
   const handleHideSelected = useCallback(() => {
@@ -134,7 +179,7 @@ export function useGroupActions(context: SelectionContextInfo | null): {
     switch (context.type) {
       case 'multiselection':
         return buildMultiSelectionActions({
-          selectedIds,
+          selectedIdsCount,
           hasGroupsInSelection,
           createGroupFromSelection,
           ungroupSelectedGroups,
@@ -152,8 +197,8 @@ export function useGroupActions(context: SelectionContextInfo | null): {
         }
         return buildGroupContextActions({
           groupId: context.groupId,
-          isGroupHidden,
-          isGroupLocked,
+          isGroupHidden: isCurrentGroupHidden,
+          isGroupLocked: isCurrentGroupLocked,
           ungroupGroupById,
           toggleGroupLock,
           toggleGroupVisibility,
@@ -166,9 +211,9 @@ export function useGroupActions(context: SelectionContextInfo | null): {
         }
         return buildElementContextActions({
           elementId: context.elementId,
-          selectedIds,
-          isElementHidden,
-          isElementLocked,
+          selectedIdsCount,
+          isElementHidden: isElementHidden(context.elementId),
+          isElementLocked: isElementLocked(context.elementId),
           createGroupFromSelection,
           toggleElementLock,
           toggleElementVisibility,
@@ -185,11 +230,11 @@ export function useGroupActions(context: SelectionContextInfo | null): {
     hasGroupsInSelection,
     hasHiddenElements,
     hasLockedElements,
+    isCurrentGroupHidden,
+    isCurrentGroupLocked,
     isElementHidden,
     isElementLocked,
-    isGroupHidden,
-    isGroupLocked,
-    selectedIds,
+    selectedIdsCount,
     showAllElements,
     toggleElementLock,
     toggleElementVisibility,
@@ -206,12 +251,12 @@ export function useGroupActions(context: SelectionContextInfo | null): {
       isGroupLocked,
       isElementHidden,
       isElementLocked,
-      hasGroupsInSelection,
+      hasGroupsInSelection: hasGroupsInSelectionHelper,
       findTopMostGroupForElement,
     }),
     [
       findTopMostGroupForElement,
-      hasGroupsInSelection,
+      hasGroupsInSelectionHelper,
       isElementHidden,
       isElementLocked,
       isGroupHidden,

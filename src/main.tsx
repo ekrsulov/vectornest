@@ -109,7 +109,8 @@ if (!designSystemRoute) {
       state.showFilePanel !== previousState.showFilePanel ||
       state.showSettingsPanel !== previousState.showSettingsPanel ||
       state.showLibraryPanel !== previousState.showLibraryPanel ||
-      state.leftSidebarActivePanel !== previousState.leftSidebarActivePanel;
+      state.leftSidebarActivePanel !== previousState.leftSidebarActivePanel ||
+      state.selectedIds.length !== previousState.selectedIds.length;
 
     if (!relevantUiStateChanged) {
       return;

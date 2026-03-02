@@ -14,17 +14,16 @@ type PluginStoreContext = {
   subscribe: CanvasStoreApi['subscribe'];
 };
 
-export function isPluginEnabled(
-  storeApi: CanvasStoreApi | null,
+export function isPluginEnabledInState(
+  state: Record<string, unknown> | null | undefined,
   pluginId: string
 ): boolean {
-  if (!storeApi) return true;
+  if (!state) return true;
 
   // Always enable pluginSelector to prevent lockout.
   if (pluginId === 'pluginSelector') return true;
 
-  const state = storeApi.getState();
-  const psState = (state as Record<string, unknown>).pluginSelector as {
+  const psState = state.pluginSelector as {
     enabledPlugins?: string[];
   } | undefined;
 
@@ -32,6 +31,14 @@ export function isPluginEnabled(
   if (psState.enabledPlugins.length === 0) return true;
 
   return psState.enabledPlugins.includes(pluginId);
+}
+
+export function isPluginEnabled(
+  storeApi: CanvasStoreApi | null,
+  pluginId: string
+): boolean {
+  if (!storeApi) return true;
+  return isPluginEnabledInState(storeApi.getState() as Record<string, unknown>, pluginId);
 }
 
 export function notifyColorModeChange(params: {

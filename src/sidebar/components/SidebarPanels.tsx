@@ -5,6 +5,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import type { CanvasStore } from '../../store/canvasStore';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
+import { usePluginRegistrationVersion } from '../../hooks/usePluginRegistrationVersion';
 import {
   getPanelConfigs,
 } from './panelConfig';
@@ -109,6 +110,7 @@ export const SidebarPanels: React.FC = () => {
   const scrollbarThumb = useColorModeValue('#888', 'rgba(255, 255, 255, 0.3)');
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
   const enabledPlugins = useEnabledPlugins();
+  const registrationVersion = usePluginRegistrationVersion();
 
   const scrollbarThumbHover = useColorModeValue('#555', 'rgba(255, 255, 255, 0.45)');
 
@@ -201,8 +203,11 @@ export const SidebarPanels: React.FC = () => {
   );
 
   // Filter panel configs to only include panels from enabled plugins
-  // Re-evaluate when activePlugin changes to pick up any newly registered panels
+  // Re-evaluate when plugins register or their enabled state changes.
   const filteredPanelConfigs = useMemo(() => {
+    void enabledPlugins;
+    void registrationVersion;
+
     return getPanelConfigs().filter(panelConfig => {
       // If panel has a pluginId property, check if that plugin is enabled
       if ('pluginId' in panelConfig && typeof panelConfig.pluginId === 'string') {
@@ -211,8 +216,7 @@ export const SidebarPanels: React.FC = () => {
       // Built-in panels (file, settings, editor, pan, documentation) are always shown
       return true;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabledPlugins, activePlugin]);
+  }, [enabledPlugins, registrationVersion]);
 
   const visiblePanelConfigs = useMemo(() => {
     const scopedPanels = (() => {

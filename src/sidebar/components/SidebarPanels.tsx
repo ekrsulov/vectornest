@@ -19,6 +19,9 @@ const getSettingsPanelSortGroup = (panelConfig: { key: string }): number => {
 };
 
 const getSettingsPanelSortLabel = (panelConfig: { key: string; pluginId?: string }): string => {
+  if ('settingsTitle' in panelConfig && typeof panelConfig.settingsTitle === 'string') {
+    return panelConfig.settingsTitle;
+  }
   if (panelConfig.pluginId) {
     return pluginManager.getPlugin(panelConfig.pluginId)?.metadata.label ?? panelConfig.key;
   }

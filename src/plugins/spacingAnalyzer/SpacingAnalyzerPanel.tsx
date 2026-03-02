@@ -16,7 +16,7 @@ import { buildElementMap } from '../../utils/elementMapUtils';
 type SpStore = CanvasStore & SpacingAnalyzerPluginSlice;
 
 export const SpacingAnalyzerPanel: React.FC = () => {
-  const { state, update, selectedIds, elements } = useCanvasStore(
+  const { state, update, selectedIds, elements, viewport } = useCanvasStore(
     useShallow((s) => {
       const st = s as SpStore;
       return {
@@ -24,6 +24,7 @@ export const SpacingAnalyzerPanel: React.FC = () => {
         update: st.updateSpacingAnalyzerState,
         selectedIds: s.selectedIds,
         elements: s.elements,
+        viewport: s.viewport,
       };
     })
   );
@@ -31,14 +32,14 @@ export const SpacingAnalyzerPanel: React.FC = () => {
   const handleAnalyze = useCallback(() => {
     if (!state || !update) return;
     const selected = elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
-    const result = analyzeSpacing(selected, buildElementMap(elements), {
+    const result = analyzeSpacing(selected, viewport, buildElementMap(elements), {
       showHorizontal: state.showHorizontal,
       showVertical: state.showVertical,
       inconsistencyThreshold: state.inconsistencyThreshold,
     });
     const inconsistentCount = result.gaps.filter((g) => g.isInconsistent).length;
     update({ gaps: result.gaps, avgHGap: result.avgHGap, avgVGap: result.avgVGap, inconsistentCount });
-  }, [state, update, selectedIds, elements]);
+  }, [state, update, selectedIds, elements, viewport]);
 
   if (!state || !update) return null;
 

@@ -94,7 +94,7 @@ function collectRelatedPanels(
         }
         panels.push({
           id: panelContrib.id,
-          label: plugin.metadata.label ?? panelContrib.id,
+          label: panelContrib.title ?? plugin.metadata.label ?? panelContrib.id,
           component: panelContrib.component as ComponentType,
           icon: plugin.metadata.icon as ComponentType<{ size?: number }> | undefined,
           order: panelContrib.order ?? 999,
@@ -352,7 +352,7 @@ function collectSettingsPanels(): PaletteCommand[] {
         } else {
           const pluginId = panel.pluginId ?? panel.key.split(':')[0];
           const plugin = pluginManager.getPlugin(pluginId);
-          label = plugin?.metadata?.label ?? panel.key;
+          label = panel.settingsTitle ?? plugin?.metadata?.label ?? panel.key;
           pluginIcon = plugin?.metadata?.icon as ComponentType<{ size?: number }> | undefined;
         }
 

@@ -15,7 +15,7 @@ import { buildElementMap } from '../../utils/elementMapUtils';
 type BboxStore = CanvasStore & BboxVisualizerPluginSlice;
 
 export const BboxVisualizerPanel: React.FC = () => {
-  const { state, update, selectedIds, elements } = useCanvasStore(
+  const { state, update, selectedIds, elements, viewport } = useCanvasStore(
     useShallow((s) => {
       const st = s as BboxStore;
       return {
@@ -23,6 +23,7 @@ export const BboxVisualizerPanel: React.FC = () => {
         update: st.updateBboxVisualizerState,
         selectedIds: s.selectedIds,
         elements: s.elements,
+        viewport: s.viewport,
       };
     })
   );
@@ -33,12 +34,12 @@ export const BboxVisualizerPanel: React.FC = () => {
     const targetEls = state.showAllElements
       ? elements
       : elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
-    const bboxes = computeBBoxes(targetEls, elementMap);
+    const bboxes = computeBBoxes(targetEls, viewport, elementMap);
     const overlaps = computeOverlaps(bboxes);
     const totalArea = bboxes.reduce((s, b) => s + b.area, 0);
     const totalOverlapArea = overlaps.reduce((s, o) => s + o.overlapArea, 0);
     update({ bboxes, overlaps, totalArea, totalOverlapArea });
-  }, [state, update, selectedIds, elements]);
+  }, [state, update, selectedIds, elements, viewport]);
 
   if (!state || !update) return null;
 

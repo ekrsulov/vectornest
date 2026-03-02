@@ -8,7 +8,7 @@ interface PluginPanel {
     id: string;
     component: ComponentType<Record<string, unknown>> | LazyExoticComponent<ComponentType<Record<string, unknown>>>;
     order: number;
-    pluginLabel: string;
+    panelTitle: string;
 }
 
 /**
@@ -42,7 +42,7 @@ export function usePluginPanels(targetPluginId: string): PluginPanel[] {
                         id: panelContrib.id,
                         component: panelContrib.component,
                         order: panelContrib.order ?? 999,
-                        pluginLabel: plugin.metadata.label ?? panelContrib.id,
+                        panelTitle: panelContrib.title ?? plugin.metadata.label ?? panelContrib.id,
                     });
                 }
             });
@@ -57,7 +57,7 @@ export function usePluginPanels(targetPluginId: string): PluginPanel[] {
                 const bIsLibrarySearch = b.id === 'library-search-panel';
                 if (aIsLibrarySearch && !bIsLibrarySearch) return -1;
                 if (!aIsLibrarySearch && bIsLibrarySearch) return 1;
-                return a.pluginLabel.localeCompare(b.pluginLabel, undefined, {
+                return a.panelTitle.localeCompare(b.panelTitle, undefined, {
                     sensitivity: 'base',
                     numeric: true,
                 });
@@ -68,7 +68,7 @@ export function usePluginPanels(targetPluginId: string): PluginPanel[] {
             targetPluginId === 'auditLibrary'
         ) {
             panels.sort((a, b) =>
-                a.pluginLabel.localeCompare(b.pluginLabel, undefined, {
+                a.panelTitle.localeCompare(b.panelTitle, undefined, {
                     sensitivity: 'base',
                     numeric: true,
                 })

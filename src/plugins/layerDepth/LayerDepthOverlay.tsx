@@ -2,16 +2,15 @@ import React, { useMemo } from 'react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { LayerDepthPluginSlice } from './slice';
-import { analyzeLayerDepth } from './depthUtils';
+import { analyzeLayerDepth, getLayerDepthBBox } from './depthUtils';
 import { buildElementMap } from '../../utils/elementMapUtils';
-import { getPathSubPathsInWorld, getSubPathsBounds } from '../../utils/pathWorldUtils';
 
 type DepthStore = CanvasStore & LayerDepthPluginSlice;
 
 export const LayerDepthOverlay: React.FC = () => {
   const {
     enabled, showZIndexLabels, highlightObscured,
-    elements, zoom,
+    elements, zoom, viewport,
   } = useCanvasStore(
     useShallow((s) => {
       const st = s as DepthStore;
@@ -21,14 +20,15 @@ export const LayerDepthOverlay: React.FC = () => {
         highlightObscured: st.layerDepth?.highlightObscured ?? true,
         elements: s.elements,
         zoom: s.viewport.zoom,
+        viewport: s.viewport,
       };
     })
   );
 
   const layers = useMemo(() => {
     if (!enabled) return [];
-    return analyzeLayerDepth(elements, buildElementMap(elements));
-  }, [enabled, elements]);
+    return analyzeLayerDepth(elements, viewport, buildElementMap(elements));
+  }, [enabled, elements, viewport]);
 
   // Build a map from element id to bounding box for label placement
   const elementBounds = useMemo(() => {
@@ -36,8 +36,7 @@ export const LayerDepthOverlay: React.FC = () => {
     const elementMap = buildElementMap(elements);
     const map = new Map<string, { cx: number; cy: number; minX: number; minY: number; width: number; height: number }>();
     for (const el of elements) {
-      if (el.type !== 'path') continue;
-      const bounds = getSubPathsBounds(getPathSubPathsInWorld(el, elementMap));
+      const bounds = getLayerDepthBBox(el, viewport, elementMap);
       if (bounds) {
         const { minX: mnX, minY: mnY, maxX: mxX, maxY: mxY } = bounds;
         map.set(el.id, {
@@ -51,7 +50,7 @@ export const LayerDepthOverlay: React.FC = () => {
       }
     }
     return map;
-  }, [enabled, elements]);
+  }, [enabled, elements, viewport]);
 
   if (!enabled || layers.length === 0) return null;
 

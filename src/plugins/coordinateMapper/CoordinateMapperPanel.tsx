@@ -34,7 +34,7 @@ export const CoordinateMapperPanel: React.FC = () => {
 
   return (
     <Panel
-      title="Coordinates"
+      title="Path Coordinates"
       isCollapsible={state.enabled}
       defaultOpen={false}
       headerActions={

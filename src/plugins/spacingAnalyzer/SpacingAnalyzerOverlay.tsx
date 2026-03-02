@@ -9,7 +9,7 @@ import { buildElementMap } from '../../utils/elementMapUtils';
 type SpStore = CanvasStore & SpacingAnalyzerPluginSlice;
 
 export const SpacingAnalyzerOverlay: React.FC = () => {
-  const { enabled, showH, showV, threshold, selectedIds, elements, zoom } = useCanvasStore(
+  const { enabled, showH, showV, threshold, selectedIds, elements, zoom, viewport } = useCanvasStore(
     useShallow((s) => {
       const st = s as SpStore;
       return {
@@ -20,6 +20,7 @@ export const SpacingAnalyzerOverlay: React.FC = () => {
         selectedIds: s.selectedIds,
         elements: s.elements,
         zoom: s.viewport.zoom,
+        viewport: s.viewport,
       };
     })
   );
@@ -29,11 +30,12 @@ export const SpacingAnalyzerOverlay: React.FC = () => {
     const selected = elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
     const result = analyzeSpacing(
       selected,
+      viewport,
       buildElementMap(elements),
       { showHorizontal: showH, showVertical: showV, inconsistencyThreshold: threshold }
     );
     return result.gaps;
-  }, [enabled, selectedIds, elements, showH, showV, threshold]);
+  }, [enabled, selectedIds, elements, showH, showV, threshold, viewport]);
 
   if (!enabled || gaps.length === 0) return null;
 

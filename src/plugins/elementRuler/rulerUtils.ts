@@ -1,5 +1,6 @@
-import type { CanvasElement } from '../../types';
-import { getPathSubPathsInWorld, getSubPathsBounds } from '../../utils/pathWorldUtils';
+import type { CanvasElement, Viewport } from '../../types';
+import { getCanvasElementBounds } from '../../utils/canvasElementBounds';
+import { getPathSubPathsInWorld, getSubPathsTightBounds } from '../../utils/pathWorldUtils';
 
 type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
 
@@ -24,14 +25,27 @@ export interface Measurement {
   from: { x: number; y: number };
   to: { x: number; y: number };
   midpoint: { x: number; y: number };
+  projections?: Array<{
+    from: { x: number; y: number };
+    to: { x: number; y: number };
+  }>;
 }
+
+const clamp = (value: number, min: number, max: number): number => {
+  return Math.max(min, Math.min(max, value));
+};
 
 export function getElementBounds(
   el: CanvasElement,
+  viewport: Viewport,
   elementsSource: ElementsSource
 ): ElementBounds | null {
-  if (el.type !== 'path') return null;
-  const bounds = getSubPathsBounds(getPathSubPathsInWorld(el, elementsSource));
+  const elementMap = elementsSource instanceof Map
+    ? elementsSource
+    : new Map(elementsSource.map((element) => [element.id, element]));
+  const bounds = el.type === 'path'
+    ? getSubPathsTightBounds(getPathSubPathsInWorld(el, elementsSource))
+    : getCanvasElementBounds(el, { viewport, elementMap });
   if (!bounds) return null;
   const { minX, minY, maxX, maxY } = bounds;
   return {
@@ -46,6 +60,7 @@ export function getElementBounds(
 
 export function computeMeasurements(
   elements: CanvasElement[],
+  viewport: Viewport,
   elementsSource: ElementsSource,
   options: {
     showDistances: boolean;
@@ -56,7 +71,7 @@ export function computeMeasurements(
 ): Measurement[] {
   const boundsList: ElementBounds[] = [];
   for (const el of elements) {
-    const b = getElementBounds(el, elementsSource);
+    const b = getElementBounds(el, viewport, elementsSource);
     if (b) boundsList.push(b);
   }
 
@@ -120,6 +135,22 @@ export function computeMeasurements(
           const leftEl = a.cx < b.cx ? a : b;
           const rightEl = a.cx < b.cx ? b : a;
           const midY = (leftEl.cy + rightEl.cy) / 2;
+          const leftProjectionY = clamp(midY, leftEl.minY, leftEl.maxY);
+          const rightProjectionY = clamp(midY, rightEl.minY, rightEl.maxY);
+          const projections = [
+            leftProjectionY !== midY
+              ? {
+                  from: { x: leftEl.maxX, y: leftProjectionY },
+                  to: { x: leftEl.maxX, y: midY },
+                }
+              : null,
+            rightProjectionY !== midY
+              ? {
+                  from: { x: rightEl.minX, y: rightProjectionY },
+                  to: { x: rightEl.minX, y: midY },
+                }
+              : null,
+          ].filter((projection): projection is NonNullable<typeof projection> => projection !== null);
           measurements.push({
             type: 'gap-h',
             fromId: leftEl.id,
@@ -129,6 +160,7 @@ export function computeMeasurements(
             from: { x: leftEl.maxX, y: midY },
             to: { x: rightEl.minX, y: midY },
             midpoint: { x: (leftEl.maxX + rightEl.minX) / 2, y: midY },
+            projections,
           });
         }
 
@@ -137,6 +169,22 @@ export function computeMeasurements(
           const topEl = a.cy < b.cy ? a : b;
           const bottomEl = a.cy < b.cy ? b : a;
           const midX = (topEl.cx + bottomEl.cx) / 2;
+          const topProjectionX = clamp(midX, topEl.minX, topEl.maxX);
+          const bottomProjectionX = clamp(midX, bottomEl.minX, bottomEl.maxX);
+          const projections = [
+            topProjectionX !== midX
+              ? {
+                  from: { x: topProjectionX, y: topEl.maxY },
+                  to: { x: midX, y: topEl.maxY },
+                }
+              : null,
+            bottomProjectionX !== midX
+              ? {
+                  from: { x: bottomProjectionX, y: bottomEl.minY },
+                  to: { x: midX, y: bottomEl.minY },
+                }
+              : null,
+          ].filter((projection): projection is NonNullable<typeof projection> => projection !== null);
           measurements.push({
             type: 'gap-v',
             fromId: topEl.id,
@@ -146,6 +194,7 @@ export function computeMeasurements(
             from: { x: midX, y: topEl.maxY },
             to: { x: midX, y: bottomEl.minY },
             midpoint: { x: midX, y: (topEl.maxY + bottomEl.minY) / 2 },
+            projections,
           });
         }
       }

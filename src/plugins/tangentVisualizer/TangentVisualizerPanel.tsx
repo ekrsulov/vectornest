@@ -24,7 +24,7 @@ export const TangentVisualizerPanel: React.FC = () => {
 
   return (
     <Panel
-      title="Tangents"
+      title="Path Tangents"
       isCollapsible={state.enabled}
       defaultOpen={false}
       headerActions={

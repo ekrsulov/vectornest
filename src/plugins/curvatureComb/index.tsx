@@ -23,7 +23,7 @@ export const curvatureCombPlugin: PluginDefinition<CanvasStore> = {
   },
   slices: [createPluginSlice(createCurvatureCombSlice)],
   sidebarPanels: [
-    createSettingsPanel('curvature-comb-settings', CurvatureCombPanel),
+    createSettingsPanel('curvature-comb-settings', CurvatureCombPanel, { title: 'Path Curvature Comb' }),
   ],
   canvasLayers: [
     {

@@ -26,7 +26,7 @@ function intensityToColor(t: number): string {
 }
 
 export const ElementHeatmapOverlay: React.FC = () => {
-  const { enabled, gridSize, opacity, elements } = useCanvasStore(
+  const { enabled, gridSize, opacity, elements, viewport } = useCanvasStore(
     useShallow((s) => {
       const st = s as HMStore;
       return {
@@ -34,14 +34,15 @@ export const ElementHeatmapOverlay: React.FC = () => {
         gridSize: st.elementHeatmap?.gridSize ?? 50,
         opacity: st.elementHeatmap?.opacity ?? 40,
         elements: s.elements,
+        viewport: s.viewport,
       };
     })
   );
 
   const cells = useMemo(() => {
     if (!enabled) return [];
-    return computeHeatmap(elements as CanvasElement[], gridSize, buildElementMap(elements));
-  }, [enabled, elements, gridSize]);
+    return computeHeatmap(elements as CanvasElement[], viewport, gridSize, buildElementMap(elements));
+  }, [enabled, elements, gridSize, viewport]);
 
   if (!enabled || cells.length === 0) return null;
 

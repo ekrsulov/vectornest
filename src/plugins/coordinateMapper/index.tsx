@@ -20,7 +20,7 @@ export const coordinateMapperPlugin: PluginDefinition<CanvasStore> = {
     cursor: 'default',
   },
   slices: [createPluginSlice(createCoordinateMapperSlice)],
-  sidebarPanels: [createSettingsPanel('coordinateMapper', CoordinateMapperPanel)],
+  sidebarPanels: [createSettingsPanel('coordinateMapper', CoordinateMapperPanel, { title: 'Path Coordinates' })],
   canvasLayers: [
     {
       id: 'coordinateMapper',

@@ -1,19 +1,33 @@
-import type { CanvasElement } from '../../types';
+import type { CanvasElement, Viewport } from '../../types';
 import type { BBoxInfo, OverlapInfo } from './slice';
-import { getPathSubPathsInWorld, getSubPathsBounds } from '../../utils/pathWorldUtils';
+import { getCanvasElementBounds } from '../../utils/canvasElementBounds';
+import { getPathSubPathsInWorld, getSubPathsTightBounds } from '../../utils/pathWorldUtils';
 
 type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
 
+const resolveElementMap = (
+  elements: CanvasElement[],
+  elementsSource?: ElementsSource
+): Map<string, CanvasElement> => {
+  if (elementsSource instanceof Map) return elementsSource;
+
+  const source = elementsSource ?? elements;
+  return new Map(source.map((element) => [element.id, element]));
+};
+
 export function computeBBoxes(
   elements: CanvasElement[],
+  viewport: Viewport,
   elementsSource?: ElementsSource
 ): BBoxInfo[] {
   const result: BBoxInfo[] = [];
   const worldSource = elementsSource ?? elements;
+  const elementMap = resolveElementMap(elements, elementsSource);
 
   for (const el of elements) {
-    if (el.type !== 'path') continue;
-    const bounds = getSubPathsBounds(getPathSubPathsInWorld(el, worldSource));
+    const bounds = el.type === 'path'
+      ? getSubPathsTightBounds(getPathSubPathsInWorld(el, worldSource))
+      : getCanvasElementBounds(el, { viewport, elementMap });
     if (!bounds) continue;
     const { minX, minY, maxX, maxY } = bounds;
 

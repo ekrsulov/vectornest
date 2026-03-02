@@ -22,7 +22,7 @@ export const tangentVisualizerPlugin: PluginDefinition<CanvasStore> = {
     cursor: 'default',
   },
   slices: [createPluginSlice(createTangentVisualizerSlice)],
-  sidebarPanels: [createSettingsPanel('tangentVisualizer', TangentVisualizerPanel)],
+  sidebarPanels: [createSettingsPanel('tangentVisualizer', TangentVisualizerPanel, { title: 'Path Tangents' })],
   canvasLayers: [
     {
       id: 'tangentVisualizerOverlay',

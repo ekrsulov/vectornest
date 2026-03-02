@@ -42,10 +42,13 @@ export function createSettingsPanel<TProps = unknown>(
   options?: {
     /** Additional condition beyond settings mode. */
     additionalCondition?: (ctx: PanelConditionContext) => boolean;
+    /** Human-readable title shown by the panel in Prefs. */
+    title?: string;
   }
 ): PanelConfig {
   return {
     key,
+    settingsTitle: options?.title,
     condition: (ctx) => {
       if (!ctx.showSettingsPanel) {
         return false;

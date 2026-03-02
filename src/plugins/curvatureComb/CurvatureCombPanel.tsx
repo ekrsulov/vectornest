@@ -25,7 +25,7 @@ export const CurvatureCombPanel: React.FC = () => {
 
   return (
     <Panel
-      title="Curvature Comb"
+      title="Path Curvature Comb"
       isCollapsible={state.enabled}
       defaultOpen={false}
       headerActions={

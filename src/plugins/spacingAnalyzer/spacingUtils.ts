@@ -1,49 +1,52 @@
-import type { CanvasElement } from '../../types';
+import type { CanvasElement, Viewport } from '../../types';
 import type { SpacingGap } from './slice';
-import { getPathSubPathsInWorld } from '../../utils/pathWorldUtils';
+import { getCanvasElementBounds } from '../../utils/canvasElementBounds';
+import { getPathSubPathsInWorld, getSubPathsTightBounds } from '../../utils/pathWorldUtils';
 
 type ElementsSource = CanvasElement[] | Map<string, CanvasElement>;
 
 interface Bounds {
   id: string;
-  minX: number; minY: number; maxX: number; maxY: number;
-  cx: number; cy: number;
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  cx: number;
+  cy: number;
 }
 
-function getBounds(el: CanvasElement, elementsSource: ElementsSource): Bounds | null {
-  if (el.type !== 'path') return null;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  let has = false;
-  for (const sp of getPathSubPathsInWorld(el, elementsSource)) {
-    for (const cmd of sp) {
-      if (cmd.type === 'Z') continue;
-      has = true;
-      const p = cmd.position;
-      if (p.x < minX) minX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y > maxY) maxY = p.y;
-    }
-  }
-  if (!has) return null;
+function getBounds(
+  el: CanvasElement,
+  viewport: Viewport,
+  elementsSource: ElementsSource
+): Bounds | null {
+  const elementMap = elementsSource instanceof Map
+    ? elementsSource
+    : new Map(elementsSource.map((element) => [element.id, element]));
+  const bounds = el.type === 'path'
+    ? getSubPathsTightBounds(getPathSubPathsInWorld(el, elementsSource))
+    : getCanvasElementBounds(el, { viewport, elementMap });
+  if (!bounds) return null;
+
+  const { minX, minY, maxX, maxY } = bounds;
   return { id: el.id, minX, minY, maxX, maxY, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
 }
 
 export function analyzeSpacing(
   elements: CanvasElement[],
+  viewport: Viewport,
   elementsSource: ElementsSource,
   options: { showHorizontal: boolean; showVertical: boolean; inconsistencyThreshold: number }
 ): { gaps: SpacingGap[]; avgHGap: number; avgVGap: number } {
   const boundsList: Bounds[] = [];
   for (const el of elements) {
-    const b = getBounds(el, elementsSource);
+    const b = getBounds(el, viewport, elementsSource);
     if (b) boundsList.push(b);
   }
 
   const gaps: SpacingGap[] = [];
 
   if (options.showHorizontal) {
-    // Sort left to right
     const sorted = [...boundsList].sort((a, b) => a.minX - b.minX);
     for (let i = 0; i < sorted.length - 1; i++) {
       const a = sorted[i];
@@ -66,7 +69,6 @@ export function analyzeSpacing(
   }
 
   if (options.showVertical) {
-    // Sort top to bottom
     const sorted = [...boundsList].sort((a, b) => a.minY - b.minY);
     for (let i = 0; i < sorted.length - 1; i++) {
       const a = sorted[i];
@@ -88,7 +90,6 @@ export function analyzeSpacing(
     }
   }
 
-  // Compute averages and mark inconsistencies
   const hGaps = gaps.filter((g) => g.axis === 'horizontal');
   const vGaps = gaps.filter((g) => g.axis === 'vertical');
   const avgHGap = hGaps.length > 0 ? hGaps.reduce((s, g) => s + g.gap, 0) / hGaps.length : 0;

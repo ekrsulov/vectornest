@@ -1,23 +1,22 @@
 import React, { useMemo } from 'react';
+import { useColorMode } from '@chakra-ui/react';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { BboxVisualizerPluginSlice } from './slice';
 import { computeBBoxes, computeOverlaps, formatArea } from './bboxUtils';
 import type { CanvasElement } from '../../types';
 import { buildElementMap } from '../../utils/elementMapUtils';
+import { SvgTagLabel } from '../../ui/SvgTagLabel';
 
 type BboxStore = CanvasStore & BboxVisualizerPluginSlice;
 
-// Distinct colors for each bounding box
-const BOX_COLORS = [
-  '#3182CE', '#38A169', '#D69E2E', '#E53E3E', '#805AD5',
-  '#DD6B20', '#319795', '#D53F8C', '#2B6CB0', '#2F855A',
-];
+const LIGHT_BOX_COLORS = ['#3F3F46', '#52525B', '#71717A', '#A1A1AA', '#D4D4D8'];
+const DARK_BOX_COLORS = ['#FAFAF9', '#E7E5E4', '#D6D3D1', '#A8A29E', '#78716C'];
 
 export const BboxVisualizerOverlay: React.FC = () => {
   const {
     enabled, showDimensions, showArea, showOverlaps, showAllElements,
-    selectedIds, elements, zoom,
+    selectedIds, elements, zoom, viewport,
   } = useCanvasStore(
     useShallow((s) => {
       const st = s as BboxStore;
@@ -30,9 +29,11 @@ export const BboxVisualizerOverlay: React.FC = () => {
         selectedIds: s.selectedIds,
         elements: s.elements,
         zoom: s.viewport.zoom,
+        viewport: s.viewport,
       };
     })
   );
+  const { colorMode } = useColorMode();
 
   const { bboxes, overlaps } = useMemo(() => {
     if (!enabled) return { bboxes: [], overlaps: [] };
@@ -40,17 +41,35 @@ export const BboxVisualizerOverlay: React.FC = () => {
     const targetEls = showAllElements
       ? elements
       : elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
-    const boxes = computeBBoxes(targetEls, elementMap);
+    const boxes = computeBBoxes(targetEls, viewport, elementMap);
     const ov = showOverlaps ? computeOverlaps(boxes) : [];
     return { bboxes: boxes, overlaps: ov };
-  }, [enabled, showAllElements, elements, selectedIds, showOverlaps]);
+  }, [enabled, showAllElements, elements, selectedIds, showOverlaps, viewport]);
 
   if (!enabled || bboxes.length === 0) return null;
 
   const invZoom = 1 / zoom;
-  const fontSize = 10 * invZoom;
+  const fontSize = 10;
+  const scaledFontSize = fontSize * invZoom;
   const strokeW = 1 * invZoom;
   const padding = 3 * invZoom;
+  const palette = colorMode === 'dark'
+    ? {
+        boxColors: DARK_BOX_COLORS,
+        overlapStroke: '#F5F5F4',
+        overlapFillOpacity: 0.12,
+        labelText: '#F5F5F4',
+        labelBackground: 'rgba(28, 25, 23, 0.92)',
+        labelBorder: '#78716C',
+      }
+    : {
+        boxColors: LIGHT_BOX_COLORS,
+        overlapStroke: '#27272A',
+        overlapFillOpacity: 0.08,
+        labelText: '#18181B',
+        labelBackground: 'rgba(250, 250, 250, 0.96)',
+        labelBorder: '#D4D4D8',
+      };
 
   return (
     <g className="bbox-visualizer-overlay">
@@ -73,9 +92,9 @@ export const BboxVisualizerOverlay: React.FC = () => {
             y={oy}
             width={ow}
             height={oh}
-            fill="#E53E3E"
-            fillOpacity={0.15}
-            stroke="#E53E3E"
+            fill={palette.overlapStroke}
+            fillOpacity={palette.overlapFillOpacity}
+            stroke={palette.overlapStroke}
             strokeWidth={strokeW * 0.5}
             strokeDasharray={`${2 * invZoom} ${2 * invZoom}`}
             strokeOpacity={0.5}
@@ -85,7 +104,7 @@ export const BboxVisualizerOverlay: React.FC = () => {
 
       {/* Bounding boxes */}
       {bboxes.map((bbox, i) => {
-        const color = BOX_COLORS[i % BOX_COLORS.length];
+        const color = palette.boxColors[i % palette.boxColors.length];
         return (
           <g key={bbox.id}>
             <rect
@@ -103,49 +122,45 @@ export const BboxVisualizerOverlay: React.FC = () => {
             {/* Dimension labels */}
             {showDimensions && (
               <>
-                {/* Width label on top */}
-                <text
+                <SvgTagLabel
                   x={bbox.x + bbox.width / 2}
-                  y={bbox.y - padding}
-                  textAnchor="middle"
-                  fill={color}
+                  y={bbox.y - (scaledFontSize / 2 + padding)}
+                  label={bbox.width.toFixed(1)}
                   fontSize={fontSize}
-                  fontFamily="monospace"
+                  zoom={zoom}
+                  textColor={palette.labelText}
+                  backgroundColor={palette.labelBackground}
+                  borderColor={palette.labelBorder}
                   opacity={0.8}
-                >
-                  {bbox.width.toFixed(1)}
-                </text>
+                />
 
-                {/* Height label on right */}
-                <text
+                <SvgTagLabel
                   x={bbox.x + bbox.width + padding}
                   y={bbox.y + bbox.height / 2}
-                  textAnchor="start"
-                  dominantBaseline="middle"
-                  fill={color}
+                  label={bbox.height.toFixed(1)}
                   fontSize={fontSize}
-                  fontFamily="monospace"
+                  zoom={zoom}
+                  textColor={palette.labelText}
+                  backgroundColor={palette.labelBackground}
+                  borderColor={palette.labelBorder}
+                  anchor="start"
                   opacity={0.8}
-                >
-                  {bbox.height.toFixed(1)}
-                </text>
+                />
               </>
             )}
 
-            {/* Area label in center */}
             {showArea && bbox.area > 0 && (
-              <text
+              <SvgTagLabel
                 x={bbox.x + bbox.width / 2}
                 y={bbox.y + bbox.height / 2}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill={color}
+                label={formatArea(bbox.area)}
                 fontSize={fontSize * 0.9}
-                fontFamily="monospace"
+                zoom={zoom}
+                textColor={palette.labelText}
+                backgroundColor={palette.labelBackground}
+                borderColor={palette.labelBorder}
                 opacity={0.6}
-              >
-                {formatArea(bbox.area)}
-              </text>
+              />
             )}
           </g>
         );

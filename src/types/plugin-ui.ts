@@ -112,6 +112,7 @@ export interface PluginPanelContribution<TProps = Record<string, unknown>> {
   targetPlugin: string;
   component: ComponentType<TProps> | LazyExoticComponent<ComponentType<TProps>>;
   order?: number;
+  title?: string;
 }
 
 export type { CanvasLayerPlacement } from './ui-contributions';

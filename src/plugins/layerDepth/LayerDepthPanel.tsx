@@ -14,20 +14,21 @@ import { buildElementMap } from '../../utils/elementMapUtils';
 type DepthStore = CanvasStore & LayerDepthPluginSlice;
 
 export const LayerDepthPanel: React.FC = () => {
-  const { state, update, elements } = useCanvasStore(
+  const { state, update, elements, viewport } = useCanvasStore(
     useShallow((s) => {
       const st = s as DepthStore;
       return {
         state: st.layerDepth,
         update: st.updateLayerDepthState,
         elements: s.elements,
+        viewport: s.viewport,
       };
     })
   );
 
   const handleAnalyze = useCallback(() => {
     if (!state || !update) return;
-    const layers = analyzeLayerDepth(elements, buildElementMap(elements));
+    const layers = analyzeLayerDepth(elements, viewport, buildElementMap(elements));
     const fullyObscuredCount = layers.filter((l) => l.isFullyObscured).length;
     const partiallyObscuredCount = layers.filter((l) => l.obscuredPercent > 0 && !l.isFullyObscured).length;
     update({
@@ -36,7 +37,7 @@ export const LayerDepthPanel: React.FC = () => {
       fullyObscuredCount,
       partiallyObscuredCount,
     });
-  }, [state, update, elements]);
+  }, [state, update, elements, viewport]);
 
   if (!state || !update) return null;
 

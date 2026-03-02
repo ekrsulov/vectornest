@@ -33,4 +33,6 @@ export interface PanelConfig {
     getProps?: (allProps: PanelComponentProps) => any;
     /** Plugin ID that contributed this panel (set automatically for plugin panels) */
     pluginId?: string;
+    /** Optional human-readable settings title used in Prefs sorting/listing. */
+    settingsTitle?: string;
 }

@@ -41,7 +41,7 @@ export const PencilPanel: React.FC<PencilPanelProps> = ({ hideTitle = false }) =
             value={pencil?.simplificationTolerance ?? 0}
             min={0}
             max={10}
-            step={1}
+            step={0.1}
             onChange={(value) => updatePencilState?.({ simplificationTolerance: value })}
             formatter={(value) => value.toFixed(1)}
             labelWidth="60px"

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -22,28 +22,12 @@ import type { CanvasElement } from '../../types';
 import type { AnimationPluginSlice, DraftAnimation, SVGAnimation } from './types';
 import { TimelineTab, EditorTab, PreviewTab, SyncTab } from './tabs';
 
-// Singleton pattern
-let isMounted = false;
-
 export const AnimationWorkspaceDialog: React.FC = () => {
-  const [isActiveInstance, setIsActiveInstance] = useState(false);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [editingAnimationId, setEditingAnimationId] = useState<string | null>(null);
   const [previewAnimationId, setPreviewAnimationId] = useState<string | null>(null);
   const [previewDraft, setPreviewDraft] = useState<DraftAnimation | null>(null);
   const [previewMode, setPreviewMode] = useState<'animation' | 'draft'>('animation');
-
-  useEffect(() => {
-    if (!isMounted) {
-      isMounted = true;
-      setIsActiveInstance(true);
-    }
-    return () => {
-      if (isActiveInstance) {
-        isMounted = false;
-      }
-    };
-  }, [isActiveInstance]);
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -65,7 +49,7 @@ export const AnimationWorkspaceDialog: React.FC = () => {
     return elements.find((el) => el.id === selectedIds[0]);
   }, [elements, selectedIds]);
 
-  if (!isActiveInstance || !isWorkspaceOpen) {
+  if (!isWorkspaceOpen) {
     return null;
   }
 

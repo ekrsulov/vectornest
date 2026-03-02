@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
+import { useCanvasStore } from '../store/canvasStore';
+import { usePluginRegistrationVersion } from '../hooks/usePluginRegistrationVersion';
 import { pluginManager } from '../utils/pluginManager';
 import { IOS_EDGE_GUARD } from '../constants';
 
@@ -44,25 +46,10 @@ interface GlobalOverlayEntry {
  * Extracted from App.tsx to reduce complexity.
  */
 export const GlobalOverlays: React.FC<GlobalOverlaysProps> = ({ isIOS = false }) => {
-  // Get global overlays from plugins (includes MinimapPanel)
-  const [globalOverlays, setGlobalOverlays] = useState<GlobalOverlayEntry[]>(
-    () => pluginManager.getGlobalOverlays() as GlobalOverlayEntry[]
-  );
+  usePluginRegistrationVersion();
+  useCanvasStore((state) => state);
 
-  // Re-query overlays after plugin registration changes
-  const refreshOverlays = useCallback(() => {
-    setGlobalOverlays(pluginManager.getGlobalOverlays() as GlobalOverlayEntry[]);
-  }, []);
-
-  // Subscribe to plugin registration events so late-registered overlays appear
-  useEffect(() => {
-    // Refresh on mount in case plugins registered before mount
-    refreshOverlays();
-
-    // Subscribe to plugin changes via pluginManager's listener mechanism
-    const unsubscribe = pluginManager.onPluginRegistrationChange?.(refreshOverlays);
-    return () => { unsubscribe?.(); };
-  }, [refreshOverlays]);
+  const globalOverlays = pluginManager.getGlobalOverlays() as GlobalOverlayEntry[];
 
   return (
     <>

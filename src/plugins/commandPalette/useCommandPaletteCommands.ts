@@ -19,6 +19,8 @@ import {
   Redo2,
   ZoomIn,
   ZoomOut,
+  Target,
+  Maximize,
   Maximize2,
   Trash2,
   Copy,
@@ -47,6 +49,14 @@ import type { ComponentType } from 'react';
 import { ExportManager } from '../../utils/export/ExportManager';
 import { ImportManager } from '../../utils/import/ImportManager';
 import type { LlmAssistantSlice } from '../../plugins/llmAssistant/slice';
+import {
+  fitViewportToActiveArtboard,
+  hasActiveArtboardForFit,
+} from '../../utils/artboardViewportFitUtils';
+import {
+  fitViewportToSelection,
+  hasSelectionForFit,
+} from '../../utils/selectionViewportFitUtils';
 
 const EditorPanel = lazy(() =>
   import('../../sidebar/panels/EditorPanel').then((module) => ({ default: module.EditorPanel }))
@@ -490,6 +500,51 @@ export function useCommandPaletteCommands(): PaletteCommand[] {
       execute: () => useCanvasStore.getState().zoom(1 / 1.2),
       keywords: ['zoom', 'out', 'smaller'],
     });
+
+    if (hasSelectionForFit(store.elements ?? [], store.selectedIds ?? [])) {
+      commands.push({
+        id: 'view-zoom-selection',
+        label: 'Zoom to Selection',
+        category: 'View',
+        icon: Target,
+        execute: () => {
+          const state = useCanvasStore.getState();
+          const nextViewport = fitViewportToSelection({
+            viewport: state.viewport,
+            canvasSize: state.canvasSize,
+            elements: state.elements,
+            selectedIds: state.selectedIds,
+          });
+          if (!nextViewport) {
+            return;
+          }
+          state.setViewport(nextViewport);
+        },
+        keywords: ['zoom', 'fit', 'selection', 'focus', 'selected'],
+      });
+    }
+
+    if (hasActiveArtboardForFit(store.artboard)) {
+      commands.push({
+        id: 'view-fit-artboard',
+        label: 'Fit Artboard',
+        category: 'View',
+        icon: Maximize,
+        execute: () => {
+          const state = useCanvasStore.getState();
+          const nextViewport = fitViewportToActiveArtboard({
+            viewport: state.viewport,
+            canvasSize: state.canvasSize,
+            artboard: state.artboard,
+          });
+          if (!nextViewport) {
+            return;
+          }
+          state.setViewport(nextViewport);
+        },
+        keywords: ['fit', 'artboard', 'zoom', 'frame', 'canvas'],
+      });
+    }
 
     commands.push({
       id: 'view-reset-zoom',

@@ -14,10 +14,8 @@ export const ArtboardLayer: React.FC<ArtboardLayerProps> = (_context) => {
     const wireframe = (state as unknown as { wireframe?: { enabled?: boolean } }).wireframe;
     return wireframe?.enabled ?? false;
   });
-  const borderColor = useColorModeValue('rgba(0, 120, 212, 0.5)', 'rgba(100, 180, 255, 0.5)');
+  const artboardDrawColor = useColorModeValue('#000000', '#ffffff');
   const marginColor = useColorModeValue('rgba(255, 0, 0, 0.3)', 'rgba(255, 100, 100, 0.3)');
-  const labelColor = useColorModeValue('rgba(0, 120, 212, 0.8)', 'rgba(100, 180, 255, 0.8)');
-  const cornerColor = useColorModeValue('rgba(0, 120, 212, 0.8)', 'rgba(100, 180, 255, 0.8)');
 
   if (!artboard?.enabled || !artboard.exportBounds) {
     return null;
@@ -32,6 +30,7 @@ export const ArtboardLayer: React.FC<ArtboardLayerProps> = (_context) => {
 
   // Validate margin size to avoid negative dimensions
   const validMarginSize = Math.min(marginSize, Math.min(width, height) / 2 - 1);
+  const crossSize = 6;
 
   return (
     <g className="artboard-layer" pointerEvents="none" style={{ isolation: 'isolate' }}>
@@ -53,16 +52,16 @@ export const ArtboardLayer: React.FC<ArtboardLayerProps> = (_context) => {
         width={width}
         height={height}
         fill="none"
-        stroke={borderColor}
-        strokeWidth={2}
+        stroke={artboardDrawColor}
+        strokeWidth={1}
       />
 
       {/* Corner indicators */}
-      <g fill={cornerColor}>
-        <circle cx={minX} cy={minY} r={4} />
-        <circle cx={minX + width} cy={minY} r={4} />
-        <circle cx={minX} cy={minY + height} r={4} />
-        <circle cx={minX + width} cy={minY + height} r={4} />
+      <g stroke={artboardDrawColor} strokeWidth={2} strokeLinecap="round">
+        <path d={`M ${minX - crossSize} ${minY} L ${minX + crossSize} ${minY} M ${minX} ${minY - crossSize} L ${minX} ${minY + crossSize}`} />
+        <path d={`M ${minX + width - crossSize} ${minY} L ${minX + width + crossSize} ${minY} M ${minX + width} ${minY - crossSize} L ${minX + width} ${minY + crossSize}`} />
+        <path d={`M ${minX - crossSize} ${minY + height} L ${minX + crossSize} ${minY + height} M ${minX} ${minY + height - crossSize} L ${minX} ${minY + height + crossSize}`} />
+        <path d={`M ${minX + width - crossSize} ${minY + height} L ${minX + width + crossSize} ${minY + height} M ${minX + width} ${minY + height - crossSize} L ${minX + width} ${minY + height + crossSize}`} />
       </g>
 
       {/* Safe margins */}
@@ -88,7 +87,7 @@ export const ArtboardLayer: React.FC<ArtboardLayerProps> = (_context) => {
             y={minY - 10}
             textAnchor="middle"
             fontSize="10"
-            fill={labelColor}
+            fill={artboardDrawColor}
             pointerEvents="none"
             fontFamily="system-ui, -apple-system, sans-serif"
           >
@@ -101,7 +100,7 @@ export const ArtboardLayer: React.FC<ArtboardLayerProps> = (_context) => {
             y={minY + height / 2}
             textAnchor="end"
             fontSize="10"
-            fill={labelColor}
+            fill={artboardDrawColor}
             pointerEvents="none"
             transform={`rotate(-90, ${minX - 10}, ${minY + height / 2})`}
             fontFamily="system-ui, -apple-system, sans-serif"
@@ -115,7 +114,7 @@ export const ArtboardLayer: React.FC<ArtboardLayerProps> = (_context) => {
             y={minY + height + 15}
             textAnchor="middle"
             fontSize="12"
-            fill={labelColor}
+            fill={artboardDrawColor}
             pointerEvents="none"
             fontFamily="system-ui, -apple-system, sans-serif"
           >

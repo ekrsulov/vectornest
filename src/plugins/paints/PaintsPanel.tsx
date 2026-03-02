@@ -35,128 +35,12 @@ import type { CanvasStore } from '../../store/canvasStore';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import type { PanelComponentProps } from '../../types/panel';
 import { useSidebarPanelState } from '../../contexts/sidebarPanelState';
-
-interface PaintInfo {
-  /** The paint value (color, url(#gradient), url(#pattern)) */
-  value: string;
-  /** Normalized value (lowercase, trimmed) used for comparisons */
-  normalizedValue: string;
-  /** Unique key, includes opacity when splitByOpacity is enabled */
-  paintKey: string;
-  /** Opacity value (if splitByOpacity is true) */
-  opacity?: number;
-  /** Number of times used in fill */
-  fillCount: number;
-  /** Number of times used in stroke */
-  strokeCount: number;
-  /** Total usage count */
-  totalCount: number;
-  /** Element IDs that use this paint in fill */
-  fillElementIds: string[];
-  /** Element IDs that use this paint in stroke */
-  strokeElementIds: string[];
-}
-
-/**
- * Normalize paint value for comparison
- */
-const HEX_COLOR_REGEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
-
-function normalizePaint(value: string | undefined): string {
-  if (!value) return 'none';
-  return value.trim().toLowerCase();
-}
-
-function formatDisplayPaintValue(value: string): string {
-  const trimmed = value.trim();
-  if (HEX_COLOR_REGEX.test(trimmed)) {
-    return trimmed.toUpperCase();
-  }
-  return trimmed;
-}
-
-/**
- * Generate a unique key for a paint (with optional opacity)
- */
-function getPaintKey(value: string, opacity: number | undefined, splitByOpacity: boolean): string {
-  const normalizedValue = normalizePaint(value);
-  if (splitByOpacity && opacity !== undefined && opacity !== 1) {
-    return `${normalizedValue}@${opacity.toFixed(2)}`;
-  }
-  return normalizedValue;
-}
-
-/**
- * Extract paints from canvas elements
- */
-function extractPaints(
-  elements: CanvasElement[],
-  splitByOpacity: boolean
-): PaintInfo[] {
-  const paintMap = new Map<string, PaintInfo>();
-
-  const addPaint = (
-    color: string,
-    opacity: number | undefined,
-    elementId: string,
-    type: 'fill' | 'stroke'
-  ) => {
-    const trimmedColor = color.trim();
-    if (!trimmedColor) return;
-
-    const displayColor = formatDisplayPaintValue(trimmedColor);
-    const normalizedValue = normalizePaint(trimmedColor);
-    const paintKey = getPaintKey(trimmedColor, opacity, splitByOpacity);
-    const existing = paintMap.get(paintKey);
-
-    if (existing) {
-      existing[type === 'fill' ? 'fillCount' : 'strokeCount']++;
-      existing.totalCount++;
-      if (type === 'fill') {
-        existing.fillElementIds.push(elementId);
-      } else {
-        existing.strokeElementIds.push(elementId);
-      }
-    } else {
-      paintMap.set(paintKey, {
-        value: displayColor,
-        normalizedValue,
-        paintKey,
-        opacity,
-        fillCount: type === 'fill' ? 1 : 0,
-        strokeCount: type === 'stroke' ? 1 : 0,
-        totalCount: 1,
-        fillElementIds: type === 'fill' ? [elementId] : [],
-        strokeElementIds: type === 'stroke' ? [elementId] : [],
-      });
-    }
-  };
-
-  for (const element of elements) {
-    if (element.type === 'group') continue;
-
-    const data = element.data as Record<string, unknown>;
-
-    const fillColor = typeof data.fillColor === 'string' ? data.fillColor : undefined;
-    if (fillColor && fillColor !== 'none') {
-      const fillOpacity = splitByOpacity
-        ? (typeof data.fillOpacity === 'number' ? data.fillOpacity : 1)
-        : undefined;
-      addPaint(fillColor, fillOpacity, element.id, 'fill');
-    }
-
-    const strokeColor = typeof data.strokeColor === 'string' ? data.strokeColor : undefined;
-    if (strokeColor && strokeColor !== 'none') {
-      const strokeOpacity = splitByOpacity
-        ? (typeof data.strokeOpacity === 'number' ? data.strokeOpacity : 1)
-        : undefined;
-      addPaint(strokeColor, strokeOpacity, element.id, 'stroke');
-    }
-  }
-
-  // Sort by total usage count (descending)
-  return Array.from(paintMap.values()).sort((a, b) => b.totalCount - a.totalCount);
-}
+import {
+  extractPaintsFromPaintData,
+  resolveElementPaintData,
+  type ElementPaintData,
+  type PaintInfo,
+} from './paintExtraction';
 
 interface PaintSwatchProps {
   paint: PaintInfo;
@@ -182,19 +66,7 @@ const PaintSwatch: React.FC<PaintSwatchProps> = ({
   applyTarget,
 }) => {
   const { panelButton } = useThemeColors();
-  const isPatternOrGradient = paint.value.startsWith('url(');
-  const swatchSize = 24;
   const pickerContainerRef = useRef<HTMLDivElement>(null);
-
-  const swatchStyle = isPatternOrGradient
-    ? {
-      backgroundImage: paint.value,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-    }
-    : {
-      background: paint.value,
-    };
 
   const handleColorChange = useCallback((newColor: string) => {
     if (hasSelection) {
@@ -244,15 +116,16 @@ const PaintSwatch: React.FC<PaintSwatchProps> = ({
             />
           )}
           {isMergeMode && (
-            <Box
-              w={`${swatchSize}px`}
-              h={`${swatchSize}px`}
-              borderRadius="full"
-              border="1px solid"
-              borderColor={panelButton.borderColor}
-              {...swatchStyle}
-              opacity={paint.opacity ?? 1}
-            />
+            <Box opacity={paint.opacity ?? 1} pointerEvents="none">
+              <MultiPaintPicker
+                label="Paint"
+                value={paint.value}
+                onChange={() => {}}
+                defaultColor={paint.value.startsWith('url(') ? '#000000' : paint.value}
+                mode={applyTarget}
+                fullWidth={false}
+              />
+            </Box>
           )}
         </Box>
 
@@ -316,29 +189,10 @@ const PaintSwatch: React.FC<PaintSwatchProps> = ({
  * Extract only paint-relevant data from elements (not position data)
  * This prevents re-renders when elements are just moved
  */
-interface ElementPaintData {
-  id: string;
-  type: string;
-  fillColor?: string;
-  fillOpacity?: number;
-  strokeColor?: string;
-  strokeOpacity?: number;
-}
-
 const extractElementPaintData = (elements: CanvasElement[]): ElementPaintData[] => {
   return elements
     .filter(el => el.type !== 'group')
-    .map(el => {
-      const data = el.data as Record<string, unknown>;
-      return {
-        id: el.id,
-        type: el.type,
-        fillColor: typeof data?.fillColor === 'string' ? data.fillColor : undefined,
-        fillOpacity: typeof data?.fillOpacity === 'number' ? data.fillOpacity : undefined,
-        strokeColor: typeof data?.strokeColor === 'string' ? data.strokeColor : undefined,
-        strokeOpacity: typeof data?.strokeOpacity === 'number' ? data.strokeOpacity : undefined,
-      };
-    });
+    .map(resolveElementPaintData);
 };
 
 const arePaintArraysEqual = (a: ElementPaintData[], b: ElementPaintData[]) => {
@@ -423,20 +277,9 @@ export const PaintsPanel: React.FC<PanelComponentProps> = ({
   const splitByOpacity = paintsState?.splitByOpacity ?? false;
   const applyTarget = paintsState?.applyTarget ?? 'fill';
 
-  // Extract and memoize paints from paint data (not full elements)
+  // Extract and memoize paints from resolved paint data (not full elements)
   const allPaints = useMemo(() => {
-    // Convert paint data back to a format extractPaints can use
-    const pseudoElements = elementPaintData.map(pd => ({
-      id: pd.id,
-      type: pd.type,
-      data: {
-        fillColor: pd.fillColor,
-        fillOpacity: pd.fillOpacity,
-        strokeColor: pd.strokeColor,
-        strokeOpacity: pd.strokeOpacity,
-      },
-    })) as CanvasElement[];
-    return extractPaints(pseudoElements, splitByOpacity);
+    return extractPaintsFromPaintData(elementPaintData, splitByOpacity);
   }, [elementPaintData, splitByOpacity]);
 
   const visiblePaints = useMemo(() =>

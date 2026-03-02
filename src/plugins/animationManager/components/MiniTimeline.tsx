@@ -8,15 +8,7 @@ import { Box, Text, Flex } from '@chakra-ui/react';
 import { useThemeColors } from '../../../hooks/useThemeColors';
 import type { SVGAnimation } from '../../animationSystem/types';
 import { computeTotalDuration } from '../utils/descriptionGenerator';
-
-/** Color palette for animation type bars */
-const TYPE_COLORS: Record<string, string> = {
-  animate: '#63B3ED',        // blue.300
-  animateTransform: '#9F7AEA', // purple.400
-  animateMotion: '#F6AD55',  // orange.300
-  set: '#68D391',            // green.300
-  custom: '#FC8181',         // red.300
-};
+import { ANIMATION_TYPE_BAR_COLORS } from '../utils/animationTypeColors';
 
 const BAR_HEIGHT = 8;
 const TRACK_HEIGHT = 14;
@@ -136,7 +128,7 @@ export const MiniTimeline: React.FC<MiniTimelineProps> = ({
         const effectiveDur = Number.isFinite(dur) ? dur : totalDuration - delay;
         const left = timeToPercent(delay);
         const width = timeToPercent(effectiveDur);
-        const color = TYPE_COLORS[anim.type] ?? TYPE_COLORS.animate;
+        const color = ANIMATION_TYPE_BAR_COLORS[anim.type] ?? ANIMATION_TYPE_BAR_COLORS.animate;
         const isSelected = anim.id === selectedAnimationId;
 
         return (

@@ -4,8 +4,8 @@
  */
 
 import React, { useCallback, useMemo } from 'react';
-import { Box, VStack, Text, Flex, useColorModeValue } from '@chakra-ui/react';
-import { Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { Box, VStack, Text, Flex, HStack, Badge, useColorModeValue } from '@chakra-ui/react';
+import { Plus, ChevronDown, ChevronRight, ChevronsDown, ChevronsUp } from 'lucide-react';
 import { Panel } from '../../../ui/Panel';
 import { PanelActionButton } from '../../../ui/PanelActionButton';
 import { PathThumbnail } from '../../../ui/PathThumbnail';
@@ -14,7 +14,7 @@ import type { CanvasStore } from '../../../store/canvasStore';
 import type { CanvasElement, Command } from '../../../types';
 import type { AnimationPluginSlice, SVGAnimation } from '../../animationSystem/types';
 import type { AnimationManagerSlice } from '../types';
-import type { DiscoveredElementAnimations, DiscoveredAnimationGroup } from '../types';
+import type { DiscoveredElementAnimations } from '../types';
 import { AnimationRow } from './AnimationRow';
 import { MiniTimeline } from './MiniTimeline';
 import { useAnimationDiscovery } from '../hooks/useAnimationDiscovery';
@@ -23,6 +23,7 @@ import { getItemThumbnailData, buildNativeShapeThumbnailCommands, getGroupThumbn
 import { useGizmoContextOptional } from '../../animationSystem/gizmos/GizmoContext';
 import { animationGizmoRegistry } from '../../animationSystem/gizmos/registry/GizmoRegistry';
 import { useShallow } from 'zustand/react/shallow';
+import { getAnimationMapGroupKey } from '../utils/groupKeys';
 
 const EMPTY_CHAIN_DELAYS = new Map<string, number>();
 
@@ -65,11 +66,6 @@ const selectMapState = (state: CanvasStore): AnimationMapStoreSlice => {
     selectElements: state.selectElements,
   };
 };
-
-/** Group label to a stable key */
-function groupKey(elementId: string, group: DiscoveredAnimationGroup): string {
-  return `${elementId}:${group.groupType}:${group.defId ?? 'direct'}`;
-}
 
 export const AnimationMap: React.FC = () => {
   const {
@@ -275,6 +271,34 @@ export const AnimationMap: React.FC = () => {
 
   const totalAnimCount = discovered.reduce((sum, el) => sum + el.totalCount, 0);
   const multiElement = discovered.length > 1;
+  const allExpandableGroupKeys = discovered.flatMap((elementAnims) =>
+    elementAnims.groups.map((group) => getAnimationMapGroupKey(elementAnims.elementId, group))
+  );
+  const areAllAnimatedElementsExpanded = allExpandableGroupKeys.length > 0 && allExpandableGroupKeys.every(
+    (key) => expandedGroups.includes(key)
+  );
+  const canExpandAllAnimatedElements = allExpandableGroupKeys.some(
+    (key) => !expandedGroups.includes(key)
+  );
+
+  const handleToggleAllAnimatedElements = useCallback(() => {
+    if (allExpandableGroupKeys.length === 0) return;
+    if (areAllAnimatedElementsExpanded) {
+      updateAnimationManagerState?.({
+        expandedGroups: expandedGroups.filter((key) => !allExpandableGroupKeys.includes(key)),
+      });
+      return;
+    }
+
+    updateAnimationManagerState?.({
+      expandedGroups: Array.from(new Set([...expandedGroups, ...allExpandableGroupKeys])),
+    });
+  }, [
+    allExpandableGroupKeys,
+    areAllAnimatedElementsExpanded,
+    expandedGroups,
+    updateAnimationManagerState,
+  ]);
 
   if (selectedIds.length === 0) {
     return (
@@ -292,16 +316,39 @@ export const AnimationMap: React.FC = () => {
 
   return (
     <Panel
-      title={`Animation Map${totalAnimCount > 0 ? ` (${totalAnimCount})` : ''}`}
+      title="Animation Map"
       isCollapsible
       defaultOpen
       headerActions={
-        <PanelActionButton
-          icon={Plus}
-          iconSize={12}
-          label="Add Animation"
-          onClick={handleAddAnimation}
-        />
+        <HStack spacing={2}>
+          {totalAnimCount > 0 && (
+            <Badge
+              variant="subtle"
+              colorScheme="blue"
+              fontSize="2xs"
+              px={1.5}
+              py={0.5}
+              borderRadius="sm"
+            >
+              {totalAnimCount}
+            </Badge>
+          )}
+          {multiElement && allExpandableGroupKeys.length > 0 && (
+            <PanelActionButton
+              label={areAllAnimatedElementsExpanded ? 'Collapse all animated elements' : 'Expand all animated elements'}
+              icon={areAllAnimatedElementsExpanded ? ChevronsUp : ChevronsDown}
+              onClick={handleToggleAllAnimatedElements}
+              iconSize={10}
+              isDisabled={!areAllAnimatedElementsExpanded && !canExpandAllAnimatedElements}
+            />
+          )}
+          <PanelActionButton
+            icon={Plus}
+            iconSize={12}
+            label="Add Animation"
+            onClick={handleAddAnimation}
+          />
+        </HStack>
       }
     >
       <VStack spacing={1} align="stretch">
@@ -423,15 +470,24 @@ const ElementAnimationSection: React.FC<ElementAnimationSectionProps> = ({
           <Text fontSize="10px" fontWeight="bold" isTruncated>
             {elementAnims.elementName}
           </Text>
-          <Text fontSize="9px" color="gray.500">
-            ({elementAnims.totalCount})
-          </Text>
+          <Badge
+            variant="subtle"
+            colorScheme="blue"
+            fontSize="2xs"
+            px={1.5}
+            py={0.5}
+            borderRadius="sm"
+            flexShrink={0}
+            ml="auto"
+          >
+            {elementAnims.totalCount}
+          </Badge>
         </Flex>
       )}
 
       {/* Animation groups */}
       {elementAnims.groups.map((group) => {
-        const key = groupKey(elementAnims.elementId, group);
+        const key = getAnimationMapGroupKey(elementAnims.elementId, group);
         const isExpanded = expandedGroups.includes(key) || !multiElement;
 
         return (

@@ -169,4 +169,31 @@ test.describe('Pencil Drawing', () => {
     // The path should be editable and show both subpaths
     await page.waitForTimeout(200);
   });
+
+  test('should use whole-number slider steps while keeping decimal text input for tolerance', async ({ page }) => {
+    await page.goto('/');
+    await waitForLoad(page);
+
+    await selectTool(page, 'Pencil');
+    await page.waitForFunction(() => (window as any).useCanvasStore?.getState?.().activePlugin === 'pencil');
+
+    const toleranceRow = page.getByText('Tolerance').first().locator('xpath=..');
+    const toleranceSlider = toleranceRow.getByRole('slider');
+
+    await toleranceSlider.focus();
+    await toleranceSlider.press('ArrowRight');
+
+    await page.waitForFunction(() => (window as any).useCanvasStore?.getState?.().pencil?.simplificationTolerance === 1);
+    await expect(toleranceRow.getByText('1.0')).toBeVisible();
+
+    await toleranceRow.getByText('1.0').click();
+
+    const toleranceInput = toleranceRow.getByRole('textbox');
+    await expect(toleranceInput).toBeVisible();
+    await toleranceInput.fill('1.5');
+    await toleranceInput.press('Enter');
+
+    await page.waitForFunction(() => (window as any).useCanvasStore?.getState?.().pencil?.simplificationTolerance === 1.5);
+    await expect(toleranceRow.getByText('1.5')).toBeVisible();
+  });
 });

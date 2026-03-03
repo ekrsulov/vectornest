@@ -13,58 +13,20 @@ import { getElementBounds as getElementBoundsService } from '../../../canvas/geo
 import { PanelToggle } from '../../../ui/PanelToggle';
 import { CopyButton } from '../../../ui/CopyButton';
 import { debugLog } from '../../../utils/debugUtils';
-
-type PreviewAnimation = Omit<SVGAnimation, 'id'> & { id?: string };
-
-type AnimationPreviewPanelProps = {
-  elements: CanvasElement[];
-  baseAnimations: SVGAnimation[];
-  draftAnimation: PreviewAnimation | null;
-  selectedElement?: CanvasElement;
-  getDraftAnimation?: () => PreviewAnimation | null;
-  previewVersion: number;
-  onPreviewActivated?: () => void;
-};
-
-const ensureAnimationWithId = (anim: PreviewAnimation): SVGAnimation => ({
-  ...anim,
-  id: anim.id ?? `preview-${anim.targetElementId}`,
-});
-
-const formatXml = (xml: string): string => {
-  const normalized = xml.replace(/>\s+</g, '><').trim();
-  const lines = normalized.replace(/></g, '>\n<').split('\n');
-  let indent = 0;
-  const formatted = lines.map((line) => {
-    const trimmed = line.trim();
-    if (trimmed.match(/^<\/\w/)) {
-      indent = Math.max(indent - 1, 0);
-    }
-    const pad = '  '.repeat(indent);
-    const out = `${pad}${trimmed}`;
-    if (trimmed.match(/^<[^!?][^>]*[^/]>$/) && !trimmed.startsWith('</') && !trimmed.includes('</')) {
-      indent += 1;
-    }
-    return out;
-  });
-  return formatted.join('\n');
-};
-
-const computeTotalDuration = (animation?: SVGAnimation): number => {
-  if (!animation) return 0;
-  const durSec = parseFloat(String(animation.dur ?? '0').replace('s', '')) || 0;
-  const repeatDur = animation.repeatDur ? parseFloat(String(animation.repeatDur).replace('s', '')) : null;
-  const repeat = animation.repeatCount === 'indefinite'
-    ? 1
-    : typeof animation.repeatCount === 'number'
-      ? animation.repeatCount
-      : 1;
-  if (repeatDur && repeatDur > 0) return repeatDur;
-  return durSec * repeat;
-};
-
-// Throttle slider updates to ~15fps to reduce React re-renders during animation
-const _SLIDER_UPDATE_INTERVAL = 1000 / 15;
+import {
+  type PreviewAnimation,
+  type AnimationPreviewPanelProps,
+  SLIDER_UPDATE_INTERVAL,
+  ensureAnimationWithId,
+  formatXml,
+  computeTotalDuration,
+  parseColorValues,
+  parseTransformValues,
+  interpolateColor,
+  interpolateFromValues,
+  namespaceSvgDefs,
+  forceGradientRepaint,
+} from './animationPreviewUtils';
 
 const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
   elements,
@@ -260,155 +222,9 @@ const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
     return map;
   }, [elements]);
 
-  /**
-   * Namespace all defs (clipPaths, gradients, patterns, filters) in the preview SVG
-   * to avoid ID collisions with the main canvas's defs.
-   * This is critical because the browser may reference the main canvas's defs
-   * instead of the preview's defs if they share the same IDs.
-   */
   const namespaceAllDefs = useCallback((svgEl: SVGSVGElement) => {
-    const idMap = new Map<string, string>();
-    const timestamp = Date.now();
-    
-    // Namespace clipPaths
-    const clipPaths = svgEl.querySelectorAll<SVGClipPathElement>('clipPath[id]');
-    clipPaths.forEach((el, idx) => {
-      const oldId = el.id;
-      const unique = `${oldId}-preview-${restartKey}-${timestamp}-clip-${idx}`;
-      el.id = unique;
-      idMap.set(oldId, unique);
-    });
-
-    // Namespace gradients (linearGradient, radialGradient)
-    const gradients = svgEl.querySelectorAll<SVGGradientElement>('linearGradient[id], radialGradient[id]');
-    gradients.forEach((el, idx) => {
-      const oldId = el.id;
-      const unique = `${oldId}-preview-${restartKey}-${timestamp}-grad-${idx}`;
-      el.id = unique;
-      idMap.set(oldId, unique);
-    });
-
-    // Namespace patterns
-    const patterns = svgEl.querySelectorAll<SVGPatternElement>('pattern[id]');
-    patterns.forEach((el, idx) => {
-      const oldId = el.id;
-      const unique = `${oldId}-preview-${restartKey}-${timestamp}-pat-${idx}`;
-      el.id = unique;
-      idMap.set(oldId, unique);
-    });
-
-    // Namespace filters
-    const filters = svgEl.querySelectorAll<SVGFilterElement>('filter[id]');
-    filters.forEach((el, idx) => {
-      const oldId = el.id;
-      const unique = `${oldId}-preview-${restartKey}-${timestamp}-filt-${idx}`;
-      el.id = unique;
-      idMap.set(oldId, unique);
-    });
-
-    // Namespace masks
-    const masks = svgEl.querySelectorAll<SVGMaskElement>('mask[id]');
-    masks.forEach((el, idx) => {
-      const oldId = el.id;
-      const unique = `${oldId}-preview-${restartKey}-${timestamp}-mask-${idx}`;
-      el.id = unique;
-      idMap.set(oldId, unique);
-    });
-
-    // Namespace markers
-    const markers = svgEl.querySelectorAll<SVGMarkerElement>('marker[id]');
-    markers.forEach((el, idx) => {
-      const oldId = el.id;
-      const unique = `${oldId}-preview-${restartKey}-${timestamp}-marker-${idx}`;
-      el.id = unique;
-      idMap.set(oldId, unique);
-    });
-
+    const idMap = namespaceSvgDefs(svgEl, restartKey);
     if (!idMap.size) return;
-
-    // Update all references to the renamed defs
-    // Handle clip-path references
-    const elementsWithClip = svgEl.querySelectorAll<SVGElement>('[clip-path]');
-    elementsWithClip.forEach((el) => {
-      const raw = el.getAttribute('clip-path');
-      if (!raw) return;
-      idMap.forEach((newId, oldId) => {
-        if (raw.includes(`#${oldId}`)) {
-          const updated = raw.replace(`#${oldId}`, `#${newId}`);
-          el.setAttribute('clip-path', updated);
-          el.style.setProperty('clip-path', `url(#${newId})`);
-          el.style.setProperty('-webkit-clip-path', `url(#${newId})`);
-        }
-      });
-    });
-
-    // Handle fill references (gradients, patterns)
-    const elementsWithFill = svgEl.querySelectorAll<SVGElement>('[fill^="url(#"]');
-    elementsWithFill.forEach((el) => {
-      const raw = el.getAttribute('fill');
-      if (!raw) return;
-      idMap.forEach((newId, oldId) => {
-        if (raw.includes(`#${oldId}`)) {
-          const updated = raw.replace(`#${oldId}`, `#${newId}`);
-          el.setAttribute('fill', updated);
-        }
-      });
-    });
-
-    // Handle stroke references (gradients, patterns)
-    const elementsWithStroke = svgEl.querySelectorAll<SVGElement>('[stroke^="url(#"]');
-    elementsWithStroke.forEach((el) => {
-      const raw = el.getAttribute('stroke');
-      if (!raw) return;
-      idMap.forEach((newId, oldId) => {
-        if (raw.includes(`#${oldId}`)) {
-          const updated = raw.replace(`#${oldId}`, `#${newId}`);
-          el.setAttribute('stroke', updated);
-        }
-      });
-    });
-
-    // Handle filter references
-    const elementsWithFilter = svgEl.querySelectorAll<SVGElement>('[filter^="url(#"]');
-    elementsWithFilter.forEach((el) => {
-      const raw = el.getAttribute('filter');
-      if (!raw) return;
-      idMap.forEach((newId, oldId) => {
-        if (raw.includes(`#${oldId}`)) {
-          const updated = raw.replace(`#${oldId}`, `#${newId}`);
-          el.setAttribute('filter', updated);
-        }
-      });
-    });
-
-    // Handle mask references
-    const elementsWithMask = svgEl.querySelectorAll<SVGElement>('[mask^="url(#"]');
-    elementsWithMask.forEach((el) => {
-      const raw = el.getAttribute('mask');
-      if (!raw) return;
-      idMap.forEach((newId, oldId) => {
-        if (raw.includes(`#${oldId}`)) {
-          const updated = raw.replace(`#${oldId}`, `#${newId}`);
-          el.setAttribute('mask', updated);
-        }
-      });
-    });
-
-    // Handle marker references
-    const elementsWithMarkers = svgEl.querySelectorAll<SVGElement>('[marker-start^="url(#"], [marker-mid^="url(#"], [marker-end^="url(#"]');
-    elementsWithMarkers.forEach((el) => {
-      const attrs: Array<'marker-start' | 'marker-mid' | 'marker-end'> = ['marker-start', 'marker-mid', 'marker-end'];
-      attrs.forEach((attr) => {
-        const raw = el.getAttribute(attr);
-        if (!raw) return;
-        idMap.forEach((newId, oldId) => {
-          if (raw.includes(`#${oldId}`)) {
-            const updated = raw.replace(`#${oldId}`, `#${newId}`);
-            el.setAttribute(attr, updated);
-          }
-        });
-      });
-    });
 
     // Update clipTargetIdRef if it was renamed
     const mappedClip = clipTargetIdRef.current ? idMap.get(clipTargetIdRef.current) : undefined;
@@ -450,92 +266,6 @@ const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
         firstShape.setAttribute(anim.attributeName, String(value));
       }
     });
-  }, []);
-
-  /**
-   * Force browser repaint for gradient animations.
-   * SMIL animations on gradient stops may not trigger visual updates in some browsers
-   * when using setCurrentTime(). This function forces a repaint by briefly toggling
-   * a style property on elements that use gradients.
-   */
-  const forceGradientRepaint = useCallback((svgEl: SVGSVGElement | null) => {
-    if (!svgEl) return;
-    
-    // Find all elements that use gradient fills or strokes
-    const elementsWithGradient = svgEl.querySelectorAll<SVGElement>('[fill^="url(#"], [stroke^="url(#"]');
-    elementsWithGradient.forEach((el) => {
-      // Force repaint by reading a layout property
-      // This triggers the browser to recalculate styles and repaint
-      void el.getBoundingClientRect();
-      
-      // Alternative: toggle a tiny transform to force repaint
-      const currentTransform = el.getAttribute('transform') || '';
-      el.setAttribute('transform', currentTransform + ' translate(0,0)');
-      // Immediately restore (browser will still process the change)
-      requestAnimationFrame(() => {
-        el.setAttribute('transform', currentTransform || '');
-      });
-    });
-    
-    // Also try forcing SVG root repaint
-    void svgEl.getBoundingClientRect();
-  }, []);
-
-  /**
-   * Parse a color values string (like "#ff0000;#00ff00;#0000ff") into an array of colors
-   */
-  const parseColorValues = (values: string): string[] => {
-    return values.split(';').map(v => v.trim()).filter(Boolean);
-  };
-
-  /**
-   * Parse numeric transform values (like "0 0.5 0.5;360 0.5 0.5") into an array
-   */
-  const parseTransformValues = (values: string): string[] => {
-    return values.split(';').map(v => v.trim()).filter(Boolean);
-  };
-
-  /**
-   * Interpolate between two hex colors
-   */
-  const interpolateColor = (color1: string, color2: string, progress: number): string => {
-    // Parse hex colors
-    const parseHex = (hex: string): [number, number, number] => {
-      const clean = hex.replace('#', '');
-      const r = parseInt(clean.substring(0, 2), 16);
-      const g = parseInt(clean.substring(2, 4), 16);
-      const b = parseInt(clean.substring(4, 6), 16);
-      return [r, g, b];
-    };
-
-    const [r1, g1, b1] = parseHex(color1);
-    const [r2, g2, b2] = parseHex(color2);
-
-    const r = Math.round(r1 + (r2 - r1) * progress);
-    const g = Math.round(g1 + (g2 - g1) * progress);
-    const b = Math.round(b1 + (b2 - b1) * progress);
-
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  };
-
-  /**
-   * Interpolate a value from a values array based on progress
-   */
-  const interpolateFromValues = useCallback((
-    values: string[],
-    progress: number,
-    interpolateFn: (v1: string, v2: string, p: number) => string
-  ): string => {
-    if (values.length === 0) return '';
-    if (values.length === 1) return values[0];
-    
-    // Map progress to segment
-    const numSegments = values.length - 1;
-    const segmentProgress = progress * numSegments;
-    const segmentIndex = Math.min(Math.floor(segmentProgress), numSegments - 1);
-    const localProgress = segmentProgress - segmentIndex;
-    
-    return interpolateFn(values[segmentIndex], values[segmentIndex + 1] || values[segmentIndex], localProgress);
   }, []);
 
   /**
@@ -599,7 +329,7 @@ const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
         parent.setAttribute(attributeName, String(interpolated));
       }
     });
-  }, [interpolateFromValues]);
+  }, []);
 
   /**
    * Apply gradient animation fallback - manually update gradient values when SMIL doesn't work.
@@ -675,7 +405,7 @@ const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
         }
       });
     });
-  }, [interpolateFromValues]);
+  }, []);
 
   const baseContext = useMemo<CanvasRenderContext>(() => ({
     viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -1048,7 +778,7 @@ const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
       currentTimeRef.current = nextTime;
       
       // Throttle state updates so the slider moves smoothly without re-rendering every frame
-      if (ts - lastStateUpdateRef.current >= _SLIDER_UPDATE_INTERVAL) {
+      if (ts - lastStateUpdateRef.current >= SLIDER_UPDATE_INTERVAL) {
         setCurrentTime(nextTime);
         lastStateUpdateRef.current = ts;
       }
@@ -1096,7 +826,7 @@ const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [domPlaying, applyClipFallback, applyGradientFallback, applyAttributeAnimationFallback, forceGradientRepaint, previewVersion]); // Only depend on domPlaying, use refs for other values
+  }, [domPlaying, applyClipFallback, applyGradientFallback, applyAttributeAnimationFallback, previewVersion]); // Only depend on domPlaying, use refs for other values
 
   // Update SVG markup display - use the raw HTML we already generated
   useEffect(() => {

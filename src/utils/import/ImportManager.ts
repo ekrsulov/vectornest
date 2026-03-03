@@ -252,8 +252,7 @@ export class ImportManager {
     private static mergeResources(pluginImports: Record<string, unknown[]>) {
         // Exclude animations from this early merge - they need element IDs which aren't available yet.
         // Animations will be processed in the second mergeImportedResources call after elements are created.
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { animation, ...defsWithoutAnimations } = pluginImports ?? {};
+        const { animation: _animation, ...defsWithoutAnimations } = pluginImports ?? {};
         mergeImportedResources(defsWithoutAnimations, new Map<string, string>(), canvasStoreApi.getState());
     }
 

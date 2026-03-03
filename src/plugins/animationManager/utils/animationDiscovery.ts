@@ -64,7 +64,7 @@ function getElementName(element: CanvasElement): string {
   if (name) return name;
 
   // Fall back to type + truncated ID
-  const shortId = element.id.length > 8 ? element.id.slice(0, 8) + '…' : element.id;
+  const shortId = element.id.length > 13 ? element.id.slice(0, 13) + '…' : element.id;
   return `${element.type} (${shortId})`;
 }
 

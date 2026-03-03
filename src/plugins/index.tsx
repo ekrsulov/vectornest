@@ -25,6 +25,7 @@ import { measurePlugin } from './measure';
 import { addPointPlugin } from './addPoint';
 import { smoothBrushPlugin } from './smoothBrush';
 import { pathSimplificationPlugin } from './pathSimplification';
+import { batchSimplifyPlugin } from './batchSimplify';
 import { roundPathPlugin } from './roundPath';
 import { pathPlugin } from './path';
 import { convertToPathPlugin } from './convertToPath';
@@ -175,6 +176,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   addPointPlugin,
   smoothBrushPlugin,
   pathSimplificationPlugin,
+  batchSimplifyPlugin,
   roundPathPlugin,
   lassoPlugin,
   sourcePlugin,

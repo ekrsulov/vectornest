@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { HStack, VStack, Input, FormLabel, Text, Box, useToast } from '@chakra-ui/react';
+import { HStack, VStack, Text, Box, useToast } from '@chakra-ui/react';
+import { PanelTextInput } from '../../ui/PanelTextInput';
+import { Upload, Download } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 
 import { logger } from '../../utils/logger';
@@ -51,8 +53,7 @@ export const FilePanel: React.FC = () => {
   }, [documentName]);
 
   // Handle document name change with throttling
-  const handleDocumentNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value;
+  const handleDocumentNameChange = useCallback((newName: string) => {
     setLocalDocumentName(newName);
 
     // Clear any existing timeout
@@ -116,6 +117,11 @@ export const FilePanel: React.FC = () => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    // Use the first file's name (without extension) as document name
+    const firstName = files[0].name.replace(/\.svg$/i, '');
+    setDocumentName(firstName);
+    setLocalDocumentName(firstName);
+
     await importSvgFiles(files, {
       appendMode: true, // Always append in FilePanel for now, or we could add a toggle
       resizeImport,
@@ -133,68 +139,68 @@ export const FilePanel: React.FC = () => {
 
   return (
     <Panel>
-      <VStack spacing={0} align="stretch">
-        {/* Document Name */}
-        <HStack spacing={0} align="center">
-          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.400' }} mb={0} pt={0.5} flexShrink={0}>
-            Name
-          </FormLabel>
-          <Box flex={1} pt={0.5} pr={0.5}>
-            <Input
-              value={localDocumentName}
-              onChange={handleDocumentNameChange}
-              placeholder="Enter document name"
-              size="sm"
-              h="20px"
-              borderRadius="0"
-              _focus={{
-                borderColor: 'gray.600',
-                boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
-              }}
-            />
-          </Box>
-          {isSaving && (
+      <VStack spacing={2} align="stretch">
+        {/* Import */}
+        <PanelStyledButton onClick={handleImportSVG} width="full" size="sm">
+          <HStack spacing={1.5}>
+            <Upload size={11} />
+            <span>Import SVG</span>
+          </HStack>
+        </PanelStyledButton>
+
+        {/* Export */}
+        <Box>
+          <Text
+            fontSize="12px"
+            color="gray.700"
+            _dark={{ color: 'gray.300' }}
+            mb={1.5}
+          >
+            EXPORT
+          </Text>
+
+          {/* Name inline row */}
+          <HStack spacing={1.5} mb={1.5} align="center">
             <Text
               fontSize="12px"
-              color="gray.500"
-              bg="white"
-              _dark={{
-                color: 'gray.400',
-                bg: 'gray.700'
-              }}
-              px={1}
+              fontWeight="medium"
+              color="gray.600"
+              _dark={{ color: 'gray.400' }}
               flexShrink={0}
             >
-              Saving...
+              Name
             </Text>
-          )}
-        </HStack>
+            <Box flex={1}>
+              <PanelTextInput
+                value={localDocumentName}
+                onChange={handleDocumentNameChange}
+                placeholder="Document name"
+                width="190px"
+                height="20px"
+              />
+            </Box>
+            {isSaving && (
+              <Text fontSize="10px" color="gray.400" _dark={{ color: 'gray.600' }} flexShrink={0}>
+                saving…
+              </Text>
+            )}
+          </HStack>
 
-        <HStack spacing={1} pt={2}>
-          <PanelStyledButton
-            onClick={handleImportSVG}
-            flex={1}
-            size="sm"
-          >
-            Import SVG
-          </PanelStyledButton>
-
-          <PanelStyledButton
-            onClick={handleSaveAsSvg}
-            flex={1}
-            size="sm"
-          >
-            SVG
-          </PanelStyledButton>
-
-          <PanelStyledButton
-            onClick={handleSaveAsPng}
-            flex={1}
-            size="sm"
-          >
-            PNG
-          </PanelStyledButton>
-        </HStack>
+          <HStack spacing={1}>
+            <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm">
+              <HStack spacing={1.5}>
+                <Download size={11} />
+                <span>SVG</span>
+              </HStack>
+            </PanelStyledButton>
+            <PanelStyledButton onClick={handleSaveAsPng} flex={1} size="sm">
+              <HStack spacing={1.5}>
+                <Download size={11} />
+                <span>PNG</span>
+              </HStack>
+            </PanelStyledButton>
+          </HStack>
+        </Box>
 
         {/* Hidden file input for SVG import */}
         <input

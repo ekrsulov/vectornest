@@ -17,7 +17,7 @@ import {
 } from './import/textStyleUtils';
 import { generateShortId } from './idGenerator';
 import { parseSvgDocument } from './svg/parser';
-import { applyEmbeddedClassStyles } from './svg/styleAttributes';
+import { applyEmbeddedClassStyles, extractStyleAttributes } from './svg/styleAttributes';
 import { extractSVGDimensions, flattenImportedElements } from './svg/importHelpers';
 import { processElement, type TextPathAttachment } from './svg/processElement';
 import type {
@@ -332,6 +332,9 @@ export async function importSVGWithDimensions(file: File): Promise<SVGImportResu
         const elements: ImportedElement[] = [];
         const attachments: TextPathAttachment[] = [];
         applyGlobalTextStyleToNodes(svgElement, globalTextStyle);
+        // Extract presentation attributes from the root <svg> element (e.g. fill="none") so they
+        // are properly inherited by all descendant elements, matching SVG cascade behaviour.
+        const svgRootInheritedStyle = extractStyleAttributes(svgElement);
         Array.from(svgElement.children).forEach((child) => {
           const isArtboardMetadataNode = child.tagName.toLowerCase() === 'metadata' && (
             child.getAttribute(VECTORNEST_ARTBOARD_METADATA_ATTR) !== null ||
@@ -349,7 +352,7 @@ export async function importSVGWithDimensions(file: File): Promise<SVGImportResu
             child,
             { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
             attachments,
-            { textStyle: globalTextStyle, doc, svgDimensions: dimensions }
+            { textStyle: globalTextStyle, doc, svgDimensions: dimensions, inheritedStyle: svgRootInheritedStyle }
           ));
         });
 

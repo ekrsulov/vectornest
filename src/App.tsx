@@ -53,15 +53,22 @@ function App() {
     e.stopPropagation();
   }, []);
 
+  const setDocumentName = useCanvasStore((state) => state.setDocumentName);
+
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
+      // Use the first SVG file's name (without extension) as document name
+      const svgFile = Array.from(files).find((f) => /\.svg$/i.test(f.name));
+      if (svgFile) {
+        setDocumentName(svgFile.name.replace(/\.svg$/i, ''));
+      }
       await importSvgFiles(files, { appendMode: true });
     }
-  }, [importSvgFiles]);
+  }, [importSvgFiles, setDocumentName]);
 
   return (
     <div

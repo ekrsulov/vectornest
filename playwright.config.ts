@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const useExternalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER === '1';
+// Default to using an already-running dev server.
+// Set PLAYWRIGHT_EXTERNAL_SERVER=0 to have Playwright manage the webServer.
+const useExternalServer = process.env.PLAYWRIGHT_EXTERNAL_SERVER !== '0';
 
 /**
  * @see https://playwright.dev/docs/test-configuration

@@ -361,7 +361,7 @@ export async function expandSnapPointsOptions(page: Page): Promise<void> {
   const snapPointsToggle = await firstVisible(page.getByRole('checkbox', { name: 'Show Snap Points' }));
   const count = await snapPointsToggle.count();
   if (count > 0 && !(await snapPointsToggle.isChecked())) {
-    await snapPointsToggle.click();
+    await snapPointsToggle.setChecked(true, { force: true });
     await page.waitForTimeout(100);
   }
   

@@ -11,6 +11,9 @@ bun run preview          # Preview production build locally
 bun run type-check       # TypeScript type checking without emit
 bun run lint             # ESLint code quality check
 bun run test             # Run Vitest unit tests
+bun run test:e2e         # Run Playwright against an already-running dev server
+bun run test:e2e:managed # Run Playwright with its managed webServer
+bun run test:ui          # Open Playwright UI against an already-running dev server
 ```
 
 **IMPORTANT**: Always run `bun run lint` and `bun run build` after making changes. Fix any errors or warnings before considering the task complete.
@@ -430,6 +433,8 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
 ## Testing
 
 - **E2E**: Playwright tests in `tests/` using helpers from `tests/helpers.ts`
+  - Default mode expects the Vite dev server to already be running on `http://localhost:5173`
+  - Use `bun run test:e2e:managed` if you want Playwright to start its own `webServer`
   ```typescript
   import { clickToolButton, getCanvasPaths, waitForLoad } from './helpers';
   await clickToolButton(page, 'Shape');

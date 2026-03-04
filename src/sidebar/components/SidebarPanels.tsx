@@ -6,6 +6,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
 import { usePluginRegistrationVersion } from '../../hooks/usePluginRegistrationVersion';
+import { AutoPanelKeyProvider } from '../../contexts/AutoPanelKeyProvider';
 import {
   getPanelConfigs,
 } from './panelConfig';
@@ -288,33 +289,35 @@ export const SidebarPanels: React.FC = () => {
         },
       }}
     >
-      <Suspense fallback={<Box h="20px" bg="gray.100" />}>
-        {visiblePanelConfigs.map((panelConfig) => {
-          const shouldShow = panelConfig.condition(conditionContext);
-          if (!shouldShow) {
-            return null;
-          }
+      <AutoPanelKeyProvider namespace={showSettingsPanel ? 'sidebar:prefs' : null}>
+        <Suspense fallback={<Box h="20px" bg="gray.100" />}>
+          {visiblePanelConfigs.map((panelConfig) => {
+            const shouldShow = panelConfig.condition(conditionContext);
+            if (!shouldShow) {
+              return null;
+            }
 
-          const PanelComponent = panelConfig.component;
-          const panelProps = {
-            ...allPanelProps,
-            ...(panelConfig.getProps
-              ? panelConfig.getProps(allPanelProps)
-              : {}),
-            panelKey: panelConfig.key,
-          };
-          const panelContent = renderWithPanelBadge(
-            <PanelComponent {...panelProps} />,
-            panelConfig.key
-          );
+            const PanelComponent = panelConfig.component;
+            const panelProps = {
+              ...allPanelProps,
+              ...(panelConfig.getProps
+                ? panelConfig.getProps(allPanelProps)
+                : {}),
+              panelKey: panelConfig.key,
+            };
+            const panelContent = renderWithPanelBadge(
+              <PanelComponent {...panelProps} />,
+              panelConfig.key
+            );
 
-          return (
-            <React.Fragment key={panelConfig.key}>
-              {panelContent}
-            </React.Fragment>
-          );
-        })}
-      </Suspense>
+            return (
+              <React.Fragment key={panelConfig.key}>
+                {panelContent}
+              </React.Fragment>
+            );
+          })}
+        </Suspense>
+      </AutoPanelKeyProvider>
     </Box>
   );
 };

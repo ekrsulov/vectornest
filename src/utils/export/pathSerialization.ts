@@ -357,6 +357,31 @@ export function serializePathElement(pathElement: PathElement, indent: string, s
     markerEndId: markerEndId ?? undefined,
   });
 
+  // When a path has textPath AND element-level animations (e.g. animateTransform translate/scale),
+  // wrap the <path> and <text> together in a <g> that carries the animations.
+  // This makes the text follow the animated path because the group transform applies to both.
+  if (pathData.textPath?.text && serializedElementAnimations.length > 0) {
+    const innerIndent = `${indent}  `;
+    // Place animations on the <g> (same indentation logic as serializePathElementTag)
+    const animLines = serializedElementAnimations
+      .split('\n')
+      .map((line) => `${indent}  ${line}`)
+      .join('\n');
+    // <path> inside the group — self-closing, no animations
+    const pathTag = `${innerIndent}<path ${attributes.join(' ')} />`;
+    // <text><textPath> inside the group at inner indent level
+    const textTag = serializeTextPathElement(
+      pathElement,
+      pathData,
+      effectiveStrokeColor,
+      isHidden,
+      chainDelays,
+      textPathAnimations,
+      innerIndent
+    );
+    return `${indent}<g>\n${animLines}\n${pathTag}${textTag}\n${indent}</g>`;
+  }
+
   let result = serializePathElementTag(indent, attributes, serializedElementAnimations);
   result += serializeTextPathElement(
     pathElement,

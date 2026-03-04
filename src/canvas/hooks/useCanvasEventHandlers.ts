@@ -79,6 +79,20 @@ export const useCanvasEventHandlers = (props: UseCanvasEventHandlersProps) => {
       return;
     }
 
+    // If the event target (or any ancestor) carries data-element-id, route to element double-click.
+    // This handles elements whose visible part is rendered outside the PathElementRenderer
+    // (e.g. textPath <text>/<tspan> rendered in a midground canvas layer).
+    const target = e.target as Element;
+    const elementId =
+      target.getAttribute?.('data-element-id') ??
+      target.closest?.('[data-element-id]')?.getAttribute('data-element-id');
+    if (elementId) {
+      e.preventDefault();
+      e.stopPropagation();
+      doubleClickHandlers.handleElementDoubleClick(elementId, e as React.MouseEvent<Element>);
+      return;
+    }
+
     // Only handle double click if we clicked on empty space
     if (isCanvasEmptySpace(e.target)) {
       e.preventDefault();
@@ -88,7 +102,7 @@ export const useCanvasEventHandlers = (props: UseCanvasEventHandlersProps) => {
         activePlugin
       });
     }
-  }, [activePlugin, eventBus]);
+  }, [activePlugin, doubleClickHandlers, eventBus]);
 
   return {
     // Desktop double-click handlers

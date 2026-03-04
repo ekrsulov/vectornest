@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { InlineTextEditSlice } from './inlineEditSlice';
 import type { NativeTextElement } from './types';
+import type { PathElement } from '../../types';
 import { isTouchDevice } from '../../utils/domHelpers';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 
@@ -135,6 +136,14 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
       | undefined ?? null;
   }, [elements, editingElementId]);
 
+  // Also look up path elements with textPath data (text-on-path editing)
+  const textPathElement = useMemo(() => {
+    if (!editingElementId) return null;
+    const el = elements.find((e) => e.id === editingElementId && e.type === 'path') as PathElement | undefined;
+    if (!el) return null;
+    return el.data.textPath ? el : null;
+  }, [elements, editingElementId]);
+
   // Keep original text for Escape-cancel
   const originalTextRef = useRef<string>('');
 
@@ -143,10 +152,28 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
 
   // Focus the editor and position it over the SVG element on editing start
   useEffect(() => {
-    if (!element || !editorRef.current) return;
+    if ((!element && !textPathElement) || !editorRef.current) return;
     cancelledRef.current = false;
 
-    const data = element.data;
+    // For textPath elements: populate editor with the textPath text and return early
+    // (textPath always uses panel mode, so no SVG overlay positioning is needed)
+    if (!element && textPathElement) {
+      const text = textPathElement.data.textPath?.text ?? '';
+      originalTextRef.current = text;
+      const lines = text.split(/\r?\n/);
+      editorRef.current.innerHTML = lines
+        .map((line, i) => (i === 0 ? escapeHtml(line || '\u200B') : `<div>${escapeHtml(line || '\u200B')}</div>`))
+        .join('');
+      editorRef.current.focus();
+      const sel = window.getSelection();
+      if (sel) {
+        sel.selectAllChildren(editorRef.current);
+        sel.collapseToEnd();
+      }
+      return;
+    }
+
+    const data = element!.data;
     const text = data.text ?? '';
     originalTextRef.current = text;
 
@@ -157,7 +184,7 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
       // The DOM rect gives tight glyph bounds (no CSS leading).
       // CSS line-height adds half-leading = (lineH-1)*fontSize/2 above the first line,
       // pushing the caret down inside the div. Shift top UP and expand height to cancel.
-      const svgTextEl = document.querySelector<SVGTextElement>(`[data-element-id="${element.id}"]`);
+      const svgTextEl = document.querySelector<SVGTextElement>(`[data-element-id="${element!.id}"]`);
       if (svgTextEl && editorRef.current) {
         const svgRect = svgTextEl.getBoundingClientRect();
         const parentEl = editorRef.current.offsetParent as HTMLElement | null;
@@ -211,6 +238,13 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
           spans: spans.length > 1 ? spans : undefined,
         },
       });
+    } else if (el && el.type === 'path') {
+      const pe = el as PathElement;
+      if (pe.data.textPath) {
+        updateElement(editingElementId, {
+          data: { ...pe.data, textPath: { ...pe.data.textPath, text: plainText } },
+        });
+      }
     }
   }, [editingElementId, updateElement]);
 
@@ -222,9 +256,14 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
   }, [applyText]);
 
   // Blur = commit (text already live, just stop editing)
+  // Also flush current editor content to handle any missed input events (e.g. paste)
   const commitEdit = useCallback(() => {
+    if (editorRef.current) {
+      const { plainText } = parseEditableContent(editorRef.current);
+      applyText(plainText);
+    }
     stopInlineTextEdit?.();
-  }, [stopInlineTextEdit]);
+  }, [applyText, stopInlineTextEdit]);
 
   // Escape = restore original text then stop
   const cancelEdit = useCallback(() => {
@@ -263,9 +302,113 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
     e.stopPropagation();
   }, []);
 
-  if (!element) return null;
+  if (!element && !textPathElement) return null;
 
-  const { data } = element;
+  // ── TEXT-ON-PATH EDITING: always use panel mode (modal dialog) ────────────────
+  if (!element && textPathElement) {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0,0,0,0.35)',
+          pointerEvents: 'auto',
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            background: 'var(--chakra-colors-chakra-body-bg, #fff)',
+            border: '1px solid var(--chakra-colors-chakra-border-color, #E2E8F0)',
+            borderRadius: '10px',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.22)',
+            padding: '10px',
+            width: 'min(96vw, 420px)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+          }}
+        >
+          <div style={{
+            fontSize: '11px',
+            fontFamily: 'system-ui, sans-serif',
+            fontWeight: 600,
+            color: 'var(--chakra-colors-gray-500, #718096)',
+            userSelect: 'none',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.05em',
+          }}>
+            Edit path text
+          </div>
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            role="textbox"
+            aria-label="Text editor"
+            spellCheck={false}
+            style={{
+              width: '100%',
+              minHeight: '72px',
+              maxHeight: '40dvh',
+              overflowY: 'auto',
+              fontSize: '16px',
+              fontFamily: 'system-ui, sans-serif',
+              lineHeight: 1.5,
+              color: 'var(--chakra-colors-chakra-body-text, #1A202C)',
+              background: 'var(--chakra-colors-chakra-subtle-bg, #F7FAFC)',
+              border: '1px solid var(--chakra-colors-chakra-border-color, #E2E8F0)',
+              borderRadius: '6px',
+              padding: '8px 10px',
+              outline: 'none',
+              caretColor: 'var(--chakra-colors-blue-400, #63B3ED)',
+              boxSizing: 'border-box' as const,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+            onKeyDown={handleKeyDown}
+            onInput={handleInput}
+            onBlur={(e) => {
+              const related = e.relatedTarget as HTMLElement | null;
+              if (related?.dataset.editorAction) return;
+              commitEdit();
+            }}
+          />
+          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+            <PanelStyledButton
+              data-editor-action="cancel"
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={cancelEdit}
+              size="sm"
+              px={3}
+            >
+              Cancel
+            </PanelStyledButton>
+            <PanelStyledButton
+              data-editor-action="commit"
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={commitEdit}
+              size="sm"
+              px={3}
+              bg="blue.500"
+              color="white"
+              borderColor="blue.500"
+              _hover={{ bg: 'blue.600' }}
+              _dark={{ bg: 'blue.400', borderColor: 'blue.400', _hover: { bg: 'blue.500' } }}
+            >
+              Apply
+            </PanelStyledButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { data } = element!;
   const { zoom } = viewport;
   const usePanelMode = isTouch || hasNonTrivialTransform(data);
 

@@ -23,6 +23,9 @@ import { GradientItemCard } from '../gradients/GradientItemCard';
 import { PatternItemCard } from '../patterns/PatternItemCard';
 import { MaskItemCard } from '../masks/MaskItemCard';
 import { AnimationItemCard } from '../animationLibrary/AnimationItemCard';
+import { TextPathItemCard } from '../textPathLibrary/TextPathItemCard';
+import { TEXT_PATH_PRESETS } from '../textPathLibrary/presets';
+import type { TextPathPreset } from '../textPathLibrary/presets';
 import type { ClipDefinition } from '../clipping/slice';
 import type { MarkerDefinition } from '../markers/slice';
 import type { SymbolDefinition } from '../symbols/slice';
@@ -31,6 +34,7 @@ import type { GradientDef } from '../gradients/slice';
 import type { PatternDef } from '../patterns/slice';
 import type { MaskDefinition } from '../masks/types';
 import type { AnimationPreset } from '../animationLibrary/types';
+import type { TextPathLibrarySlice } from '../textPathLibrary/slice';
 import { Panel } from '../../ui/Panel';
 import { PanelTextInput } from '../../ui/PanelTextInput';
 import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
@@ -140,14 +144,15 @@ export const LibrarySearchPanel: React.FC = () => {
     const hasQuery = librarySearchQuery.trim().length > 0;
 
     const TYPE_LABELS = {
+        animations: 'Animations',
         clips: 'Clips',
-        markers: 'Markers',
-        symbols: 'Symbols',
         filters: 'Filters',
         gradients: 'Gradients',
-        patterns: 'Patterns',
+        markers: 'Markers',
         masks: 'Masks',
-        animations: 'Animations',
+        patterns: 'Patterns',
+        symbols: 'Symbols',
+        textpaths: 'Textpaths',
     } as const;
 
     type TypeKey = keyof typeof TYPE_LABELS;
@@ -160,14 +165,15 @@ export const LibrarySearchPanel: React.FC = () => {
     );
     const [enabledTypes, setEnabledTypes] = useState<Record<TypeKey, boolean>>(
         storedEnabledTypes ?? {
+            animations: true,
             clips: true,
-            markers: true,
-            symbols: true,
             filters: true,
             gradients: true,
-            patterns: true,
+            markers: true,
             masks: true,
-            animations: true,
+            patterns: true,
+            symbols: true,
+            textpaths: true,
         }
     );
 
@@ -186,43 +192,50 @@ export const LibrarySearchPanel: React.FC = () => {
 
     const selectAll = useCallback(() => {
         persistEnabledTypes({
+            animations: true,
             clips: true,
-            markers: true,
-            symbols: true,
             filters: true,
             gradients: true,
-            patterns: true,
+            markers: true,
             masks: true,
-            animations: true,
+            patterns: true,
+            symbols: true,
+            textpaths: true,
         });
     }, [persistEnabledTypes]);
 
     const deselectAll = useCallback(() => {
         persistEnabledTypes({
+            animations: false,
             clips: false,
-            markers: false,
-            symbols: false,
             filters: false,
             gradients: false,
-            patterns: false,
+            markers: false,
             masks: false,
-            animations: false,
+            patterns: false,
+            symbols: false,
+            textpaths: false,
         });
     }, [persistEnabledTypes]);
+
+    const selectTextPathFromSearch = useShallowCanvasSelector((state) =>
+        (state as CanvasStore & TextPathLibrarySlice).selectFromSearch
+    );
 
     const results = useMemo(() => {
         if (!hasQuery) return null;
         const q = librarySearchQuery.toLowerCase();
 
         return {
+            animations: enabledTypes.animations ? animations.filter(i => i.name.toLowerCase().includes(q)) : [],
             clips: enabledTypes.clips ? clips.filter(i => i.name.toLowerCase().includes(q)) : [],
-            markers: enabledTypes.markers ? markers.filter(i => i.name.toLowerCase().includes(q)) : [],
-            symbols: enabledTypes.symbols ? symbols.filter(i => i.name.toLowerCase().includes(q)) : [],
             filters: enabledTypes.filters ? filters.filter(i => i.name.toLowerCase().includes(q)) : [],
             gradients: enabledTypes.gradients ? gradients.filter(i => i.name.toLowerCase().includes(q)) : [],
-            patterns: enabledTypes.patterns ? patterns.filter(i => i.name.toLowerCase().includes(q)) : [],
+            markers: enabledTypes.markers ? markers.filter(i => i.name.toLowerCase().includes(q)) : [],
             masks: enabledTypes.masks ? normalizedMasks.filter(i => i.name.toLowerCase().includes(q)) : [],
-            animations: enabledTypes.animations ? animations.filter(i => i.name.toLowerCase().includes(q)) : [],
+            patterns: enabledTypes.patterns ? patterns.filter(i => i.name.toLowerCase().includes(q)) : [],
+            symbols: enabledTypes.symbols ? symbols.filter(i => i.name.toLowerCase().includes(q)) : [],
+            textpaths: enabledTypes.textpaths ? TEXT_PATH_PRESETS.filter(i => i.label.toLowerCase().includes(q)).map(p => ({ id: p.id, name: p.label, _preset: p })) : [],
         };
     }, [hasQuery, librarySearchQuery, clips, markers, symbols, filters, gradients, patterns, normalizedMasks, animations, enabledTypes]);
 
@@ -249,7 +262,7 @@ export const LibrarySearchPanel: React.FC = () => {
     };
 
 
-    const renderResultItem = (item: { id: string; name: string }, type: string) => {
+    const renderResultItem = (item: { id: string; name: string; _preset?: TextPathPreset }, type: string) => {
         switch (type) {
             case 'Clips':
                 return <ClipItemCard clip={item as unknown as ClipDefinition} onClick={() => {
@@ -299,6 +312,17 @@ export const LibrarySearchPanel: React.FC = () => {
                         <AnimationItemCard preset={item as unknown as AnimationPreset} isSelected={false} />
                     </Box>
                 );
+            case 'Textpaths':
+                return item._preset ? (
+                    <TextPathItemCard
+                        preset={item._preset}
+                        isSelected={false}
+                        onClick={() => {
+                            setOpenPanelKey?.('sidebar:library:textpath');
+                            deferSelection(() => selectTextPathFromSearch?.(item.id));
+                        }}
+                    />
+                ) : null;
             default:
                 return null;
         }
@@ -373,14 +397,15 @@ export const LibrarySearchPanel: React.FC = () => {
                 </Box>
                 {results && (
                     <VStack spacing={2} align="stretch" overflowY="auto" flex={1}>
+                        {renderResultSection('Animations', results.animations)}
                         {renderResultSection('Clips', results.clips)}
-                        {renderResultSection('Markers', results.markers)}
-                        {renderResultSection('Symbols', results.symbols)}
                         {renderResultSection('Filters', results.filters)}
                         {renderResultSection('Gradients', results.gradients)}
-                        {renderResultSection('Patterns', results.patterns)}
+                        {renderResultSection('Markers', results.markers)}
                         {renderResultSection('Masks', results.masks)}
-                        {renderResultSection('Animations', results.animations)}
+                        {renderResultSection('Patterns', results.patterns)}
+                        {renderResultSection('Symbols', results.symbols)}
+                        {renderResultSection('Textpaths', results.textpaths)}
                         {Object.values(results).every(r => r.length === 0) && librarySearchQuery && (
                             <Text fontSize="sm" color="gray.500" textAlign="center" py={4}>
                                 No results found

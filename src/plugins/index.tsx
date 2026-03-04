@@ -35,6 +35,7 @@ import { pluginSelectorPlugin } from './pluginSelector';
 import { wrap3dPlugin } from './wrap3d';
 import { nativeTextPlugin } from './nativeText';
 import { nativeShapesPlugin } from './nativeShapes';
+import { textPathLibraryPlugin } from './textPathLibrary';
 import { gradientsPlugin } from './gradients';
 import { patternsPlugin } from './patterns';
 import { arrowsPlugin } from './arrows';
@@ -183,6 +184,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   imagePlugin,
   nativeTextPlugin,
   nativeShapesPlugin,
+  textPathLibraryPlugin,
   gradientsPlugin,
   patternsPlugin,
   wrap3dPlugin,

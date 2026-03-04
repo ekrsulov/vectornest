@@ -8,6 +8,7 @@ import type { PathElement } from '../../types';
 import type { WireframePluginSlice } from '../wireframe/slice';
 import { commandsToString } from '../../utils/pathParserUtils';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
+import { renderAnimationsForElement } from '../animationSystem/renderAnimations';
 import { ensureChainDelays } from '../animationSystem/chainUtils';
 import { getClipRuntimeId } from '../../utils/maskUtils';
 
@@ -63,6 +64,18 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
     const strokeOpacity = wireframeEnabled ? 1 : (textPath.strokeOpacity ?? 1);
     const chainDelays: Map<string, number> = ensureChainDelays(animationState?.chainDelays);
     const restartKey = animationState?.restartKey ?? 0;
+
+    // Filter to transform-level animations (animateTransform, animateMotion) so the
+    // group — that holds both the reference path and the <text> — moves together with
+    // the visible path rendered by PathElementRenderer.
+    const transformAnimations: SVGAnimation[] = animations.filter(
+      (anim) =>
+        anim.targetElementId === element.id &&
+        (anim.type === 'animateTransform' || anim.type === 'animateMotion')
+    );
+    const groupAnimationNodes = transformAnimations.length > 0
+      ? renderAnimationsForElement(element.id, transformAnimations, animationState)
+      : null;
     const transformAttr = (() => {
       if (textPath.transformMatrix) return `matrix(${textPath.transformMatrix.join(' ')})`;
       const pathTransform = (pathData as { transformMatrix?: number[] }).transformMatrix;
@@ -93,13 +106,14 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
         {...(clipPathUrl ? { clipPath: clipPathUrl } : {})}
         opacity={textPath.opacity ?? pathData.opacity}
       >
+        {groupAnimationNodes}
         <path
           id={pathRefId}
           data-element-id={element.id}
           d={pathD}
           fill="none"
           stroke="transparent"
-          strokeWidth={Math.max(pathData.strokeWidth, 6)}
+          strokeWidth={Math.max(pathData.strokeWidth, 12)}
           pointerEvents="stroke"
         />
         <text
@@ -119,6 +133,8 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
           stroke={strokeColor}
           strokeWidth={strokeWidth}
           strokeOpacity={strokeOpacity}
+          pointerEvents="all"
+          style={{ cursor: 'move' }}
           filter={wireframeEnabled ? undefined : (pathData.filterId ? `url(#${pathData.filterId})` : undefined)}
         >
           <textPath

@@ -213,6 +213,13 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
 
   updateSelectedPaths: (properties) => {
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+
+    // Check once outside the setter whether we should redirect to textPath
+    const isNativeTextMode = get().activePlugin === 'nativeText';
+    const TEXTPATH_STYLE_KEYS = new Set([
+      'fillColor', 'fillOpacity', 'strokeColor', 'strokeWidth', 'strokeOpacity', 'opacity',
+    ]);
+
     setStore((currentState) => {
       const selectedSet = new Set(currentState.selectedIds);
       return {
@@ -224,6 +231,28 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
         // Paths keep existing behavior
         if (el.type === 'path') {
           const pathData = el.data as PathData;
+
+          // In nativeText mode, route style-related writes to the textPath sub-object
+          if (isNativeTextMode && pathData.textPath) {
+            const textPathUpdates: Record<string, unknown> = {};
+            const directPathUpdates: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(properties as Record<string, unknown>)) {
+              if (TEXTPATH_STYLE_KEYS.has(key)) {
+                textPathUpdates[key] = value;
+              } else {
+                directPathUpdates[key] = value;
+              }
+            }
+            return {
+              ...el,
+              data: {
+                ...pathData,
+                ...directPathUpdates,
+                textPath: { ...pathData.textPath, ...textPathUpdates },
+              },
+            };
+          }
+
           return {
             ...el,
             data: {
@@ -240,6 +269,19 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
       }),
     };
     });
+
+    // When writes are redirected to textPath, also keep state.style in sync so
+    // NativeTextPanel's sync effect sees matching values and doesn't revert the change.
+    if (isNativeTextMode) {
+      const styleUpdates: Record<string, unknown> = {};
+      for (const key of TEXTPATH_STYLE_KEYS) {
+        const propsMap = properties as Record<string, unknown>;
+        if (key in propsMap) styleUpdates[key] = propsMap[key];
+      }
+      if (Object.keys(styleUpdates).length > 0) {
+        get().updateStyle(styleUpdates as Parameters<CanvasStore['updateStyle']>[0]);
+      }
+    }
   },
 
   setSelectionPath: (path) => {

@@ -481,11 +481,23 @@ export const nativeTextPlugin: PluginDefinition<CanvasStore> = {
   onElementDoubleClick: (elementId, _event, context) => {
     const state = context.store.getState();
     const element = state.elements.find(el => el.id === elementId);
-    if (!element || element.type !== 'nativeText') return;
+    if (!element) return;
 
-    // Start inline text editing
-    const inlineState = state as unknown as InlineTextEditSlice;
-    inlineState.startInlineTextEdit?.(elementId);
+    // Handle nativeText inline editing
+    if (element.type === 'nativeText') {
+      const inlineState = state as unknown as InlineTextEditSlice;
+      inlineState.startInlineTextEdit?.(elementId);
+      return;
+    }
+
+    // Handle path with textPath: activate nativeText plugin and open the text edit modal
+    if (element.type === 'path' && (element as PathElement).data.textPath) {
+      state.setActivePlugin('nativeText');
+      state.selectElements([elementId]);
+      const inlineState = state as unknown as InlineTextEditSlice;
+      inlineState.startInlineTextEdit?.(elementId);
+      return;
+    }
   },
   onCanvasDoubleClick: (_event, context) => {
     // If currently inline editing, stop and go back to select

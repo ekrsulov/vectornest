@@ -14,6 +14,7 @@ import { MarkerItemCard } from '../markers/MarkerItemCard';
 import { FilterItemCard } from '../libraryFilters/FilterItemCard';
 import { PatternItemCard } from '../patterns/PatternItemCard';
 import { MaskItemCard } from '../masks/MaskItemCard';
+import { TextPathItemCard } from '../textPathLibrary/TextPathItemCard';
 
 import { useCanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -26,6 +27,7 @@ import type { MarkersSlice } from '../markers/slice';
 import type { SymbolPluginSlice } from '../symbols/slice';
 import type { MasksSlice } from '../masks/types';
 import type { AnimationLibrarySlice } from '../animationLibrary/types';
+import type { TextPathLibrarySlice } from '../textPathLibrary/slice';
 import type { LibraryItem, LibraryItemType } from './useLibrarySearchResults';
 import { LIB_TYPE_LABELS } from './useLibrarySearchResults';
 import { pluginManager } from '../../utils/pluginManager';
@@ -51,6 +53,7 @@ const LIBRARY_PANEL_PLUGIN_IDS: Record<LibraryItemType, string> = {
   filters: 'libraryFilters',
   patterns: 'patterns',
   masks: 'masks',
+  textpaths: 'textPathLibrary',
 };
 
 const resolveLibraryPanelComponent = (
@@ -74,6 +77,7 @@ export const LibraryCardRenderer: React.FC<LibraryCardRendererProps> = ({
     selectFilterFromSearch,
     selectPatternFromSearch,
     selectMaskFromSearch,
+    selectTextPathFromSearch,
   } = useCanvasStore(
     useShallow((s) => ({
       selectSymbolFromSearch:    (s as CanvasStore & SymbolPluginSlice).selectFromSearch,
@@ -84,6 +88,7 @@ export const LibraryCardRenderer: React.FC<LibraryCardRendererProps> = ({
       selectFilterFromSearch:    (s as CanvasStore & LibraryFiltersSlice).selectFromSearch,
       selectPatternFromSearch:   (s as CanvasStore & PatternsSlice).selectFromSearch,
       selectMaskFromSearch:      (s as CanvasStore & MasksSlice).selectFromSearch,
+      selectTextPathFromSearch:  (s as CanvasStore & TextPathLibrarySlice).selectFromSearch,
     }))
   );
 
@@ -103,6 +108,7 @@ export const LibraryCardRenderer: React.FC<LibraryCardRendererProps> = ({
       filters:    selectFilterFromSearch,
       patterns:   selectPatternFromSearch,
       masks:      selectMaskFromSearch,
+      textpaths:  selectTextPathFromSearch,
     };
 
     // Open the modal, then once the panel has mounted, scroll-select the item
@@ -113,7 +119,7 @@ export const LibraryCardRenderer: React.FC<LibraryCardRendererProps> = ({
     onOpenModal,
     selectSymbolFromSearch, selectGradientFromSearch, selectAnimationFromSearch,
     selectClipFromSearch, selectMarkerFromSearch, selectFilterFromSearch,
-    selectPatternFromSearch, selectMaskFromSearch,
+    selectPatternFromSearch, selectMaskFromSearch, selectTextPathFromSearch,
   ]);
 
   switch (item.libType) {
@@ -170,6 +176,13 @@ export const LibraryCardRenderer: React.FC<LibraryCardRendererProps> = ({
         <Box cursor="pointer" onClick={() => handleClick('masks', item.data.id)}>
           <MaskItemCard mask={item.data} isSelected={false} />
         </Box>
+      );
+    case 'textpaths':
+      return (
+        <TextPathItemCard
+          preset={item.data}
+          onClick={() => handleClick('textpaths', item.data.id)}
+        />
       );
     default:
       return null;

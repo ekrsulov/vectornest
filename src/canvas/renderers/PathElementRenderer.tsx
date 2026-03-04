@@ -121,7 +121,10 @@ const PathElementRendererView = ({
   const isDefElement = Boolean(pathData.isDefinition || pathData.isTextPathRef);
   const display = isDefElement ? 'none' : pathData.display;
   const visibility = isDefElement ? 'hidden' : pathData.visibility;
-  const pointerEventsValue = isDefElement || isPathInteractionDisabled ? 'none' : 'auto';
+  // TextPath paths use fill=none/stroke=none for layout — force all pointer events so
+  // clicks and double-clicks on the text (layer above) or path area still register.
+  const isTextPathElement = Boolean(pathData.textPath);
+  const pointerEventsValue = isDefElement || isPathInteractionDisabled ? 'none' : isTextPathElement ? 'all' : 'auto';
 
   const extensionAttributes = collectExtensionAttributes(element, context);
   const extensionChildren = collectExtensionChildren(element, context);

@@ -146,6 +146,13 @@ export function LibraryPanelHelper<T extends LibraryItem>(props: LibraryPanelHel
                     }
                 />
 
+                {/* Filter / Extra Content above items */}
+                {ExtraContent && (
+                    <Box>
+                        {ExtraContent}
+                    </Box>
+                )}
+
                 {/* List Section */}
                 {items.length === 0 ? (
                     <Text fontSize="10px" color={emptyColor} lineHeight="1.3">
@@ -197,13 +204,6 @@ export function LibraryPanelHelper<T extends LibraryItem>(props: LibraryPanelHel
                     </Box>
                 )}
 
-                {/* Extra Content Section */}
-                {ExtraContent && (
-                    <Box>
-                        {!hideDividers && <Divider borderColor={dividerColor} my={1} />}
-                        {ExtraContent}
-                    </Box>
-                )}
             </VStack>
         </Panel>
     );

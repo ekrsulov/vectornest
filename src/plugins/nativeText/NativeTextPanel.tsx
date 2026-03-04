@@ -15,6 +15,7 @@ import { preventSpacebarPropagation } from '../../utils/panelHelpers';
 import { isTTFFont } from '../../utils/ttfFontUtils';
 import { isPathElement, type PathElement } from '../../types';
 import { NumberInput } from '../../ui/NumberInput';
+import type { InlineTextEditSlice } from './inlineEditSlice';
 interface NativeTextPanelProps {
   hideTitle?: boolean;
 }
@@ -26,6 +27,9 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
   const selectedIds = useCanvasStore((state) => state.selectedIds);
   const updateElement = useCanvasStore((state) => state.updateElement);
   const style = useCanvasStore((state) => state.style);
+  const inlineEditingElementId = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null
+  );
 
   const selectedText = useMemo(() => {
     const first = elements.find((el) => selectedIds.includes(el.id) && el.type === 'nativeText');
@@ -103,7 +107,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
       textLength: tp?.textLength ?? current.textLength,
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPath?.id, current.text, current.fontSize, current.fontFamily, current.fontWeight, current.fontStyle, current.textDecoration, current.letterSpacing, current.lengthAdjust, current.textLength]);
+  }, [selectedPath?.id, selectedPath?.data.textPath?.text, current.text, current.fontSize, current.fontFamily, current.fontWeight, current.fontStyle, current.textDecoration, current.letterSpacing, current.lengthAdjust, current.textLength]);
   const [pathTextState, setPathTextState] = useState(pathTextDefaults);
   const isSameTextPath = (
     a: NonNullable<PathElement['data']['textPath']> | undefined,
@@ -164,6 +168,9 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
 
   useEffect(() => {
     if (!hasSelectedPath || !selectedPath || !updateElement) return;
+    // Skip while the inline text editor modal is open for this element;
+    // the overlay writes directly to the store and this effect would undo those changes.
+    if (inlineEditingElementId === selectedPath.id) return;
     const styleState = style;
     const next = {
       ...pathTextState,
@@ -184,7 +191,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
         textPath: next,
       },
     });
-  }, [hasSelectedPath, pathTextState, selectedPath, style, updateElement]);
+  }, [hasSelectedPath, inlineEditingElementId, pathTextState, selectedPath, style, updateElement]);
 
   useEffect(() => {
     setPathTextState(pathTextDefaults);

@@ -10,7 +10,7 @@ import { TransformationOverlay } from './TransformationOverlay';
 import { TransformationFeedbackLayer } from './TransformationFeedbackLayer';
 import { BlockingOverlay } from '../../overlays/BlockingOverlay';
 import { measureSubpathBounds } from '../../utils/measurementUtils';
-import type { PathData } from '../../types';
+import type { PathData, PathElement } from '../../types';
 import { useTransformationHook } from './hooks/useTransformationHook';
 import { useCanvasStore } from '../../store/canvasStore';
 import { createPluginSlice } from '../../utils/pluginUtils';
@@ -104,9 +104,15 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
       const element = state.elements.find(el => el.id === elementId);
       if (!element) return;
       
-      // For paths: go to edit mode
+      // For paths: go to edit mode (or nativeText if path has textPath)
       if (element.type === 'path') {
-        state.setActivePlugin('edit');
+        const pathEl = element as PathElement;
+        if (pathEl.data.textPath) {
+          state.setActivePlugin('nativeText');
+          state.selectElements([elementId]);
+        } else {
+          state.setActivePlugin('edit');
+        }
       }
       // For nativeText: start inline text editing and switch to nativeText mode
       else if (element.type === 'nativeText') {

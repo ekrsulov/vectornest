@@ -17,6 +17,7 @@ import { pluginManager } from '../utils/pluginManager';
 import { elementContributionRegistry } from '../utils/elementContributionRegistry';
 import { getAccumulatedTransformMatrix } from '../utils/elementTransformUtils';
 import type { GroupEditorSlice } from '../store/slices/features/groupEditorSlice';
+import type { InlineTextEditSlice } from './nativeText/inlineEditSlice';
 
 type GridSnapStore = CanvasStore & {
   grid?: { snapEnabled?: boolean };
@@ -296,7 +297,21 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
     if (state.selectedIds.length === 1 && state.selectedIds[0] === elementId) {
       if (element.type === 'path') {
         const pathData = element.data as import('../types').PathData;
-        if (pathData.subPaths.length === 1) {
+        // Paths with textPath go directly to nativeText mode and open the text edit modal
+        if (pathData.textPath) {
+          // Sync global style so the Editor panel shows and edits the textPath's own style
+          const tp = pathData.textPath;
+          state.updateStyle({
+            fillColor: tp.fillColor ?? 'none',
+            fillOpacity: tp.fillOpacity ?? 1,
+            strokeColor: tp.strokeColor ?? 'none',
+            strokeWidth: tp.strokeWidth ?? 0,
+            strokeOpacity: tp.strokeOpacity ?? 1,
+          });
+          state.setActivePlugin('nativeText');
+          state.selectElements([elementId]);
+          (state as unknown as InlineTextEditSlice).startInlineTextEdit?.(elementId);
+        } else if (pathData.subPaths.length === 1) {
           // Single subpath -> go to transformation mode
           state.setActivePlugin('transformation');
         } else if (pathData.subPaths.length > 1) {

@@ -237,7 +237,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       {/* Third row: Align */}
       {onTextAnchorChange && (
         <HStack spacing={2} align="center">
-          <Text fontSize="sm" color="gray.600" minW="70px">Align</Text>
+          <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="70px">Align</Text>
           <JoinedButtonGroup
             size="sm"
             flex="1"
@@ -255,7 +255,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       {/* Fourth row: Transform */}
       {onTextTransformChange && (
         <HStack spacing={2} align="center">
-          <Text fontSize="sm" color="gray.600" minW="70px">Transform</Text>
+          <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="70px">Transform</Text>
           <JoinedButtonGroup
             size="sm"
             flex="1"
@@ -274,7 +274,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       {/* Fifth row: Line Height */}
       {onLineHeightChange && (
         <HStack align="center" spacing={1}>
-          <Text fontSize="sm" color="gray.600" minW="70px">Line H</Text>
+          <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="70px">Line H</Text>
           <Box flex="1" pr={lineTrackSliderPr}>
             <SliderControl
               inline={true}
@@ -291,7 +291,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       {/* Sixth row: Tracking */}
       {onLetterSpacingChange && (
         <HStack align="center" spacing={1}>
-          <Text fontSize="sm" color="gray.600" minW="70px">Track</Text>
+          <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="70px">Track</Text>
           <Box flex="1" pr={lineTrackSliderPr}>
             <SliderControl
               inline={true}

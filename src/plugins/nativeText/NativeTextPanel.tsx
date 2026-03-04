@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { VStack, HStack, Text, Box } from '@chakra-ui/react';
 import { Panel } from '../../ui/Panel';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -26,7 +26,6 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
   const elements = useCanvasStore((state) => state.elements);
   const selectedIds = useCanvasStore((state) => state.selectedIds);
   const updateElement = useCanvasStore((state) => state.updateElement);
-  const style = useCanvasStore((state) => state.style);
   const inlineEditingElementId = useCanvasStore(
     (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null
   );
@@ -40,6 +39,11 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
     return first ? first as PathElement : null;
   }, [elements, selectedIds]);
   const hasSelectedPath = !!selectedPath;
+  // Always keep a ref to the latest selectedPath so the sync effect can read
+  // it without subscribing to it — prevents re-firing the effect on every
+  // updateElement call (which replaces the elements array with new object refs).
+  const selectedPathRef = useRef(selectedPath);
+  selectedPathRef.current = selectedPath;
 
   const handleDuplicate = useCallback(() => {
     if (selectedText) {
@@ -167,31 +171,38 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
   };
 
   useEffect(() => {
-    if (!hasSelectedPath || !selectedPath || !updateElement) return;
+    if (!hasSelectedPath || !selectedPathRef.current || !updateElement) return;
     // Skip while the inline text editor modal is open for this element;
     // the overlay writes directly to the store and this effect would undo those changes.
-    if (inlineEditingElementId === selectedPath.id) return;
-    const styleState = style;
+    if (inlineEditingElementId === selectedPathRef.current.id) return;
+    // Read the current element through the ref (not a dependency) so this effect
+    // does NOT re-fire when updateElement replaces the elements array and gives
+    // selectedPath a new object reference — that was the root cause of the
+    // "Maximum update depth exceeded" infinite loop.
+    const sp = selectedPathRef.current;
+    const existing = sp.data.textPath;
     const next = {
       ...pathTextState,
       richText: pathTextState.richText,
       spans: pathTextState.spans,
-      fillColor: styleState?.fillColor ?? selectedPath.data.textPath?.fillColor ?? '#000',
-      fillOpacity: styleState?.fillOpacity ?? selectedPath.data.textPath?.fillOpacity ?? 1,
-      strokeColor: styleState?.strokeColor ?? selectedPath.data.textPath?.strokeColor ?? 'none',
-      strokeWidth: styleState?.strokeWidth ?? selectedPath.data.textPath?.strokeWidth ?? 0,
-      strokeOpacity: styleState?.strokeOpacity ?? selectedPath.data.textPath?.strokeOpacity ?? 1,
+      fillColor: existing?.fillColor ?? '#000',
+      fillOpacity: existing?.fillOpacity ?? 1,
+      strokeColor: existing?.strokeColor ?? 'none',
+      strokeWidth: existing?.strokeWidth ?? 0,
+      strokeOpacity: existing?.strokeOpacity ?? 1,
     };
-    if (isSameTextPath(selectedPath.data.textPath, next)) {
+    if (isSameTextPath(existing, next)) {
       return;
     }
-    updateElement(selectedPath.id, {
+    updateElement(sp.id, {
       data: {
-        ...selectedPath.data,
+        ...sp.data,
         textPath: next,
       },
     });
-  }, [hasSelectedPath, inlineEditingElementId, pathTextState, selectedPath, style, updateElement]);
+  // NOTE: selectedPath intentionally omitted from deps — using selectedPathRef
+  // to read its latest value without triggering the effect on every updateElement.
+  }, [hasSelectedPath, inlineEditingElementId, pathTextState, updateElement]);
 
   useEffect(() => {
     setPathTextState(pathTextDefaults);
@@ -227,7 +238,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
               lineTrackSliderPr={0.5}
             />
             <HStack align="center" spacing={2}>
-              <Text fontSize="sm" color="gray.600" minW="70px">Writing</Text>
+              <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="70px">Writing</Text>
               <CustomSelect
                 size="sm"
                 flex="1"
@@ -244,7 +255,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
             />
           </HStack>
           <HStack align="center" spacing={2}>
-            <Text fontSize="sm" color="gray.600" minW="70px">Baseline</Text>
+            <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="70px">Baseline</Text>
             <CustomSelect
               size="sm"
               flex="1"
@@ -259,7 +270,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
             />
           </HStack>
           <HStack align="center" spacing={2}>
-            <Text fontSize="sm" color="gray.600" minW="70px">Length mode</Text>
+            <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="70px">Length mode</Text>
             <CustomSelect
               size="sm"
               flex="1"
@@ -284,7 +295,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
       )}
         {hasSelectedPath && (
         <VStack align="stretch" spacing={1}>
-          <Text fontSize="sm" fontWeight="semibold" color="gray.700">Text on Path</Text>
+          <Text fontSize="sm" fontWeight="semibold" color="gray.600" _dark={{ color: 'gray.400' }}>Text on Path</Text>
             <RichTextEditor
               value={pathTextState.richText || pathTextState.text}
               onKeyDown={preventSpacebarPropagation as unknown as React.KeyboardEventHandler<HTMLDivElement>}
@@ -308,7 +319,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
               lineTrackSliderPr={0.5}
             />
           <HStack align="center" spacing={0}>
-            <Text fontSize="sm" color="gray.600" minW="80px">Offset %</Text>
+            <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="80px">Offset %</Text>
             <Box flex="1" p="0">
               {(() => {
                 const startOffsetValue = typeof pathTextState.startOffset === 'number'
@@ -328,7 +339,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
             </Box>
           </HStack>
           <HStack align="center" spacing={0}>
-            <Text fontSize="sm" color="gray.600" minW="80px">Length mode</Text>
+            <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="80px">Length mode</Text>
             <CustomSelect
               size="sm"
               flex="1"
@@ -350,7 +361,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
             suffix="px"
           />
           <HStack align="center" spacing={0}>
-            <Text fontSize="sm" color="gray.600" minW="80px">Tracking</Text>
+            <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="80px">Tracking</Text>
             <Box flex="1" p="0" pr={0.5}>
               <SliderControl
                 inline={true}
@@ -364,7 +375,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
             </Box>
           </HStack>
           <HStack align="center" spacing={0}>
-            <Text fontSize="sm" color="gray.600" minW="80px">Align</Text>
+            <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }} minW="80px">Align</Text>
             <JoinedButtonGroup
               size="md"
               flex="1"
@@ -402,7 +413,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
             Duplicate
           </PanelStyledButton>
         )}
-        <Text fontSize="xs" color="gray.500">
+        <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
           {selectedText ? 'Editing selected native text.' : hasSelectedPath ? 'Editing text on path.' : 'Click on canvas with Native Text tool to place text.'}
         </Text>
       </VStack>

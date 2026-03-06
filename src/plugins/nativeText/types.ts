@@ -60,6 +60,7 @@ export type NativeTextElement = CanvasElementBase<'nativeText', {
   mixBlendMode?: string;
   isolation?: 'auto' | 'isolate';
   sourceId?: string;
+  metadata?: Record<string, unknown>;
   transformMatrix?: [number, number, number, number, number, number];
   transform?: {
     translateX?: number;

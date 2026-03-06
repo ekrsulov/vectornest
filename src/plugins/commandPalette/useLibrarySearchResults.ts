@@ -24,6 +24,8 @@ import type { MaskDefinition } from '../masks/types';
 import type { AnimationPreset } from '../animationLibrary/types';
 import { TEXT_PATH_PRESETS } from '../textPathLibrary/presets';
 import type { TextPathPreset } from '../textPathLibrary/presets';
+import { TEXT_EFFECT_PRESETS } from '../textEffectsLibrary/presets';
+import type { TextEffectPreset } from '../textEffectsLibrary/types';
 
 // ─── Library type chip configuration ────────────────────────────────────────
 
@@ -37,6 +39,7 @@ export const LIBRARY_CHIP_ITEMS = [
   { key: 'patterns',   label: 'PAT',  category: 'LibPatterns' },
   { key: 'symbols',    label: 'SYM',  category: 'LibSymbols' },
   { key: 'textpaths',  label: 'TPATH', category: 'LibTextPaths' },
+  { key: 'texteffects', label: 'TFXS', category: 'LibTextEffects' },
 ] as const;
 
 export type LibraryItemType = (typeof LIBRARY_CHIP_ITEMS)[number]['key'];
@@ -58,6 +61,7 @@ export const LIB_PANEL_KEYS: Record<LibraryItemType, string> = {
   patterns:   'sidebar:library:patterns',
   symbols:    'sidebar:library:symbols',
   textpaths:  'sidebar:library:textpath',
+  texteffects: 'sidebar:library:text-effects',
 };
 
 /** Type label for display in section headers */
@@ -71,6 +75,7 @@ export const LIB_TYPE_LABELS: Record<LibraryItemType, string> = {
   patterns:   'Patterns',
   symbols:    'Symbols',
   textpaths:  'Textpaths',
+  texteffects: 'Text Effects',
 };
 
 // ─── Item type unions ────────────────────────────────────────────────────────
@@ -84,7 +89,8 @@ export type LibraryItem =
   | { libType: 'masks';      data: MaskDefinition & { name: string } }
   | { libType: 'patterns';   data: PatternDef }
   | { libType: 'symbols';    data: SymbolDefinition }
-  | { libType: 'textpaths';  data: TextPathPreset };
+  | { libType: 'textpaths';  data: TextPathPreset }
+  | { libType: 'texteffects'; data: TextEffectPreset };
 
 export type LibraryResults = Record<LibraryItemType, LibraryItem[]>;
 
@@ -146,6 +152,7 @@ export function useLibrarySearchResults(query: string): LibraryResults | null {
       patterns:   raw.patterns.filter(i => match(i.name)).map(data => ({ libType: 'patterns' as const, data })),
       symbols:    raw.symbols.filter(i => match(i.name)).map(data => ({ libType: 'symbols' as const, data })),
       textpaths:  TEXT_PATH_PRESETS.filter(i => match(i.label)).map(data => ({ libType: 'textpaths' as const, data })),
+      texteffects: TEXT_EFFECT_PRESETS.filter(i => match(i.label)).map(data => ({ libType: 'texteffects' as const, data })),
     };
   }, [query, raw]);
 }

@@ -44,12 +44,12 @@ export const UndoRedoControls: React.FC = () => {
 
     const buttonProps = {
         bg: useColorModeValue(inactiveBg, inactiveBgDark),
-        borderWidth: '0px',
-        borderColor: 'transparent',
+        borderWidth: '1px',
+        borderColor: 'border.toolbar',
         color: inactiveColor,
         shadow: 'none',
         _hover: { bg: inactiveHoverBg },
-        _dark: { bg: inactiveBgDark, borderWidth: '0px', borderColor: 'transparent' },
+        _dark: { bg: inactiveBgDark, borderWidth: '1px', borderColor: 'border.toolbar' },
         size: 'sm',
         isRound: true,
         sx: {

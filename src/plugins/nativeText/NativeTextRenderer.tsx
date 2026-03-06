@@ -5,9 +5,14 @@ import { isTouchDevice } from '../../utils/domHelpers';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { WireframePluginSlice } from '../wireframe/slice';
 import type { InlineTextEditSlice } from './inlineEditSlice';
-import { getInitialAnimationAttributes, renderAnimationsForElement } from '../animationSystem/renderAnimations';
+import { renderAnimationsForElement } from '../animationSystem/renderAnimations';
 import type { AnimationState, SVGAnimation } from '../animationSystem/types';
 import { getClipRuntimeId } from '../../utils/maskUtils';
+import {
+  getTextEffectBaseAnimationsFromMetadata,
+  getTextEffectLayersFromMetadata,
+  renderInlineTextEffectAnimations,
+} from '../textEffectsLibrary/renderLayerUtils';
 
 type TextRendererOverrides = {
   fill?: string;
@@ -30,6 +35,11 @@ const computeTransformAttr = (data: NativeTextElement['data']) => {
     return `translate(${data.transform.translateX ?? 0} ${data.transform.translateY ?? 0}) rotate(${data.transform.rotation ?? 0} ${cx} ${cy}) scale(${data.transform.scaleX ?? 1} ${data.transform.scaleY ?? 1})`;
   }
   return undefined;
+};
+
+const composeTransforms = (...parts: Array<string | undefined>): string | undefined => {
+  const value = parts.filter(Boolean).join(' ');
+  return value.length > 0 ? value : undefined;
 };
 
 export const NativeTextRenderer: CanvasElementRenderer<NativeTextElement> = (
@@ -80,16 +90,21 @@ const NativeTextRendererInner: React.FC<{
   const pointerUpHandler = eventHandlers.onPointerUp;
   const isSelected = isElementSelected?.(element.id) ?? false;
   const isLocked = isElementLocked?.(element.id) ?? false;
-  const initialAttrs = getInitialAnimationAttributes(
-    element.id,
-    (context.animations as SVGAnimation[] | undefined) ?? [],
-    context.animationState as AnimationState | undefined
+  const allAnimations = (context.animations as SVGAnimation[] | undefined) ?? [];
+  const animationState = context.animationState as AnimationState | undefined;
+  const transformAnimations = allAnimations.filter(
+    (animation) =>
+      animation.targetElementId === element.id &&
+      (animation.type === 'animateTransform' || animation.type === 'animateMotion')
   );
-  const animationNodes = renderAnimationsForElement(
-    element.id,
-    (context.animations as SVGAnimation[] | undefined) ?? [],
-    context.animationState as AnimationState | undefined
+  const textAttributeAnimations = allAnimations.filter(
+    (animation) =>
+      animation.targetElementId === element.id &&
+      animation.type !== 'animateTransform' &&
+      animation.type !== 'animateMotion'
   );
+  const groupAnimationNodes = renderAnimationsForElement(element.id, transformAnimations, animationState);
+  const animationNodes = renderAnimationsForElement(element.id, textAttributeAnimations, animationState);
 
   // Removed: handleDoubleClick now handled by basePlugins -> transformation flow
   // This ensures consistent double-click behavior across all element types
@@ -144,90 +159,173 @@ const NativeTextRendererInner: React.FC<{
 
   const spans = data.spans && data.spans.length > 0 ? data.spans : null;
   const lines = spans ? Array.from(new Set(spans.map(s => s.line))).sort((a, b) => a - b) : (data.text || '').split(/\r?\n/);
+  const textEffectLayers = renderMode === 'wireframe' ? [] : getTextEffectLayersFromMetadata(data.metadata);
+  const inlineBaseAnimations = renderMode === 'wireframe' ? [] : getTextEffectBaseAnimationsFromMetadata(data.metadata);
+  const underlays = textEffectLayers.filter((layer) => layer.renderBeforeBase);
+  const overlays = textEffectLayers.filter((layer) => !layer.renderBeforeBase);
+  const restartKey = animationState?.restartKey ?? 0;
 
   const clipAttr = clipRuntimeId ? { clipPath: `url(#${clipRuntimeId})` } : {};
   const blendStyle: React.CSSProperties = {};
   if (data.mixBlendMode) blendStyle.mixBlendMode = data.mixBlendMode as React.CSSProperties['mixBlendMode'];
   if (data.isolation) blendStyle.isolation = data.isolation;
+
+  const renderTextContent = (
+    keyPrefix: string,
+    layerFill: string | undefined,
+    useSourceFill: boolean,
+  ) => (
+    spans
+      ? spans.map((span, idx) => {
+        const isLineStart = idx === 0 || span.line !== spans[idx - 1].line;
+        return (
+          <tspan
+            key={`${keyPrefix}-tspan-${idx}`}
+            x={isLineStart ? data.x : undefined}
+            dy={isLineStart ? (span.line === 0 ? 0 : data.fontSize * lineHeight * (span.line - (spans[idx - 1]?.line ?? 0))) : undefined}
+            dx={span.dx}
+            fontWeight={span.fontWeight}
+            fontStyle={span.fontStyle}
+            fontSize={span.fontSize}
+            textDecoration={span.textDecoration}
+            fill={useSourceFill ? (span.fillColor ?? layerFill) : layerFill}
+          >
+            {span.text}
+          </tspan>
+        );
+      })
+      : (lines as string[]).map((line, idx) => (
+        <tspan key={`${keyPrefix}-tspan-${idx}`} x={data.x} dy={idx === 0 ? 0 : data.fontSize * lineHeight}>
+          {line}
+        </tspan>
+      ))
+  );
+
+  const renderEffectLayer = (layer: typeof textEffectLayers[number], index: number) => {
+    const layerMaskVersion = layer.maskId && maskVersions?.get(layer.maskId);
+    const layerMaskId = layer.maskId && layerMaskVersion ? `${layer.maskId}-v${layerMaskVersion}` : layer.maskId;
+    const layerClipId = getClipRuntimeId(layer.clipPathId, undefined, clipVersions);
+    const layerFill = layer.useSourceFill ? fill : (layer.fillColor ?? 'none');
+    const layerFillOpacity = layer.fillOpacity ?? (layer.useSourceFill ? opacity : 1);
+    const layerFilter = disableFilter ? undefined : (layer.filterId ? `url(#${layer.filterId})` : undefined);
+
+    return (
+      <g
+        key={`${element.id}-textfx-layer-${index}`}
+        transform={composeTransforms(
+          layer.offsetX || layer.offsetY
+            ? `translate(${layer.offsetX} ${layer.offsetY})`
+            : undefined,
+        )}
+        pointerEvents="none"
+      >
+        <text
+          x={data.x}
+          y={data.y}
+          fontSize={data.fontSize}
+          fontFamily={data.fontFamily}
+          fontWeight={data.fontWeight ?? 'normal'}
+          fontStyle={data.fontStyle ?? 'normal'}
+          fill={layerFill}
+          fillOpacity={layerFillOpacity}
+          stroke={layer.strokeColor ?? 'none'}
+          strokeWidth={layer.strokeWidth ?? 0}
+          strokeOpacity={layer.strokeOpacity ?? 1}
+          strokeLinecap={data.strokeLinecap}
+          strokeLinejoin={data.strokeLinejoin}
+          strokeDasharray={strokeDasharray}
+          textAnchor={data.textAnchor ?? 'start'}
+          textDecoration={data.textDecoration ?? 'none'}
+          dominantBaseline={dominantBaseline}
+          writingMode={writingMode}
+          direction={direction}
+          wordSpacing={wordSpacing}
+          unicodeBidi={unicodeBidi}
+          rotate={rotate ? rotate.join(' ') : undefined}
+          filter={layerFilter}
+          opacity={layer.opacity}
+          letterSpacing={letterSpacing}
+          lengthAdjust={data.lengthAdjust}
+          textLength={data.textLength}
+          style={{
+            pointerEvents: 'none',
+            textDecoration: data.textDecoration ?? 'none',
+            ...(textTransform ? { textTransform } : {}),
+            ...blendStyle,
+          }}
+          {...(layerClipId ? { clipPath: `url(#${layerClipId})` } : {})}
+          {...(layerMaskId ? { mask: `url(#${layerMaskId})` } : {})}
+        >
+          {renderInlineTextEffectAnimations(layer.animations, `${element.id}-textfx-layer-${index}`, restartKey)}
+          {renderTextContent(`${element.id}-textfx-layer-${index}`, layerFill, Boolean(layer.useSourceFill))}
+        </text>
+      </g>
+    );
+  };
+
   return (
-    <text
+    <g
       key={element.id}
       data-element-id={element.id}
-      x={data.x}
-      y={data.y}
-      fontSize={data.fontSize}
-      fontFamily={data.fontFamily}
-      fontWeight={data.fontWeight ?? 'normal'}
-      fontStyle={data.fontStyle ?? 'normal'}
-      fill={fill}
-      fillOpacity={opacity}
-      stroke={strokeColor}
-      strokeWidth={strokeWidth}
-      strokeOpacity={data.strokeOpacity ?? 1}
-      strokeLinecap={data.strokeLinecap}
-      strokeLinejoin={data.strokeLinejoin}
-      strokeDasharray={strokeDasharray}
-      textAnchor={data.textAnchor ?? 'start'}
-      textDecoration={data.textDecoration ?? 'none'}
-      dominantBaseline={dominantBaseline}
-      writingMode={writingMode}
-      direction={direction}
-      wordSpacing={wordSpacing}
-      unicodeBidi={unicodeBidi}
-      rotate={rotate ? rotate.join(' ') : undefined}
-      filter={filterAttr}
-      opacity={data.opacity}
-      transform={initialAttrs.transform ? String(initialAttrs.transform) : transformAttr}
-      letterSpacing={letterSpacing}
-      lengthAdjust={data.lengthAdjust}
-      textLength={data.textLength}
-      {...initialAttrs}
-      {...(!isTouch && pointerDownHandler && { onPointerDown: (event) => pointerDownHandler(element.id, event) })}
-      {...(!isTouch && pointerUpHandler && { onPointerUp: (event) => pointerUpHandler(element.id, event) })}
-      {...(!isTouch && doubleClickHandler && { onDoubleClick: (event) => doubleClickHandler(element.id, event) })}
-      style={{
-        cursor:
-          pathCursorMode === 'select'
-            ? isLocked
-              ? 'default'
-              : isSelected
-                ? 'move'
-                : 'text'
-            : 'text',
-        pointerEvents: isPathInteractionDisabled ? 'none' : 'auto',
-        textDecoration: data.textDecoration ?? 'none',
-        ...(textTransform ? { textTransform } : {}),
-        ...(disableFilter ? { filter: 'none' } : {}),
-        ...blendStyle,
-      }}
-      {...clipAttr}
-      {...maskAttr}
+      transform={transformAttr}
     >
-      {animationNodes}
-      {spans
-        ? spans.map((span, idx) => {
-          const isLineStart = idx === 0 || span.line !== spans[idx - 1].line;
-          return (
-            <tspan
-              key={`${element.id}-tspan-${idx}`}
-              x={isLineStart ? data.x : undefined}
-              dy={isLineStart ? (span.line === 0 ? 0 : data.fontSize * lineHeight * (span.line - (spans[idx - 1]?.line ?? 0))) : undefined}
-              dx={span.dx}
-              fontWeight={span.fontWeight}
-              fontStyle={span.fontStyle}
-              fontSize={span.fontSize}
-              textDecoration={span.textDecoration}
-              fill={span.fillColor ?? fill}
-            >
-              {span.text}
-            </tspan>
-          );
-        })
-        : (lines as string[]).map((line, idx) => (
-          <tspan key={`${element.id}-tspan-${idx}`} x={data.x} dy={idx === 0 ? 0 : data.fontSize * lineHeight}>
-            {line}
-          </tspan>
-        ))}
-    </text>
+      {groupAnimationNodes}
+      {underlays.map(renderEffectLayer)}
+      <text
+        data-element-id={element.id}
+        x={data.x}
+        y={data.y}
+        fontSize={data.fontSize}
+        fontFamily={data.fontFamily}
+        fontWeight={data.fontWeight ?? 'normal'}
+        fontStyle={data.fontStyle ?? 'normal'}
+        fill={fill}
+        fillOpacity={opacity}
+        stroke={strokeColor}
+        strokeWidth={strokeWidth}
+        strokeOpacity={data.strokeOpacity ?? 1}
+        strokeLinecap={data.strokeLinecap}
+        strokeLinejoin={data.strokeLinejoin}
+        strokeDasharray={strokeDasharray}
+        textAnchor={data.textAnchor ?? 'start'}
+        textDecoration={data.textDecoration ?? 'none'}
+        dominantBaseline={dominantBaseline}
+        writingMode={writingMode}
+        direction={direction}
+        wordSpacing={wordSpacing}
+        unicodeBidi={unicodeBidi}
+        rotate={rotate ? rotate.join(' ') : undefined}
+        filter={filterAttr}
+        opacity={data.opacity}
+        letterSpacing={letterSpacing}
+        lengthAdjust={data.lengthAdjust}
+        textLength={data.textLength}
+        {...(!isTouch && pointerDownHandler && { onPointerDown: (event) => pointerDownHandler(element.id, event) })}
+        {...(!isTouch && pointerUpHandler && { onPointerUp: (event) => pointerUpHandler(element.id, event) })}
+        {...(!isTouch && doubleClickHandler && { onDoubleClick: (event) => doubleClickHandler(element.id, event) })}
+        style={{
+          cursor:
+            pathCursorMode === 'select'
+              ? isLocked
+                ? 'default'
+                : isSelected
+                  ? 'move'
+                  : 'text'
+              : 'text',
+          pointerEvents: isPathInteractionDisabled ? 'none' : 'auto',
+          textDecoration: data.textDecoration ?? 'none',
+          ...(textTransform ? { textTransform } : {}),
+          ...(disableFilter ? { filter: 'none' } : {}),
+          ...blendStyle,
+        }}
+        {...clipAttr}
+        {...maskAttr}
+      >
+        {animationNodes}
+        {renderInlineTextEffectAnimations(inlineBaseAnimations, `${element.id}-textfx-base`, restartKey)}
+        {renderTextContent(element.id, fill, true)}
+      </text>
+      {overlays.map(renderEffectLayer)}
+    </g>
   );
 };

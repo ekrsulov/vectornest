@@ -31,6 +31,16 @@ const safeChildIds = (data: { childIds?: string[] } | null | undefined): string[
   Array.isArray(data?.childIds) ? data.childIds : []
 );
 
+const filterAttrString = (filter: FilterDefinition): string => [
+  `id="${filter.id}"`,
+  `x="${escapeAttr(filter.filterAttributes?.x ?? '-20%')}"`,
+  `y="${escapeAttr(filter.filterAttributes?.y ?? '-20%')}"`,
+  `width="${escapeAttr(filter.filterAttributes?.width ?? '140%')}"`,
+  `height="${escapeAttr(filter.filterAttributes?.height ?? '140%')}"`,
+  'filterUnits="objectBoundingBox"',
+  'primitiveUnits="userSpaceOnUse"',
+].join(' ');
+
 /**
  * Collect filter IDs that are actually being used by elements
  */
@@ -78,6 +88,24 @@ const collectFilterUsage = (elements: CanvasElement[]): Set<string> => {
  */
 const renderFilterPrimitive = (primitive: FilterPrimitive): string => {
   const { type, ...attrs } = primitive;
+  const normalizedAttrs = { ...(attrs as Record<string, unknown>) } as Record<string, unknown>;
+
+  if (type === 'feColorMatrix') {
+    const colorMatrixType = normalizedAttrs['colorMatrixType'] ?? normalizedAttrs['matrixType'];
+    if (colorMatrixType !== undefined) {
+      normalizedAttrs['type'] = colorMatrixType;
+      delete normalizedAttrs['colorMatrixType'];
+      delete normalizedAttrs['matrixType'];
+    }
+  }
+
+  if (type === 'feTurbulence') {
+    const turbulenceType = normalizedAttrs['turbulenceType'];
+    if (turbulenceType !== undefined) {
+      normalizedAttrs['type'] = turbulenceType;
+      delete normalizedAttrs['turbulenceType'];
+    }
+  }
 
   // Special handling for primitives with nested content
   if (type === 'feMerge' && Array.isArray(primitive.feMergeNodes)) {
@@ -103,8 +131,68 @@ const renderFilterPrimitive = (primitive: FilterPrimitive): string => {
     return `<${type} ${filterAttrs}><${lightTag} ${lightAttrs} /></${type}>`;
   }
 
+  if (type === 'feComponentTransfer') {
+    const transferAttrs = { ...normalizedAttrs } as Record<string, unknown>;
+    const funcEntries: Array<[string, string]> = [
+      ['funcR', 'feFuncR'],
+      ['funcG', 'feFuncG'],
+      ['funcB', 'feFuncB'],
+      ['funcA', 'feFuncA'],
+      ['feFuncR', 'feFuncR'],
+      ['feFuncG', 'feFuncG'],
+      ['feFuncB', 'feFuncB'],
+      ['feFuncA', 'feFuncA'],
+    ];
+    const renderedTags = new Set<string>();
+    const children = funcEntries
+      .map(([sourceKey, tag]) => {
+        const data = transferAttrs[sourceKey] as Record<string, unknown> | undefined;
+        if (!data) return '';
+        if (renderedTags.has(tag)) return '';
+        renderedTags.add(tag);
+        delete transferAttrs[sourceKey];
+        const funcAttrs = Object.entries(data)
+          .map(([key, value]) => {
+            if (value === undefined || value === null) return '';
+            const attrKey = key === 'funcType' ? 'type' : key;
+            return `${attrKey}="${escapeAttr(String(value))}"`;
+          })
+          .filter(Boolean)
+          .join(' ');
+        return `<${tag}${funcAttrs ? ` ${funcAttrs}` : ''} />`;
+      })
+      .filter(Boolean)
+      .join('');
+
+    const attrString = Object.entries(transferAttrs)
+      .filter(([key]) => !funcEntries.some(([sourceKey]) => sourceKey === key))
+      .map(([key, value]) => {
+        if (value === undefined || value === null) return '';
+        return `${key}="${escapeAttr(String(value))}"`;
+      })
+      .filter(Boolean)
+      .join(' ');
+
+    return `<${type}${attrString ? ` ${attrString}` : ''}>${children}</${type}>`;
+  }
+
+  const animChildren = Array.isArray(primitive.animateChildren)
+    ? (primitive.animateChildren as Array<Record<string, unknown>>).map((anim) => {
+      const { element: animTag, ...animAttrs } = anim;
+      const attrString = Object.entries(animAttrs)
+        .map(([key, value]) => {
+          if (value === undefined || value === null) return '';
+          return `${key}="${escapeAttr(String(value))}"`;
+        })
+        .filter(Boolean)
+        .join(' ');
+      return `<${animTag ?? 'animate'}${attrString ? ` ${attrString}` : ''} />`;
+    }).join('')
+    : '';
+
   // Standard primitive rendering
-  const attrString = Object.entries(attrs)
+  const attrString = Object.entries(normalizedAttrs)
+    .filter(([key]) => key !== 'animateChildren')
     .map(([key, value]) => {
       if (value === undefined || value === null) return '';
       return `${key}="${escapeAttr(String(value))}"`;
@@ -112,7 +200,11 @@ const renderFilterPrimitive = (primitive: FilterPrimitive): string => {
     .filter(Boolean)
     .join(' ');
 
-  return `<${type} ${attrString} />`;
+  if (animChildren) {
+    return `<${type}${attrString ? ` ${attrString}` : ''}>${animChildren}</${type}>`;
+  }
+
+  return `<${type}${attrString ? ` ${attrString}` : ''} />`;
 };
 
 /**
@@ -141,7 +233,7 @@ defsContributionRegistry.register({
 
     return filtered.map((filter) => {
       const primitives = filter.primitives.map((p) => renderFilterPrimitive(p)).join('\n  ');
-      return `<filter id="${filter.id}" x="-20%" y="-20%" width="140%" height="140%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse">\n  ${primitives}\n</filter>`;
+      return `<filter ${filterAttrString(filter)}>\n  ${primitives}\n</filter>`;
     });
   },
 });
@@ -186,6 +278,20 @@ const importFilterDefs = (doc: Document): Record<string, FilterDefinition[]> | n
         }
       }
 
+      const animChildren: Array<Record<string, unknown>> = [];
+      Array.from(child.children).forEach((sub) => {
+        if (sub.tagName === 'animate' || sub.tagName === 'animateTransform') {
+          const animData: Record<string, unknown> = { element: sub.tagName };
+          Array.from(sub.attributes).forEach((attr) => {
+            animData[attr.name] = attr.value;
+          });
+          animChildren.push(animData);
+        }
+      });
+      if (animChildren.length > 0) {
+        primitive.animateChildren = animChildren;
+      }
+
       primitives.push(primitive);
     });
 
@@ -195,6 +301,12 @@ const importFilterDefs = (doc: Document): Record<string, FilterDefinition[]> | n
       type: 'blur' as const, // Default type, will be inferred from primitives
       category: 'basic' as const,
       primitives,
+      filterAttributes: {
+        ...(node.getAttribute('x') ? { x: node.getAttribute('x') ?? '0%' } : {}),
+        ...(node.getAttribute('y') ? { y: node.getAttribute('y') ?? '0%' } : {}),
+        ...(node.getAttribute('width') ? { width: node.getAttribute('width') ?? '100%' } : {}),
+        ...(node.getAttribute('height') ? { height: node.getAttribute('height') ?? '100%' } : {}),
+      },
     };
   });
 

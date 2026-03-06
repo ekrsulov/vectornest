@@ -37,7 +37,7 @@ export const ExpandableToolPanel: React.FC = () => {
     expandable: { bg, borderColor, iconColor, hoverBg },
     toggle: { inactive: { hoverBg: inactiveHoverBg, color: inactiveColor } },
   } = useThemeColors();
-  const borderWidth = useColorModeValue('0px', '0px');
+  const borderWidth = useColorModeValue('1px', '1px');
   const expandedBorderBottom = useColorModeValue('0px', '0px');
   const inactiveBg = 'rgba(255, 255, 255, 0.95)';
   const inactiveBgDark = 'rgba(26, 32, 44, 0.95)';
@@ -83,7 +83,7 @@ export const ExpandableToolPanel: React.FC = () => {
           bg={useReducedButtonStyle ? inactiveBg : bg}
           borderRadius={isExpanded ? '12px 12px 0 0' : 'full'}
           borderWidth={borderWidth}
-          borderColor={useReducedButtonStyle ? 'transparent' : borderColor}
+          borderColor={useReducedButtonStyle ? 'border.toolbar' : borderColor}
           borderBottom={isExpanded ? expandedBorderBottom : 'none'}
           display="flex"
           justifyContent="center"
@@ -104,7 +104,7 @@ export const ExpandableToolPanel: React.FC = () => {
           _active={useReducedButtonStyle ? { transform: 'translateY(0px)' } : undefined}
           transition="all 0.15s ease"
           boxShadow="none"
-          _dark={useReducedButtonStyle ? { bg: inactiveBgDark, borderColor: 'transparent' } : undefined}
+          _dark={useReducedButtonStyle ? { bg: inactiveBgDark, borderColor: 'border.toolbar' } : undefined}
           sx={useReducedButtonStyle ? {
             width: '32px',
             height: '32px',

@@ -51,7 +51,7 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
 
     const bg = toolbar.bg;
     const borderColor = toolbar.borderColor;
-    const borderWidth = useColorModeValue(0, 0);
+    const borderWidth = useColorModeValue(1, 1);
     const dividerWidth = useColorModeValue(1, 0);
     const textColor = 'text.primary'; // Keeping existing color usage via string key if it works, or fallback to theme
     const iconColor = 'text.secondary';

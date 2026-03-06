@@ -549,7 +549,8 @@ const DesktopContextBar: React.FC<{
         <HStack
           bg={toolbar.bg}
           borderRadius="full"
-          border="none"
+          borderWidth="1px"
+          borderColor={toolbar.borderColor}
           boxShadow="none"
           px={1}
           py={0.5}
@@ -605,7 +606,7 @@ const MobileContextBar: React.FC<{
         <HStack
           bg={toolbar.bg}
           borderRadius="full"
-          borderWidth={toolbar.borderWidth}
+          borderWidth="1px"
           borderColor={toolbar.borderColor}
           boxShadow="none"
           px={1}

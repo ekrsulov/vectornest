@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { HStack } from '@chakra-ui/react';
+import { HStack, useColorModeValue } from '@chakra-ui/react';
 import { useShallow } from 'zustand/react/shallow';
 import {
   ZoomIn,
@@ -40,6 +40,7 @@ export const BottomActionBar: React.FC = () => {
   const {
     activeTool: { bg: activeBg, color: activeColor },
   } = useThemeColors();
+  const menuHoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
   // Get effective sidebar width using consolidated hook
   const { effectiveSidebarWidth, effectiveLeftSidebarWidth } = useSidebarLayout();
 
@@ -171,11 +172,11 @@ export const BottomActionBar: React.FC = () => {
       sidebarWidth={effectiveSidebarWidth}
       leftSidebarWidth={effectiveLeftSidebarWidth}
       boxShadow="none"
-      borderWidth="0px"
-      borderColor="transparent"
+      borderWidth="1px"
+      borderColor="border.toolbar"
       _dark={{
-        borderWidth: '0px',
-        borderColor: 'transparent',
+        borderWidth: '1px',
+        borderColor: 'border.toolbar',
       }}
       sx={{
         transition: 'left 0.3s ease-in-out, right 0.3s ease-in-out, transform 0.3s ease-in-out',
@@ -203,10 +204,10 @@ export const BottomActionBar: React.FC = () => {
                     bg={isToolActive ? activeBg : undefined}
                     color={isToolActive ? activeColor : undefined}
                     _hover={{
-                      bg: isToolActive ? activeBg : undefined,
+                      bg: isToolActive ? activeBg : menuHoverBg,
                     }}
                     _active={{
-                      bg: isToolActive ? activeBg : undefined,
+                      bg: isToolActive ? activeBg : menuHoverBg,
                     }}
                     onClick={() => handleToolSelect('basic', tool.id)}
                   />

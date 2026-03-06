@@ -8,10 +8,10 @@ export const renderFilterNode = (filter: FilterDefinition) => (
     <filter
         key={filter.id}
         id={filter.id}
-        x="-20%"
-        y="-20%"
-        width="140%"
-        height="140%"
+        x={filter.filterAttributes?.x ?? '-20%'}
+        y={filter.filterAttributes?.y ?? '-20%'}
+        width={filter.filterAttributes?.width ?? '140%'}
+        height={filter.filterAttributes?.height ?? '140%'}
         filterUnits="objectBoundingBox"
         primitiveUnits="userSpaceOnUse"
     >
@@ -72,11 +72,23 @@ export const renderFilterNode = (filter: FilterDefinition) => (
             // Handle feComponentTransfer children (feFuncR/feFuncG/feFuncB/feFuncA)
             if (type === 'feComponentTransfer') {
                 const transferAttrs = { ...normalizedAttrs } as Record<string, unknown>;
-                const funcKeys = ['funcR', 'funcG', 'funcB', 'funcA'];
-                const children = funcKeys
-                    .map((k) => {
-                        const func = transferAttrs[k] as Record<string, unknown> | undefined;
+                const funcEntries: Array<[string, string]> = [
+                    ['funcR', 'feFuncR'],
+                    ['funcG', 'feFuncG'],
+                    ['funcB', 'feFuncB'],
+                    ['funcA', 'feFuncA'],
+                    ['feFuncR', 'feFuncR'],
+                    ['feFuncG', 'feFuncG'],
+                    ['feFuncB', 'feFuncB'],
+                    ['feFuncA', 'feFuncA'],
+                ];
+                const renderedTags = new Set<string>();
+                const children = funcEntries
+                    .map(([sourceKey, tag]) => {
+                        const func = transferAttrs[sourceKey] as Record<string, unknown> | undefined;
                         if (!func) return null;
+                        if (renderedTags.has(tag)) return null;
+                        renderedTags.add(tag);
                         const funcAttrs: Record<string, unknown> = { ...func };
                         // Some definitions use "funcType" to avoid a name clash — map it to the SVG attribute "type"
                         if (funcAttrs['funcType'] !== undefined) {
@@ -84,17 +96,29 @@ export const renderFilterNode = (filter: FilterDefinition) => (
                             delete funcAttrs['funcType'];
                         }
                         // remove the parent-level func key so it doesn't become an attribute
-                        delete transferAttrs[k];
-                        const tag = k.replace('func', 'feFunc'); // funcR -> feFuncR
-                        return React.createElement(tag, { key: k, ...funcAttrs });
+                        delete transferAttrs[sourceKey];
+                        return React.createElement(tag, { key: sourceKey, ...funcAttrs });
                     })
                     .filter(Boolean) as React.ReactNode[];
 
                 return React.createElement(type, { key: idx, ...transferAttrs }, ...children);
             }
 
-            // Standard primitive
-            return React.createElement(type, { key: idx, ...normalizedAttrs });
+            // Collect animate/animateTransform children if present
+            const animChildren = Array.isArray((primitive as FilterPrimitive & { animateChildren?: Array<Record<string, unknown>> }).animateChildren)
+                ? ((primitive as FilterPrimitive & { animateChildren: Array<Record<string, unknown>> }).animateChildren).map(
+                    (anim: Record<string, unknown>, animIdx: number) => {
+                        const { element: animTag, ...animAttrs } = anim;
+                        return React.createElement(
+                            (animTag as string) || 'animate',
+                            { key: `anim-${animIdx}`, ...animAttrs },
+                        );
+                    },
+                )
+                : [];
+
+            // Standard primitive (with optional animate children)
+            return React.createElement(type, { key: idx, ...normalizedAttrs }, ...animChildren);
         })}
     </filter>
 );

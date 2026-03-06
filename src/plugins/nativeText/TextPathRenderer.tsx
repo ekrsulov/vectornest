@@ -11,6 +11,11 @@ import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/type
 import { renderAnimationsForElement } from '../animationSystem/renderAnimations';
 import { ensureChainDelays } from '../animationSystem/chainUtils';
 import { getClipRuntimeId } from '../../utils/maskUtils';
+import {
+  getTextEffectBaseAnimationsFromMetadata,
+  getTextEffectLayersFromMetadata,
+  renderInlineTextEffectAnimations,
+} from '../textEffectsLibrary/renderLayerUtils';
 
 const getEffectiveStrokeColor = (path: PathElement['data']): string => {
   if (path.strokeColor === 'none') return '#00000001';
@@ -62,6 +67,10 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
     const strokeColor = wireframeEnabled ? wireframeStroke : (textPath.strokeColor ?? 'none');
     const strokeWidth = wireframeEnabled ? 1 : (textPath.strokeWidth ?? 0);
     const strokeOpacity = wireframeEnabled ? 1 : (textPath.strokeOpacity ?? 1);
+    const inlineBaseAnimations = wireframeEnabled ? [] : getTextEffectBaseAnimationsFromMetadata(pathData.metadata);
+    const textEffectLayers = wireframeEnabled ? [] : getTextEffectLayersFromMetadata(pathData.metadata);
+    const underlays = textEffectLayers.filter((layer) => layer.renderBeforeBase);
+    const overlays = textEffectLayers.filter((layer) => !layer.renderBeforeBase);
     const chainDelays: Map<string, number> = ensureChainDelays(animationState?.chainDelays);
     const restartKey = animationState?.restartKey ?? 0;
 
@@ -92,10 +101,106 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
         anim.targetElementId === element.id &&
         anim.attributeName === 'startOffset'
     );
+    const textAttributeAnimations: SVGAnimation[] = animations.filter(
+      (anim) =>
+        anim.targetElementId === element.id &&
+        anim.attributeName !== 'startOffset' &&
+        anim.type !== 'animateTransform' &&
+        anim.type !== 'animateMotion'
+    );
     const allowRender =
       animationState?.isPlaying ||
       animationState?.hasPlayed ||
       textPathAnimations.length > 0;
+    const renderTextPathContent = (
+      keyPrefix: string,
+      layerFill: string | undefined,
+      useSourceFill: boolean,
+    ) => (
+      spans.length > 0
+        ? spans.map((span, idx) => {
+          const previousSpan = idx > 0 ? spans[idx - 1] : undefined;
+          const isLineStart = idx === 0 || span.line !== previousSpan?.line;
+          return (
+            <tspan
+              key={`${keyPrefix}-tp-span-${idx}`}
+              dy={isLineStart && span.line > 0 ? textPath.fontSize * (span.line - (previousSpan?.line ?? 0)) : undefined}
+              dx={span.dx}
+              fontWeight={span.fontWeight}
+              fontStyle={span.fontStyle}
+              textDecoration={span.textDecoration}
+              fill={useSourceFill
+                ? (span.fillColor ?? layerFill)
+                : layerFill}
+            >
+              {span.text}
+            </tspan>
+          );
+        })
+        : textPath.text
+    );
+
+    const renderEffectLayer = (layer: typeof textEffectLayers[number], index: number) => {
+      const layerFill = layer.useSourceFill ? fillColor : (layer.fillColor ?? 'none');
+      const layerFillOpacity = layer.fillOpacity ?? (layer.useSourceFill ? fillOpacity : 1);
+      const layerFilter = wireframeEnabled ? undefined : (layer.filterId ? `url(#${layer.filterId})` : undefined);
+      const layerTextAnimations = (layer.animations ?? []).filter((animation) => animation.attributeName !== 'startOffset');
+      const layerStartOffsetAnimations = (layer.animations ?? []).filter((animation) => animation.attributeName === 'startOffset');
+
+      return (
+        <g
+          key={`${element.id}-textfx-tp-layer-${index}`}
+          transform={layer.offsetX || layer.offsetY ? `translate(${layer.offsetX} ${layer.offsetY})` : undefined}
+          pointerEvents="none"
+        >
+          <text
+            fontSize={textPath.fontSize}
+            fontFamily={textPath.fontFamily}
+            fontWeight={textPath.fontWeight ?? 'normal'}
+            fontStyle={textPath.fontStyle ?? 'normal'}
+            textDecoration={textPath.textDecoration ?? 'none'}
+            textAnchor={textPath.textAnchor ?? 'start'}
+            letterSpacing={textPath.letterSpacing}
+            lengthAdjust={textPath.lengthAdjust}
+            textLength={textPath.textLength}
+            dominantBaseline={textPath.dominantBaseline}
+            fill={layerFill}
+            fillOpacity={layerFillOpacity}
+            stroke={layer.strokeColor ?? 'none'}
+            strokeWidth={layer.strokeWidth ?? 0}
+            strokeOpacity={layer.strokeOpacity ?? 1}
+            opacity={layer.opacity}
+            pointerEvents="none"
+            filter={layerFilter}
+            {...(layer.maskId ? { mask: `url(#${layer.maskId})` } : {})}
+            {...(layer.clipPathId ? { clipPath: `url(#${layer.clipPathId})` } : {})}
+          >
+            {renderInlineTextEffectAnimations(layerTextAnimations, `${element.id}-textfx-tp-layer-${index}`, restartKey)}
+            <textPath
+              href={`#${pathRefId}`}
+              startOffset={
+                textPath.startOffset !== undefined
+                  ? (typeof textPath.startOffset === 'number' ? `${textPath.startOffset}%` : textPath.startOffset)
+                  : undefined
+              }
+              method={textPath.method}
+              spacing={textPath.spacing}
+              lengthAdjust={textPath.lengthAdjust}
+              textLength={textPath.textLength}
+            >
+              {renderTextPathContent(`${element.id}-textfx-tp-layer-${index}`, layerFill, Boolean(layer.useSourceFill))}
+              {layerStartOffsetAnimations.length > 0
+                ? renderInlineTextEffectAnimations(
+                  layerStartOffsetAnimations,
+                  `${element.id}-textfx-tp-layer-start-${index}`,
+                  restartKey,
+                )
+                : null}
+            </textPath>
+          </text>
+        </g>
+      );
+    };
 
     nodes.push(
       <g
@@ -116,6 +221,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
           strokeWidth={Math.max(pathData.strokeWidth, 12)}
           pointerEvents="stroke"
         />
+        {underlays.map(renderEffectLayer)}
         <text
           data-element-id={element.id}
           fontSize={textPath.fontSize}
@@ -137,6 +243,10 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
           style={{ cursor: 'move' }}
           filter={wireframeEnabled ? undefined : (pathData.filterId ? `url(#${pathData.filterId})` : undefined)}
         >
+          {textAttributeAnimations.length > 0
+            ? renderAnimationsForElement(element.id, textAttributeAnimations, animationState)
+            : null}
+          {renderInlineTextEffectAnimations(inlineBaseAnimations.filter((animation) => animation.attributeName !== 'startOffset'), `${element.id}-textfx-base`, restartKey)}
           <textPath
             href={`#${pathRefId}`}
             startOffset={
@@ -149,25 +259,8 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
             lengthAdjust={textPath.lengthAdjust}
             textLength={textPath.textLength}
           >
-            {spans.length > 0
-              ? spans.map((span, idx) => {
-                const previousSpan = idx > 0 ? spans[idx - 1] : undefined;
-                const isLineStart = idx === 0 || span.line !== previousSpan?.line;
-                return (
-                  <tspan
-                    key={`${element.id}-tp-span-${idx}`}
-                    dy={isLineStart && span.line > 0 ? textPath.fontSize * (span.line - (previousSpan?.line ?? 0)) : undefined}
-                    dx={span.dx}
-                    fontWeight={span.fontWeight}
-                    fontStyle={span.fontStyle}
-                    textDecoration={span.textDecoration}
-                    fill={wireframeEnabled ? (removeFill ? 'none' : wireframeStroke) : (span.fillColor ?? textPath.fillColor ?? effectiveStrokeColor)}
-                  >
-                    {span.text}
-                  </tspan>
-                );
-              })
-              : textPath.text}
+            {renderTextPathContent(element.id, fillColor, true)}
+            {renderInlineTextEffectAnimations(inlineBaseAnimations.filter((animation) => animation.attributeName === 'startOffset'), `${element.id}-textfx-base-start`, restartKey)}
             {allowRender
               ? textPathAnimations.map((animation) => {
                 const delayMs = chainDelays.get(animation.id) ?? 0;
@@ -199,6 +292,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
               : null}
           </textPath>
         </text>
+        {overlays.map(renderEffectLayer)}
       </g>
     );
   });

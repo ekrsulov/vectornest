@@ -45,35 +45,53 @@ export const LeftSidebarContent: React.FC = () => {
         {!maximizedLeftSidebarPanelKey && <LeftSidebarToolGrid />}
 
         <Box
-        flex={1}
-        px={2}
-        pb={0}
-        overflowY="auto"
-        overflowX="hidden"
-        display="flex"
-        flexDirection="column"
-        gap={0}
-        bg="surface.panel"
-        minH={0}
-        css={{
-          '&::-webkit-scrollbar': {
-            width: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: scrollbarTrack,
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: scrollbarThumb,
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb:hover': {
-            background: scrollbarThumbHover,
-          },
-        }}
-      >
-        {panelContent}
+          data-sidebar-scroll-area="true"
+          flex={1}
+          px={2}
+          pb={0}
+          overflowY="auto"
+          overflowX="hidden"
+          display="flex"
+          flexDirection="column"
+          gap={0}
+          bg="surface.panel"
+          minH={0}
+          css={{
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': {
+              width: '0px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'transparent',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'transparent',
+            },
+            '[data-sidebar-shell="true"]:hover &': {
+              scrollbarWidth: 'thin',
+              scrollbarColor: `${scrollbarThumb} ${scrollbarTrack}`,
+            },
+            '[data-sidebar-shell="true"]:hover &::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '[data-sidebar-shell="true"]:hover &::-webkit-scrollbar-track': {
+              background: scrollbarTrack,
+            },
+            '[data-sidebar-shell="true"]:hover &::-webkit-scrollbar-thumb': {
+              background: scrollbarThumb,
+            },
+            '[data-sidebar-shell="true"]:hover &::-webkit-scrollbar-thumb:hover': {
+              background: scrollbarThumbHover,
+            },
+          }}
+        >
+          {panelContent}
+        </Box>
       </Box>
-    </Box>
     </SidebarPanelScopeContext.Provider>
   );
 };

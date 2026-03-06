@@ -57,6 +57,7 @@ export interface FilterDefinition {
   type: FilterPresetType;
   primitives: FilterPrimitive[];
   category: 'basic' | 'color' | 'special' | 'artistic' | 'preset';
+  filterAttributes?: Record<string, string>;
 }
 
 export interface FilterPresetDefinition {

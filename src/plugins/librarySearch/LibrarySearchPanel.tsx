@@ -26,6 +26,9 @@ import { AnimationItemCard } from '../animationLibrary/AnimationItemCard';
 import { TextPathItemCard } from '../textPathLibrary/TextPathItemCard';
 import { TEXT_PATH_PRESETS } from '../textPathLibrary/presets';
 import type { TextPathPreset } from '../textPathLibrary/presets';
+import { TextEffectItemCard } from '../textEffectsLibrary/TextEffectItemCard';
+import { TEXT_EFFECT_PRESETS } from '../textEffectsLibrary/presets';
+import type { TextEffectPreset } from '../textEffectsLibrary/types';
 import type { ClipDefinition } from '../clipping/slice';
 import type { MarkerDefinition } from '../markers/slice';
 import type { SymbolDefinition } from '../symbols/slice';
@@ -35,6 +38,7 @@ import type { PatternDef } from '../patterns/slice';
 import type { MaskDefinition } from '../masks/types';
 import type { AnimationPreset } from '../animationLibrary/types';
 import type { TextPathLibrarySlice } from '../textPathLibrary/slice';
+import type { TextEffectsLibrarySlice } from '../textEffectsLibrary/types';
 import { Panel } from '../../ui/Panel';
 import { PanelTextInput } from '../../ui/PanelTextInput';
 import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
@@ -52,6 +56,7 @@ import type { PatternsSlice } from '../patterns/slice';
 import type { MasksSlice } from '../masks/types';
 import type { AnimationLibrarySlice } from '../animationLibrary/types';
 
+// NOTE: textEffects and textPaths use static presets, not store state
 // Selector to get all library items
 const selectAllLibraryItems = (state: CanvasStore) => {
     const clippingSlice = state as CanvasStore & ClippingPluginSlice;
@@ -105,6 +110,7 @@ export const LibrarySearchPanel: React.FC = () => {
         const symbolsSlice = state as CanvasStore & SymbolPluginSlice;
         const masksSlice = state as CanvasStore & MasksSlice;
         const animationLibrarySlice = state as CanvasStore & AnimationLibrarySlice;
+        const textEffectsSlice = state as CanvasStore & TextEffectsLibrarySlice;
 
         return {
             selectGradientFromSearch: gradientsSlice.selectFromSearch,
@@ -115,6 +121,7 @@ export const LibrarySearchPanel: React.FC = () => {
             selectSymbolFromSearch: symbolsSlice.selectFromSearch,
             selectMaskFromSearch: masksSlice.selectFromSearch,
             selectAnimationFromSearch: animationLibrarySlice.selectFromSearch,
+            selectTextEffectFromSearch: textEffectsSlice.selectTextEffectFromSearch,
             setOpenSidebarPanelKey: state.setOpenSidebarPanelKey,
             setLeftOpenSidebarPanelKey: state.setLeftOpenSidebarPanelKey,
             librarySearchQuery: state.librarySearchQuery,
@@ -131,6 +138,7 @@ export const LibrarySearchPanel: React.FC = () => {
         selectSymbolFromSearch,
         selectMaskFromSearch,
         selectAnimationFromSearch,
+        selectTextEffectFromSearch,
         setOpenSidebarPanelKey: setOpenRightPanelKey,
         setLeftOpenSidebarPanelKey,
         librarySearchQuery,
@@ -153,6 +161,7 @@ export const LibrarySearchPanel: React.FC = () => {
         patterns: 'Patterns',
         symbols: 'Symbols',
         textpaths: 'Textpaths',
+        texteffects: 'Text Effects',
     } as const;
 
     type TypeKey = keyof typeof TYPE_LABELS;
@@ -174,6 +183,7 @@ export const LibrarySearchPanel: React.FC = () => {
             patterns: true,
             symbols: true,
             textpaths: true,
+            texteffects: true,
         }
     );
 
@@ -201,6 +211,7 @@ export const LibrarySearchPanel: React.FC = () => {
             patterns: true,
             symbols: true,
             textpaths: true,
+            texteffects: true,
         });
     }, [persistEnabledTypes]);
 
@@ -215,6 +226,7 @@ export const LibrarySearchPanel: React.FC = () => {
             patterns: false,
             symbols: false,
             textpaths: false,
+            texteffects: false,
         });
     }, [persistEnabledTypes]);
 
@@ -236,6 +248,7 @@ export const LibrarySearchPanel: React.FC = () => {
             patterns: enabledTypes.patterns ? patterns.filter(i => i.name.toLowerCase().includes(q)) : [],
             symbols: enabledTypes.symbols ? symbols.filter(i => i.name.toLowerCase().includes(q)) : [],
             textpaths: enabledTypes.textpaths ? TEXT_PATH_PRESETS.filter(i => i.label.toLowerCase().includes(q)).map(p => ({ id: p.id, name: p.label, _preset: p })) : [],
+            texteffects: enabledTypes.texteffects ? TEXT_EFFECT_PRESETS.filter(i => i.label.toLowerCase().includes(q)).map(p => ({ id: p.id, name: p.label, _effectPreset: p })) : [],
         };
     }, [hasQuery, librarySearchQuery, clips, markers, symbols, filters, gradients, patterns, normalizedMasks, animations, enabledTypes]);
 
@@ -262,7 +275,7 @@ export const LibrarySearchPanel: React.FC = () => {
     };
 
 
-    const renderResultItem = (item: { id: string; name: string; _preset?: TextPathPreset }, type: string) => {
+    const renderResultItem = (item: { id: string; name: string; _preset?: TextPathPreset; _effectPreset?: TextEffectPreset }, type: string) => {
         switch (type) {
             case 'Clips':
                 return <ClipItemCard clip={item as unknown as ClipDefinition} onClick={() => {
@@ -320,6 +333,17 @@ export const LibrarySearchPanel: React.FC = () => {
                         onClick={() => {
                             setOpenPanelKey?.('sidebar:library:textpath');
                             deferSelection(() => selectTextPathFromSearch?.(item.id));
+                        }}
+                    />
+                ) : null;
+            case 'Text Effects':
+                return item._effectPreset ? (
+                    <TextEffectItemCard
+                        preset={item._effectPreset}
+                        isSelected={false}
+                        onClick={() => {
+                            setOpenPanelKey?.('sidebar:library:text-effects');
+                            deferSelection(() => selectTextEffectFromSearch?.(item.id));
                         }}
                     />
                 ) : null;
@@ -406,6 +430,7 @@ export const LibrarySearchPanel: React.FC = () => {
                         {renderResultSection('Patterns', results.patterns)}
                         {renderResultSection('Symbols', results.symbols)}
                         {renderResultSection('Textpaths', results.textpaths)}
+                        {renderResultSection('Text Effects', results.texteffects)}
                         {Object.values(results).every(r => r.length === 0) && librarySearchQuery && (
                             <Text fontSize="sm" color="gray.500" textAlign="center" py={4}>
                                 No results found

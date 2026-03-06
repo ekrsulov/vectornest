@@ -7,6 +7,7 @@ import { llmAssistantPlugin } from '../llmAssistant';
 import { selectSimilarPlugin } from '../selectSimilar';
 import { animationManagerPlugin } from '../animationManager';
 import { animationLibraryPlugin } from '../animationLibrary';
+import { textEffectsLibraryPlugin } from '../textEffectsLibrary';
 import { potracePlugin } from '../potrace';
 import { paintsPlugin } from '../paints';
 
@@ -18,6 +19,7 @@ export const UTILITY_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectSimilarPlugin,
   animationManagerPlugin,
   animationLibraryPlugin,
+  textEffectsLibraryPlugin,
   potracePlugin,
   paintsPlugin,
 ];

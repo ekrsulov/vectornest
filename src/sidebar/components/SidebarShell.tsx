@@ -27,11 +27,11 @@ export const SidebarShell: React.FC<SidebarShellProps> = ({
     side === 'left'
       ? {
         left: 0,
-        borderRight: 'none',
+        borderRightWidth: isPinned ? '1px' : 0,
       }
       : {
         right: 0,
-        borderLeft: 'none',
+        borderLeftWidth: isPinned ? '1px' : 0,
       };
 
   const sidebarFrameStyles: BoxProps = {
@@ -43,7 +43,8 @@ export const SidebarShell: React.FC<SidebarShellProps> = ({
     h: '100dvh',
     maxH: '100dvh',
     bg: sidebarBg,
-    borderColor: 'transparent',
+    borderColor: isPinned ? 'border.sidebar' : 'transparent',
+    borderStyle: 'solid',
     boxShadow: 'none',
     display: 'flex',
     flexDirection: 'column',
@@ -60,7 +61,7 @@ export const SidebarShell: React.FC<SidebarShellProps> = ({
 
   return (
     <>
-      {isPinned && <Box {...sidebarFrameStyles}>{children}</Box>}
+      {isPinned && <Box data-sidebar-shell="true" {...sidebarFrameStyles}>{children}</Box>}
 
       {!isPinned && isOpen && (
         <>
@@ -75,7 +76,7 @@ export const SidebarShell: React.FC<SidebarShellProps> = ({
               overscrollBehavior: 'contain',
             }}
           />
-          <Box {...sidebarFrameStyles}>{children}</Box>
+          <Box data-sidebar-shell="true" {...sidebarFrameStyles}>{children}</Box>
         </>
       )}
     </>

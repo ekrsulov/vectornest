@@ -50,9 +50,9 @@ export const VirtualShiftButton: React.FC = () => {
         size="sm"
         borderRadius="full"
         boxShadow="none"
-        borderWidth="0px"
-        borderColor="transparent"
-        _dark={{ bg: isVirtualShiftActive ? activeBg : inactiveBgDark, borderWidth: '0px', borderColor: 'transparent' }}
+        borderWidth="1px"
+        borderColor="border.toolbar"
+        _dark={{ bg: isVirtualShiftActive ? activeBg : inactiveBgDark, borderWidth: '1px', borderColor: 'border.toolbar' }}
         sx={{
           width: '32px',
           height: '32px',

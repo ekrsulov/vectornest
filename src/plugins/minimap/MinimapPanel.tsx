@@ -224,7 +224,7 @@ const ExpandedMinimapPanel: React.FC<MinimapOverlayProps> = ({
   const containerBg = useColorModeValue('surface.toolbar', 'surface.toolbar');
   const containerShadow = 'none';
 
-  const borderWidth = useColorModeValue('0px', '0px');
+  const borderWidth = useColorModeValue('1px', '1px');
   const canvasFill = useColorModeValue('rgba(248, 250, 252, 0.95)', 'rgba(26, 32, 44, 0.85)');
   const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');
   const elementFill = useColorModeValue('rgba(113, 128, 150, 0.2)', 'rgba(160, 174, 192, 0.35)');

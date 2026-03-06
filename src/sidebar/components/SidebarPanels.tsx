@@ -262,6 +262,7 @@ export const SidebarPanels: React.FC = () => {
 
   return (
     <Box
+      data-sidebar-scroll-area="true"
       flex={1}
       px={2}
       pb={isFooterVisible ? 0 : 0}
@@ -274,17 +275,34 @@ export const SidebarPanels: React.FC = () => {
       bg="surface.panel"
       minH={0} // Important: allows flex item to shrink below content size
       css={{
+        scrollbarWidth: 'none',
         '&::-webkit-scrollbar': {
-          width: '8px',
+          width: '0px',
         },
         '&::-webkit-scrollbar-track': {
-          background: scrollbarTrack,
+          background: 'transparent',
         },
         '&::-webkit-scrollbar-thumb': {
-          background: scrollbarThumb,
+          background: 'transparent',
           borderRadius: '4px',
         },
         '&::-webkit-scrollbar-thumb:hover': {
+          background: 'transparent',
+        },
+        '[data-sidebar-shell="true"]:hover &': {
+          scrollbarWidth: 'thin',
+          scrollbarColor: `${scrollbarThumb} ${scrollbarTrack}`,
+        },
+        '[data-sidebar-shell="true"]:hover &::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '[data-sidebar-shell="true"]:hover &::-webkit-scrollbar-track': {
+          background: scrollbarTrack,
+        },
+        '[data-sidebar-shell="true"]:hover &::-webkit-scrollbar-thumb': {
+          background: scrollbarThumb,
+        },
+        '[data-sidebar-shell="true"]:hover &::-webkit-scrollbar-thumb:hover': {
           background: scrollbarThumbHover,
         },
       }}

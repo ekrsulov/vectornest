@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Badge, Box, useColorModeValue } from '@chakra-ui/react';
 import { useShallow } from 'zustand/react/shallow';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -10,8 +10,55 @@ import { AutoPanelKeyProvider } from '../../contexts/AutoPanelKeyProvider';
 import {
   getPanelConfigs,
 } from './panelConfig';
-import type { PanelComponentProps } from '../../types/panel';
+import type { PanelComponentProps, PanelConfig } from '../../types/panel';
 import { pluginManager } from '../../utils/pluginManager';
+
+type ReactLazyLike = {
+  _payload?: unknown;
+  _init?: (payload: unknown) => unknown;
+};
+
+const PREFS_PRELOAD_CONTEXT = {
+  activePlugin: null,
+  showFilePanel: false,
+  showSettingsPanel: true,
+  showLibraryPanel: false,
+  isInSpecialPanelMode: true,
+  canPerformOpticalAlignment: false,
+  llmAssistantConfigured: false,
+  selectedSubpathsCount: 0,
+  selectedCommandsCount: 0,
+  selectedPathsCount: 0,
+  selectedElementsCount: 0,
+  totalElementsCount: 0,
+  hasPathWithMultipleSubpaths: false,
+  canApplyOffset: () => false,
+  activeGroupId: null,
+  selectedGroupsCount: 0,
+};
+
+const isPromiseLike = (value: unknown): value is PromiseLike<unknown> => (
+  (typeof value === 'object' || typeof value === 'function') &&
+  value !== null &&
+  'then' in value &&
+  typeof value.then === 'function'
+);
+
+// React.lazy has no public preload API, so we opportunistically trigger its loader in idle time.
+const preloadLazyPanelComponent = async (component: PanelConfig['component']): Promise<void> => {
+  const lazyComponent = component as ReactLazyLike;
+  if (typeof lazyComponent._init !== 'function' || !('_payload' in lazyComponent)) {
+    return;
+  }
+
+  try {
+    lazyComponent._init(lazyComponent._payload);
+  } catch (error) {
+    if (isPromiseLike(error)) {
+      await Promise.resolve(error).then(() => undefined, () => undefined);
+    }
+  }
+};
 
 const getSettingsPanelSortGroup = (panelConfig: { key: string }): number => {
   if (panelConfig.key === 'settings') return 0;
@@ -89,7 +136,7 @@ const selectSidebarPanelsState = (state: CanvasStore) => {
     setMaximizedSidebarPanelKey: state.setMaximizedSidebarPanelKey,
     activeGroupId: groupEditor?.activeGroupId ?? null,
     selectedGroupsCount,
-    canApplyOffset: state.canApplyOffset ?? false,
+    canApplyOffset: state.canApplyOffset,
     llmAssistantConfigured: Boolean(
       llmAssistantSettings?.apiKey?.trim() &&
       llmAssistantSettings?.model?.trim() &&
@@ -109,9 +156,11 @@ export const SidebarPanels: React.FC = () => {
 
   const scrollbarTrack = useColorModeValue('#f1f1f1', 'rgba(255, 255, 255, 0.06)');
   const scrollbarThumb = useColorModeValue('#888', 'rgba(255, 255, 255, 0.3)');
+  const panelLoadingBg = useColorModeValue('gray.100', 'whiteAlpha.100');
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
   const enabledPlugins = useEnabledPlugins();
   const registrationVersion = usePluginRegistrationVersion();
+  const preloadedPrefsPanelKeysRef = useRef<Set<string>>(new Set());
 
   const scrollbarThumbHover = useColorModeValue('#555', 'rgba(255, 255, 255, 0.45)');
 
@@ -250,6 +299,10 @@ export const SidebarPanels: React.FC = () => {
     });
   }, [filteredPanelConfigs, maximizedSidebarPanelKey, showSettingsPanel]);
 
+  const prefsPanelConfigs = useMemo(() => (
+    filteredPanelConfigs.filter((panelConfig) => panelConfig.condition(PREFS_PRELOAD_CONTEXT))
+  ), [filteredPanelConfigs]);
+
   useEffect(() => {
     if (!maximizedSidebarPanelKey) return;
     const match = filteredPanelConfigs.find(panelConfig => panelConfig.key === maximizedSidebarPanelKey);
@@ -257,6 +310,47 @@ export const SidebarPanels: React.FC = () => {
       setMaximizedSidebarPanelKey(null);
     }
   }, [conditionContext, filteredPanelConfigs, maximizedSidebarPanelKey, setMaximizedSidebarPanelKey]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const browserWindow = window;
+    const requestIdleCallback = browserWindow.requestIdleCallback?.bind(browserWindow);
+    const cancelIdleCallback = browserWindow.cancelIdleCallback?.bind(browserWindow);
+
+    const pendingPanels = prefsPanelConfigs.filter((panelConfig) => !preloadedPrefsPanelKeysRef.current.has(panelConfig.key));
+    if (pendingPanels.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    const preload = () => {
+      if (cancelled) {
+        return;
+      }
+
+      pendingPanels.forEach((panelConfig) => {
+        preloadedPrefsPanelKeysRef.current.add(panelConfig.key);
+        void preloadLazyPanelComponent(panelConfig.component);
+      });
+    };
+
+    if (requestIdleCallback && cancelIdleCallback) {
+      const idleId = requestIdleCallback(preload, { timeout: 1200 });
+      return () => {
+        cancelled = true;
+        cancelIdleCallback(idleId);
+      };
+    }
+
+    const timeoutId = globalThis.setTimeout(preload, 250);
+    return () => {
+      cancelled = true;
+      globalThis.clearTimeout(timeoutId);
+    };
+  }, [prefsPanelConfigs]);
 
   const isFooterVisible = !isInSpecialPanelMode && !isFooterHidingPlugin && !maximizedSidebarPanelKey;
 
@@ -308,33 +402,31 @@ export const SidebarPanels: React.FC = () => {
       }}
     >
       <AutoPanelKeyProvider namespace={showSettingsPanel ? 'sidebar:prefs' : null}>
-        <Suspense fallback={<Box h="20px" bg="gray.100" />}>
-          {visiblePanelConfigs.map((panelConfig) => {
-            const shouldShow = panelConfig.condition(conditionContext);
-            if (!shouldShow) {
-              return null;
-            }
+        {visiblePanelConfigs.map((panelConfig) => {
+          const shouldShow = panelConfig.condition(conditionContext);
+          if (!shouldShow) {
+            return null;
+          }
 
-            const PanelComponent = panelConfig.component;
-            const panelProps = {
-              ...allPanelProps,
-              ...(panelConfig.getProps
-                ? panelConfig.getProps(allPanelProps)
-                : {}),
-              panelKey: panelConfig.key,
-            };
-            const panelContent = renderWithPanelBadge(
-              <PanelComponent {...panelProps} />,
-              panelConfig.key
-            );
+          const PanelComponent = panelConfig.component;
+          const panelProps = {
+            ...allPanelProps,
+            ...(panelConfig.getProps
+              ? panelConfig.getProps(allPanelProps)
+              : {}),
+            panelKey: panelConfig.key,
+          };
+          const panelContent = renderWithPanelBadge(
+            <PanelComponent {...panelProps} />,
+            panelConfig.key
+          );
 
-            return (
-              <React.Fragment key={panelConfig.key}>
-                {panelContent}
-              </React.Fragment>
-            );
-          })}
-        </Suspense>
+          return (
+            <Suspense key={panelConfig.key} fallback={<Box h="20px" bg={panelLoadingBg} />}>
+              {panelContent}
+            </Suspense>
+          );
+        })}
       </AutoPanelKeyProvider>
     </Box>
   );

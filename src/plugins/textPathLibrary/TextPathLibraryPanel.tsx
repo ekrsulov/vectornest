@@ -11,7 +11,7 @@ import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
 import { useCanvasStore } from '../../store/canvasStore';
-import { isPathElement, type PathElement } from '../../types';
+import { isPathElement } from '../../types';
 import {
   TEXT_PATH_PRESETS,
   CATEGORY_LABELS,
@@ -42,8 +42,8 @@ const selectPanelState = (state: CanvasStore) => {
     selectedFromSearch: slice.selectedFromSearch ?? null,
     selectFromSearch: slice.selectFromSearch,
     hasPathSelection,
-    selectedPath: selectedIds.length > 0
-      ? (elements.find((el) => selectedIds.includes(el.id) && isPathElement(el as never)) as PathElement | undefined) ?? null
+    selectedPathId: selectedIds.length > 0
+      ? elements.find((el) => selectedIds.includes(el.id) && isPathElement(el as never))?.id ?? null
       : null,
   };
 };
@@ -55,7 +55,7 @@ export const TextPathLibraryPanel: React.FC = () => {
     selectedFromSearch,
     selectFromSearch,
     hasPathSelection,
-    selectedPath,
+    selectedPathId,
   } = useShallowCanvasSelector(selectPanelState);
 
   const detailsRef = useRef<HTMLDivElement | null>(null);
@@ -96,8 +96,12 @@ export const TextPathLibraryPanel: React.FC = () => {
   }, []);
 
   const handleApplyToSelected = useCallback(() => {
-    if (!selectedPath || !activePreset) return;
+    if (!selectedPathId || !activePreset) return;
     const state = useCanvasStore.getState();
+    const selectedPath = state.elements.find((element) => element.id === selectedPathId);
+    if (!selectedPath || !isPathElement(selectedPath)) {
+      return;
+    }
     const storeStyle = state.style;
     const fillColor = storeStyle?.fillColor === 'none' ? '#000000' : (storeStyle?.fillColor ?? '#000000');
     state.updateElement(selectedPath.id, {
@@ -111,7 +115,7 @@ export const TextPathLibraryPanel: React.FC = () => {
         },
       },
     });
-  }, [selectedPath, activePreset, text, fontSize, startOffset]);
+  }, [selectedPathId, activePreset, text, fontSize, startOffset]);
 
   const placementActive = Boolean(activePresetId && placingPresetId === activePresetId);
 

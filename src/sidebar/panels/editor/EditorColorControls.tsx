@@ -50,7 +50,7 @@ const EditorColorControlsComponent: React.FC<EditorColorControlsProps> = ({
             {/* Fill Color & Opacity */}
             <VStack spacing={0} align="stretch">
                 <Flex align="center" gap={1} minH="24px" w="100%" flexWrap="nowrap">
-                    <Text fontSize="12px" fontWeight="400" color={labelColor} minW="50px" flexShrink={0} h="24px" display="flex" alignItems="center">
+                    <Text fontSize="11px" fontWeight="700" color={labelColor} minW="50px" flexShrink={0} h="24px" display="flex" alignItems="center">
                         Fill
                     </Text>
                     <Box flex="1 1 0" minW="0">
@@ -93,7 +93,7 @@ const EditorColorControlsComponent: React.FC<EditorColorControlsProps> = ({
             {/* Stroke Color & Opacity */}
             <VStack spacing={0} align="stretch">
                 <Flex align="center" gap={1} minH="24px" w="100%" flexWrap="nowrap">
-                    <Text fontSize="12px" fontWeight="400" color={labelColor} minW="50px" flexShrink={0} h="24px" display="flex" alignItems="center">
+                    <Text fontSize="11px" fontWeight="700" color={labelColor} minW="50px" flexShrink={0} h="24px" display="flex" alignItems="center">
                         Stroke
                     </Text>
                     <Box flex="1 1 0" minW="0">

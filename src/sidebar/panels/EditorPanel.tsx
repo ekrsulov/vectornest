@@ -40,7 +40,7 @@ export const EditorPanel: React.FC = () => {
   const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
   const { colorMode } = useColorMode();
   const presets = React.useMemo(() => getFillAndStrokePresets(colorMode), [colorMode]);
-  const labelColor = useColorModeValue('gray.600', 'gray.300');
+  const labelColor = useColorModeValue('gray.800', 'gray.100');
 
   // Colors for active style eyedropper button
   const activeButtonBg = useColorModeValue('gray.800', 'gray.200');
@@ -259,7 +259,7 @@ export const EditorPanel: React.FC = () => {
           />
           {/* Global Opacity */}
           <HStack minH="24px" justify="flex-start" spacing={1.5}>
-            <Text fontSize="12px" fontWeight="400" color={labelColor} minW="50px" h="24px" display="flex" alignItems="center">
+            <Text fontSize="11px" fontWeight="700" color={labelColor} minW="50px" h="24px" display="flex" alignItems="center">
               Opacity
             </Text>
             <Box flex={1} minW="120px" pr={0.5}>
@@ -276,7 +276,7 @@ export const EditorPanel: React.FC = () => {
           </HStack>
           {/* Stroke Width */}
           <HStack minH="24px" justify="flex-start" spacing={1.5}>
-            <Text fontSize="12px" fontWeight="400" color={labelColor} minW="50px" h="24px" display="flex" alignItems="center">
+            <Text fontSize="11px" fontWeight="700" color={labelColor} minW="50px" h="24px" display="flex" alignItems="center">
               Width
             </Text>
             <Box flex={1} minW="120px" pr={0.5}>

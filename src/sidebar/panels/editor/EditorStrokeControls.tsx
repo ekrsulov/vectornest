@@ -38,8 +38,8 @@ const EditorStrokeControlsComponent: React.FC<EditorStrokeControlsProps> = ({
             {/* Linecap */}
             <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
                 <Text
-                    fontSize="12px"
-                    fontWeight="400"
+                    fontSize="11px"
+                    fontWeight="700"
                     color={labelColor}
                     w="50px"
                     flexShrink={0}
@@ -64,8 +64,8 @@ const EditorStrokeControlsComponent: React.FC<EditorStrokeControlsProps> = ({
             {/* Linejoin */}
             <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
                 <Text
-                    fontSize="12px"
-                    fontWeight="400"
+                    fontSize="11px"
+                    fontWeight="700"
                     color={labelColor}
                     w="50px"
                     flexShrink={0}
@@ -90,8 +90,8 @@ const EditorStrokeControlsComponent: React.FC<EditorStrokeControlsProps> = ({
             {/* Fill Rule */}
             <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
                 <Text
-                    fontSize="12px"
-                    fontWeight="400"
+                    fontSize="11px"
+                    fontWeight="700"
                     color={labelColor}
                     w="50px"
                     flexShrink={0}
@@ -116,8 +116,8 @@ const EditorStrokeControlsComponent: React.FC<EditorStrokeControlsProps> = ({
             {/* Custom Dash Array */}
             <HStack justify="flex-start" minH="24px" spacing={1}>
                 <Text
-                    fontSize="12px"
-                    fontWeight="400"
+                    fontSize="11px"
+                    fontWeight="700"
                     color={labelColor}
                     w="50px"
                     flexShrink={0}

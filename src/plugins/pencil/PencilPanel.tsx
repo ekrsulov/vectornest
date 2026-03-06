@@ -38,7 +38,7 @@ export const PencilPanel: React.FC<PencilPanelProps> = ({ hideTitle = false }) =
         <Box pr={0.5}>
           <SliderControl
             label="Tolerance"
-            value={pencil?.simplificationTolerance ?? 0}
+            value={pencil?.simplificationTolerance ?? 10}
             min={0}
             max={10}
             step={1}

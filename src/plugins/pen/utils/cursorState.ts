@@ -89,6 +89,7 @@ export function calculateEditCursorState(
     pathId: string,
     subPathIndex: number,
     autoAddDelete: boolean,
+    continueFromEndpoints: boolean,
     zoom: number = 1
 ): { cursorState: PenCursorState; hoverTarget: PenHoverTarget } {
     const threshold = 8 / zoom;
@@ -112,7 +113,11 @@ export function calculateEditCursorState(
     const anchorIndex = findAnchorOnPath(point, path, threshold);
     if (anchorIndex !== null) {
         // Check if it's an endpoint (start or end of open path)
-        if (!path.closed && (anchorIndex === 0 || anchorIndex === path.anchors.length - 1)) {
+        if (
+            continueFromEndpoints &&
+            !path.closed &&
+            (anchorIndex === 0 || anchorIndex === path.anchors.length - 1)
+        ) {
             return {
                 cursorState: 'continue',
                 hoverTarget: { type: 'endpoint', pathId, subPathIndex, anchorIndex },

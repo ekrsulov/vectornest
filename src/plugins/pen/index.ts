@@ -67,6 +67,12 @@ export const penPlugin: PluginDefinition<CanvasStore> = {
         // Main handler is managed by the hook
         // This is here for compatibility but actual handling is in usePenDrawingHook
     },
+    onCanvasDoubleClick: (_event, context) => {
+        const state = context.store.getState() as PenStore;
+        if (state.pen?.mode === 'drawing') {
+            finalizePath(context.store.getState as () => CanvasStore);
+        }
+    },
     keyboardShortcuts: {
         p: (event, { store }) => {
             if (!event.ctrlKey && !event.metaKey) {

@@ -46,6 +46,7 @@ const selectPenPanelState = (state: CanvasStore) => {
     return {
         // Preferences (change infrequently)
         autoAddDelete: penState.autoAddDelete,
+        continueFromEndpoints: penState.continueFromEndpoints,
         guidelinesEnabled: penState.guidelinesEnabled,
         showHandleDistance: penState.showHandleDistance,
         // Mode (changes on state transitions, not on mouse move)
@@ -73,6 +74,7 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
 
     const {
         autoAddDelete,
+        continueFromEndpoints,
         guidelinesEnabled,
         showHandleDistance,
         mode,
@@ -122,6 +124,16 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
                             id="guidelines-enabled"
                             isChecked={guidelinesEnabled}
                             onChange={(e) => updatePenState({ guidelinesEnabled: e.target.checked })}
+                        />
+                    </FormControl>
+                    <FormControl display="flex" alignItems="center">
+                        <FormLabel htmlFor="continue-from-endpoints" mb="0" fontSize="12px" flex="1" color={labelColor}>
+                            Continue from Endpoints
+                        </FormLabel>
+                        <PanelSwitch
+                            id="continue-from-endpoints"
+                            isChecked={continueFromEndpoints}
+                            onChange={(e) => updatePenState({ continueFromEndpoints: e.target.checked })}
                         />
                     </FormControl>
                     <FormControl display="flex" alignItems="center">
@@ -187,4 +199,3 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
         </Panel>
     );
 };
-

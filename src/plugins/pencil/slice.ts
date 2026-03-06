@@ -22,6 +22,6 @@ export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], Pe
     'pencil',
     {
       reusePath: false,
-      simplificationTolerance: 0,
+      simplificationTolerance: 10,
     }
   );

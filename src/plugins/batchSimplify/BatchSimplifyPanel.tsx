@@ -1,29 +1,37 @@
 import React from 'react';
 import { VStack, Text, Box } from '@chakra-ui/react';
-import { useCanvasStore } from '../../store/canvasStore';
+import { useShallowCanvasSelector } from '../../hooks/useShallowCanvasSelector';
+import type { CanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SliderControl } from '../../ui/SliderControl';
 import type { BatchSimplifyPluginSlice } from './slice';
 
-export const BatchSimplifyPanel: React.FC = () => {
-    const batchSimplify = useCanvasStore(
-        (state) => (state as unknown as BatchSimplifyPluginSlice).batchSimplify
-    );
-    const updateBatchSimplify = useCanvasStore(
-        (state) => (state as unknown as BatchSimplifyPluginSlice).updateBatchSimplify
-    );
-    const applyBatchSimplify = useCanvasStore(
-        (state) => (state as unknown as BatchSimplifyPluginSlice).applyBatchSimplify
-    );
-
-    const selectedIds = useCanvasStore((state) => state.selectedIds ?? []);
-    const elements = useCanvasStore((state) => state.elements ?? []);
+const selectBatchSimplifyPanelState = (state: CanvasStore) => {
+    const batchSimplifyState = (state as unknown as BatchSimplifyPluginSlice).batchSimplify;
+    const selectedIds = state.selectedIds ?? [];
+    const elements = state.elements ?? [];
 
     const pathCount = selectedIds.filter((id) => {
-        const el = elements.find((e) => e.id === id);
-        return el?.type === 'path';
+        const element = elements.find((candidate) => candidate.id === id);
+        return element?.type === 'path';
     }).length;
+
+    return {
+        tolerance: batchSimplifyState?.tolerance ?? 1,
+        updateBatchSimplify: (state as unknown as BatchSimplifyPluginSlice).updateBatchSimplify,
+        applyBatchSimplify: (state as unknown as BatchSimplifyPluginSlice).applyBatchSimplify,
+        pathCount,
+    };
+};
+
+export const BatchSimplifyPanel: React.FC = () => {
+    const {
+        tolerance,
+        updateBatchSimplify,
+        applyBatchSimplify,
+        pathCount,
+    } = useShallowCanvasSelector(selectBatchSimplifyPanelState);
 
     const hasSelection = pathCount > 0;
 
@@ -46,7 +54,7 @@ export const BatchSimplifyPanel: React.FC = () => {
                 <Box pr={0.5}>
                     <SliderControl
                         label="Tolerance"
-                        value={batchSimplify?.tolerance ?? 1}
+                        value={tolerance}
                         min={0}
                         max={10}
                         step={1}

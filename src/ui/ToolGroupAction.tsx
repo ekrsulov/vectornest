@@ -40,6 +40,10 @@ interface ToolGroupActionProps {
      * Default tool to activate when clicking an inactive button
      */
     defaultToolId?: string;
+    /**
+     * If true, clicking an inactive group activates the default tool instead of opening the menu
+     */
+    activateDefaultOnInactiveClick?: boolean;
 }
 
 export const ToolGroupAction: React.FC<ToolGroupActionProps> = ({
@@ -55,6 +59,7 @@ export const ToolGroupAction: React.FC<ToolGroupActionProps> = ({
     counterColor = 'gray',
     toolGroup,
     defaultToolId,
+    activateDefaultOnInactiveClick = true,
 }) => {
     const themeColors = useThemeColors();
     const { activeTool: { bg: activeBg, color: activeColor }, counter: counterColors, menu: menuColors } = themeColors;
@@ -71,7 +76,7 @@ export const ToolGroupAction: React.FC<ToolGroupActionProps> = ({
 
     // Custom click handler: if inactive, activate default tool; if active, let Menu handle it
     const handleButtonClick = (e: React.MouseEvent) => {
-        if (toolGroup && defaultToolId && !isActive) {
+        if (activateDefaultOnInactiveClick && toolGroup && defaultToolId && !isActive) {
             // Prevent menu from opening
             e.preventDefault();
             e.stopPropagation();

@@ -15,6 +15,7 @@ const EMPTY_SNAPSHOT: PluginHooksSnapshot = {
 
 let snapshot: PluginHooksSnapshot = EMPTY_SNAPSHOT;
 let storeUnsubscribe: (() => void) | null = null;
+let registrationUnsubscribe: (() => void) | null = null;
 const listeners = new Set<() => void>();
 
 const areArraysEqual = (a: string[], b: string[]): boolean => (
@@ -85,6 +86,10 @@ const ensureStoreSubscription = (): void => {
 
     updateSnapshot();
   });
+
+  registrationUnsubscribe = pluginManager.onPluginRegistrationChange(() => {
+    updateSnapshot();
+  });
 };
 
 const subscribe = (listener: () => void): (() => void) => {
@@ -93,9 +98,15 @@ const subscribe = (listener: () => void): (() => void) => {
 
   return () => {
     listeners.delete(listener);
-    if (listeners.size === 0 && storeUnsubscribe) {
-      storeUnsubscribe();
-      storeUnsubscribe = null;
+    if (listeners.size === 0) {
+      if (storeUnsubscribe) {
+        storeUnsubscribe();
+        storeUnsubscribe = null;
+      }
+      if (registrationUnsubscribe) {
+        registrationUnsubscribe();
+        registrationUnsubscribe = null;
+      }
     }
   };
 };

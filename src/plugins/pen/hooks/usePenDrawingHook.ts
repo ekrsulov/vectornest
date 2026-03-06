@@ -43,6 +43,11 @@ import {
 import type { PenHoverTarget, PenPath } from '../types';
 import { snapManager } from '../../../snap/SnapManager';
 import { toWorldPenPath } from '../utils/penPathTransforms';
+import { isDoubleTap, type TapState } from '../../../utils/tapUtils';
+
+const canFinishPenPath = (path: PenPath | null | undefined): boolean => {
+    return (path?.anchors.length ?? 0) >= 2;
+};
 
 /**
  * Main hook for Pen tool pointer event handling
@@ -60,6 +65,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
     const isVKeyPressedRef = useRef(false);
     const isMovingLastAnchorRef = useRef(false);
     const lastAnchorOriginalPositionRef = useRef<Point | null>(null);
+    const lastTapRef = useRef<TapState | null>(null);
 
     // Reference for segment translation: stores original anchor positions when drag starts
     const segmentOriginalAnchorsRef = useRef<{ start: Point; end: Point } | null>(null);
@@ -75,6 +81,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
     // Reset pen state when tool becomes active (cleanup from previous session)
     useEffect(() => {
         if (isActive) {
+            lastTapRef.current = null;
             const state = useCanvasStore.getState() as PenStore;
             const penState = state.pen;
 
@@ -102,6 +109,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 isMovingLastAnchorRef.current = false;
                 lastAnchorOriginalPositionRef.current = null;
                 segmentOriginalAnchorsRef.current = null;
+                lastTapRef.current = null;
             }
         }
     }, [isActive]);
@@ -229,6 +237,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
 
             if (!penState) return;
 
+            const { mode, currentPath, cursorState, guidelinesEnabled } = penState;
+
             // Apply snapping for actions (drawing/dragging)
             // We exclude the current path being drawn/edited from object snap to avoid self-snapping issues during creation
             // although sometimes self-snapping is desired (e.g. closing path).
@@ -264,8 +274,6 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             const canvasPoint = getSnappedPoint(rawCanvasPoint);
             // Use raw point for detection to avoid snapping away from targets
             const detectionPoint = rawCanvasPoint;
-
-            const { mode, currentPath, cursorState, guidelinesEnabled } = penState;
 
             // Calculate guidelines snap directly for the current point
             // This is necessary because on touch devices, there's no pointerMove before pointerDown,
@@ -324,14 +332,15 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
 
                 // If editing a specific path, check it first (regardless of distance)
                 if (penState.editingPathId && penState.currentPath) {
-                    const result = calculateEditCursorState(
-                        detectionPoint,
-                        penState.currentPath,
-                        penState.editingPathId,
-                        penState.editingSubPathIndex ?? 0,
-                        penState.autoAddDelete,
-                        viewportZoom
-                    );
+                        const result = calculateEditCursorState(
+                            detectionPoint,
+                            penState.currentPath,
+                            penState.editingPathId,
+                            penState.editingSubPathIndex ?? 0,
+                            penState.autoAddDelete,
+                            penState.continueFromEndpoints,
+                            viewportZoom
+                        );
                     hoverTarget = result.hoverTarget;
                     if (hoverTarget.type !== 'none') {
                         // Found something on the current path
@@ -354,6 +363,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                             result.pathId,
                             result.subPathIndex,
                             penState.autoAddDelete,
+                            penState.continueFromEndpoints,
                             viewportZoom
                         );
                         hoverTarget = editResult.hoverTarget;
@@ -440,7 +450,12 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                             }
                         }
 
-                        if (hoverTarget.type === 'endpoint' && hoverTarget.anchorIndex !== undefined && hoverTarget.pathId) {
+                        if (
+                            penState.continueFromEndpoints &&
+                            hoverTarget.type === 'endpoint' &&
+                            hoverTarget.anchorIndex !== undefined &&
+                            hoverTarget.pathId
+                        ) {
                             // Continue path
                             continueFromEndpoint(hoverTarget.pathId, hoverTarget.anchorIndex, useCanvasStore.getState, hoverTarget.subPathIndex);
                             return;
@@ -626,6 +641,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         penState.editingPathId,
                         penState.editingSubPathIndex ?? 0, // Use the actual subpath index being edited
                         penState.autoAddDelete,
+                        penState.continueFromEndpoints,
                         viewportZoom
                     );
                     newCursorState = result.cursorState;
@@ -642,6 +658,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                             result.pathId,
                             result.subPathIndex,
                             penState.autoAddDelete,
+                            penState.continueFromEndpoints,
                             viewportZoom
                         );
                         // If we hit something specific (anchor/segment), show that cursor
@@ -857,6 +874,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 isDraggingRef.current = false;
                 dragStartPointRef.current = null;
                 rawDragStartPointRef.current = null;
+                lastTapRef.current = null;
                 state.updatePenState?.({ dragState: null, activeGuidelines: null });
                 return;
             }
@@ -866,6 +884,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 isDraggingRef.current = false;
                 dragStartPointRef.current = null;
                 rawDragStartPointRef.current = null;
+                lastTapRef.current = null;
                 state.updatePenState?.({ dragState: null, activeGuidelines: null });
                 referencePointsRef.current = []; // Clear cache for next operation
                 return;
@@ -877,6 +896,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 dragStartPointRef.current = null;
                 rawDragStartPointRef.current = null;
                 segmentOriginalAnchorsRef.current = null; // Clear original anchor positions
+                lastTapRef.current = null;
                 state.updatePenState?.({ dragState: null, activeGuidelines: null });
                 return;
             }
@@ -907,6 +927,34 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 // Use wasRealDrag (calculated with raw points) to determine if this was a click or drag
                 // This prevents false positives from grid snap offset differences
                 const isDragGesture = wasRealDrag;
+                const currentTap: TapState = {
+                    time: Date.now(),
+                    x: event.clientX,
+                    y: event.clientY,
+                };
+                const shouldFinishFromDoubleActivate =
+                    !isDragGesture &&
+                    canFinishPenPath(currentPath) &&
+                    (
+                        event.detail >= 2 ||
+                        isDoubleTap(currentTap, lastTapRef.current)
+                    );
+
+                if (shouldFinishFromDoubleActivate) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    lastTapRef.current = null;
+                    isDraggingRef.current = false;
+                    dragStartPointRef.current = null;
+                    rawDragStartPointRef.current = null;
+                    savedInHandleRef.current = null;
+                    segmentOriginalAnchorsRef.current = null;
+                    isMovingLastAnchorRef.current = false;
+                    lastAnchorOriginalPositionRef.current = null;
+                    state.updatePenState?.({ dragState: null, activeGuidelines: null });
+                    finalizePath(useCanvasStore.getState);
+                    return;
+                }
 
                 // Check if this is the first point being dragged (not a new point)
                 // This is true when:
@@ -920,6 +968,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     Math.abs(dragStartPointRef.current.y - firstAnchor.position.y) < 1;
 
                 if (!isDragGesture) {
+                    lastTapRef.current = currentTap;
+
                     // Simple click - add straight anchor (but not if it's still the first point being placed)
                     if (!isFirstPointDrag) {
                         let finalPoint = dragStartPointRef.current;
@@ -934,6 +984,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     }
                     // If first point with no drag, just keep it as corner (no action needed)
                 } else {
+                    lastTapRef.current = null;
                     // Drag gesture - use the already calculated handleVector which has snap applied
                     const outHandle = { ...handleVector };
 
@@ -986,6 +1037,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         }
                     }
                 }
+            } else {
+                lastTapRef.current = null;
             }
 
             // Reset drag state

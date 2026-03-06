@@ -60,7 +60,11 @@ export const CanvasEffectManager: React.FC<CanvasEffectManagerProps> = ({
   currentModeRef.current = currentMode;
 
   useEffect(() => {
-    const unsubscribe = eventBus.subscribe('canvasDoubleClick', () => {
+    const unsubscribe = eventBus.subscribe('canvasDoubleClick', (payload) => {
+      if (payload.activePlugin === 'pen') {
+        return;
+      }
+
       const state = canvasStoreApi.getState();
       if (state.groupEditor.isEditing && state.groupEditor.activeGroupId) {
         state.exitGroupEditor();

@@ -41,6 +41,7 @@ export interface PenPluginSlice {
 
         // Preferences
         autoAddDelete: boolean;
+        continueFromEndpoints: boolean;
         snapToPoints: boolean;
         showHandleDistance: boolean;
         
@@ -70,6 +71,7 @@ export const createPenPluginSlice: StateCreator<PenPluginSlice> = (set) => ({
         editingSubPathIndex: null,
         selectedAnchorIndex: null,
         autoAddDelete: false,
+        continueFromEndpoints: false,
         snapToPoints: false,
         showHandleDistance: false,
         guidelinesEnabled: true,

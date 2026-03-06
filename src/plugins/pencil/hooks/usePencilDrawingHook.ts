@@ -15,7 +15,7 @@ export function usePencilDrawingHook(context: PluginHooksContext): void {
     // Default pencil settings if not initialized (pencil-specific only)
     const effectivePencil = pencil ?? {
         reusePath: false,
-        simplificationTolerance: 0,
+        simplificationTolerance: 10,
     };
 
     // Default style settings if not initialized (from centralized StyleSlice)

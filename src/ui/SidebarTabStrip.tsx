@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
 import { useResponsive } from '../hooks/useResponsive';
+import { useThemeColors } from '../hooks/useThemeColors';
 import { SidebarUtilityButton } from './SidebarUtilityButton';
 
 export interface SidebarTabStripItem {
@@ -15,6 +16,7 @@ interface SidebarTabStripProps {
   scrollable?: boolean;
   tabWidth?: string;
   fontSize?: string;
+  flat?: boolean;
 }
 
 export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
@@ -22,10 +24,15 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
   scrollable = false,
   tabWidth,
   fontSize = 'sm',
+  flat = false,
 }) => {
   const railBg = useColorModeValue('blackAlpha.50', 'whiteAlpha.100');
   const railBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
-  const separatorColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
+  const {
+    toggle: {
+      inactive: { color: separatorColor },
+    },
+  } = useThemeColors();
   const { isMobile } = useResponsive();
 
   if (items.length === 0) {
@@ -38,20 +45,21 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
       align="stretch"
       w={scrollable ? 'max-content' : 'full'}
       minW={scrollable ? 'full' : undefined}
-      borderRadius={isMobile ? 0 : '12px'}
+      borderRadius={flat || isMobile ? 0 : '12px'}
       border="1px solid"
-      borderLeftWidth={isMobile ? 0 : '1px'}
-      borderTopWidth={isMobile ? 0 : '1px'}
+      borderLeftWidth={flat || isMobile ? 0 : '1px'}
+      borderTopWidth={flat || isMobile ? 0 : '1px'}
+      borderBottomWidth="0"
       borderColor={railBorderColor}
       bg={railBg}
       p="0"
-      boxShadow={isMobile ? 'none' : 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'}
+      boxShadow={flat || isMobile ? 'none' : 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'}
     >
       {items.map((item, index) => {
         const previousItem = items[index - 1];
         const showSeparator = index > 0 && !item.isActive && !previousItem?.isActive;
         const hasFixedScrollableWidth = scrollable && Boolean(tabWidth);
-        const tabShape = isMobile
+        const tabShape = flat || isMobile
           ? 'none'
           : items.length === 1
             ? 'full'
@@ -80,7 +88,8 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
                 bottom="4px"
                 w="1px"
                 bg={separatorColor}
-                zIndex={0}
+                zIndex={1}
+                pointerEvents="none"
               />
             )}
             <SidebarUtilityButton

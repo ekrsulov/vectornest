@@ -84,9 +84,9 @@ export const LeftSidebarToolGrid: React.FC = () => {
     <Box
       bg="surface.panel"
       position="relative"
-      pl={{ base: 0, md: '2px' }}
-      pr={{ base: 0, md: '2px' }}
-      pt={{ base: 0, md: '1px' }}
+      pl={0}
+      pr={0}
+      pt={0}
     >
       <HStack w="full" spacing={1} alignItems="stretch">
         <Box
@@ -99,7 +99,6 @@ export const LeftSidebarToolGrid: React.FC = () => {
               label={isLeftSidebarPinned ? 'Unpin sidebar' : 'Pin sidebar'}
               icon={isLeftSidebarPinned ? PinOff : Pin}
               iconOnly
-              visualStyle="tab"
               fontSize="xs"
               inactiveBg={pinBg}
               inactiveBorderColor={pinBorderColor}
@@ -115,7 +114,7 @@ export const LeftSidebarToolGrid: React.FC = () => {
           </ConditionalTooltip>
         </Box>
         <Box flex={1} display="flex" minW={0}>
-          <SidebarTabStrip items={buttons} />
+          <SidebarTabStrip items={buttons} flat />
         </Box>
       </HStack>
     </Box>

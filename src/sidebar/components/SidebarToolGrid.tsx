@@ -96,9 +96,9 @@ export const SidebarToolGrid: React.FC = () => {
     <Box
       bg="surface.panel"
       position="relative"
-      pl={{ base: 0, md: '2px' }}
-      pr={{ base: 0, md: '2px' }}
-      pt={{ base: 0, md: '1px' }}
+      pl={0}
+      pr={0}
+      pt={0}
     >
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
       <HStack w="full" spacing={1} alignItems="stretch">
@@ -106,6 +106,7 @@ export const SidebarToolGrid: React.FC = () => {
           <SidebarTabStrip
             items={tabItems}
             scrollable={shouldUseHorizontalScroll}
+            flat
           />
         </Box>
         {canPinSidebar && (
@@ -120,7 +121,6 @@ export const SidebarToolGrid: React.FC = () => {
                 label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
                 icon={isPinned ? PinOff : Pin}
                 iconOnly
-                visualStyle="tab"
                 fontSize="xs"
                 fullWidth={false}
                 flex={0}

@@ -186,14 +186,25 @@ export const ToolGroupAction: React.FC<ToolGroupActionProps> = ({
                                     icon={<ToolIcon size={16} />}
                                     command={isToolActive ? '✓' : undefined}
                                     isDisabled={tool.isDisabled}
+                                    bg="transparent"
                                     color={menuColors.iconColor}
                                     _hover={{ bg: hoverBg }}
-                                    _focus={{ outline: 'none', boxShadow: 'none', bg: 'transparent' }}
-                                    _active={{ outline: 'none', bg: 'transparent' }}
+                                    _focus={{ outline: 'none', boxShadow: 'none', bg: hoverBg }}
+                                    _active={{ outline: 'none', bg: hoverBg }}
+                                    _disabled={{ bg: 'transparent', opacity: 0.4, cursor: 'not-allowed' }}
                                     fontSize="14px"
                                     fontWeight="medium"
                                     px={3}
                                     py={2}
+                                    transition="all 0.2s"
+                                    sx={{
+                                        '&[data-hover]': {
+                                            bg: hoverBg,
+                                        },
+                                        '&[data-focus]': {
+                                            bg: hoverBg,
+                                        },
+                                    }}
                                 >
                                     {tool.label}
                                 </MenuItem>

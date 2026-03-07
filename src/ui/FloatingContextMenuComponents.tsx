@@ -25,18 +25,28 @@ export const renderMenuIcon = (action: FloatingContextMenuAction) => {
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function menuItemChakraStyleProps(action: FloatingContextMenuAction, theme: ReturnType<typeof useThemeColors>) {
+  const hoverBg = action.variant === 'danger' ? theme.menu.dangerHoverBg : theme.menu.hoverBg;
   return {
+    bg: 'transparent',
     color: action.variant === 'danger' ? theme.menu.dangerColor : theme.menu.iconColor,
     _hover: !action.isDisabled ? {
-      bg: action.variant === 'danger' ? theme.menu.dangerHoverBg : theme.menu.hoverBg
+      bg: hoverBg
     } : {},
-    _focus: { outline: 'none', boxShadow: 'none', bg: 'transparent' },
-    _active: { outline: 'none', bg: 'transparent' },
+    _focus: { outline: 'none', boxShadow: 'none', bg: action.isDisabled ? 'transparent' : hoverBg },
+    _active: { outline: 'none', bg: action.isDisabled ? 'transparent' : hoverBg },
+    _disabled: { bg: 'transparent', opacity: 0.4, cursor: 'not-allowed' },
     sx: {
+      '&[data-hover]': {
+        background: action.isDisabled ? 'transparent' : hoverBg,
+      },
+      '&[data-focus]': {
+        background: action.isDisabled ? 'transparent' : hoverBg,
+      },
       ...NO_TAP_HIGHLIGHT,
       ...NO_FOCUS_STYLES,
     },
     fontSize: "14px",
+    transition: 'all 0.2s',
   };
 }
 
@@ -45,6 +55,7 @@ export function menuItemChakraStyleProps(action: FloatingContextMenuAction, them
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function menuItemStyleProps(action: FloatingContextMenuAction, theme: ReturnType<typeof useThemeColors>) {
+  const hoverBg = action.variant === 'danger' ? theme.menu.dangerHoverBg : theme.menu.hoverBg;
   return {
     px: 3,
     py: 2,
@@ -58,11 +69,17 @@ export function menuItemStyleProps(action: FloatingContextMenuAction, theme: Ret
     opacity: action.isDisabled ? 0.4 : 1,
     cursor: action.isDisabled ? 'not-allowed' : 'pointer',
     _hover: !action.isDisabled ? {
-      bg: action.variant === 'danger' ? theme.menu.dangerHoverBg : theme.menu.hoverBg
+      bg: hoverBg
     } : {},
-    _focus: { outline: 'none', boxShadow: 'none' },
-    _active: { outline: 'none' },
+    _focus: { outline: 'none', boxShadow: 'none', bg: action.isDisabled ? 'transparent' : hoverBg },
+    _active: { outline: 'none', bg: action.isDisabled ? 'transparent' : hoverBg },
     sx: {
+      '&[data-hover]': {
+        background: action.isDisabled ? 'transparent' : hoverBg,
+      },
+      '&[data-focus]': {
+        background: action.isDisabled ? 'transparent' : hoverBg,
+      },
       ...NO_TAP_HIGHLIGHT,
       ...NO_FOCUS_STYLES,
     },

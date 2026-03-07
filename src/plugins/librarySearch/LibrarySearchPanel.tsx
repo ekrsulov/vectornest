@@ -266,16 +266,26 @@ export const LibrarySearchPanel: React.FC = () => {
     };
 
     const menuItemProps = {
-        bg: themeColors.menu.bg,
+        bg: 'transparent',
         color: themeColors.menu.iconColor,
         _hover: { bg: themeColors.menu.hoverBg },
-        _focus: { outline: 'none', boxShadow: 'none', bg: themeColors.menu.bg },
-        _active: { outline: 'none', bg: themeColors.menu.bg },
+        _focus: { outline: 'none', boxShadow: 'none', bg: themeColors.menu.hoverBg },
+        _active: { outline: 'none', bg: themeColors.menu.hoverBg },
+        _disabled: { bg: 'transparent', opacity: 0.4, cursor: 'not-allowed' },
         fontSize: '14px',
         fontWeight: 'medium',
         px: 3,
         py: 2,
         gap: 2,
+        transition: 'all 0.2s',
+        sx: {
+            '&[data-hover]': {
+                bg: themeColors.menu.hoverBg,
+            },
+            '&[data-focus]': {
+                bg: themeColors.menu.hoverBg,
+            },
+        },
     };
 
 

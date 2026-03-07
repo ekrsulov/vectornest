@@ -53,6 +53,7 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
     const borderColor = toolbar.borderColor;
     const borderWidth = useColorModeValue(1, 1);
     const dividerWidth = useColorModeValue(1, 0);
+    const hoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
     const textColor = 'text.primary'; // Keeping existing color usage via string key if it works, or fallback to theme
     const iconColor = 'text.secondary';
 
@@ -60,7 +61,7 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
         size: 'xs',
         variant: 'ghost',
         color: iconColor,
-        _hover: { bg: useColorModeValue('gray.100', 'whiteAlpha.200') },
+        _hover: { bg: hoverBg },
         isRound: true,
         sx: {
             minWidth: '24px',
@@ -83,14 +84,26 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
     };
 
     const menuItemProps = {
+        bg: 'transparent',
         color: menu.iconColor,
         _hover: { bg: menu.hoverBg },
-        _focus: { outline: 'none', boxShadow: 'none', bg: 'transparent' },
-        _active: { outline: 'none', bg: 'transparent' },
+        _focus: { outline: 'none', boxShadow: 'none', bg: menu.hoverBg },
+        _active: { outline: 'none', bg: menu.hoverBg },
+        _disabled: { bg: 'transparent', opacity: 0.4, cursor: 'not-allowed' },
         fontSize: "14px",
         fontWeight: "medium",
         px: 3,
         py: 2,
+        gap: 2,
+        transition: 'all 0.2s',
+        sx: {
+            '&[data-hover]': {
+                bg: menu.hoverBg,
+            },
+            '&[data-focus]': {
+                bg: menu.hoverBg,
+            },
+        },
     };
 
     // Shared MenuButton props
@@ -103,7 +116,7 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
         px: isMinimized ? 3 : 1, // Increased horizontal padding
         minW: isMinimized ? undefined : "50px",
         borderRadius: "full",
-        _hover: { bg: useColorModeValue('gray.100', 'whiteAlpha.200') },
+        _hover: { bg: hoverBg },
     };
 
     if (isMinimized) {

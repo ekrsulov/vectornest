@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
+import { useResponsive } from '../hooks/useResponsive';
 import { SidebarUtilityButton } from './SidebarUtilityButton';
 
 export interface SidebarTabStripItem {
@@ -25,6 +26,7 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
   const railBg = useColorModeValue('blackAlpha.50', 'whiteAlpha.100');
   const railBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   const separatorColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
+  const { isMobile } = useResponsive();
 
   if (items.length === 0) {
     return null;
@@ -36,24 +38,28 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
       align="stretch"
       w={scrollable ? 'max-content' : 'full'}
       minW={scrollable ? 'full' : undefined}
-      borderRadius="12px"
+      borderRadius={isMobile ? 0 : '12px'}
       border="1px solid"
+      borderLeftWidth={isMobile ? 0 : '1px'}
+      borderTopWidth={isMobile ? 0 : '1px'}
       borderColor={railBorderColor}
       bg={railBg}
       p="0"
-      boxShadow="inset 0 1px 0 rgba(255, 255, 255, 0.03)"
+      boxShadow={isMobile ? 'none' : 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'}
     >
       {items.map((item, index) => {
         const previousItem = items[index - 1];
         const showSeparator = index > 0 && !item.isActive && !previousItem?.isActive;
         const hasFixedScrollableWidth = scrollable && Boolean(tabWidth);
-        const tabShape = items.length === 1
-          ? 'full'
-          : index === 0
-            ? 'left'
-            : index === items.length - 1
-              ? 'right'
-              : 'none';
+        const tabShape = isMobile
+          ? 'none'
+          : items.length === 1
+            ? 'full'
+            : index === 0
+              ? 'left'
+              : index === items.length - 1
+                ? 'right'
+                : 'none';
 
         return (
           <Box

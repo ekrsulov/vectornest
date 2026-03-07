@@ -96,9 +96,9 @@ export const SidebarToolGrid: React.FC = () => {
     <Box
       bg="surface.panel"
       position="relative"
-      pl="2px"
-      pr="2px"
-      pt="1px"
+      pl={{ base: 0, md: '2px' }}
+      pr={{ base: 0, md: '2px' }}
+      pt={{ base: 0, md: '1px' }}
     >
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
       <HStack w="full" spacing={1} alignItems="stretch">

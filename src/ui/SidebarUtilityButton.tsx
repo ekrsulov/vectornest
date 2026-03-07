@@ -26,6 +26,7 @@ interface SidebarUtilityButtonProps {
   minWidth?: string | number;
   tabShape?: 'full' | 'left' | 'right' | 'none';
   tabPaddingX?: string | number;
+  activeTopRadius?: string | number;
 }
 
 /**
@@ -52,6 +53,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   minWidth,
   tabShape = 'full',
   tabPaddingX,
+  activeTopRadius = '10px',
 }) => {
   const {
     toggle: {
@@ -63,6 +65,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   const isTab = visualStyle === 'tab';
   const tabInactiveHoverBg = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   const tabActiveHoverBg = useColorModeValue('gray.900', 'gray.100');
+  const tabActiveOutlineColor = useColorModeValue('blackAlpha.200', 'whiteAlpha.300');
   const showBorder = !borderless;
   const dimension = iconOnly ? '26px' : undefined;
   const controlHeight = isTab ? '26px' : (dimension ?? 'auto');
@@ -72,6 +75,8 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
     topRight: tabShape === 'full' || tabShape === 'right' ? '9px' : '0',
     bottomRight: tabShape === 'full' || tabShape === 'right' ? '9px' : '0',
   };
+  const selectedTopRadius = isTab && isActive ? activeTopRadius : undefined;
+  const tabActiveInsetShadow = `inset 1px 0 0 ${tabActiveOutlineColor}, inset -1px 0 0 ${tabActiveOutlineColor}, inset 0 1px 0 ${tabActiveOutlineColor}`;
 
   return (
     <Button
@@ -81,7 +86,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       size="xs"
       fontSize={fontSize}
       data-active={isActive}
-      bg={isActive ? activeBg : (inactiveBg ?? 'transparent')}
+      bg={isTab && isActive ? 'transparent' : (isActive ? activeBg : (inactiveBg ?? 'transparent'))}
       isDisabled={isDisabled}
       color={isActive ? activeColor : inactiveColor}
       border={showBorder ? `${borderWidth} solid` : 'none'}
@@ -91,10 +96,10 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
           : 'transparent'
       }
       borderRadius={isTab ? undefined : 'full'}
-      borderTopLeftRadius={isTab ? tabRadius.topLeft : undefined}
-      borderBottomLeftRadius={isTab ? tabRadius.bottomLeft : undefined}
-      borderTopRightRadius={isTab ? tabRadius.topRight : undefined}
-      borderBottomRightRadius={isTab ? tabRadius.bottomRight : undefined}
+      borderTopLeftRadius={isTab ? (selectedTopRadius ?? tabRadius.topLeft) : undefined}
+      borderBottomLeftRadius={isTab ? (isActive ? '0' : tabRadius.bottomLeft) : undefined}
+      borderTopRightRadius={isTab ? (selectedTopRadius ?? tabRadius.topRight) : undefined}
+      borderBottomRightRadius={isTab ? (isActive ? '0' : tabRadius.bottomRight) : undefined}
       fontWeight={isTab ? 'medium' : 'bold'}
       transition="all 0.2s"
       width={iconOnly ? dimension : (fullWidth ? 'full' : 'auto')}
@@ -103,9 +108,13 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       minW={minWidth ?? dimension}
       minH={controlHeight}
       h={controlHeight}
+      position="relative"
+      zIndex={isTab && isActive ? 1 : undefined}
+      overflow={isTab ? 'hidden' : undefined}
+      boxShadow={isTab && isActive ? tabActiveInsetShadow : undefined}
       _hover={{
         bg: isTab
-          ? (isActive ? tabActiveHoverBg : tabInactiveHoverBg)
+          ? (isActive ? 'transparent' : tabInactiveHoverBg)
           : (isActive ? activeHoverBg : inactiveHoverBg),
       }}
       _focus={{ outline: 'none', boxShadow: 'none' }}
@@ -119,10 +128,44 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
         whiteSpace: 'nowrap',
         WebkitAppearance: 'none',
         appearance: 'none',
+        isolation: isTab ? 'isolate' : undefined,
+        '&::before': isTab
+          ? {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            zIndex: 0,
+            bg: isActive ? activeBg : 'transparent',
+            borderTopLeftRadius: selectedTopRadius ?? tabRadius.topLeft,
+            borderBottomLeftRadius: isActive ? '0' : tabRadius.bottomLeft,
+            borderTopRightRadius: selectedTopRadius ?? tabRadius.topRight,
+            borderBottomRightRadius: isActive ? '0' : tabRadius.bottomRight,
+            transformOrigin: 'bottom center',
+            transform: isActive ? 'translateY(0) scaleY(1)' : 'translateY(28%) scaleY(0.92)',
+            opacity: isActive ? 1 : 0,
+            transition: 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease, background-color 0.28s ease',
+          }
+          : undefined,
+        '&:hover::before': isTab && isActive ? { bg: tabActiveHoverBg } : undefined,
+        '&:active::before': isTab && isActive ? { bg: tabActiveHoverBg } : undefined,
         ...NO_TAP_HIGHLIGHT,
       }}
     >
-      {Icon ? <Icon size={iconSize} /> : label}
+      <span
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+          transform: isTab && isActive ? 'translateY(-1px)' : 'translateY(0)',
+          transition: 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
+        {Icon ? <Icon size={iconSize} /> : label}
+      </span>
     </Button>
   );
 };

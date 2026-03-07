@@ -75,6 +75,10 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
             position="relative"
             display="flex"
             alignItems="stretch"
+            overflow={item.isActive ? 'hidden' : undefined}
+            zIndex={item.isActive ? 1 : 0}
+            borderTopLeftRadius={item.isActive ? '8px' : 0}
+            borderTopRightRadius={item.isActive ? '8px' : 0}
           >
             {showSeparator && (
               <Box
@@ -100,6 +104,7 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
               minWidth={hasFixedScrollableWidth ? tabWidth : undefined}
               tabShape={tabShape}
               tabPaddingX={scrollable && !hasFixedScrollableWidth ? 2 : undefined}
+              activeTopRadius="6px"
             />
           </Box>
         );

@@ -7,11 +7,17 @@ import { SidebarUtilityButton, SIDEBAR_UTILITY_BORDER_WIDTH } from '../../ui/Sid
 import { SidebarTabStrip, type SidebarTabStripItem } from '../../ui/SidebarTabStrip';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useResponsive } from '../../hooks/useResponsive';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export const LeftSidebarToolGrid: React.FC = () => {
   const { canPinSidebar } = useResponsive();
   const pinBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
-  const topRowBorderColor = pinBorderColor;
+  const defaultTopRowBorderColor = useColorModeValue('blackAlpha.300', 'whiteAlpha.400');
+  const {
+    toggle: {
+      active: { bg: activeTabFill },
+    },
+  } = useThemeColors();
 
   const {
     leftSidebarActivePanel,
@@ -79,6 +85,8 @@ export const LeftSidebarToolGrid: React.FC = () => {
       onClick: () => switchPanel('animLibrary'),
     },
   ];
+  const hasActiveTab = buttons.some((item) => item.isActive);
+  const topRowBorderColor = hasActiveTab ? activeTabFill : defaultTopRowBorderColor;
 
   return (
     <Box

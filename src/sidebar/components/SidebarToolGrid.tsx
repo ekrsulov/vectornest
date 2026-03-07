@@ -9,6 +9,7 @@ import { useSidebarContext } from '../../contexts/SidebarContext';
 import { pluginManager } from '../../utils/pluginManager';
 import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 interface ToolConfig {
   name: string;
@@ -29,7 +30,12 @@ const UTILITY_TOOLS: ToolConfig[] = [
  */
 export const SidebarToolGrid: React.FC = () => {
   const pinBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
-  const topRowBorderColor = pinBorderColor;
+  const defaultTopRowBorderColor = useColorModeValue('blackAlpha.300', 'whiteAlpha.400');
+  const {
+    toggle: {
+      active: { bg: activeTabFill },
+    },
+  } = useThemeColors();
   // Get values from context
   const {
     activePlugin,
@@ -91,6 +97,8 @@ export const SidebarToolGrid: React.FC = () => {
       };
     }),
   ];
+  const hasActiveTab = tabItems.some((item) => item.isActive);
+  const topRowBorderColor = hasActiveTab ? activeTabFill : defaultTopRowBorderColor;
 
   return (
     <Box

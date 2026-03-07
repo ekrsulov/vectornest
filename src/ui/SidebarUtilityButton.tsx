@@ -143,7 +143,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
             transformOrigin: 'bottom center',
             transform: isActive ? 'translateY(0) scaleY(1)' : 'translateY(28%) scaleY(0.92)',
             opacity: isActive ? 1 : 0,
-            transition: 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease, background-color 0.28s ease',
+            transition: 'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease, background-color 0.36s ease',
           }
           : undefined,
         '&:hover::before': isTab && isActive ? { bg: tabActiveHoverBg } : undefined,
@@ -161,7 +161,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
           width: '100%',
           height: '100%',
           transform: isTab && isActive ? 'translateY(-1px)' : 'translateY(0)',
-          transition: 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)',
+          transition: 'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >
         {Icon ? <Icon size={iconSize} /> : label}

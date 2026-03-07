@@ -1,7 +1,9 @@
 import React from 'react';
-import { Button } from '@chakra-ui/react';
+import { Button, useColorModeValue } from '@chakra-ui/react';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { NO_TAP_HIGHLIGHT } from '../constants';
+
+export const SIDEBAR_UTILITY_BORDER_WIDTH = '1px';
 
 interface SidebarUtilityButtonProps {
   label: string;
@@ -42,7 +44,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   isDisabled = false,
   fontSize = 'sm',
   borderless = false,
-  borderWidth = '1px',
+  borderWidth = SIDEBAR_UTILITY_BORDER_WIDTH,
   inactiveBorderColor,
   activeBorderColor,
   inactiveBg,
@@ -59,6 +61,8 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   } = useThemeColors();
 
   const isTab = visualStyle === 'tab';
+  const tabInactiveHoverBg = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
+  const tabActiveHoverBg = useColorModeValue('gray.900', 'gray.100');
   const showBorder = !borderless;
   const dimension = iconOnly ? '26px' : undefined;
   const controlHeight = isTab ? '26px' : (dimension ?? 'auto');
@@ -100,7 +104,9 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       minH={controlHeight}
       h={controlHeight}
       _hover={{
-        bg: isActive ? activeHoverBg : inactiveHoverBg,
+        bg: isTab
+          ? (isActive ? tabActiveHoverBg : tabInactiveHoverBg)
+          : (isActive ? activeHoverBg : inactiveHoverBg),
       }}
       _focus={{ outline: 'none', boxShadow: 'none' }}
       sx={{

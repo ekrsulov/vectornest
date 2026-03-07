@@ -3,7 +3,7 @@ import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
 import { Pin, PinOff } from 'lucide-react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
-import { SidebarUtilityButton } from '../../ui/SidebarUtilityButton';
+import { SidebarUtilityButton, SIDEBAR_UTILITY_BORDER_WIDTH } from '../../ui/SidebarUtilityButton';
 import { SidebarTabStrip, type SidebarTabStripItem } from '../../ui/SidebarTabStrip';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { pluginManager } from '../../utils/pluginManager';
@@ -28,8 +28,8 @@ const UTILITY_TOOLS: ToolConfig[] = [
  * are now in the ActionBar at the bottom of the screen
  */
 export const SidebarToolGrid: React.FC = () => {
-  const pinBg = useColorModeValue('blackAlpha.50', 'whiteAlpha.100');
   const pinBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
+  const topRowBorderColor = pinBorderColor;
   // Get values from context
   const {
     activePlugin,
@@ -101,7 +101,15 @@ export const SidebarToolGrid: React.FC = () => {
       pt={0}
     >
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
-      <HStack w="full" spacing={1} alignItems="stretch">
+      <HStack
+        w="full"
+        spacing={0}
+        h="26px"
+        alignItems="stretch"
+        borderBottomWidth={SIDEBAR_UTILITY_BORDER_WIDTH}
+        borderBottomStyle="solid"
+        borderColor={topRowBorderColor}
+      >
         <Box flex={1} minW={0} display="flex" alignItems="stretch">
           <SidebarTabStrip
             items={tabItems}
@@ -114,7 +122,10 @@ export const SidebarToolGrid: React.FC = () => {
             flexShrink={0}
             display="flex"
             alignItems="center"
-            h="28px"
+            h="26px"
+            borderLeftWidth="2px"
+            borderLeftStyle="solid"
+            borderColor={pinBorderColor}
           >
             <ConditionalTooltip label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}>
               <SidebarUtilityButton
@@ -127,8 +138,9 @@ export const SidebarToolGrid: React.FC = () => {
                 onClick={onTogglePin}
                 isActive={false}
                 isDisabled={!canPinSidebar}
-                inactiveBg={pinBg}
-                inactiveBorderColor={pinBorderColor}
+                visualStyle="tab"
+                tabShape="none"
+                borderless
               />
             </ConditionalTooltip>
           </Box>

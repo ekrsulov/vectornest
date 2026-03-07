@@ -3,15 +3,15 @@ import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
 import { Pin, PinOff } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
-import { SidebarUtilityButton } from '../../ui/SidebarUtilityButton';
+import { SidebarUtilityButton, SIDEBAR_UTILITY_BORDER_WIDTH } from '../../ui/SidebarUtilityButton';
 import { SidebarTabStrip, type SidebarTabStripItem } from '../../ui/SidebarTabStrip';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useResponsive } from '../../hooks/useResponsive';
 
 export const LeftSidebarToolGrid: React.FC = () => {
   const { canPinSidebar } = useResponsive();
-  const pinBg = useColorModeValue('blackAlpha.50', 'whiteAlpha.100');
   const pinBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
+  const topRowBorderColor = pinBorderColor;
 
   const {
     leftSidebarActivePanel,
@@ -88,11 +88,22 @@ export const LeftSidebarToolGrid: React.FC = () => {
       pr={0}
       pt={0}
     >
-      <HStack w="full" spacing={1} alignItems="stretch">
+      <HStack
+        w="full"
+        spacing={0}
+        h="26px"
+        alignItems="stretch"
+        borderBottomWidth={SIDEBAR_UTILITY_BORDER_WIDTH}
+        borderBottomStyle="solid"
+        borderColor={topRowBorderColor}
+      >
         <Box
           display="flex"
           alignItems="center"
-          h="28px"
+          h="26px"
+          borderRightWidth="2px"
+          borderRightStyle="solid"
+          borderColor={pinBorderColor}
         >
           <ConditionalTooltip label={isLeftSidebarPinned ? 'Unpin sidebar' : 'Pin sidebar'}>
             <SidebarUtilityButton
@@ -100,8 +111,9 @@ export const LeftSidebarToolGrid: React.FC = () => {
               icon={isLeftSidebarPinned ? PinOff : Pin}
               iconOnly
               fontSize="xs"
-              inactiveBg={pinBg}
-              inactiveBorderColor={pinBorderColor}
+              visualStyle="tab"
+              tabShape="none"
+              borderless
               onClick={() => {
                 if (!canPinSidebar) return;
                 setIsLeftSidebarPinned(!isLeftSidebarPinned);

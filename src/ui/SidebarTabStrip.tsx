@@ -1,8 +1,9 @@
 import React from 'react';
 import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
 import { useResponsive } from '../hooks/useResponsive';
-import { useThemeColors } from '../hooks/useThemeColors';
-import { SidebarUtilityButton } from './SidebarUtilityButton';
+import { SidebarUtilityButton, SIDEBAR_UTILITY_BORDER_WIDTH } from './SidebarUtilityButton';
+
+export const SIDEBAR_TAB_SEPARATOR_WIDTH = '2px';
 
 export interface SidebarTabStripItem {
   key: string;
@@ -28,11 +29,7 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
 }) => {
   const railBg = useColorModeValue('blackAlpha.50', 'whiteAlpha.100');
   const railBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
-  const {
-    toggle: {
-      inactive: { color: separatorColor },
-    },
-  } = useThemeColors();
+  const separatorColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   const { isMobile } = useResponsive();
 
   if (items.length === 0) {
@@ -46,12 +43,12 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
       w={scrollable ? 'max-content' : 'full'}
       minW={scrollable ? 'full' : undefined}
       borderRadius={flat || isMobile ? 0 : '12px'}
-      border="1px solid"
-      borderLeftWidth={flat || isMobile ? 0 : '1px'}
-      borderTopWidth={flat || isMobile ? 0 : '1px'}
+      border={flat ? 'none' : `${SIDEBAR_UTILITY_BORDER_WIDTH} solid`}
+      borderLeftWidth={flat || isMobile ? 0 : SIDEBAR_UTILITY_BORDER_WIDTH}
+      borderTopWidth={flat || isMobile ? 0 : SIDEBAR_UTILITY_BORDER_WIDTH}
       borderBottomWidth="0"
-      borderColor={railBorderColor}
-      bg={railBg}
+      borderColor={flat ? 'transparent' : railBorderColor}
+      bg={flat ? 'transparent' : railBg}
       p="0"
       boxShadow={flat || isMobile ? 'none' : 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'}
     >
@@ -86,7 +83,7 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
                 left={0}
                 top="4px"
                 bottom="4px"
-                w="1px"
+                w={SIDEBAR_TAB_SEPARATOR_WIDTH}
                 bg={separatorColor}
                 zIndex={1}
                 pointerEvents="none"

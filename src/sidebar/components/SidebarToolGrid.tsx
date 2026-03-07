@@ -1,9 +1,10 @@
-import React, { type ComponentType } from 'react';
+import React from 'react';
 import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
 import { Pin, PinOff } from 'lucide-react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { SidebarUtilityButton } from '../../ui/SidebarUtilityButton';
+import { SidebarTabStrip, type SidebarTabStripItem } from '../../ui/SidebarTabStrip';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { pluginManager } from '../../utils/pluginManager';
 import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
@@ -12,16 +13,13 @@ import { useCanvasStore } from '../../store/canvasStore';
 interface ToolConfig {
   name: string;
   label: string;
-  flex: number;
-  icon?: ComponentType<{ size?: number }>;
-  iconOnly?: boolean;
 }
 
 // Plugin configuration - only utility/settings tools
 const UTILITY_TOOLS: ToolConfig[] = [
-  { name: 'file', label: 'File', flex: 0 },
-  { name: 'library', label: 'Lib', flex: 0 },
-  { name: 'settings', label: 'Prefs', flex: 0 },
+  { name: 'file', label: 'File' },
+  { name: 'library', label: 'Lib' },
+  { name: 'settings', label: 'Prefs' },
 ];
 
 /**
@@ -30,7 +28,8 @@ const UTILITY_TOOLS: ToolConfig[] = [
  * are now in the ActionBar at the bottom of the screen
  */
 export const SidebarToolGrid: React.FC = () => {
-  const toolGridBorderColor = useColorModeValue('gray.600', 'whiteAlpha.700');
+  const pinBg = useColorModeValue('blackAlpha.50', 'whiteAlpha.100');
+  const pinBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   // Get values from context
   const {
     activePlugin,
@@ -55,47 +54,29 @@ export const SidebarToolGrid: React.FC = () => {
     : sidebarToolbarButtons;
   const shouldUseHorizontalScroll = !showLeftSidebar;
 
-  const renderPluginButton = (plugin: ToolConfig) => {
-    const handleClick = () => {
-      onToolClick(plugin.name);
-    };
-
-    // Determine if button should be active
+  const isToolActive = (toolName: string) => {
     let isActive = false;
 
     if (showFilePanel) {
-      isActive = plugin.name === 'file';
+      isActive = toolName === 'file';
     } else if (showSettingsPanel) {
-      isActive = plugin.name === 'settings';
+      isActive = toolName === 'settings';
     } else if (showLibraryPanel) {
-      isActive = plugin.name === 'library';
+      isActive = toolName === 'library';
     } else {
-      isActive = activePlugin === plugin.name;
+      isActive = activePlugin === toolName;
     }
 
-    // Flex values: File=1, Library=2, Settings=2, Unpin=1 (small)
-    const flexValue = plugin.flex;
-
-    const button = (
-      <SidebarUtilityButton
-        key={plugin.name}
-        label={plugin.label}
-        isActive={isActive}
-        onClick={handleClick}
-        fullWidth={!shouldUseHorizontalScroll}
-        flex={flexValue}
-        icon={undefined}
-        iconOnly={false}
-        fontSize="sm"
-        borderWidth="1px"
-        inactiveBorderColor={toolGridBorderColor}
-      />
-    );
-    return button;
+    return isActive;
   };
 
-  const buttons = [
-    ...effectiveUtilityTools.map((plugin) => ({ key: plugin.name, element: renderPluginButton(plugin) })),
+  const tabItems: SidebarTabStripItem[] = [
+    ...effectiveUtilityTools.map((plugin) => ({
+      key: plugin.name,
+      label: plugin.label,
+      isActive: isToolActive(plugin.name),
+      onClick: () => onToolClick(plugin.name),
+    })),
     ...effectiveSidebarToolbarButtons.map((button) => {
       let label = button.label ?? pluginManager.getPlugin(button.pluginId)?.metadata.label ?? button.id;
       if (button.pluginId === 'svgStructure') {
@@ -104,20 +85,9 @@ export const SidebarToolGrid: React.FC = () => {
 
       return {
         key: `${button.pluginId}:${button.id}`,
-        element: (
-            <SidebarUtilityButton
-              label={label}
-              icon={undefined}
-              iconOnly={false}
-              onClick={() => onToolClick(button.pluginId)}
-              isActive={activePlugin === button.pluginId}
-              fullWidth={!shouldUseHorizontalScroll}
-              flex={0}
-              fontSize="sm"
-              borderWidth="1px"
-              inactiveBorderColor={toolGridBorderColor}
-            />
-        ),
+        label,
+        isActive: activePlugin === button.pluginId,
+        onClick: () => onToolClick(button.pluginId),
       };
     }),
   ];
@@ -126,70 +96,39 @@ export const SidebarToolGrid: React.FC = () => {
     <Box
       bg="surface.panel"
       position="relative"
-      pl="6px"
-      pt="4px"
+      pl="2px"
+      pr="2px"
+      pt="1px"
     >
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
-      <HStack w="full" spacing={0} alignItems="center">
-        <Box
-          flex={1}
-          minW={0}
-          overflow={shouldUseHorizontalScroll ? 'hidden' : 'visible'}
-          display="flex"
-          alignItems="center"
-        >
-          <Box
-            overflowX={shouldUseHorizontalScroll ? 'auto' : 'visible'}
-            overflowY="hidden"
-            w={shouldUseHorizontalScroll ? 'auto' : 'full'}
-            flex={shouldUseHorizontalScroll ? undefined : 1}
-            css={shouldUseHorizontalScroll ? {
-              scrollbarWidth: 'none',
-              '&::-webkit-scrollbar': {
-                display: 'none',
-              },
-            } : undefined}
-          >
-            <HStack
-              spacing={shouldUseHorizontalScroll ? 1 : 2}
-              w={shouldUseHorizontalScroll ? 'max-content' : 'full'}
-              minW={shouldUseHorizontalScroll ? 'full' : undefined}
-              pr={shouldUseHorizontalScroll ? 1 : 0}
-              justifyContent={shouldUseHorizontalScroll ? undefined : 'space-between'}
-            >
-              {buttons.map((button) => (
-                <Box
-                  key={button.key}
-                  flex={shouldUseHorizontalScroll ? '0 0 auto' : '1'}
-                  w={shouldUseHorizontalScroll ? undefined : 'full'}
-                  display="flex"
-                  justifyContent="center"
-                >
-                  {button.element}
-                </Box>
-              ))}
-            </HStack>
-          </Box>
+      <HStack w="full" spacing={1} alignItems="stretch">
+        <Box flex={1} minW={0} display="flex" alignItems="stretch">
+          <SidebarTabStrip
+            items={tabItems}
+            scrollable={shouldUseHorizontalScroll}
+          />
         </Box>
         {canPinSidebar && (
           <Box
             flexShrink={0}
             display="flex"
             alignItems="center"
-            pl={0}
+            h="28px"
           >
             <ConditionalTooltip label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}>
               <SidebarUtilityButton
                 label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
                 icon={isPinned ? PinOff : Pin}
                 iconOnly
+                visualStyle="tab"
                 fontSize="xs"
                 fullWidth={false}
                 flex={0}
                 onClick={onTogglePin}
                 isActive={false}
                 isDisabled={!canPinSidebar}
-                borderless
+                inactiveBg={pinBg}
+                inactiveBorderColor={pinBorderColor}
               />
             </ConditionalTooltip>
           </Box>

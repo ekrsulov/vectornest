@@ -19,6 +19,11 @@ interface SidebarUtilityButtonProps {
   borderWidth?: string;
   inactiveBorderColor?: string;
   activeBorderColor?: string;
+  inactiveBg?: string;
+  visualStyle?: 'default' | 'tab';
+  minWidth?: string | number;
+  tabShape?: 'full' | 'left' | 'right' | 'none';
+  tabPaddingX?: string | number;
 }
 
 /**
@@ -40,6 +45,11 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   borderWidth = '1px',
   inactiveBorderColor,
   activeBorderColor,
+  inactiveBg,
+  visualStyle = 'default',
+  minWidth,
+  tabShape = 'full',
+  tabPaddingX,
 }) => {
   const {
     toggle: {
@@ -48,8 +58,16 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
     },
   } = useThemeColors();
 
+  const isTab = visualStyle === 'tab';
   const showBorder = !borderless;
   const dimension = iconOnly ? '26px' : undefined;
+  const controlHeight = isTab ? '26px' : (dimension ?? 'auto');
+  const tabRadius = {
+    topLeft: tabShape === 'full' || tabShape === 'left' ? '9px' : '0',
+    bottomLeft: tabShape === 'full' || tabShape === 'left' ? '9px' : '0',
+    topRight: tabShape === 'full' || tabShape === 'right' ? '9px' : '0',
+    bottomRight: tabShape === 'full' || tabShape === 'right' ? '9px' : '0',
+  };
 
   return (
     <Button
@@ -59,7 +77,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       size="xs"
       fontSize={fontSize}
       data-active={isActive}
-      bg={isActive ? activeBg : 'transparent'}
+      bg={isActive ? activeBg : (inactiveBg ?? 'transparent')}
       isDisabled={isDisabled}
       color={isActive ? activeColor : inactiveColor}
       border={showBorder ? `${borderWidth} solid` : 'none'}
@@ -68,27 +86,31 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
           ? (isActive ? (activeBorderColor ?? activeBg) : (inactiveBorderColor ?? inactiveBorder))
           : 'transparent'
       }
-      borderRadius="full"
-      fontWeight="bold"
+      borderRadius={isTab ? undefined : 'full'}
+      borderTopLeftRadius={isTab ? tabRadius.topLeft : undefined}
+      borderBottomLeftRadius={isTab ? tabRadius.bottomLeft : undefined}
+      borderTopRightRadius={isTab ? tabRadius.topRight : undefined}
+      borderBottomRightRadius={isTab ? tabRadius.bottomRight : undefined}
+      fontWeight={isTab ? (isActive ? 'semibold' : 'medium') : 'bold'}
       transition="all 0.2s"
-      width={fullWidth ? 'full' : 'auto'}
+      width={iconOnly ? dimension : (fullWidth ? 'full' : 'auto')}
       flex={fullWidth ? '1 1 0' : flex}
       alignSelf={fullWidth ? 'stretch' : undefined}
+      minW={minWidth ?? dimension}
+      minH={controlHeight}
+      h={controlHeight}
       _hover={{
         bg: isActive ? activeHoverBg : inactiveHoverBg,
       }}
       _focus={{ outline: 'none', boxShadow: 'none' }}
       sx={{
-        minH: dimension ?? 'auto',
-        minW: dimension,
-        w: dimension,
-        h: dimension ?? 'auto',
-        px: iconOnly ? 0 : 2,
+        px: iconOnly ? 0 : (isTab ? (tabPaddingX ?? 1) : 2),
         py: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         textDecoration: 'none',
+        whiteSpace: 'nowrap',
         WebkitAppearance: 'none',
         appearance: 'none',
         ...NO_TAP_HIGHLIGHT,

@@ -165,6 +165,9 @@ export const LibrarySearchPanel: React.FC = () => {
     } as const;
 
     type TypeKey = keyof typeof TYPE_LABELS;
+    const sortedTypeEntries = [...(Object.entries(TYPE_LABELS) as Array<[TypeKey, string]>)].sort(([, a], [, b]) =>
+        a.localeCompare(b)
+    );
 
     const storedEnabledTypes = useShallowCanvasSelector((state) =>
         (state as CanvasStore & UiSlice).librarySearchEnabledTypes
@@ -263,10 +266,11 @@ export const LibrarySearchPanel: React.FC = () => {
     };
 
     const menuItemProps = {
+        bg: themeColors.menu.bg,
         color: themeColors.menu.iconColor,
         _hover: { bg: themeColors.menu.hoverBg },
-        _focus: { outline: 'none', boxShadow: 'none', bg: 'transparent' },
-        _active: { outline: 'none', bg: 'transparent' },
+        _focus: { outline: 'none', boxShadow: 'none', bg: themeColors.menu.bg },
+        _active: { outline: 'none', bg: themeColors.menu.bg },
         fontSize: '14px',
         fontWeight: 'medium',
         px: 3,
@@ -401,7 +405,7 @@ export const LibrarySearchPanel: React.FC = () => {
                                 <MenuItem {...menuItemProps} closeOnSelect={false} onClick={(e) => { e.stopPropagation(); selectAll(); }}>Select all</MenuItem>
                                 <MenuItem {...menuItemProps} closeOnSelect={false} onClick={(e) => { e.stopPropagation(); deselectAll(); }}>Deselect all</MenuItem>
                                 <MenuDivider />
-                                {Object.entries(TYPE_LABELS).map(([key, label]) => (
+                                {sortedTypeEntries.map(([key, label]) => (
                                     <MenuItem
                                         {...menuItemProps}
                                         key={key}

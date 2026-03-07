@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Box } from '@chakra-ui/react';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useRulerInteractions, type RulerViewport } from '../hooks/useRulerInteractions';
+import type { Bounds } from '../utils/boundsUtils';
 
 /** Standard ruler size in pixels */
 export const RULER_SIZE = 20;
@@ -16,6 +17,50 @@ const VERTICAL_CANVAS_STYLE: React.CSSProperties = {
   width: `${RULER_SIZE}px`,
   height: '100%',
   pointerEvents: 'none',
+};
+
+interface RulerProjectionBand {
+  offset: number;
+  size: number;
+}
+
+const computeProjectionBand = (
+  minValue: number,
+  maxValue: number,
+  zoom: number,
+  pan: number,
+  span: number
+): RulerProjectionBand | null => {
+  if (
+    !Number.isFinite(minValue) ||
+    !Number.isFinite(maxValue) ||
+    !Number.isFinite(zoom) ||
+    !Number.isFinite(pan) ||
+    !Number.isFinite(span) ||
+    span <= 0
+  ) {
+    return null;
+  }
+
+  const start = minValue * zoom + pan;
+  const end = maxValue * zoom + pan;
+
+  if (end <= 0 || start >= span) {
+    return null;
+  }
+
+  const clampedStart = Math.max(0, Math.min(start, span));
+  const clampedEnd = Math.max(0, Math.min(end, span));
+  const visibleSize = clampedEnd - clampedStart;
+
+  if (visibleSize <= 0) {
+    return null;
+  }
+
+  return {
+    offset: clampedStart,
+    size: Math.max(1, visibleSize),
+  };
 };
 
 export interface RulersProps {
@@ -35,6 +80,8 @@ export interface RulersProps {
   onDragEnd?: () => void;
   /** Callback when starting to drag from vertical ruler */
   onVerticalDragStart?: (canvasX: number) => void;
+  /** Optional selection bounds projected into the rulers */
+  selectionProjectionBounds?: Bounds | null;
 }
 
 /**
@@ -68,6 +115,7 @@ export const Rulers: React.FC<RulersProps> = ({
   onVerticalDragStart,
   onDragUpdate,
   onDragEnd,
+  selectionProjectionBounds,
 }) => {
   const { ruler } = useThemeColors();
   
@@ -79,6 +127,20 @@ export const Rulers: React.FC<RulersProps> = ({
 
   // Calculate tick spacing based on zoom
   const spacing = getTickSpacing(zoom);
+
+  const horizontalProjection = useMemo(
+    () => selectionProjectionBounds
+      ? computeProjectionBand(selectionProjectionBounds.minX, selectionProjectionBounds.maxX, zoom, panX, width)
+      : null,
+    [selectionProjectionBounds, zoom, panX, width]
+  );
+
+  const verticalProjection = useMemo(
+    () => selectionProjectionBounds
+      ? computeProjectionBand(selectionProjectionBounds.minY, selectionProjectionBounds.maxY, zoom, panY, height)
+      : null,
+    [selectionProjectionBounds, zoom, panY, height]
+  );
 
   // Draw horizontal ruler
   useEffect(() => {
@@ -231,8 +293,24 @@ export const Rulers: React.FC<RulersProps> = ({
         zIndex={100}
         cursor={interactive ? 'row-resize' : 'default'}
         onPointerDown={handleHorizontalPointerDown}
+        overflow="hidden"
         style={TOUCH_ACTION_NONE}
       >
+        {horizontalProjection ? (
+          <Box
+            data-testid="horizontal-ruler-selection-band"
+            position="absolute"
+            top="1px"
+            left={`${horizontalProjection.offset}px`}
+            width={`${horizontalProjection.size}px`}
+            height={`${RULER_SIZE - 2}px`}
+            borderRadius="sm"
+            bg={ruler.projectionFill}
+            border="1px solid"
+            borderColor={ruler.projectionBorderColor}
+            pointerEvents="none"
+          />
+        ) : null}
         <canvas
           ref={horizontalRulerRef}
           style={HORIZONTAL_CANVAS_STYLE}
@@ -250,8 +328,24 @@ export const Rulers: React.FC<RulersProps> = ({
         zIndex={100}
         cursor={interactive ? 'col-resize' : 'default'}
         onPointerDown={handleVerticalPointerDown}
+        overflow="hidden"
         style={TOUCH_ACTION_NONE}
       >
+        {verticalProjection ? (
+          <Box
+            data-testid="vertical-ruler-selection-band"
+            position="absolute"
+            top={`${verticalProjection.offset}px`}
+            left="1px"
+            width={`${RULER_SIZE - 2}px`}
+            height={`${verticalProjection.size}px`}
+            borderRadius="sm"
+            bg={ruler.projectionFill}
+            border="1px solid"
+            borderColor={ruler.projectionBorderColor}
+            pointerEvents="none"
+          />
+        ) : null}
         <canvas
           ref={verticalRulerRef}
           style={VERTICAL_CANVAS_STYLE}

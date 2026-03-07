@@ -16,6 +16,7 @@ import { snapManager } from '../../snap/SnapManager';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { registerToggleFlag, unregisterToggleFlag } from '../../utils/toggleFlagRegistry';
 import { createPluginSlice } from '../../utils/pluginUtils';
+import { useRulerSelectionBounds } from '../../hooks/useRulerSelectionBounds';
 
 registerStateKeys('grid', ['grid'], 'temporal');
 
@@ -36,6 +37,23 @@ const GridOverlayWrapper: React.FC<{
       grid={grid ?? { enabled: false, type: 'square', spacing: 20, showRulers: false }}
       viewport={viewport}
       canvasSize={canvasSize}
+    />
+  );
+};
+
+const GridRulersWrapper: React.FC<{
+  viewport: { zoom: number; panX: number; panY: number };
+  canvasSize: { width: number; height: number };
+}> = ({ viewport, canvasSize }) => {
+  const selectionProjectionBounds = useRulerSelectionBounds();
+
+  return (
+    <Rulers
+      width={canvasSize.width}
+      height={canvasSize.height}
+      viewport={viewport}
+      interactive={false}
+      selectionProjectionBounds={selectionProjectionBounds}
     />
   );
 };
@@ -102,14 +120,7 @@ const createGridRulersDecorator = (): CanvasDecorator => ({
     height: RULER_SIZE,
   }),
   render: ({ viewport, canvasSize }: CanvasDecoratorContext) => {
-    return (
-      <Rulers
-        width={canvasSize.width}
-        height={canvasSize.height}
-        viewport={viewport}
-        interactive={false}
-      />
-    );
+    return <GridRulersWrapper viewport={viewport} canvasSize={canvasSize} />;
   },
 });
 

@@ -528,10 +528,11 @@ const SvgStructurePanelComponent: React.FC<PanelComponentProps> = ({ panelKey })
   };
 
   const menuItemProps = {
+    bg: themeColors.menu.bg,
     color: themeColors.menu.iconColor,
     _hover: { bg: themeColors.menu.hoverBg },
-    _focus: { outline: 'none', boxShadow: 'none', bg: 'transparent' },
-    _active: { outline: 'none', bg: 'transparent' },
+    _focus: { outline: 'none', boxShadow: 'none', bg: themeColors.menu.bg },
+    _active: { outline: 'none', bg: themeColors.menu.bg },
     fontSize: '14px',
     fontWeight: 'medium',
     px: 3,

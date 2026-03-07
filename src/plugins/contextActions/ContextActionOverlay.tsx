@@ -20,6 +20,13 @@ import type { CanvasOverlayProps } from '../../types/ui-contributions';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
+import {
+  selectGridEnabled,
+  selectGridShowRulers,
+  selectGuidelinesEnabled,
+  selectGuidelinesManualEnabled,
+} from '../../canvas/pluginStateSelectors';
+import { RULER_SIZE } from '../../ui/Rulers';
 
 /** Minimum distance from viewport edges */
 const EDGE_PADDING = 8;
@@ -39,6 +46,8 @@ const ACTION_LOCK_MS = 2000;
 const ACTION_FEEDBACK_MS = 260;
 /** Delay before closing dropdown to let feedback flash be visible */
 const MENU_ACTION_CLOSE_DELAY_MS = 120;
+/** Context bar top offset when rulers are visible */
+const RULER_TOP_OFFSET = EDGE_PADDING + RULER_SIZE;
 
 /**
  * Build stable keys per item occurrence so duplicate ids don't collide in React lists.
@@ -519,7 +528,8 @@ GroupActionButton.displayName = 'GroupActionButton';
 const DesktopContextBar: React.FC<{
   directActions: QuickAction[];
   groups: ActionGroup[];
-}> = React.memo(({ directActions, groups }) => {
+  topOffset: number;
+}> = React.memo(({ directActions, groups, topOffset }) => {
   const { toolbar } = useThemeColors();
   const { effectiveSidebarWidth, effectiveLeftSidebarWidth } = useSidebarLayout();
   const directActionKeys = useMemo(() => buildStableKeys(directActions), [directActions]);
@@ -534,8 +544,9 @@ const DesktopContextBar: React.FC<{
 
   return (
     <Box
+      data-testid="context-bar"
       position="fixed"
-      top={`${EDGE_PADDING}px`}
+      top={`${topOffset}px`}
       left={left}
       right={right}
       transform={transform}
@@ -585,7 +596,8 @@ DesktopContextBar.displayName = 'DesktopContextBar';
 const MobileContextBar: React.FC<{
   directActions: QuickAction[];
   groups: ActionGroup[];
-}> = React.memo(({ directActions, groups }) => {
+  topOffset: number;
+}> = React.memo(({ directActions, groups, topOffset }) => {
   const { toolbar } = useThemeColors();
   const directActionKeys = useMemo(() => buildStableKeys(directActions), [directActions]);
   const groupKeys = useMemo(() => buildStableKeys(groups), [groups]);
@@ -595,8 +607,9 @@ const MobileContextBar: React.FC<{
 
   return (
     <Box
+      data-testid="context-bar"
       position="fixed"
-      top={`${EDGE_PADDING}px`}
+      top={`${topOffset}px`}
       left="50%"
       transform="translateX(-50%)"
       zIndex={899}
@@ -647,6 +660,13 @@ export const ContextActionOverlay: React.FC<CanvasOverlayProps> = React.memo(
     const isWithoutDistractionMode = useCanvasStore((state) => Boolean(state.settings.withoutDistractionMode));
     const { directActions, groups } = useContextActions();
     const { isMobile } = useResponsive();
+    const showCanvasRulers = useCanvasStore((state) => {
+      const guidelinesRulersVisible =
+        Boolean(selectGuidelinesEnabled(state)) && Boolean(selectGuidelinesManualEnabled(state));
+      const gridRulersVisible =
+        Boolean(selectGridEnabled(state)) && Boolean(selectGridShowRulers(state));
+      return guidelinesRulersVisible || gridRulersVisible;
+    });
 
     if (isWithoutDistractionMode) {
       return null;
@@ -655,11 +675,13 @@ export const ContextActionOverlay: React.FC<CanvasOverlayProps> = React.memo(
     const totalActions = directActions.length + groups.length;
     if (totalActions === 0) return null;
 
+    const topOffset = showCanvasRulers ? RULER_TOP_OFFSET : EDGE_PADDING;
+
     if (isMobile) {
-      return <MobileContextBar directActions={directActions} groups={groups} />;
+      return <MobileContextBar directActions={directActions} groups={groups} topOffset={topOffset} />;
     }
 
-    return <DesktopContextBar directActions={directActions} groups={groups} />;
+    return <DesktopContextBar directActions={directActions} groups={groups} topOffset={topOffset} />;
   }
 );
 ContextActionOverlay.displayName = 'ContextActionOverlay';

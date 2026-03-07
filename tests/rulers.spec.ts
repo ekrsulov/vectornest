@@ -1,5 +1,16 @@
 import { test, expect, Page } from '@playwright/test';
-import {waitForLoad, expandGuidelinesOptions, openSettingsPanel, getPanelContainer} from './helpers';
+import {waitForLoad, expandGuidelinesOptions, openSettingsPanel, getPanelContainer, selectTool, getCanvasPaths} from './helpers';
+
+async function bootstrap(page: Page): Promise<void> {
+  await page.goto('/');
+  await waitForLoad(page);
+  await page.evaluate(() => {
+    window.localStorage.clear();
+    window.sessionStorage?.clear();
+  });
+  await page.reload();
+  await waitForLoad(page);
+}
 
 /**
  * Helper to enable Guidelines and Manual guides to show rulers
@@ -69,10 +80,44 @@ function getVerticalRuler(page: Page) {
   return page.getByTestId('vertical-ruler');
 }
 
+async function createSelectedRectangle(
+  page: Page,
+  { x = 80, y = 110, width = 120, height = 80 }: { x?: number; y?: number; width?: number; height?: number } = {}
+): Promise<void> {
+  await page.evaluate(({ x, y, width, height }) => {
+    const storeApi = window.useCanvasStore;
+    if (!storeApi) {
+      throw new Error('Canvas store is not available');
+    }
+
+    const { addElement, selectElements } = storeApi.getState();
+    const id = addElement({
+      type: 'path',
+      data: {
+        subPaths: [[
+          { type: 'M', position: { x, y } },
+          { type: 'L', position: { x: x + width, y } },
+          { type: 'L', position: { x: x + width, y: y + height } },
+          { type: 'L', position: { x, y: y + height } },
+          { type: 'Z' },
+        ]],
+        strokeWidth: 1,
+        strokeColor: '#000000',
+        strokeOpacity: 1,
+        fillColor: '#ffffff',
+        fillOpacity: 1,
+      },
+    });
+
+    selectElements([id]);
+  }, { x, y, width, height });
+
+  await page.waitForTimeout(150);
+}
+
 test.describe('Rulers Tests', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await waitForLoad(page);
+    await bootstrap(page);
   });
 
   test('should show rulers when enabling Manual guides in Guidelines panel', async ({ page }) => {
@@ -200,5 +245,82 @@ test.describe('Rulers Tests', () => {
     // Interactive rulers should be hidden (Guidelines rulers are not enabled)
     const interactiveVisible = await interactiveRulersAreVisible(page);
     expect(interactiveVisible).toBe(false);
+  });
+
+  test('should project the current selection onto both rulers and update while moving', async ({ page }) => {
+    await openSettingsPanel(page);
+    await enableGridRulers(page);
+    await createSelectedRectangle(page);
+    await selectTool(page, 'Select');
+
+    const horizontalBand = page.getByTestId('horizontal-ruler-selection-band');
+    const verticalBand = page.getByTestId('vertical-ruler-selection-band');
+
+    await expect(horizontalBand).toBeVisible();
+    await expect(verticalBand).toBeVisible();
+
+    const initialHorizontalBox = await horizontalBand.boundingBox();
+    const initialVerticalBox = await verticalBand.boundingBox();
+    expect(initialHorizontalBox).not.toBeNull();
+    expect(initialVerticalBox).not.toBeNull();
+
+    const canvasPath = getCanvasPaths(page).first();
+    const pathBox = await canvasPath.boundingBox();
+    expect(pathBox).not.toBeNull();
+
+    if (!initialHorizontalBox || !initialVerticalBox || !pathBox) {
+      throw new Error('Expected ruler bands and path to have bounding boxes');
+    }
+
+    await page.mouse.move(pathBox.x + pathBox.width / 2, pathBox.y + pathBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      pathBox.x + pathBox.width / 2 + 90,
+      pathBox.y + pathBox.height / 2 + 60,
+      { steps: 8 }
+    );
+    await page.waitForTimeout(100);
+
+    const midDragHorizontalBox = await horizontalBand.boundingBox();
+    const midDragVerticalBox = await verticalBand.boundingBox();
+
+    await page.mouse.up();
+
+    expect(midDragHorizontalBox).not.toBeNull();
+    expect(midDragVerticalBox).not.toBeNull();
+
+    if (!midDragHorizontalBox || !midDragVerticalBox) {
+      throw new Error('Expected ruler bands to update during drag');
+    }
+
+    expect(midDragHorizontalBox.x).toBeGreaterThan(initialHorizontalBox.x + 40);
+    expect(midDragVerticalBox.y).toBeGreaterThan(initialVerticalBox.y + 20);
+  });
+
+  test('should move the context bar below the rulers when rulers are active', async ({ page }) => {
+    await createSelectedRectangle(page);
+    await selectTool(page, 'Select');
+
+    const contextBar = page.getByTestId('context-bar');
+    await expect(contextBar).toBeVisible();
+
+    const initialBox = await contextBar.boundingBox();
+    expect(initialBox).not.toBeNull();
+
+    await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      store?.updateGridState?.({ enabled: true, showRulers: true });
+    });
+    await page.waitForTimeout(150);
+
+    const shiftedBox = await contextBar.boundingBox();
+    expect(shiftedBox).not.toBeNull();
+
+    if (!initialBox || !shiftedBox) {
+      throw new Error('Expected context bar to have a bounding box before and after enabling rulers');
+    }
+
+    expect(shiftedBox.y).toBeGreaterThan(initialBox.y + 10);
+    expect(shiftedBox.y).toBeGreaterThanOrEqual(20);
   });
 });

@@ -115,6 +115,8 @@ export function useThemeColors() {
       textColor: isDark ? 'gray.400' : 'gray.600',
       tickColor: isDark ? 'gray.500' : 'gray.400',
       borderColor: isDark ? 'gray.600' : 'gray.300',
+      projectionFill: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+      projectionBorderColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(15, 23, 42, 0.18)',
       // Raw hex values for canvas rendering
       bgHex: isDark ? '#1a202c' : '#f7fafc',
       textHex: isDark ? '#a0aec0' : '#718096',

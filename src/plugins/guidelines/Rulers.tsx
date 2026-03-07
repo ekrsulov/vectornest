@@ -1,6 +1,7 @@
 import React from 'react';
 import { Rulers as SharedRulers } from '../../ui/Rulers';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useRulerSelectionBounds } from '../../hooks/useRulerSelectionBounds';
 
 interface RulersProps {
   width: number;
@@ -21,6 +22,7 @@ export const Rulers: React.FC<RulersProps> = ({ width, height, viewport }) => {
   const startDraggingGuide = useCanvasStore(state => state.startDraggingGuide);
   const updateDraggingGuide = useCanvasStore(state => state.updateDraggingGuide);
   const finishDraggingGuide = useCanvasStore(state => state.finishDraggingGuide);
+  const selectionProjectionBounds = useRulerSelectionBounds();
 
   if (!guidelines?.enabled) {
     return null;
@@ -52,7 +54,7 @@ export const Rulers: React.FC<RulersProps> = ({ width, height, viewport }) => {
       onVerticalDragStart={handleVerticalDragStart}
       onDragUpdate={handleDragUpdate}
       onDragEnd={handleDragEnd}
+      selectionProjectionBounds={selectionProjectionBounds}
     />
   );
 };
-

@@ -272,7 +272,7 @@ export const AnimationEditor: React.FC = () => {
 
   return (
     <Panel title="Editor" isCollapsible defaultOpen>
-      <Box px={1} pb={1}>
+      <Box pb={1}>
         <AnimationCard
           animation={selectedAnimation}
           onDelete={handleDelete}

@@ -10,9 +10,11 @@ import { animationLibraryPlugin } from '../animationLibrary';
 import { textEffectsLibraryPlugin } from '../textEffectsLibrary';
 import { potracePlugin } from '../potrace';
 import { paintsPlugin } from '../paints';
+import { iconifyLibraryPlugin } from '../iconifyLibrary';
 
 export const UTILITY_PLUGINS: PluginDefinition<CanvasStore>[] = [
   librarySearchPlugin,
+  iconifyLibraryPlugin,
   manualMovePlugin,
   gridDistributionPlugin,
   llmAssistantPlugin,

@@ -235,7 +235,7 @@ export const PresetCatalog: React.FC = () => {
           placeholder="Search presets..."
           value={catalogSearchQuery}
           onChange={handleSearch}
-          width="min(100%, 230px)"
+          width="full"
         />
 
         {/* Category tags */}

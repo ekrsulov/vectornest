@@ -88,25 +88,18 @@ export const translateImportedElements = (
                 hasAnimatedTransform?: boolean;
                 transformMatrix?: TransformMatrix;
             } | undefined;
-            
-            // If group has animateTransform, translate the group's transformMatrix instead of children's coordinates
-            // This preserves the animation's coordinate system (children stay centered at group origin)
-            if (groupData?.hasAnimatedTransform) {
-                const tm = groupData.transformMatrix ?? [1, 0, 0, 1, 0, 0] as TransformMatrix;
-                return {
-                    ...group,
-                    data: {
-                        ...group.data,
-                        transformMatrix: translateMatrix(tm, deltaX, deltaY),
-                    },
-                    // Don't translate children - they should stay relative to group origin for animations
-                    children: group.children,
-                };
-            }
-            
+
+            // Imported groups keep children in local coordinates and store world placement in
+            // transformMatrix. Translating children would incorrectly multiply the movement when
+            // the group has scale/rotation, so move the group matrix instead.
+            const tm = groupData?.transformMatrix ?? [1, 0, 0, 1, 0, 0] as TransformMatrix;
             return {
                 ...group,
-                children: translateImportedElements(group.children, deltaX, deltaY),
+                data: {
+                    ...group.data,
+                    transformMatrix: translateMatrix(tm, deltaX, deltaY),
+                },
+                children: group.children,
             };
         }
         if (element.type === 'path') {

@@ -255,7 +255,14 @@ const extractArtboardMetadata = (svgElement: Element): ImportedArtboardMetadata 
 /**
  * Import SVG file and return both dimensions and imported element data.
  */
-export async function importSVGWithDimensions(file: File): Promise<SVGImportResult> {
+export interface SVGImportOptions {
+  skipDarkModeColorTransform?: boolean;
+}
+
+export async function importSVGWithDimensions(
+  file: File,
+  options: SVGImportOptions = {},
+): Promise<SVGImportResult> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -356,7 +363,10 @@ export async function importSVGWithDimensions(file: File): Promise<SVGImportResu
           ));
         });
 
-        const shouldApplyDarkModeImportTransform = importedColorMode === 'dark';
+        const shouldApplyDarkModeImportTransform = (
+          importedColorMode === 'dark' &&
+          options.skipDarkModeColorTransform !== true
+        );
         const normalizedElements = shouldApplyDarkModeImportTransform
           ? transformImportedElementsForDarkMode(elements)
           : elements;

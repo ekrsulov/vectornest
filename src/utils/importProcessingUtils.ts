@@ -32,12 +32,14 @@ export interface ProcessingOptions {
     resizeWidth?: number;
     resizeHeight?: number;
     applyUnion?: boolean;
+    skipDarkModeColorTransform?: boolean;
 }
 
 type ImportBounds = { minX: number; minY: number; maxX: number; maxY: number; width: number; height: number };
 
 type Matrix6 = [number, number, number, number, number, number];
 type Bounds4 = { minX: number; minY: number; maxX: number; maxY: number };
+const IDENTITY_MATRIX_6: Matrix6 = [1, 0, 0, 1, 0, 0];
 
 /**
  * Transform axis-aligned bounds through a 2×3 matrix and accumulate into mutable min/max accumulators.
@@ -70,23 +72,51 @@ function accumulateBoundsViaMatrix(
     }
 }
 
-const calculateImportBounds = (elements: ImportedElement[], paths: PathData[]): ImportBounds => {
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
+const multiplyMatrixTuples = (left: Matrix6, right: Matrix6): Matrix6 => ([
+    left[0] * right[0] + left[2] * right[1],
+    left[1] * right[0] + left[3] * right[1],
+    left[0] * right[2] + left[2] * right[3],
+    left[1] * right[2] + left[3] * right[3],
+    left[0] * right[4] + left[2] * right[5] + left[4],
+    left[1] * right[4] + left[3] * right[5] + left[5],
+]);
 
-    // Consider paths
-    paths.forEach(pathData => {
-        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth ?? 1, 1);
-        minX = Math.min(minX, bounds.minX);
-        maxX = Math.max(maxX, bounds.maxX);
-        minY = Math.min(minY, bounds.minY);
-        maxY = Math.max(maxY, bounds.maxY);
-    });
+const isIdentityMatrix = (matrix: Matrix6): boolean => (
+    matrix[0] === 1 &&
+    matrix[1] === 0 &&
+    matrix[2] === 0 &&
+    matrix[3] === 1 &&
+    matrix[4] === 0 &&
+    matrix[5] === 0
+);
 
-    // Consider plugin-provided elements
+const combineTransforms = (parentMatrix: Matrix6, localMatrix?: Matrix6): Matrix6 => (
+    localMatrix ? multiplyMatrixTuples(parentMatrix, localMatrix) : parentMatrix
+);
+
+const accumulateImportedElementBounds = (
+    elements: ImportedElement[],
+    acc: { minX: number; maxX: number; minY: number; maxY: number },
+    parentMatrix: Matrix6 = IDENTITY_MATRIX_6,
+): void => {
     elements.forEach((el) => {
+        if (el.type === 'group') {
+            const groupData = el.data as {
+                transformMatrix?: Matrix6;
+            } | undefined;
+            const nextParentMatrix = combineTransforms(parentMatrix, groupData?.transformMatrix);
+            accumulateImportedElementBounds(el.children, acc, nextParentMatrix);
+            return;
+        }
+
+        if (el.type === 'path') {
+            const data = el.data;
+            const pathBounds = measurePath(data.subPaths, data.strokeWidth ?? 1, 1);
+            const effectiveMatrix = combineTransforms(parentMatrix, data.transformMatrix);
+            accumulateBoundsViaMatrix(pathBounds, isIdentityMatrix(effectiveMatrix) ? undefined : effectiveMatrix, acc);
+            return;
+        }
+
         if (el.type === 'nativeShape') {
             const data = el.data as {
                 kind: string;
@@ -95,7 +125,7 @@ const calculateImportBounds = (elements: ImportedElement[], paths: PathData[]): 
                 width: number;
                 height: number;
                 points?: { x: number; y: number }[];
-                transformMatrix?: [number, number, number, number, number, number];
+                transformMatrix?: Matrix6;
             };
             const baseBounds = (() => {
                 if (data.kind === 'circle') {
@@ -121,33 +151,34 @@ const calculateImportBounds = (elements: ImportedElement[], paths: PathData[]): 
                     const pts = data.points ?? [];
                     if (!pts.length) return null;
                     return pts.reduce(
-                        (b, p) => ({
-                            minX: Math.min(b.minX, p.x),
-                            minY: Math.min(b.minY, p.y),
-                            maxX: Math.max(b.maxX, p.x),
-                            maxY: Math.max(b.maxY, p.y),
+                        (bounds, point) => ({
+                            minX: Math.min(bounds.minX, point.x),
+                            minY: Math.min(bounds.minY, point.y),
+                            maxX: Math.max(bounds.maxX, point.x),
+                            maxY: Math.max(bounds.maxY, point.y),
                         }),
                         { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity }
                     );
                 }
                 return { minX: data.x, minY: data.y, maxX: data.x + data.width, maxY: data.y + data.height };
             })();
-            if (baseBounds) {
-                const acc = { minX, maxX, minY, maxY };
-                accumulateBoundsViaMatrix(baseBounds, data.transformMatrix, acc);
-                minX = acc.minX; maxX = acc.maxX; minY = acc.minY; maxY = acc.maxY;
+            if (!baseBounds) {
+                return;
             }
+            const effectiveMatrix = combineTransforms(parentMatrix, data.transformMatrix);
+            accumulateBoundsViaMatrix(baseBounds, isIdentityMatrix(effectiveMatrix) ? undefined : effectiveMatrix, acc);
+            return;
         }
+
         if (el.type === 'nativeText') {
             const data = el.data as {
                 x: number;
                 y: number;
                 fontSize?: number;
-                fontFamily?: string;
                 text?: string;
                 lineHeight?: number;
                 writingMode?: string;
-                transformMatrix?: [number, number, number, number, number, number];
+                transformMatrix?: Matrix6;
             };
             const fontSize = data.fontSize ?? 16;
             const lineHeight = (data.lineHeight ?? 1.2) * fontSize;
@@ -168,17 +199,18 @@ const calculateImportBounds = (elements: ImportedElement[], paths: PathData[]): 
                 maxX: data.x + widthApprox,
                 maxY: data.y + (isVertical ? heightApprox : fontSize * 0.2),
             };
-            const acc = { minX, maxX, minY, maxY };
-            accumulateBoundsViaMatrix(baseBounds, data.transformMatrix, acc);
-            minX = acc.minX; maxX = acc.maxX; minY = acc.minY; maxY = acc.maxY;
+            const effectiveMatrix = combineTransforms(parentMatrix, data.transformMatrix);
+            accumulateBoundsViaMatrix(baseBounds, isIdentityMatrix(effectiveMatrix) ? undefined : effectiveMatrix, acc);
+            return;
         }
+
         if (el.type === 'image') {
             const data = el.data as {
                 x: number;
                 y: number;
                 width: number;
                 height: number;
-                transformMatrix?: [number, number, number, number, number, number];
+                transformMatrix?: Matrix6;
             };
             const baseBounds = {
                 minX: data.x,
@@ -186,10 +218,11 @@ const calculateImportBounds = (elements: ImportedElement[], paths: PathData[]): 
                 maxX: data.x + data.width,
                 maxY: data.y + data.height,
             };
-            const acc = { minX, maxX, minY, maxY };
-            accumulateBoundsViaMatrix(baseBounds, data.transformMatrix, acc);
-            minX = acc.minX; maxX = acc.maxX; minY = acc.minY; maxY = acc.maxY;
+            const effectiveMatrix = combineTransforms(parentMatrix, data.transformMatrix);
+            accumulateBoundsViaMatrix(baseBounds, isIdentityMatrix(effectiveMatrix) ? undefined : effectiveMatrix, acc);
+            return;
         }
+
         if (el.type === 'embeddedSvg') {
             const data = el.data as {
                 x?: number;
@@ -197,7 +230,7 @@ const calculateImportBounds = (elements: ImportedElement[], paths: PathData[]): 
                 width?: number;
                 height?: number;
                 viewBox?: string;
-                transformMatrix?: [number, number, number, number, number, number];
+                transformMatrix?: Matrix6;
             };
             const viewBoxParts = data.viewBox ? data.viewBox.split(/\s+/).map(parseFloat) : undefined;
             const width = data.width ?? (viewBoxParts && viewBoxParts.length === 4 ? viewBoxParts[2] : 0);
@@ -208,17 +241,18 @@ const calculateImportBounds = (elements: ImportedElement[], paths: PathData[]): 
                 maxX: (data.x ?? 0) + width,
                 maxY: (data.y ?? 0) + height,
             };
-            const acc = { minX, maxX, minY, maxY };
-            accumulateBoundsViaMatrix(baseBounds, data.transformMatrix, acc);
-            minX = acc.minX; maxX = acc.maxX; minY = acc.minY; maxY = acc.maxY;
+            const effectiveMatrix = combineTransforms(parentMatrix, data.transformMatrix);
+            accumulateBoundsViaMatrix(baseBounds, isIdentityMatrix(effectiveMatrix) ? undefined : effectiveMatrix, acc);
+            return;
         }
+
         if (el.type === 'foreignObject') {
             const data = el.data as {
                 x?: number;
                 y?: number;
                 width?: number;
                 height?: number;
-                transformMatrix?: [number, number, number, number, number, number];
+                transformMatrix?: Matrix6;
             };
             const baseBounds = {
                 minX: data.x ?? 0,
@@ -226,11 +260,23 @@ const calculateImportBounds = (elements: ImportedElement[], paths: PathData[]): 
                 maxX: (data.x ?? 0) + (data.width ?? 0),
                 maxY: (data.y ?? 0) + (data.height ?? 0),
             };
-            const acc = { minX, maxX, minY, maxY };
-            accumulateBoundsViaMatrix(baseBounds, data.transformMatrix, acc);
-            minX = acc.minX; maxX = acc.maxX; minY = acc.minY; maxY = acc.maxY;
+            const effectiveMatrix = combineTransforms(parentMatrix, data.transformMatrix);
+            accumulateBoundsViaMatrix(baseBounds, isIdentityMatrix(effectiveMatrix) ? undefined : effectiveMatrix, acc);
         }
     });
+};
+
+export const calculateImportedElementBounds = (elements: ImportedElement[]): ImportBounds => {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    const acc = { minX, maxX, minY, maxY };
+    accumulateImportedElementBounds(elements, acc);
+    minX = acc.minX;
+    maxX = acc.maxX;
+    minY = acc.minY;
+    maxY = acc.maxY;
 
     if (minX === Infinity || minY === Infinity || maxX === -Infinity || maxY === -Infinity) {
         return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 };
@@ -250,7 +296,13 @@ export const processSvgFile = async (
     file: File,
     options: ProcessingOptions
 ): Promise<ProcessedSvg | null> => {
-    const { resizeImport, resizeWidth = 0, resizeHeight = 0, applyUnion } = options;
+    const {
+        resizeImport,
+        resizeWidth = 0,
+        resizeHeight = 0,
+        applyUnion,
+        skipDarkModeColorTransform = false,
+    } = options;
 
 
     const {
@@ -258,7 +310,7 @@ export const processSvgFile = async (
         elements: importedElements,
         pluginImports,
         artboardMetadata,
-    } = await importSVGWithDimensions(file);
+    } = await importSVGWithDimensions(file, { skipDarkModeColorTransform });
 
     if ((!importedElements || importedElements.length === 0) && !artboardMetadata) {
         logger.warn('No elements found in SVG file', { fileName: file.name });
@@ -313,7 +365,7 @@ export const processSvgFile = async (
     }
 
     // Recalculate bounds
-    const boundsResult = calculateImportBounds(workingElements, pathDataArray);
+    const boundsResult = calculateImportedElementBounds(workingElements);
 
     return {
         elements: workingElements,

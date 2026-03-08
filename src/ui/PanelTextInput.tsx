@@ -25,6 +25,7 @@ export const PanelTextInput: React.FC<PanelTextInputProps> = ({
   textAlign = 'left',
   height = '20px',
 }) => {
+  const wrapperWidth = width && !leftIcon && !rightElement ? undefined : width;
   const input = (
     <Input
       type={type}
@@ -34,11 +35,13 @@ export const PanelTextInput: React.FC<PanelTextInputProps> = ({
       size="sm"
       h={height}
       w={width && !leftIcon && !rightElement ? width : 'full'} // If grouped, width applies to group
+      minW={0}
+      maxW="100%"
       pl={leftIcon ? '28px' : 2}
       pr={rightElement ? '28px' : 2}
       textAlign={textAlign}
       borderRadius="0"
-      m={leftIcon || rightElement ? 0 : 0.5}
+      my={leftIcon || rightElement ? 0 : 0.5}
       borderColor="gray.300"
       bg="white"
       _dark={{
@@ -58,7 +61,7 @@ export const PanelTextInput: React.FC<PanelTextInputProps> = ({
 
   if (leftIcon || rightElement) {
     return (
-      <InputGroup size="sm" h={height} w={width} m={0.5}>
+      <InputGroup size="sm" h={height} w={wrapperWidth} minW={0} maxW="100%" my={0.5}>
         {leftIcon && (
           <InputLeftElement pointerEvents="none" h={height} w="28px" children={leftIcon} />
         )}

@@ -112,10 +112,13 @@ export const injectAnimationsIntoSymbolContent = (
     anim.symbolTargetId === symbolId && anim.symbolChildIndex !== undefined
   );
   if (symbolAnimations.length === 0) return rawContent;
+  const scopedAnimations = idPrefix
+    ? symbolAnimations.map((anim) => ({ ...anim, id: `${idPrefix}${anim.id}` }))
+    : symbolAnimations;
 
   // Group animations by child index
   const animsByChild = new Map<number, SVGAnimation[]>();
-  symbolAnimations.forEach((anim) => {
+  scopedAnimations.forEach((anim) => {
     const idx = anim.symbolChildIndex;
     if (idx === undefined) return;
     if (!animsByChild.has(idx)) {
@@ -138,11 +141,7 @@ export const injectAnimationsIntoSymbolContent = (
 
     // Serialize each animation and append to the target element
     anims.forEach((anim) => {
-      // If idPrefix is provided, create a modified animation with prefixed ID
-      const animToSerialize = idPrefix && anim.id 
-        ? { ...anim, id: `${idPrefix}${anim.id}` }
-        : anim;
-      const animHtml = serializeAnimation(animToSerialize, chainDelays);
+      const animHtml = serializeAnimation(anim, chainDelays, scopedAnimations);
       if (animHtml) {
         // Parse the animation HTML and append to target
         const animDoc = new DOMParser().parseFromString(`<root>${animHtml}</root>`, 'application/xml');
@@ -726,12 +725,14 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
   const transformAnimationNodes = renderAnimationsForElement(
     element.id,
     allAnimations.filter(isTransformAnimation),
-    animationState
+    animationState,
+    allAnimations
   );
   const attributeAnimationNodes = renderAnimationsForElement(
     element.id,
     allAnimations.filter((anim) => !isTransformAnimation(anim)),
-    animationState
+    animationState,
+    allAnimations
   );
 
   return (

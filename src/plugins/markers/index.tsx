@@ -271,7 +271,7 @@ defsContributionRegistry.register({
         ];
         const markerAnimations = (animState.animations ?? [])
           .filter((a) => a.markerTargetId === marker.id)
-          .map((a) => serializeAnimation(a, chainDelays));
+          .map((a) => serializeAnimation(a, chainDelays, animState.animations ?? []));
         const animAttributeNames = new Set(
           (animState.animations ?? [])
             .filter((a) => a.markerTargetId === marker.id && a.attributeName)

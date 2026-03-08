@@ -18,6 +18,7 @@ import { registerAnimationCleanupHook } from './cleanupHook';
 import './rendererExtension';
 import './persistence';
 import { AnimationGizmoOverlay } from './integration';
+import { buildSmilReferenceMap, getAnimationDomId, remapSmilTimingValue } from './smilTimingUtils';
 const AnimationWorkspaceDialog = React.lazy(() =>
   import('./AnimationWorkspaceDialog').then((module) => ({ default: module.AnimationWorkspaceDialog }))
 );
@@ -468,12 +469,14 @@ function importAnimationDefs(doc: Document): Record<string, unknown[]> | null {
     const keyTimes = animEl.getAttribute('keyTimes') ?? undefined;
     const keySplines = animEl.getAttribute('keySplines') ?? undefined;
 
+    const smilId = animEl.getAttribute('id') ?? undefined;
     const baseAnimation = {
       type: tagName === 'animatetransform'
         ? 'animateTransform'
         : tagName === 'animatemotion'
           ? 'animateMotion'
           : tagName as AnimationType,
+      smilId,
       dur,
       begin,
       end,
@@ -632,14 +635,23 @@ function importAnimationDefs(doc: Document): Record<string, unknown[]> | null {
 /**
  * Serialize a single animation to SVG markup
  */
-export function serializeAnimation(anim: SVGAnimation, chainDelays: Map<string, number>): string {
-  const delayMs = chainDelays.get(anim.id) ?? 0;
-  const beginValue = delayMs > 0 ? `${(delayMs / 1000).toFixed(3)}s` : (anim.begin ?? '0s');
+export function serializeAnimation(
+  anim: SVGAnimation,
+  chainDelays: Map<string, number> = new Map<string, number>(),
+  referenceAnimations: SVGAnimation[] = [anim]
+): string {
+  const smilIdMap = buildSmilReferenceMap(referenceAnimations);
+  const beginValue = chainDelays.has(anim.id)
+    ? `${((chainDelays.get(anim.id) ?? 0) / 1000).toFixed(3)}s`
+    : (remapSmilTimingValue(anim.begin ?? '0s', smilIdMap) ?? '0s');
+  const endValue = remapSmilTimingValue(anim.end, smilIdMap);
+  const domId = getAnimationDomId(anim);
 
   const commonAttrs = [
+    domId ? `id="${domId}"` : null,
     `dur="${anim.dur ?? '2s'}"`,
     `begin="${beginValue}"`,
-    anim.end ? `end="${anim.end}"` : null,
+    endValue ? `end="${endValue}"` : null,
     `fill="${anim.fill ?? 'freeze'}"`,
     anim.repeatCount !== undefined ? `repeatCount="${anim.repeatCount}"` : null,
     anim.repeatDur ? `repeatDur="${anim.repeatDur}"` : null,
@@ -729,7 +741,7 @@ animationContributionRegistry.register({
     // Serialize each animation
     const serialized: string[] = [];
     elementAnimations.forEach((anim) => {
-      serialized.push(serializeAnimation(anim, chainDelays));
+      serialized.push(serializeAnimation(anim, chainDelays, animations));
     });
     return serialized;
   },

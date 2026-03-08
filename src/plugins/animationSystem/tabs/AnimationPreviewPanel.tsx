@@ -27,6 +27,7 @@ import {
   namespaceSvgDefs,
   forceGradientRepaint,
 } from './animationPreviewUtils';
+import { shouldTriggerBeginElementManually } from '../smilTimingUtils';
 
 const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
   elements,
@@ -611,6 +612,9 @@ const AnimationPreviewPanelComponent: React.FC<AnimationPreviewPanelProps> = ({
         // We must unpause it for animations to run and explicitly trigger beginElement for safety.
         const animateNodes = svgEl.querySelectorAll<SVGAnimationElement>('animate, animateTransform, animateMotion, set');
         animateNodes.forEach((node) => {
+          if (!shouldTriggerBeginElementManually(node.getAttribute('begin'))) {
+            return;
+          }
           try {
             // beginElement() is needed when animations have begin="indefinite" or were frozen previously
             node.beginElement?.();

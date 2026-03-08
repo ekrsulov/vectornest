@@ -9,6 +9,7 @@ import { createPlayingAnimationState } from '../../utils/animationStatePreparati
 import type { CanvasElement } from '../../types';
 import type { SVGAnimation, AnimationState } from '../../types/animations';
 import type React from 'react';
+import { shouldTriggerBeginElementManually } from '../../plugins/animationSystem/smilTimingUtils';
 
 const TRANSPARENT_BG_STYLE: React.CSSProperties = { background: 'transparent' };
 
@@ -196,6 +197,9 @@ export const insertPreviewSvg = ({
     'animate, animateTransform, animateMotion, set'
   );
   animateNodes.forEach((node) => {
+    if (!shouldTriggerBeginElementManually(node.getAttribute('begin'))) {
+      return;
+    }
     try {
       node.beginElement?.();
     } catch {

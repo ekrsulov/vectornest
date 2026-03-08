@@ -1,7 +1,11 @@
 export interface ExportContribution {
   pluginId: string;
   serializeDefs?: (state: unknown) => string;
-  serializeAnimation?: (animation: unknown, chainDelays: Map<string, number>) => string;
+  serializeAnimation?: (
+    animation: unknown,
+    chainDelays: Map<string, number>,
+    referenceAnimations?: unknown[]
+  ) => string;
 }
 
 const contributions = new Map<string, ExportContribution>();
@@ -20,11 +24,12 @@ export function clearExportContributions(): void {
 
 export function serializeAnimationFromContributions(
   animation: unknown,
-  chainDelays: Map<string, number>
+  chainDelays: Map<string, number>,
+  referenceAnimations?: unknown[]
 ): string {
   for (const contribution of contributions.values()) {
     if (contribution.serializeAnimation) {
-      const result = contribution.serializeAnimation(animation, chainDelays);
+      const result = contribution.serializeAnimation(animation, chainDelays, referenceAnimations);
       if (result) return result;
     }
   }

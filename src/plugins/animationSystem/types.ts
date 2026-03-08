@@ -28,6 +28,8 @@ export interface AnimationTargetPath {
 
 export interface SVGAnimation {
   id: string;
+  /** Original SMIL id from imported SVG markup, used to remap event-based begin/end references safely. */
+  smilId?: string;
   type: AnimationType;
   targetElementId: string;
   /** 

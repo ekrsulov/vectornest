@@ -103,8 +103,8 @@ const NativeTextRendererInner: React.FC<{
       animation.type !== 'animateTransform' &&
       animation.type !== 'animateMotion'
   );
-  const groupAnimationNodes = renderAnimationsForElement(element.id, transformAnimations, animationState);
-  const animationNodes = renderAnimationsForElement(element.id, textAttributeAnimations, animationState);
+  const groupAnimationNodes = renderAnimationsForElement(element.id, transformAnimations, animationState, allAnimations);
+  const animationNodes = renderAnimationsForElement(element.id, textAttributeAnimations, animationState, allAnimations);
 
   // Removed: handleDoubleClick now handled by basePlugins -> transformation flow
   // This ensures consistent double-click behavior across all element types

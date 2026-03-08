@@ -1,20 +1,12 @@
 import React from 'react';
 import type { AnimationState, SVGAnimation } from './types';
-import { ensureChainDelays } from './chainUtils';
-
-const formatBegin = (animation: SVGAnimation, animationState?: AnimationState): string | undefined => {
-  if (!animationState) {
-    return animation.begin ?? '0s';
-  }
-  const delays: Map<string, number> = ensureChainDelays(animationState.chainDelays);
-  const delayMs = delays.get(animation.id) ?? 0;
-  return `${(delayMs / 1000).toFixed(3)}s`;
-};
+import { getAnimationDomId, resolveAnimationBegin, resolveAnimationEnd } from './smilTimingUtils';
 
 export const renderAnimationsForElement = (
   elementId: string,
   animations: SVGAnimation[],
-  animationState?: AnimationState
+  animationState?: AnimationState,
+  referenceAnimations: SVGAnimation[] = animations
 ): React.ReactNode[] => {
   const allowRender = animationState
     ? (animationState.isPlaying || animationState.hasPlayed || animationState.isWorkspaceOpen)
@@ -45,12 +37,14 @@ export const renderAnimationsForElement = (
   const nodes: React.ReactNode[] = [];
 
   uniqueAnimations.forEach((animation) => {
-    const beginValue = animationState ? formatBegin(animation, animationState) : animation.begin ?? '0s';
+    const beginValue = resolveAnimationBegin(animation, animationState, referenceAnimations);
+    const endValue = resolveAnimationEnd(animation, referenceAnimations);
+    const animationDomId = getAnimationDomId(animation);
     const restartKey = animationState?.restartKey ?? 0;
     const commonProps = {
       dur: animation.dur ?? '2s',
       begin: beginValue,
-      end: animation.end,
+      end: endValue,
       fill: animation.fill ?? 'freeze',
       repeatCount: animation.repeatCount ?? 1,
       repeatDur: animation.repeatDur,
@@ -64,6 +58,7 @@ export const renderAnimationsForElement = (
         nodes.push(
           <animate
             key={`${animation.id}-${restartKey}`}
+            id={animationDomId}
             {...commonProps}
             attributeName={animation.attributeName}
             values={animation.values}
@@ -78,6 +73,7 @@ export const renderAnimationsForElement = (
         nodes.push(
           <animateTransform
             key={`${animation.id}-${restartKey}`}
+            id={animationDomId}
             {...commonProps}
             attributeName={animation.attributeName}
             type={animation.transformType}
@@ -93,6 +89,7 @@ export const renderAnimationsForElement = (
         nodes.push(
           <animateMotion
             key={`${animation.id}-${restartKey}`}
+            id={animationDomId}
             {...commonProps}
             path={animation.mpath ? undefined : animation.path}
             rotate={animation.rotate ?? 'auto'}
@@ -106,6 +103,7 @@ export const renderAnimationsForElement = (
         nodes.push(
           <set
             key={`${animation.id}-${restartKey}`}
+            id={animationDomId}
             {...commonProps}
             attributeName={animation.attributeName}
             to={animation.to}

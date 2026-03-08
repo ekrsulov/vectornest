@@ -321,7 +321,7 @@ const serializeTextPathElement = (
         ...(animation as Record<string, unknown>),
       } as Record<string, unknown>;
 
-      return serializeAnimationFromContributions(minimalAnimation, chainDelays);
+      return serializeAnimationFromContributions(minimalAnimation, chainDelays, textPathAnimations);
     })
     .map((line) => `${indent}  ${line}`)
     .join('\n');

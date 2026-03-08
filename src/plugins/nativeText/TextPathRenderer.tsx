@@ -9,13 +9,13 @@ import type { WireframePluginSlice } from '../wireframe/slice';
 import { commandsToString } from '../../utils/pathParserUtils';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
 import { renderAnimationsForElement } from '../animationSystem/renderAnimations';
-import { ensureChainDelays } from '../animationSystem/chainUtils';
 import { getClipRuntimeId } from '../../utils/maskUtils';
 import {
   getTextEffectBaseAnimationsFromMetadata,
   getTextEffectLayersFromMetadata,
   renderInlineTextEffectAnimations,
 } from '../textEffectsLibrary/renderLayerUtils';
+import { getAnimationDomId, resolveAnimationBegin, resolveAnimationEnd } from '../animationSystem/smilTimingUtils';
 
 const getEffectiveStrokeColor = (path: PathElement['data']): string => {
   if (path.strokeColor === 'none') return '#00000001';
@@ -71,7 +71,6 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
     const textEffectLayers = wireframeEnabled ? [] : getTextEffectLayersFromMetadata(pathData.metadata);
     const underlays = textEffectLayers.filter((layer) => layer.renderBeforeBase);
     const overlays = textEffectLayers.filter((layer) => !layer.renderBeforeBase);
-    const chainDelays: Map<string, number> = ensureChainDelays(animationState?.chainDelays);
     const restartKey = animationState?.restartKey ?? 0;
 
     // Filter to transform-level animations (animateTransform, animateMotion) so the
@@ -83,7 +82,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
         (anim.type === 'animateTransform' || anim.type === 'animateMotion')
     );
     const groupAnimationNodes = transformAnimations.length > 0
-      ? renderAnimationsForElement(element.id, transformAnimations, animationState)
+      ? renderAnimationsForElement(element.id, transformAnimations, animationState, animations)
       : null;
     const transformAttr = (() => {
       if (textPath.transformMatrix) return `matrix(${textPath.transformMatrix.join(' ')})`;
@@ -244,7 +243,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
           filter={wireframeEnabled ? undefined : (pathData.filterId ? `url(#${pathData.filterId})` : undefined)}
         >
           {textAttributeAnimations.length > 0
-            ? renderAnimationsForElement(element.id, textAttributeAnimations, animationState)
+            ? renderAnimationsForElement(element.id, textAttributeAnimations, animationState, animations)
             : null}
           {renderInlineTextEffectAnimations(inlineBaseAnimations.filter((animation) => animation.attributeName !== 'startOffset'), `${element.id}-textfx-base`, restartKey)}
           <textPath
@@ -263,12 +262,10 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
             {renderInlineTextEffectAnimations(inlineBaseAnimations.filter((animation) => animation.attributeName === 'startOffset'), `${element.id}-textfx-base-start`, restartKey)}
             {allowRender
               ? textPathAnimations.map((animation) => {
-                const delayMs = chainDelays.get(animation.id) ?? 0;
-                const beginValue = delayMs > 0 ? `${(delayMs / 1000).toFixed(3)}s` : (animation.begin ?? '0s');
                 const commonProps = {
                   dur: animation.dur ?? '2s',
-                  begin: beginValue,
-                  end: animation.end,
+                  begin: resolveAnimationBegin(animation, animationState, animations),
+                  end: resolveAnimationEnd(animation, animations),
                   fill: animation.fill ?? 'freeze',
                   repeatCount: animation.repeatCount ?? 1,
                   repeatDur: animation.repeatDur,
@@ -279,6 +276,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
                 return (
                   <animate
                     key={`${animation.id}-${restartKey}`}
+                    id={getAnimationDomId(animation)}
                     {...commonProps}
                     attributeName={animation.attributeName}
                     values={animation.values}

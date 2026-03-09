@@ -10,6 +10,8 @@ export default tseslint.config([
       'dist/**',
       'node_modules/**',
       '.vite/**',
+      'test-results/**',
+      'playwright-report/**',
       'doc/**',
       '*.config.js',
       '*.config.ts'

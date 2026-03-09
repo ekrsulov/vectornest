@@ -9,6 +9,7 @@ import { parsePathD } from '../../utils/pathParserUtils';
 import { measurePath } from '../../utils/measurementUtils';
 import { scaleCommands, translateCommands } from '../../utils/transformationUtils';
 import type { PathData } from '../../types';
+import { shapeToPath } from '../../utils/import/shapeToPath';
 
 /** Extended PathData with computed bounds for symbol viewBox mapping. */
 type SymbolPathData = PathData & { x: number; y: number; width: number; height: number };
@@ -20,16 +21,68 @@ const composeMatrices = (left: BaseMatrix, right: BaseMatrix): BaseMatrix => {
 // Helper to convert object matrix to array matrix
 const toArrayMatrix = (m: Matrix): BaseMatrix => [m.a, m.b, m.c, m.d, m.e, m.f];
 
-const buildPathData = (pathNode: SVGPathElement | null, styleAttrs: Record<string, unknown>): SymbolPathData | null => {
-    if (!pathNode) return null;
-    const pathD = pathNode.getAttribute('d');
+const GRAPHICS_TAGS = new Set(['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon']);
+
+const isSupportedGraphicsElement = (element: Element | null | undefined): element is Element => (
+    Boolean(element && GRAPHICS_TAGS.has(element.tagName.toLowerCase()))
+);
+
+const resolveUseReferenceTarget = (useNode: Element | null | undefined): Element | null => {
+    if (!useNode || useNode.tagName.toLowerCase() !== 'use') {
+        return null;
+    }
+
+    const href = useNode.getAttribute('href') || useNode.getAttribute('xlink:href');
+    if (!href || !href.startsWith('#')) {
+        return null;
+    }
+
+    const target = useNode.ownerDocument?.getElementById(href.slice(1));
+    return isSupportedGraphicsElement(target) ? target : null;
+};
+
+const resolvePrimarySymbolGraphicsElement = (symbolNode: Element | null | undefined): Element | null => {
+    if (!symbolNode) {
+        return null;
+    }
+
+    const directChildren = Array.from(symbolNode.children);
+    if (directChildren.length === 1) {
+        const [onlyChild] = directChildren;
+        if (isSupportedGraphicsElement(onlyChild)) {
+            return onlyChild;
+        }
+        const useTarget = resolveUseReferenceTarget(onlyChild);
+        if (useTarget) {
+            return useTarget;
+        }
+    }
+
+    const drawableDescendants = Array.from(symbolNode.querySelectorAll(Array.from(GRAPHICS_TAGS).join(',')));
+    if (drawableDescendants.length === 1) {
+        return drawableDescendants[0];
+    }
+
+    const useDescendants = Array.from(symbolNode.querySelectorAll('use'));
+    if (drawableDescendants.length === 0 && useDescendants.length === 1) {
+        return resolveUseReferenceTarget(useDescendants[0]);
+    }
+
+    return null;
+};
+
+const buildPathData = (graphicsNode: Element | null, styleAttrs: Record<string, unknown>): SymbolPathData | null => {
+    if (!graphicsNode) return null;
+    const pathD = graphicsNode.tagName.toLowerCase() === 'path'
+        ? graphicsNode.getAttribute('d')
+        : shapeToPath(graphicsNode);
     if (!pathD) return null;
     const subPaths = [parsePathD(pathD)];
-    const strokeColor = (styleAttrs as { strokeColor?: string }).strokeColor ?? pathNode.getAttribute('stroke') ?? 'none';
-    const strokeWidth = (styleAttrs as { strokeWidth?: number }).strokeWidth ?? parseFloat(pathNode.getAttribute('stroke-width') ?? '1');
-    const fillColor = (styleAttrs as { fillColor?: string }).fillColor ?? pathNode.getAttribute('fill') ?? 'none';
-    const strokeOpacity = (styleAttrs as { strokeOpacity?: number }).strokeOpacity ?? parseFloat(pathNode.getAttribute('stroke-opacity') ?? '1');
-    const fillOpacity = (styleAttrs as { fillOpacity?: number }).fillOpacity ?? parseFloat(pathNode.getAttribute('fill-opacity') ?? '1');
+    const strokeColor = (styleAttrs as { strokeColor?: string }).strokeColor ?? graphicsNode.getAttribute('stroke') ?? 'none';
+    const strokeWidth = (styleAttrs as { strokeWidth?: number }).strokeWidth ?? parseFloat(graphicsNode.getAttribute('stroke-width') ?? '1');
+    const fillColor = (styleAttrs as { fillColor?: string }).fillColor ?? graphicsNode.getAttribute('fill') ?? 'none';
+    const strokeOpacity = (styleAttrs as { strokeOpacity?: number }).strokeOpacity ?? parseFloat(graphicsNode.getAttribute('stroke-opacity') ?? '1');
+    const fillOpacity = (styleAttrs as { fillOpacity?: number }).fillOpacity ?? parseFloat(graphicsNode.getAttribute('fill-opacity') ?? '1');
     const measured = measurePath(subPaths, strokeWidth || 1, 1);
     return {
         subPaths,
@@ -47,6 +100,47 @@ const buildPathData = (pathNode: SVGPathElement | null, styleAttrs: Record<strin
 };
 
 type ViewBox = { minX: number; minY: number; width: number; height: number };
+
+const parseViewBox = (value: string | null | undefined): ViewBox | null => {
+    if (!value) {
+        return null;
+    }
+
+    const parts = value.split(/[\s,]+/).map(parseFloat);
+    if (parts.length !== 4 || parts.some((part) => !Number.isFinite(part))) {
+        return null;
+    }
+
+    return {
+        minX: parts[0],
+        minY: parts[1],
+        width: parts[2],
+        height: parts[3],
+    };
+};
+
+const resolveImplicitViewportSize = (element: Element): { width: number; height: number } | null => {
+    let current: Element | null = element.parentElement;
+
+    while (current) {
+        if (current.tagName.toLowerCase() === 'svg') {
+            const viewBox = parseViewBox(current.getAttribute('viewBox'));
+            if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
+                return { width: viewBox.width, height: viewBox.height };
+            }
+
+            const width = parseFloat(current.getAttribute('width') || '');
+            const height = parseFloat(current.getAttribute('height') || '');
+            if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
+                return { width, height };
+            }
+        }
+
+        current = current.parentElement;
+    }
+
+    return null;
+};
 
 const applyViewBoxTransform = (
     pathData: SymbolPathData,
@@ -174,8 +268,8 @@ export function importUse(
 
     const widthAttr = parseFloat(widthAttrRaw || '0');
     const heightAttr = parseFloat(heightAttrRaw || '0');
-    let x = parseFloat(xAttrRaw || '0');
-    let y = parseFloat(yAttrRaw || '0');
+    const x = parseFloat(xAttrRaw || '0');
+    const y = parseFloat(yAttrRaw || '0');
 
     const hasExplicitWidth = element.hasAttribute('width');
     const hasExplicitHeight = element.hasAttribute('height');
@@ -205,37 +299,33 @@ export function importUse(
     let finalWidth = widthAttr;
     let finalHeight = heightAttr;
 
-    const viewBoxAttr = symbolNode?.getAttribute('viewBox');
-    const viewBoxParts = viewBoxAttr ? viewBoxAttr.split(/\s+/).map(parseFloat) : null;
-    const parsedViewBox: ViewBox | null =
-        viewBoxParts && viewBoxParts.length === 4 && viewBoxParts.every((v) => Number.isFinite(v))
-            ? { minX: viewBoxParts[0], minY: viewBoxParts[1], width: viewBoxParts[2], height: viewBoxParts[3] }
-            : null;
+    const parsedViewBox = parseViewBox(symbolNode?.getAttribute('viewBox'));
+    const implicitViewportSize = resolveImplicitViewportSize(element);
 
     if (parsedViewBox) {
-        if (!hasExplicitWidth && (!Number.isFinite(finalWidth) || finalWidth === 0)) finalWidth = parsedViewBox.width;
-        if (!hasExplicitHeight && (!Number.isFinite(finalHeight) || finalHeight === 0)) finalHeight = parsedViewBox.height;
+        if (!hasExplicitWidth && (!Number.isFinite(finalWidth) || finalWidth === 0)) {
+            finalWidth = implicitViewportSize?.width ?? parsedViewBox.width;
+        }
+        if (!hasExplicitHeight && (!Number.isFinite(finalHeight) || finalHeight === 0)) {
+            finalHeight = implicitViewportSize?.height ?? parsedViewBox.height;
+        }
     }
 
     if (!Number.isFinite(finalWidth) || finalWidth === 0) finalWidth = parsedViewBox?.width ?? 100;
     if (!Number.isFinite(finalHeight) || finalHeight === 0) finalHeight = parsedViewBox?.height ?? 100;
 
-    const alignToViewBoxOrigin = Boolean(parsedViewBox && !hasExplicitWidth && !hasExplicitHeight && !hasExplicitX && !hasExplicitY);
-    if (alignToViewBoxOrigin && parsedViewBox) {
-        // When <use> omits width/height, align the implicit viewport to the symbol's viewBox
-        // so the symbol's local coordinates stay centered (avoid the default minX/minY offset).
-        x += parsedViewBox.minX;
-        y += parsedViewBox.minY;
-    }
+    void hasExplicitX;
+    void hasExplicitY;
+
+    const symbolGraphicsNode = resolvePrimarySymbolGraphicsElement(symbolNode);
 
     if (symbolNode) {
 
         // Resolve color inheritance if needed (currentColor etc)
-        const pathNode = symbolNode.querySelector('path');
-        const symbolFill = pathNode?.getAttribute('fill');
-        const symbolStroke = pathNode?.getAttribute('stroke');
-        const symbolFillOpacity = pathNode?.getAttribute('fill-opacity');
-        const symbolStrokeOpacity = pathNode?.getAttribute('stroke-opacity');
+        const symbolFill = symbolGraphicsNode?.getAttribute('fill');
+        const symbolStroke = symbolGraphicsNode?.getAttribute('stroke');
+        const symbolFillOpacity = symbolGraphicsNode?.getAttribute('fill-opacity');
+        const symbolStrokeOpacity = symbolGraphicsNode?.getAttribute('stroke-opacity');
 
         // logic from svgImportUtils
         const colorAttr = element.getAttribute('color');
@@ -272,16 +362,10 @@ export function importUse(
     );
 
     // Try to resolve geometry for thumbnails/bounds; fall back to rendering via <use> when unresolved
-    const symbolUseNode = symbolNode?.querySelector('use');
-    const symbolUseHref = symbolUseNode?.getAttribute('href') ?? symbolUseNode?.getAttribute('xlink:href');
-    const symbolUseRefId = symbolUseHref?.startsWith('#') ? symbolUseHref.slice(1) : null;
-    const symbolUseRefNode = symbolUseRefId ? doc?.getElementById(symbolUseRefId) : null;
-
     let pathData =
         symbolHasMultipleChildren
             ? undefined
-            : buildPathData(symbolNode?.querySelector('path') ?? null, styleAttrs) ??
-              buildPathData(symbolUseRefNode instanceof SVGPathElement ? symbolUseRefNode : null, styleAttrs) ??
+            : buildPathData(symbolGraphicsNode, styleAttrs) ??
               undefined;
 
     // Apply symbol viewBox transform so imported geometry matches how SVG renders the symbol
@@ -293,6 +377,15 @@ export function importUse(
             symbolNode?.getAttribute('preserveAspectRatio')
         );
     }
+
+    if ((!Number.isFinite(finalWidth) || finalWidth === 0) && pathData) {
+        finalWidth = pathData.width;
+    }
+    if ((!Number.isFinite(finalHeight) || finalHeight === 0) && pathData) {
+        finalHeight = pathData.height;
+    }
+    if (!Number.isFinite(finalWidth) || finalWidth === 0) finalWidth = parsedViewBox?.width ?? 100;
+    if (!Number.isFinite(finalHeight) || finalHeight === 0) finalHeight = parsedViewBox?.height ?? 100;
 
     return {
         type: 'symbolInstance',

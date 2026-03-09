@@ -544,13 +544,31 @@ const applyMatrix = (pt: { x: number; y: number }, matrix: Matrix) => ({
 
 const computeSymbolBounds = (data: SymbolInstanceData) => {
   const matrix = ensureMatrix(data);
-  const { width, height } = getInstanceDimensions(data);
   const halfStroke = (data.strokeWidth || 0) / 2;
+  const localBounds = (() => {
+    if (data.pathData) {
+      const measured = measurePath(data.pathData.subPaths, data.pathData.strokeWidth ?? data.strokeWidth ?? 1, 1);
+      return {
+        minX: measured.minX - halfStroke,
+        minY: measured.minY - halfStroke,
+        maxX: measured.maxX + halfStroke,
+        maxY: measured.maxY + halfStroke,
+      };
+    }
+
+    const { width, height } = getInstanceDimensions(data);
+    return {
+      minX: -halfStroke,
+      minY: -halfStroke,
+      maxX: width + halfStroke,
+      maxY: height + halfStroke,
+    };
+  })();
   const corners = [
-    { x: -halfStroke, y: -halfStroke },
-    { x: width + halfStroke, y: -halfStroke },
-    { x: width + halfStroke, y: height + halfStroke },
-    { x: -halfStroke, y: height + halfStroke },
+    { x: localBounds.minX, y: localBounds.minY },
+    { x: localBounds.maxX, y: localBounds.minY },
+    { x: localBounds.maxX, y: localBounds.maxY },
+    { x: localBounds.minX, y: localBounds.maxY },
   ];
   const transformed = corners.map((pt) => applyMatrix(pt, matrix));
   const minX = Math.min(...transformed.map((pt) => pt.x));

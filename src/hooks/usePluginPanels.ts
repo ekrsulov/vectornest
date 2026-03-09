@@ -49,7 +49,7 @@ export function usePluginPanels(targetPluginId: string): PluginPanel[] {
         });
 
         // Library panels keep "Library Search" pinned first, then sort alphabetically.
-        // Gen/Audit panels are sorted alphabetically by plugin title.
+        // Gen/Audit/Edit panels are sorted alphabetically by panel title.
         // Other panel containers preserve explicit "order" semantics.
         if (targetPluginId === 'library') {
             panels.sort((a, b) => {
@@ -65,7 +65,8 @@ export function usePluginPanels(targetPluginId: string): PluginPanel[] {
         } else if (
             targetPluginId === 'generatorLibrary' ||
             targetPluginId === 'animLibrary' ||
-            targetPluginId === 'auditLibrary'
+            targetPluginId === 'auditLibrary' ||
+            targetPluginId === 'edit'
         ) {
             panels.sort((a, b) =>
                 a.panelTitle.localeCompare(b.panelTitle, undefined, {

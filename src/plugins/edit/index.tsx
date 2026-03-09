@@ -3,7 +3,7 @@ import React from 'react';
 import type { PluginDefinition, SnapOverlayConfig } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { SnapStoreSlice } from '../../snap/types';
-import { createToolPanel, createConditionalToolPanel } from '../../utils/pluginFactories';
+import { createToolPanel } from '../../utils/pluginFactories';
 import { MousePointerClick } from 'lucide-react';
 import { createEditPluginSlice } from './slice';
 import type { EditPluginSlice } from './slice';
@@ -285,12 +285,14 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     createToolPanel('edit', EditPanel, {
       key: 'edit',
     }),
-    createConditionalToolPanel(
-      'edit',
-      ControlPointAlignmentPanel,
-      (ctx) => ctx.selectedCommandsCount === 1,
-      { key: 'control-point-alignment' }
-    ),
+  ],
+  relatedPluginPanels: [
+    {
+      id: 'control-point-alignment-edit-panel',
+      targetPlugin: 'edit',
+      component: ControlPointAlignmentPanel,
+      title: 'Point',
+    },
   ],
   contextMenuActions: [
     {

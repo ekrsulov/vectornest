@@ -77,6 +77,23 @@ const getSettingsPanelSortLabel = (panelConfig: { key: string; pluginId?: string
   return panelConfig.key;
 };
 
+const SELECT_PANEL_SORT_TITLE_OVERRIDES: Record<string, string> = {
+  filter: 'Filters',
+  llmAssistant: 'Assistant',
+};
+
+const getSelectPanelSortLabel = (panelConfig: { key: string; pluginId?: string }): string => {
+  if (panelConfig.pluginId && SELECT_PANEL_SORT_TITLE_OVERRIDES[panelConfig.pluginId]) {
+    return SELECT_PANEL_SORT_TITLE_OVERRIDES[panelConfig.pluginId];
+  }
+
+  if (panelConfig.pluginId) {
+    return pluginManager.getPlugin(panelConfig.pluginId)?.metadata.label ?? panelConfig.key;
+  }
+
+  return panelConfig.key;
+};
+
 type SidebarPanelsExtendedStore = CanvasStore & {
   llmAssistant?: {
     settings?: {
@@ -275,29 +292,39 @@ export const SidebarPanels: React.FC = () => {
       return match ? [match] : filteredPanelConfigs;
     })();
 
-    if (!showSettingsPanel || maximizedSidebarPanelKey) {
-      return scopedPanels;
+    if (showSettingsPanel && !maximizedSidebarPanelKey) {
+      return [...scopedPanels].sort((a, b) => {
+        const groupA = getSettingsPanelSortGroup(a);
+        const groupB = getSettingsPanelSortGroup(b);
+
+        if (groupA !== groupB) {
+          return groupA - groupB;
+        }
+
+        if (groupA !== 2) {
+          return 0;
+        }
+
+        return getSettingsPanelSortLabel(a).localeCompare(
+          getSettingsPanelSortLabel(b),
+          undefined,
+          { sensitivity: 'base', numeric: true }
+        );
+      });
     }
 
-    return [...scopedPanels].sort((a, b) => {
-      const groupA = getSettingsPanelSortGroup(a);
-      const groupB = getSettingsPanelSortGroup(b);
-
-      if (groupA !== groupB) {
-        return groupA - groupB;
-      }
-
-      if (groupA !== 2) {
-        return 0;
-      }
-
-      return getSettingsPanelSortLabel(a).localeCompare(
-        getSettingsPanelSortLabel(b),
-        undefined,
-        { sensitivity: 'base', numeric: true }
+    if (!isInSpecialPanelMode && activePlugin === 'select') {
+      return [...scopedPanels].sort((a, b) =>
+        getSelectPanelSortLabel(a).localeCompare(
+          getSelectPanelSortLabel(b),
+          undefined,
+          { sensitivity: 'base', numeric: true }
+        )
       );
-    });
-  }, [filteredPanelConfigs, maximizedSidebarPanelKey, showSettingsPanel]);
+    }
+
+    return scopedPanels;
+  }, [activePlugin, filteredPanelConfigs, isInSpecialPanelMode, maximizedSidebarPanelKey, showSettingsPanel]);
 
   const prefsPanelConfigs = useMemo(() => (
     filteredPanelConfigs.filter((panelConfig) => panelConfig.condition(PREFS_PRELOAD_CONTEXT))
@@ -353,6 +380,11 @@ export const SidebarPanels: React.FC = () => {
   }, [prefsPanelConfigs]);
 
   const isFooterVisible = !isInSpecialPanelMode && !isFooterHidingPlugin && !maximizedSidebarPanelKey;
+  const panelExclusivityNamespace = showSettingsPanel
+    ? 'sidebar:prefs'
+    : !isInSpecialPanelMode && (activePlugin === 'select' || activePlugin === 'edit')
+      ? `sidebar:${activePlugin}`
+      : null;
 
   return (
     <Box
@@ -401,7 +433,7 @@ export const SidebarPanels: React.FC = () => {
         },
       }}
     >
-      <AutoPanelKeyProvider namespace={showSettingsPanel ? 'sidebar:prefs' : null}>
+      <AutoPanelKeyProvider namespace={panelExclusivityNamespace}>
         {visiblePanelConfigs.map((panelConfig) => {
           const shouldShow = panelConfig.condition(conditionContext);
           if (!shouldShow) {

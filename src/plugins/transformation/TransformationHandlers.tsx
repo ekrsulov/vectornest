@@ -83,6 +83,7 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Top-left corner overlay */}
       <rect
+        data-transform-handler="corner-tl"
         x={bounds.minX - (cornerOverlaySize - triangleSize) / 2}
         y={bounds.minY - (cornerOverlaySize - triangleSize) / 2}
         width={cornerOverlaySize}
@@ -124,6 +125,7 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Top-right corner overlay */}
       <rect
+        data-transform-handler="corner-tr"
         x={bounds.maxX - cornerOverlaySize + (cornerOverlaySize - triangleSize) / 2}
         y={bounds.minY - (cornerOverlaySize - triangleSize) / 2}
         width={cornerOverlaySize}
@@ -165,6 +167,7 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Bottom-left corner overlay */}
       <rect
+        data-transform-handler="corner-bl"
         x={bounds.minX - (cornerOverlaySize - triangleSize) / 2}
         y={bounds.maxY - cornerOverlaySize + (cornerOverlaySize - triangleSize) / 2}
         width={cornerOverlaySize}
@@ -206,6 +209,7 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Bottom-right corner overlay */}
       <rect
+        data-transform-handler="corner-br"
         x={bounds.maxX - cornerOverlaySize + (cornerOverlaySize - triangleSize) / 2}
         y={bounds.maxY - cornerOverlaySize + (cornerOverlaySize - triangleSize) / 2}
         width={cornerOverlaySize}
@@ -232,6 +236,7 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Rotation handler overlay */}
       <circle
+        data-transform-handler="rotate-tr"
         cx={bounds.maxX + rotationOffset}
         cy={bounds.minY - rotationOffset}
         r={rotationOverlaySize / 2}
@@ -256,6 +261,7 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Top overlay */}
       <rect
+        data-transform-handler="midpoint-t"
         x={bounds.minX + handlerSize + lineSeparation}
         y={bounds.minY - 8 / viewport.zoom}
         width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
@@ -280,6 +286,7 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Right overlay */}
       <rect
+        data-transform-handler="midpoint-r"
         x={bounds.maxX - lineThickness / viewport.zoom - 8 / viewport.zoom}
         y={bounds.minY + handlerSize + lineSeparation}
         width={overlaySize / viewport.zoom}
@@ -304,6 +311,7 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Bottom overlay */}
       <rect
+        data-transform-handler="midpoint-b"
         x={bounds.minX + handlerSize + lineSeparation}
         y={bounds.maxY - lineThickness / viewport.zoom - 8 / viewport.zoom}
         width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
@@ -328,6 +336,7 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Left overlay */}
       <rect
+        data-transform-handler="midpoint-l"
         x={bounds.minX - 8 / viewport.zoom}
         y={bounds.minY + handlerSize + lineSeparation}
         width={overlaySize / viewport.zoom}

@@ -1,5 +1,6 @@
 import type { CanvasEventBus, CanvasPointerEventPayload } from '../../../canvas/CanvasEventBusContext';
 import { useCanvasStore } from '../../../store/canvasStore';
+import { getEffectiveShift } from '../../../utils/effectiveShift';
 import type { TransformationPluginSlice } from '../slice';
 
 /**
@@ -42,7 +43,7 @@ class TransformationService {
 
     // Handle regular transformation
     if (transformState?.isTransforming) {
-      const isShiftPressed = payload.event.shiftKey;
+      const isShiftPressed = getEffectiveShift(payload.event.shiftKey, store.isVirtualShiftActive);
       transformationHandlers.updateTransformation(payload.point, isShiftPressed);
     }
 

@@ -1,4 +1,3 @@
-import { isGroupElement } from '../../types';
 import type { CanvasRenderContext } from './CanvasRendererRegistry';
 
 /**
@@ -54,7 +53,7 @@ const compareGroupSubtree = (
     const previousGroup = previous.elementMap.get(groupId);
     const nextGroup = next.elementMap.get(groupId);
 
-    if (!isGroupElement(previousGroup) || !isGroupElement(nextGroup)) {
+    if (previousGroup?.type !== 'group' || nextGroup?.type !== 'group') {
         return previousGroup === nextGroup &&
             hasSameElementInteractionState(previous, next, groupId);
     }
@@ -96,7 +95,7 @@ const compareGroupSubtree = (
             return false;
         }
 
-        if (isGroupElement(previousChild) && isGroupElement(nextChild)) {
+        if (previousChild?.type === 'group' && nextChild?.type === 'group') {
             if (!compareGroupSubtree(previous, next, nextChildId, visited)) {
                 return false;
             }

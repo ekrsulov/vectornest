@@ -3,7 +3,8 @@ import type { CanvasStore } from '../../store/canvasStore';
 import type { PathData, Point } from '../../types';
 import { generateShortId } from '../../utils/idGenerator';
 import { measurePath } from '../../utils/measurementUtils';
-import { translatePathData } from '../../utils/transformationUtils';
+import { scalePathData, translatePathData } from '../../utils/transformationUtils';
+import type { SymbolInstanceData } from './types';
 import type { SymbolInstanceElement } from './types';
 
 const ensurePositiveDimension = (value: number): number =>
@@ -27,9 +28,25 @@ export interface SymbolDefinition {
 export interface SymbolPluginSlice {
   symbols: SymbolDefinition[];
   placingSymbolId: string | null;
+  symbolPlacementInteraction: {
+    isActive: boolean;
+    pointerId: number | null;
+    startPoint: Point | null;
+    targetPoint: Point | null;
+    sourceWidth: number;
+    sourceHeight: number;
+    isShiftPressed: boolean;
+  };
   setPlacingSymbolId: (id: string | null) => void;
+  setSymbolPlacementInteraction: (
+    updates: Partial<SymbolPluginSlice['symbolPlacementInteraction']>
+  ) => void;
   createSymbolFromSelection: () => void;
   placeSymbolInstance: (symbolId: string, point: Point) => void;
+  placeSymbolInstanceAtRect: (
+    symbolId: string,
+    rect: { x: number; y: number; width: number; height: number }
+  ) => void;
   removeSymbol: (symbolId: string) => void;
   renameSymbol: (symbolId: string, name: string) => void;
   updateSymbol: (symbolId: string, updates: Partial<SymbolDefinition>) => void;
@@ -44,6 +61,60 @@ const createDefinition = (pathData: PathData, name: string, bounds: SymbolBounds
   bounds,
 });
 
+const createSymbolInstanceData = (
+  symbol: SymbolDefinition,
+  store: CanvasStore,
+  placement: { x: number; y: number; width: number; height: number }
+): SymbolInstanceData => {
+  const width = ensurePositiveDimension(placement.width);
+  const height = ensurePositiveDimension(placement.height);
+
+  const isComplexSymbol = Boolean(symbol.rawContent);
+  const pathData = (() => {
+    if (isComplexSymbol) {
+      return undefined;
+    }
+
+    const baseWidth = ensurePositiveDimension(symbol.bounds.width);
+    const baseHeight = ensurePositiveDimension(symbol.bounds.height);
+    const scaleX = width / baseWidth;
+    const scaleY = height / baseHeight;
+
+    if (Math.abs(scaleX - 1) < 0.0001 && Math.abs(scaleY - 1) < 0.0001) {
+      return symbol.pathData;
+    }
+
+    return scalePathData(symbol.pathData, scaleX, scaleY, 0, 0);
+  })();
+
+  const styleOverrides = isComplexSymbol ? {} : {
+    strokeColor: store.style.strokeColor,
+    strokeWidth: store.style.strokeWidth,
+    strokeOpacity: store.style.strokeOpacity,
+    strokeLinecap: store.style.strokeLinecap,
+    strokeLinejoin: store.style.strokeLinejoin,
+    strokeDasharray: store.style.strokeDasharray,
+    fillColor: store.style.fillColor,
+    fillOpacity: store.style.fillOpacity,
+    fillRule: store.style.fillRule,
+  };
+
+  return {
+    symbolId: symbol.id,
+    width,
+    height,
+    ...(pathData && { pathData }),
+    transform: {
+      translateX: placement.x,
+      translateY: placement.y,
+      rotation: 0,
+      scaleX: 1,
+      scaleY: 1,
+    },
+    ...styleOverrides,
+  };
+};
+
 export const createSymbolsSlice: StateCreator<CanvasStore, [], [], SymbolPluginSlice> = (set, get) => {
   // Preserve persisted state if it exists
   const currentState = get();
@@ -52,10 +123,36 @@ export const createSymbolsSlice: StateCreator<CanvasStore, [], [], SymbolPluginS
   return {
     symbols: Array.isArray(persistedSymbols) && persistedSymbols.length > 0 ? persistedSymbols : [],
     placingSymbolId: null,
+    symbolPlacementInteraction: {
+      isActive: false,
+      pointerId: null,
+      startPoint: null,
+      targetPoint: null,
+      sourceWidth: 1,
+      sourceHeight: 1,
+      isShiftPressed: false,
+    },
     setPlacingSymbolId: (id) => {
       set((state) => ({
         ...state,
         placingSymbolId: id,
+        symbolPlacementInteraction: {
+          ...state.symbolPlacementInteraction,
+          isActive: false,
+          pointerId: null,
+          startPoint: null,
+          targetPoint: null,
+          isShiftPressed: false,
+        },
+      }));
+    },
+    setSymbolPlacementInteraction: (updates) => {
+      set((state) => ({
+        ...state,
+        symbolPlacementInteraction: {
+          ...state.symbolPlacementInteraction,
+          ...updates,
+        },
       }));
     },
     createSymbolFromSelection: () => {
@@ -124,44 +221,30 @@ export const createSymbolsSlice: StateCreator<CanvasStore, [], [], SymbolPluginS
 
       const width = ensurePositiveDimension(symbol.bounds.width);
       const height = ensurePositiveDimension(symbol.bounds.height);
-      const translateX = point.x - width / 2;
-      const translateY = point.y - height / 2;
-      
-      // For symbols with rawContent (complex symbols), don't include pathData or style overrides
-      // This causes the renderer to use <use> referencing the symbol in defs
-      // and preserves the original colors of each element within the symbol
-      const isComplexSymbol = Boolean(symbol.rawContent);
-      const pathData = isComplexSymbol ? undefined : symbol.pathData;
-      
-      // Only apply style settings to simple symbols (without rawContent)
-      const styleOverrides = isComplexSymbol ? {} : {
-        strokeColor: store.style.strokeColor,
-        strokeWidth: store.style.strokeWidth,
-        strokeOpacity: store.style.strokeOpacity,
-        strokeLinecap: store.style.strokeLinecap,
-        strokeLinejoin: store.style.strokeLinejoin,
-        strokeDasharray: store.style.strokeDasharray,
-        fillColor: store.style.fillColor,
-        fillOpacity: store.style.fillOpacity,
-        fillRule: store.style.fillRule,
-      };
-      
+
       store.addElement?.({
         type: 'symbolInstance',
-        data: {
-          symbolId,
+        data: createSymbolInstanceData(symbol, store, {
+          x: point.x - width / 2,
+          y: point.y - height / 2,
           width,
           height,
-          ...(pathData && { pathData }),
-          transform: {
-            translateX,
-            translateY,
-            rotation: 0,
-            scaleX: 1,
-            scaleY: 1,
-          },
-          ...styleOverrides,
-        },
+        }),
+      });
+
+      // Disable placement mode after creating instance
+      set({ placingSymbolId: null });
+    },
+    placeSymbolInstanceAtRect: (symbolId, rect) => {
+      const store = get();
+      const symbol = store.symbols.find((item: SymbolDefinition) => item.id === symbolId);
+      if (!symbol) {
+        return;
+      }
+
+      store.addElement?.({
+        type: 'symbolInstance',
+        data: createSymbolInstanceData(symbol, store, rect),
       });
 
       // Disable placement mode after creating instance

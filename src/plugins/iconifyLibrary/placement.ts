@@ -1,13 +1,13 @@
 import type { CanvasStore } from '../../store/canvasStore';
 import type { Point } from '../../types';
 import { detectThemeColorMode } from '../../utils/colorModeSyncUtils';
-import { sanitizeSvgContent } from '../../utils/sanitizeSvgContent';
 import { processSvgFile } from '../../utils/importProcessingUtils';
 import { addImportedElementsToCanvas, translateImportedElements } from '../../utils/importHelpers';
 import { mergeImportedResources } from '../../utils/importContributionRegistry';
 import {
-  buildIconSvgUrl,
   DEFAULT_INSERT_ICON_SIZE,
+  getIconifySvgBounds,
+  loadIconifySvg,
   prepareIconifySvgForImport,
   splitIconifyName,
 } from './iconifyApi';
@@ -41,29 +41,19 @@ const resolveInsertTargetSize = (state: CanvasStore): number => {
   return Math.max(16, width, height);
 };
 
-export const insertIconifyIconAtPoint = async (
+const importPreparedIconifySvg = async (
   store: CanvasStore,
   iconId: string,
+  rawSvg: string,
+  targetMaxSize: number,
   point: Point,
 ): Promise<void> => {
-  const split = splitIconifyName(iconId);
-  if (!split) {
-    throw new Error(`Invalid Iconify icon id: ${iconId}`);
-  }
-
-  const response = await fetch(buildIconSvgUrl(split.prefix, split.name));
-  if (!response.ok) {
-    throw new Error(`Icon request failed with ${response.status}`);
-  }
-
-  const rawSvg = await response.text();
   const preparedSvg = prepareIconifySvgForImport(rawSvg, {
     colorMode: detectThemeColorMode(),
     monochromeColor: resolveInsertColor(store),
-    targetMaxSize: resolveInsertTargetSize(store),
+    targetMaxSize,
   });
-  const sanitizedSvg = sanitizeSvgContent(preparedSvg, { allowExternalUrls: false });
-  const file = new File([sanitizedSvg], `${iconId.replace(':', '-')}.svg`, {
+  const file = new File([preparedSvg], `${iconId.replace(':', '-')}.svg`, {
     type: 'image/svg+xml',
   });
   const processed = await processSvgFile(file, {
@@ -113,4 +103,68 @@ export const insertIconifyIconAtPoint = async (
   }
 
   store.setActivePlugin('select');
+};
+
+const fitBoundsToRect = (
+  sourceBounds: { width: number; height: number },
+  rect: { width: number; height: number },
+): { width: number; height: number } => {
+  const sourceWidth = Math.max(1, sourceBounds.width);
+  const sourceHeight = Math.max(1, sourceBounds.height);
+  const scale = Math.min(rect.width / sourceWidth, rect.height / sourceHeight);
+  const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+
+  return {
+    width: sourceWidth * safeScale,
+    height: sourceHeight * safeScale,
+  };
+};
+
+export const insertIconifyIconAtPoint = async (
+  store: CanvasStore,
+  iconId: string,
+  point: Point,
+): Promise<void> => {
+  const split = splitIconifyName(iconId);
+  if (!split) {
+    throw new Error(`Invalid Iconify icon id: ${iconId}`);
+  }
+
+  const rawSvg = await loadIconifySvg(split.prefix, split.name);
+  await importPreparedIconifySvg(
+    store,
+    iconId,
+    rawSvg,
+    resolveInsertTargetSize(store),
+    point,
+  );
+};
+
+export const insertIconifyIconAtRect = async (
+  store: CanvasStore,
+  iconId: string,
+  rect: { x: number; y: number; width: number; height: number },
+): Promise<void> => {
+  const split = splitIconifyName(iconId);
+  if (!split) {
+    throw new Error(`Invalid Iconify icon id: ${iconId}`);
+  }
+
+  const rawSvg = await loadIconifySvg(split.prefix, split.name);
+  const sourceBounds = getIconifySvgBounds(rawSvg);
+  if (!sourceBounds) {
+    throw new Error('Could not determine Iconify SVG bounds');
+  }
+
+  const fittedSize = fitBoundsToRect(sourceBounds, rect);
+  await importPreparedIconifySvg(
+    store,
+    iconId,
+    rawSvg,
+    Math.max(fittedSize.width, fittedSize.height),
+    {
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height / 2,
+    },
+  );
 };

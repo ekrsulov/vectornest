@@ -6,12 +6,14 @@ import type { TextPathPreset } from './presets';
 interface TextPathItemCardProps {
   preset: TextPathPreset;
   isSelected?: boolean;
+  isPlacementActive?: boolean;
   onClick?: () => void;
 }
 
 export const TextPathItemCard: React.FC<TextPathItemCardProps> = ({
   preset,
   isSelected,
+  isPlacementActive,
   onClick,
 }) => {
   const pathStroke = useColorModeValue('#555555', '#aaaaaa');
@@ -24,6 +26,7 @@ export const TextPathItemCard: React.FC<TextPathItemCardProps> = ({
     <LibraryItemCard
       name={preset.label}
       isSelected={isSelected}
+      isPlacementActive={isPlacementActive}
       onClick={onClick}
       preview={
         <svg viewBox="-4 -4 76 76" width="100%" height="100%">

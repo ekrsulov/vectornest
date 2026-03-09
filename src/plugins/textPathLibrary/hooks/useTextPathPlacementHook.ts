@@ -5,9 +5,17 @@ import type { CanvasStore } from '../../../store/canvasStore';
 import type { PluginHooksContext } from '../../../types/plugins';
 import type { TextPathLibrarySlice } from '../slice';
 import { TEXT_PATH_PRESETS } from '../presets';
-import { parsePathD } from '../../../utils/pathParserUtils';
-
-const DEFAULT_SIZE = 200;
+import { getEffectiveShift } from '../../../utils/effectiveShift';
+import {
+  calculateAspectPlacementRect,
+  createCenteredPlacementRect,
+  isPlacementDragSufficient,
+  snapPlacementTargetPoint,
+} from '../../../utils/aspectPlacement';
+import {
+  createTextPathElementInput,
+  getTextPathPresetSourceSize,
+} from '../placement';
 
 type TextPathLibraryStore = CanvasStore & TextPathLibrarySlice;
 
@@ -15,14 +23,26 @@ export const useTextPathPlacementHook = (context: PluginHooksContext): void => {
   const { svgRef, screenToCanvas } = context;
 
   useEffect(() => {
+    const resetInteraction = () => {
+      const state = useCanvasStore.getState() as TextPathLibraryStore;
+      state.setTextPathPlacementInteraction?.({
+        isActive: false,
+        pointerId: null,
+        startPoint: null,
+        targetPoint: null,
+        isShiftPressed: false,
+      });
+    };
+
     const cleanup = installGlobalPluginListeners(
       createListenerContext(useCanvasStore),
       [
         {
           target: () => svgRef.current ?? window,
           event: 'pointerdown',
+          options: { capture: true },
           handler: (event: PointerEvent) => {
-            if (event.button !== 0) return;
+            if (event.pointerType !== 'touch' && event.button !== 0) return;
             const state = useCanvasStore.getState() as TextPathLibraryStore;
             const presetId = state.placingTextPathPresetId;
             if (!presetId) return;
@@ -33,71 +53,108 @@ export const useTextPathPlacementHook = (context: PluginHooksContext): void => {
             if (!preset) return;
 
             event.preventDefault();
+            event.stopPropagation();
 
-            const clickPoint = screenToCanvas(event.clientX, event.clientY);
-            const size = DEFAULT_SIZE;
-            const halfSize = size / 2;
-            const offsetX = clickPoint.x - halfSize;
-            const offsetY = clickPoint.y - halfSize;
+            const startPoint = screenToCanvas(event.clientX, event.clientY);
+            const sourceSize = getTextPathPresetSourceSize(preset);
+            const effectiveShiftKey = getEffectiveShift(event.shiftKey, state.isVirtualShiftActive);
 
-            const pathD = preset.generatePath(size);
-            const commands = parsePathD(pathD);
-
-            const translated = commands.map((cmd) => {
-              if (cmd.type === 'Z') return cmd;
-              const moved = {
-                ...cmd,
-                position: { x: cmd.position.x + offsetX, y: cmd.position.y + offsetY },
-              };
-              if (cmd.type === 'C') {
-                return {
-                  ...moved,
-                  controlPoint1: {
-                    x: cmd.controlPoint1.x + offsetX,
-                    y: cmd.controlPoint1.y + offsetY,
-                  },
-                  controlPoint2: {
-                    x: cmd.controlPoint2.x + offsetX,
-                    y: cmd.controlPoint2.y + offsetY,
-                  },
-                };
-              }
-              return moved;
+            state.setTextPathPlacementInteraction?.({
+              isActive: true,
+              pointerId: event.pointerId,
+              startPoint,
+              targetPoint: startPoint,
+              sourceWidth: sourceSize.width,
+              sourceHeight: sourceSize.height,
+              isShiftPressed: effectiveShiftKey,
             });
+          },
+        },
+        {
+          target: () => window,
+          event: 'pointermove',
+          options: { capture: true },
+          handler: (event: PointerEvent) => {
+            const state = useCanvasStore.getState() as TextPathLibraryStore;
+            const interaction = state.textPathPlacementInteraction;
+            if (!interaction.isActive || interaction.pointerId !== event.pointerId || !interaction.startPoint) {
+              return;
+            }
 
-            const storeStyle = state.style;
-            const fillColor =
-              storeStyle?.fillColor === 'none' ? '#000000' : (storeStyle?.fillColor ?? '#000000');
+            event.preventDefault();
+            event.stopPropagation();
 
-            state.addElement({
-              type: 'path',
-              data: {
-                subPaths: [translated],
-                strokeColor: 'none',
-                strokeWidth: 0,
-                fillColor: 'none',
-                fillOpacity: 0,
-                strokeOpacity: 1,
-                textPath: {
-                  text: 'Text on path',
-                  fontSize: 24,
-                  fontFamily: 'Arial',
-                  fontWeight: 'normal',
-                  fontStyle: 'normal' as const,
-                  textAnchor: preset.defaultTextAnchor,
-                  startOffset: preset.defaultStartOffset,
-                  fillColor,
-                  fillOpacity: storeStyle?.fillOpacity ?? 1,
-                  strokeColor: 'none',
-                  strokeWidth: 0,
-                  strokeOpacity: 1,
-                  dominantBaseline: 'alphabetic' as const,
-                },
-              },
+            const effectiveShiftKey = getEffectiveShift(event.shiftKey, state.isVirtualShiftActive);
+            const rawTargetPoint = screenToCanvas(event.clientX, event.clientY);
+            const targetPoint = snapPlacementTargetPoint(
+              interaction.startPoint,
+              rawTargetPoint,
+              effectiveShiftKey,
+            );
+
+            state.setTextPathPlacementInteraction?.({
+              targetPoint,
+              isShiftPressed: effectiveShiftKey,
             });
+          },
+        },
+        {
+          target: () => window,
+          event: 'pointerup',
+          options: { capture: true },
+          handler: (event: PointerEvent) => {
+            const state = useCanvasStore.getState() as TextPathLibraryStore;
+            const interaction = state.textPathPlacementInteraction;
+            if (!interaction.isActive || interaction.pointerId !== event.pointerId || !interaction.startPoint) {
+              return;
+            }
 
+            event.preventDefault();
+            event.stopPropagation();
+
+            const presetId = state.placingTextPathPresetId;
+            const preset = presetId
+              ? TEXT_PATH_PRESETS.find((candidate) => candidate.id === presetId)
+              : null;
+
+            if (!preset || !interaction.targetPoint) {
+              resetInteraction();
+              return;
+            }
+
+            const sourceSize = {
+              width: interaction.sourceWidth,
+              height: interaction.sourceHeight,
+            };
+            const placementRect = isPlacementDragSufficient(
+              interaction.startPoint,
+              interaction.targetPoint,
+            )
+              ? calculateAspectPlacementRect(interaction.startPoint, interaction.targetPoint, sourceSize)
+              : createCenteredPlacementRect(interaction.startPoint, sourceSize);
+
+            state.addElement(
+              createTextPathElementInput(preset, placementRect, state.style),
+            );
             state.setPlacingTextPathPresetId?.(null);
             state.setActivePlugin('select');
+            resetInteraction();
+          },
+        },
+        {
+          target: () => window,
+          event: 'pointercancel',
+          options: { capture: true },
+          handler: (event: PointerEvent) => {
+            const state = useCanvasStore.getState() as TextPathLibraryStore;
+            const interaction = state.textPathPlacementInteraction;
+            if (!interaction.isActive || interaction.pointerId !== event.pointerId) {
+              return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            resetInteraction();
           },
         },
       ]
@@ -108,6 +165,7 @@ export const useTextPathPlacementHook = (context: PluginHooksContext): void => {
       const state = useCanvasStore.getState() as TextPathLibraryStore;
       if (state.placingTextPathPresetId) {
         state.setPlacingTextPathPresetId?.(null);
+        resetInteraction();
       }
     };
 

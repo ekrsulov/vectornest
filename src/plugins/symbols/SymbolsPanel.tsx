@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { Box, useColorModeValue } from '@chakra-ui/react';
+import { MousePointer } from 'lucide-react';
 import { shallow } from 'zustand/shallow';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { SymbolPluginSlice, SymbolDefinition } from './slice';
@@ -312,12 +313,12 @@ const SymbolsPanelComponent: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!activeSymbolId) {
-      setPlacingSymbolId?.(null);
+    if (!placingSymbolId || placingSymbolId === activeSymbolId) {
       return;
     }
+
     setPlacingSymbolId?.(null);
-  }, [activeSymbolId, setPlacingSymbolId]);
+  }, [activeSymbolId, placingSymbolId, setPlacingSymbolId]);
 
   const handleTogglePlacement = () => {
     if (!activeSymbolId) {
@@ -329,6 +330,11 @@ const SymbolsPanelComponent: React.FC = () => {
       setPlacingSymbolId?.(activeSymbolId);
     }
   };
+
+  const handleSymbolDoubleClick = useCallback((id: string) => {
+    setActiveSymbolId(id);
+    setPlacingSymbolId?.(id);
+  }, [setPlacingSymbolId]);
 
   const presetsLoadedRef = useRef(false);
   useEffect(() => {
@@ -356,6 +362,7 @@ const SymbolsPanelComponent: React.FC = () => {
     <SymbolItemCard
       symbol={symbol}
       isSelected={isSelected}
+      isPlacementActive={placingSymbolId === symbol.id}
     />
   );
 
@@ -369,6 +376,7 @@ const SymbolsPanelComponent: React.FC = () => {
       onDelete={(id) => removeSymbol?.(id)}
       emptyMessage="Select a path and use the add button to capture a symbol."
       renderItem={renderItem}
+      onItemDoubleClick={handleSymbolDoubleClick}
       detailsRef={detailsRef}
       detailsFlashKey={detailsFlashKey}
       Editor={
@@ -402,7 +410,7 @@ const SymbolsPanelComponent: React.FC = () => {
         <>
           {activeSymbol ? (
             <StatusMessage>
-              Click canvas to place &quot;{activeSymbol.name}&quot;. Press Escape to cancel.
+              Click canvas to place &quot;{activeSymbol.name}&quot;, or click and drag to set the size. Press Escape to cancel.
             </StatusMessage>
           ) : (
             <StatusMessage>
@@ -413,6 +421,7 @@ const SymbolsPanelComponent: React.FC = () => {
             <PanelStyledButton
               onClick={handleTogglePlacement}
               isDisabled={!activeSymbol}
+              leftIcon={<MousePointer size={11} />}
               w="full"
             >
               {placementActive ? 'Disable placement' : 'Enable placement'}
@@ -420,7 +429,7 @@ const SymbolsPanelComponent: React.FC = () => {
           </ActionButtonGroup>
           {placingSymbolId && activeSymbolId && placingSymbolId === activeSymbolId && (
             <StatusMessage>
-              Placement active. Click to insert copies.
+              Placement active. Click to place, or click and drag to set the size.
             </StatusMessage>
           )}
         </>

@@ -10,6 +10,7 @@ import { PanelTextInput } from '../../ui/PanelTextInput';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SliderControl } from '../../ui/SliderControl';
 import { CustomSelect } from '../../ui/CustomSelect';
+import { StatusMessage } from '../../ui/PresetButtonGrid';
 import { useCanvasStore } from '../../store/canvasStore';
 import { isPathElement } from '../../types';
 import {
@@ -129,11 +130,24 @@ export const TextPathLibraryPanel: React.FC = () => {
   }, [activePresetId, placementActive, setPlacingPresetId]);
 
   useEffect(() => {
+    if (!placingPresetId || placingPresetId === activePresetId) {
+      return;
+    }
+
     setPlacingPresetId?.(null);
-  }, [activePresetId, setPlacingPresetId]);
+  }, [activePresetId, placingPresetId, setPlacingPresetId]);
+
+  const handlePresetDoubleClick = useCallback((id: string) => {
+    handleSelect(id);
+    setPlacingPresetId?.(id);
+  }, [handleSelect, setPlacingPresetId]);
 
   const renderItem = (item: PresetItem, isSelected: boolean) => (
-    <TextPathItemCard preset={item} isSelected={isSelected} />
+    <TextPathItemCard
+      preset={item}
+      isSelected={isSelected}
+      isPlacementActive={placingPresetId === item.id}
+    />
   );
 
   return (
@@ -142,6 +156,7 @@ export const TextPathLibraryPanel: React.FC = () => {
       items={filteredItems}
       selectedId={activePresetId}
       onSelect={handleSelect}
+      onItemDoubleClick={handlePresetDoubleClick}
       emptyMessage="No presets match the current filter."
       renderItem={renderItem}
       detailsRef={detailsRef}
@@ -174,15 +189,24 @@ export const TextPathLibraryPanel: React.FC = () => {
       Actions={
         activePreset ? (
           <VStack spacing={1} align="stretch">
+            <StatusMessage>
+              {placementActive
+                ? `Click canvas to place "${activePreset.label}", or click and drag to set the size. Press Escape to cancel.`
+                : `Enable placement to insert "${activePreset.label}" with a canvas click.`}
+            </StatusMessage>
             <PanelStyledButton
               onClick={handleTogglePlacement}
               leftIcon={<MousePointer size={11} />}
-              colorScheme={placementActive ? 'blue' : 'gray'}
               size="xs"
               width="100%"
             >
-              {placementActive ? 'Click canvas to place...' : 'Place on canvas'}
+              {placementActive ? 'Disable placement' : 'Enable placement'}
             </PanelStyledButton>
+            {placementActive && (
+              <StatusMessage>
+                Placement active. Click to place, or click and drag to set the size.
+              </StatusMessage>
+            )}
             {hasPathSelection && (
               <PanelStyledButton onClick={handleApplyToSelected} variant="outline" size="xs" width="100%">
                 Apply to selected path

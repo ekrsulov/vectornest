@@ -10,6 +10,7 @@ interface LibraryItemCardProps {
     details?: ReactNode;
 
     isSelected?: boolean;
+    isPlacementActive?: boolean;
     onClick?: () => void;
 }
 
@@ -18,26 +19,37 @@ export const LibraryItemCard: React.FC<LibraryItemCardProps> = ({
     preview,
     details,
     isSelected = false,
+    isPlacementActive = false,
     onClick,
 }) => {
     const bg = useColorModeValue('white', 'gray.800');
     const borderColor = useColorModeValue('gray.200', 'gray.700');
     const selectedBorderColor = useColorModeValue('blue.500', 'blue.400');
+    const placementBorderColor = useColorModeValue('orange.500', 'orange.300');
     const bgHover = useColorModeValue('gray.50', 'gray.700');
     const detailsColor = useColorModeValue('gray.500','gray.400');
+    const resolvedBorderColor = isPlacementActive
+        ? placementBorderColor
+        : isSelected
+            ? selectedBorderColor
+            : borderColor;
 
     return (
         <Box
             onClick={onClick}
             cursor={onClick ? "pointer" : "default"}
             borderWidth="1px"
-            borderColor={isSelected ? selectedBorderColor : borderColor}
+            borderColor={resolvedBorderColor}
             borderRadius="md"
             overflow="hidden"
             bg={bg}
             transition="all 0.2s"
             _hover={{
-                borderColor: isSelected ? selectedBorderColor : 'gray.400',
+                borderColor: isPlacementActive
+                    ? placementBorderColor
+                    : isSelected
+                        ? selectedBorderColor
+                        : 'gray.400',
                 bg: bgHover,
                 transform: onClick ? "translateY(-1px)" : "none",
                 boxShadow: "sm"

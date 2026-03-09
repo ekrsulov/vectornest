@@ -6,12 +6,14 @@ import { commandsToString } from '../../utils/pathParserUtils';
 interface SymbolItemCardProps {
     symbol: SymbolDefinition;
     isSelected?: boolean;
+    isPlacementActive?: boolean;
     onClick?: () => void;
 }
 
 export const SymbolItemCard: React.FC<SymbolItemCardProps> = ({
     symbol,
     isSelected,
+    isPlacementActive,
     onClick
 }) => {
     // Build SVG content for preview - prefer rawContent for animated symbols
@@ -33,6 +35,7 @@ export const SymbolItemCard: React.FC<SymbolItemCardProps> = ({
         <LibraryItemCard
             name={symbol.name}
             isSelected={isSelected}
+            isPlacementActive={isPlacementActive}
             onClick={onClick}
             preview={
                 <svg

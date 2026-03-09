@@ -1,23 +1,21 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   processSvgFileMock,
   translateImportedElementsMock,
   addImportedElementsToCanvasMock,
   mergeImportedResourcesMock,
+  prepareIconifySvgForImportMock,
 } = vi.hoisted(() => ({
   processSvgFileMock: vi.fn(),
   translateImportedElementsMock: vi.fn(),
   addImportedElementsToCanvasMock: vi.fn(),
   mergeImportedResourcesMock: vi.fn(),
+  prepareIconifySvgForImportMock: vi.fn(),
 }));
 
 vi.mock('../../utils/colorModeSyncUtils', () => ({
   detectThemeColorMode: () => 'dark',
-}));
-
-vi.mock('../../utils/sanitizeSvgContent', () => ({
-  sanitizeSvgContent: (value: string) => value,
 }));
 
 vi.mock('../../utils/importProcessingUtils', () => ({
@@ -37,22 +35,22 @@ vi.mock('./iconifyApi', async () => {
   const actual = await vi.importActual<typeof import('./iconifyApi')>('./iconifyApi');
   return {
     ...actual,
-    buildIconSvgUrl: () => 'https://api.iconify.design/test/home.svg',
-    prepareIconifySvgForImport: () => '<svg xmlns="http://www.w3.org/2000/svg" />',
+    getIconifySvgBounds: () => ({ minX: 0, minY: 0, width: 24, height: 12 }),
+    loadIconifySvg: () => Promise.resolve('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" />'),
+    prepareIconifySvgForImport: prepareIconifySvgForImportMock,
     splitIconifyName: () => ({ prefix: 'test', name: 'home' }),
   };
 });
 
-import { insertIconifyIconAtPoint } from './placement';
+import { insertIconifyIconAtPoint, insertIconifyIconAtRect } from './placement';
 
-describe('insertIconifyIconAtPoint', () => {
-  const originalFetch = globalThis.fetch;
-
+describe('iconifyLibrary placement', () => {
   beforeEach(() => {
     processSvgFileMock.mockReset();
     translateImportedElementsMock.mockReset();
     addImportedElementsToCanvasMock.mockReset();
     mergeImportedResourcesMock.mockReset();
+    prepareIconifySvgForImportMock.mockReset();
 
     translateImportedElementsMock.mockImplementation((elements) => elements);
     addImportedElementsToCanvasMock.mockReturnValue({
@@ -61,6 +59,7 @@ describe('insertIconifyIconAtPoint', () => {
       sourceIdMap: new Map(),
       hiddenElementIds: [],
     });
+    prepareIconifySvgForImportMock.mockImplementation(() => '<svg xmlns="http://www.w3.org/2000/svg" />');
     processSvgFileMock.mockResolvedValue({
       elements: [
         {
@@ -91,15 +90,6 @@ describe('insertIconifyIconAtPoint', () => {
       pluginImports: {},
       artboardMetadata: null,
     });
-
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve('<svg xmlns="http://www.w3.org/2000/svg" />'),
-    }) as unknown as typeof fetch;
-  });
-
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
   });
 
   it('skips the generic dark-mode mono transform for iconify imports', async () => {
@@ -131,5 +121,38 @@ describe('insertIconifyIconAtPoint', () => {
     expect(processSvgFileMock.mock.calls[0]?.[1]).toEqual(expect.objectContaining({
       skipDarkModeColorTransform: true,
     }));
+  });
+
+  it('fits drag placement to the requested rect while keeping the icon aspect ratio', async () => {
+    const store = {
+      style: {
+        fillColor: '#111111',
+        strokeColor: 'none',
+      },
+      settings: {
+        importResize: false,
+        importResizeWidth: 0,
+        importResizeHeight: 0,
+      },
+      elements: [],
+      addElement: vi.fn(),
+      updateElement: vi.fn(),
+      toggleElementVisibility: vi.fn(),
+      selectElements: vi.fn(),
+      setActivePlugin: vi.fn(),
+    };
+
+    await insertIconifyIconAtRect(
+      store as never,
+      'test:home',
+      { x: 10, y: 20, width: 90, height: 40 },
+    );
+
+    expect(prepareIconifySvgForImportMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        targetMaxSize: 80,
+      }),
+    );
   });
 });

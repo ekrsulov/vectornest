@@ -311,7 +311,7 @@ const injectAnimationsForPreview = (
     if (index >= 0 && index < childElements.length) {
       const targetEl = childElements[index];
       anims.forEach((anim) => {
-        const markup = serializeAnimation(anim, new Map<string, number>(), animations);
+        const markup = serializeAnimation(anim);
         const animDoc = parser.parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${markup}</svg>`, 'image/svg+xml');
         const animEl = animDoc.querySelector('svg')?.firstElementChild;
         if (animEl) {

@@ -66,6 +66,8 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   const tabInactiveHoverBg = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   const tabActiveHoverBg = useColorModeValue('gray.900', 'gray.100');
   const tabActiveOutlineColor = useColorModeValue('blackAlpha.200', 'whiteAlpha.300');
+  const tabInactiveTextColor = useColorModeValue('gray.800', 'gray.100');
+  const tabActiveTextColor = useColorModeValue('gray.50', 'gray.700');
   const showBorder = !borderless;
   const dimension = iconOnly ? '26px' : undefined;
   const controlHeight = isTab ? '26px' : (dimension ?? 'auto');
@@ -88,7 +90,11 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       data-active={isActive}
       bg={isTab && isActive ? 'transparent' : (isActive ? activeBg : (inactiveBg ?? 'transparent'))}
       isDisabled={isDisabled}
-      color={isActive ? activeColor : inactiveColor}
+      color={
+        isTab && !iconOnly
+          ? (isActive ? tabActiveTextColor : tabInactiveTextColor)
+          : (isActive ? activeColor : inactiveColor)
+      }
       border={showBorder ? `${borderWidth} solid` : 'none'}
       borderColor={
         showBorder
@@ -100,7 +106,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       borderBottomLeftRadius={isTab ? (isActive ? '0' : tabRadius.bottomLeft) : undefined}
       borderTopRightRadius={isTab ? (selectedTopRadius ?? tabRadius.topRight) : undefined}
       borderBottomRightRadius={isTab ? (isActive ? '0' : tabRadius.bottomRight) : undefined}
-      fontWeight={isTab ? 'medium' : 'bold'}
+      fontWeight="bold"
       transition="all 0.2s"
       width={iconOnly ? dimension : (fullWidth ? 'full' : 'auto')}
       flex={fullWidth ? '1 1 0' : flex}

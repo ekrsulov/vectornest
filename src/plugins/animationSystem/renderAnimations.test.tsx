@@ -4,6 +4,12 @@ import { renderAnimationsForElement } from './renderAnimations';
 import { shouldTriggerBeginElementManually } from './smilTimingUtils';
 import type { AnimationState, SVGAnimation } from './types';
 
+type AnimationNodeProps = {
+  id?: string;
+  begin?: string;
+  end?: string;
+};
+
 const createAnimationState = (chainDelays: Map<string, number>): AnimationState => ({
   isPlaying: true,
   hasPlayed: true,
@@ -51,7 +57,7 @@ describe('renderAnimationsForElement', () => {
       animations,
       createAnimationState(new Map<string, number>()),
       animations
-    ) as ReactElement[];
+    ) as ReactElement<AnimationNodeProps>[];
 
     expect(nodes).toHaveLength(2);
     expect(nodes[0]?.props.id).toBe('anm-first');
@@ -80,7 +86,7 @@ describe('renderAnimationsForElement', () => {
       animations,
       createAnimationState(new Map<string, number>([['anm-first', 150]])),
       animations
-    ) as ReactElement[];
+    ) as ReactElement<AnimationNodeProps>[];
 
     expect(nodes).toHaveLength(1);
     expect(nodes[0]?.props.begin).toBe('0.150s');

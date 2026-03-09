@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Layers } from 'lucide-react';
 import { lazy } from 'react';
 import type {
@@ -9,7 +10,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { isMonoColor, transformMonoColor } from '../../utils/colorModeSyncUtils';
 import { createSymbolsSlice, type SymbolDefinition, type SymbolPluginSlice } from './slice';
 import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
-import type { CanvasElement, PathData } from '../../types';
+import type { CanvasElement, PathData, Viewport } from '../../types';
 import type { CanvasElementRenderer, CanvasRenderContext } from '../../canvas/renderers/CanvasRendererRegistry';
 import type { ElementContribution } from '../../utils/elementContributionRegistry';
 import type { SymbolInstanceElement, SymbolInstanceData, Matrix } from './types';
@@ -22,6 +23,13 @@ import { importUse } from './importer';
 import { Box, useColorMode, useColorModeValue } from '@chakra-ui/react';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import type React from 'react';
+import { BlockingOverlay } from '../../overlays/BlockingOverlay';
+import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
+import { AspectPlacementPreview } from '../../overlays/AspectPlacementPreview';
+import {
+  calculateAspectPlacementRect,
+  createAspectPlacementFeedback,
+} from '../../utils/aspectPlacement';
 
 registerStateKeys('symbols', ['symbols'], 'persist');
 import { useCanvasStore } from '../../store/canvasStore';
@@ -552,7 +560,6 @@ const computeSymbolBounds = (data: SymbolInstanceData) => {
   return { minX, minY, maxX, maxY };
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 const SymbolInstanceThumbnail = ({ element }: { element: SymbolInstanceElement }) => {
   const data = element.data;
   const bounds = computeSymbolBounds(data);
@@ -622,7 +629,6 @@ const SymbolInstanceThumbnail = ({ element }: { element: SymbolInstanceElement }
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement; rendererContext: CanvasRenderContext }> = ({ element, rendererContext }) => {
   const data = element.data;
   const wireframe = useCanvasStore((state) => (state as unknown as WireframePluginSlice).wireframe);
@@ -773,7 +779,6 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 const SymbolInstanceRenderer: CanvasElementRenderer<SymbolInstanceElement> = (element, context) => (
   <SymbolInstanceRendererComponent element={element} rendererContext={context} />
 );
@@ -971,6 +976,75 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
   return symbols.length > 0 ? { symbol: symbols } : null;
 };
 
+const SymbolsBlockingOverlayWrapper: React.FC<{
+  viewport: Viewport;
+  canvasSize: { width: number; height: number };
+}> = ({ viewport, canvasSize }) => {
+  const isActive = useCanvasStore(
+    (state) => (state as CanvasStore & SymbolPluginSlice).symbolPlacementInteraction?.isActive ?? false,
+  );
+
+  return (
+    <BlockingOverlay
+      viewport={viewport}
+      canvasSize={canvasSize}
+      isActive={isActive}
+    />
+  );
+};
+
+const SymbolsPlacementPreviewWrapper: React.FC = () => {
+  const interaction = useCanvasStore(
+    (state) => (state as CanvasStore & SymbolPluginSlice).symbolPlacementInteraction,
+  );
+  const viewport = useCanvasStore((state) => state.viewport);
+
+  if (!interaction?.isActive || !interaction.startPoint || !interaction.targetPoint) {
+    return null;
+  }
+
+  const rect = calculateAspectPlacementRect(
+    interaction.startPoint,
+    interaction.targetPoint,
+    {
+      width: interaction.sourceWidth,
+      height: interaction.sourceHeight,
+    },
+  );
+
+  return <AspectPlacementPreview rect={rect} viewport={viewport} />;
+};
+
+const SymbolsFeedbackOverlayWrapper: React.FC<{
+  viewport: Viewport;
+  canvasSize: { width: number; height: number };
+}> = ({ viewport, canvasSize }) => {
+  const interaction = useCanvasStore(
+    (state) => (state as CanvasStore & SymbolPluginSlice).symbolPlacementInteraction,
+  );
+
+  if (!interaction?.isActive || !interaction.startPoint || !interaction.targetPoint) {
+    return null;
+  }
+
+  const rect = calculateAspectPlacementRect(
+    interaction.startPoint,
+    interaction.targetPoint,
+    {
+      width: interaction.sourceWidth,
+      height: interaction.sourceHeight,
+    },
+  );
+
+  return (
+    <FeedbackOverlay
+      viewport={viewport}
+      canvasSize={canvasSize}
+      shapeFeedback={createAspectPlacementFeedback(rect, interaction.isShiftPressed)}
+    />
+  );
+};
+
 export const symbolsPlugin: PluginDefinition<CanvasStore> = {
   id: 'symbols',
   metadata: {
@@ -1059,6 +1133,27 @@ export const symbolsPlugin: PluginDefinition<CanvasStore> = {
       id: 'symbols-placement-hook',
       hook: useSymbolPlacementHook,
       global: true,
+    },
+  ],
+  canvasLayers: [
+    {
+      id: 'symbols-placement-blocking-overlay',
+      placement: 'midground',
+      render: ({ viewport, canvasSize }) => (
+        <SymbolsBlockingOverlayWrapper viewport={viewport} canvasSize={canvasSize} />
+      ),
+    },
+    {
+      id: 'symbols-placement-preview',
+      placement: 'midground',
+      render: () => <SymbolsPlacementPreviewWrapper />,
+    },
+    {
+      id: 'symbols-placement-feedback',
+      placement: 'foreground',
+      render: ({ viewport, canvasSize }) => (
+        <SymbolsFeedbackOverlayWrapper viewport={viewport} canvasSize={canvasSize} />
+      ),
     },
   ],
   onColorModeChange: ({ nextColorMode, store }) => {

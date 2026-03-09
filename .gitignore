@@ -33,3 +33,5 @@ test-results
 test-results/*
 .claude
 .claude/*
+.codex
+.codex/*

@@ -82,11 +82,13 @@ const selectIconifyPanelState = (state: CanvasStore) => {
 const IconifyIconCard: React.FC<{
   item: IconGridItem;
   isSelected: boolean;
+  isPlacementActive: boolean;
   onClick: () => void;
   onDoubleClick: () => void;
-}> = ({ item, isSelected, onClick, onDoubleClick }) => {
+}> = ({ item, isSelected, isPlacementActive, onClick, onDoubleClick }) => {
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.200');
   const selectedBorderColor = useColorModeValue('gray.900', 'gray.100');
+  const placementBorderColor = useColorModeValue('orange.500', 'orange.300');
   const previewBg = useColorModeValue(
     'linear-gradient(180deg, rgba(244,239,231,0.95) 0%, rgba(234,228,218,0.95) 100%)',
     'linear-gradient(180deg, rgba(52,50,45,0.98) 0%, rgba(37,35,31,0.98) 100%)',
@@ -95,6 +97,11 @@ const IconifyIconCard: React.FC<{
   const titleColor = useColorModeValue('gray.800', 'gray.100');
   const cardBg = useColorModeValue('white', 'gray.800');
   const hoverBorderColor = useColorModeValue('gray.400', 'whiteAlpha.400');
+  const resolvedBorderColor = isPlacementActive
+    ? placementBorderColor
+    : isSelected
+      ? selectedBorderColor
+      : borderColor;
 
   return (
     <Box
@@ -103,13 +110,17 @@ const IconifyIconCard: React.FC<{
       title={`${item.id}\n${item.collectionName}`}
       cursor="pointer"
       borderWidth="1px"
-      borderColor={isSelected ? selectedBorderColor : borderColor}
+      borderColor={resolvedBorderColor}
       borderRadius="md"
       overflow="hidden"
       bg={cardBg}
       transition="all 0.18s ease"
       _hover={{
-        borderColor: isSelected ? selectedBorderColor : hoverBorderColor,
+        borderColor: isPlacementActive
+          ? placementBorderColor
+          : isSelected
+            ? selectedBorderColor
+            : hoverBorderColor,
         transform: 'translateY(-1px)',
         boxShadow: 'sm',
       }}
@@ -122,7 +133,7 @@ const IconifyIconCard: React.FC<{
         bgImage={previewBg}
         bgSize="cover"
         borderBottomWidth="1px"
-        borderBottomColor={isSelected ? selectedBorderColor : borderColor}
+        borderBottomColor={resolvedBorderColor}
       >
         <IconifyPreview
           prefix={item.prefix}
@@ -179,6 +190,10 @@ export const IconifyLibraryPanel: React.FC = () => {
   const activeAccentBg = useColorModeValue('gray.900', 'gray.100');
   const activeAccentColor = useColorModeValue('white', 'gray.900');
   const activeAccentBorder = useColorModeValue('gray.900', 'gray.100');
+  const activeAccentHoverBg = useColorModeValue('gray.700', 'gray.300');
+  const activeAccentHoverBorder = useColorModeValue('gray.700', 'gray.300');
+  const featuredChipHoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
+  const featuredChipHoverBorder = useColorModeValue('gray.500', 'whiteAlpha.500');
   const hoverBorderColor = useColorModeValue('gray.400', 'whiteAlpha.400');
   const detailsPreviewBg = useColorModeValue('rgba(255,255,255,0.78)', 'rgba(17,17,16,0.65)');
   const activeCollectionRef = useRef<HTMLDivElement | null>(null);
@@ -541,18 +556,23 @@ export const IconifyLibraryPanel: React.FC = () => {
                       onClick={() => setIconifyActiveCollectionPrefix(collection.prefix)}
                       bg={isActive ? activeAccentBg : 'transparent'}
                       color={isActive ? activeAccentColor : undefined}
-                      borderColor={isActive ? activeAccentBorder : undefined}
+                      borderColor={isActive ? activeAccentBorder : borderColor}
+                      _hover={{
+                        bg: isActive ? activeAccentHoverBg : featuredChipHoverBg,
+                        borderColor: isActive ? activeAccentHoverBorder : featuredChipHoverBorder,
+                        color: isActive ? activeAccentColor : undefined,
+                      }}
                       _dark={
-                        isActive
-                          ? {
-                            bg: activeAccentBg,
-                            color: activeAccentColor,
-                            borderColor: activeAccentBorder,
-                            _hover: {
-                              bg: activeAccentBg,
-                            },
-                          }
-                          : undefined
+                        {
+                          bg: isActive ? activeAccentBg : 'transparent',
+                          color: isActive ? activeAccentColor : undefined,
+                          borderColor: isActive ? activeAccentBorder : borderColor,
+                          _hover: {
+                            bg: isActive ? activeAccentHoverBg : featuredChipHoverBg,
+                            borderColor: isActive ? activeAccentHoverBorder : featuredChipHoverBorder,
+                            color: isActive ? activeAccentColor : undefined,
+                          },
+                        }
                       }
                     >
                       {collection.name}
@@ -682,6 +702,7 @@ export const IconifyLibraryPanel: React.FC = () => {
                 key={item.id}
                 item={item}
                 isSelected={item.id === selectedItem?.id}
+                isPlacementActive={iconifyLibrary.placingIconId === item.id}
                 onClick={() => setIconifySelectedIconId(item.id)}
                 onDoubleClick={() => handleCardDoubleClick(item)}
               />
@@ -782,7 +803,7 @@ export const IconifyLibraryPanel: React.FC = () => {
                 {iconifyLibrary.isPlacementPending
                   ? `Placing "${selectedItem.name}"...`
                   : placementActive
-                    ? `Click canvas to place "${selectedItem.name}". Press Escape to cancel.`
+                    ? `Click canvas to place "${selectedItem.name}", or click and drag to set the size. Press Escape to cancel.`
                     : `Enable placement to insert "${selectedItem.name}" with a canvas click.`}
               </StatusMessage>
             ) : (
@@ -816,7 +837,7 @@ export const IconifyLibraryPanel: React.FC = () => {
 
             {placementActive && !iconifyLibrary.isPlacementPending && (
               <StatusMessage>
-                Placement mode ends after the next canvas click.
+                Placement active. Click to place, or click and drag to set the size.
               </StatusMessage>
             )}
 

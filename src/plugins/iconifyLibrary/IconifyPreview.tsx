@@ -1,8 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, useColorMode } from '@chakra-ui/react';
-import { sanitizeSvgContent } from '../../utils/sanitizeSvgContent';
 import { logger } from '../../utils/logger';
-import { buildIconSvgUrl, prepareIconifySvgForPreview } from './iconifyApi';
+import {
+  getCachedIconifySvg,
+  getIconifyCacheKey,
+  loadIconifySvg,
+  prepareIconifySvgForPreview,
+} from './iconifyApi';
 
 interface IconifyPreviewProps {
   prefix: string;
@@ -11,8 +15,6 @@ interface IconifyPreviewProps {
   size: number;
 }
 
-const previewSvgCache = new Map<string, string>();
-
 export const IconifyPreview: React.FC<IconifyPreviewProps> = ({
   prefix,
   iconName,
@@ -20,11 +22,11 @@ export const IconifyPreview: React.FC<IconifyPreviewProps> = ({
   size,
 }) => {
   const { colorMode } = useColorMode();
-  const iconId = `${prefix}:${iconName}`;
-  const [rawSvg, setRawSvg] = useState<string | null>(() => previewSvgCache.get(iconId) ?? null);
+  const iconId = getIconifyCacheKey(prefix, iconName);
+  const [rawSvg, setRawSvg] = useState<string | null>(() => getCachedIconifySvg(iconId));
 
   useEffect(() => {
-    const cachedSvg = previewSvgCache.get(iconId);
+    const cachedSvg = getCachedIconifySvg(iconId);
     if (cachedSvg) {
       setRawSvg(cachedSvg);
       return;
@@ -34,15 +36,9 @@ export const IconifyPreview: React.FC<IconifyPreviewProps> = ({
 
     const loadPreviewSvg = async () => {
       try {
-        const response = await fetch(buildIconSvgUrl(prefix, iconName), {
+        const svg = await loadIconifySvg(prefix, iconName, {
           signal: controller.signal,
         });
-        if (!response.ok) {
-          throw new Error(`Icon preview request failed with ${response.status}`);
-        }
-
-        const svg = sanitizeSvgContent(await response.text(), { allowExternalUrls: false });
-        previewSvgCache.set(iconId, svg);
         if (!controller.signal.aborted) {
           setRawSvg(svg);
         }

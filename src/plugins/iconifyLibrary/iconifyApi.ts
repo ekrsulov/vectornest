@@ -1,5 +1,6 @@
 import type { Viewport } from '../../types';
 import { transformMonoColor, type ThemeColorMode } from '../../utils/colorModeSyncUtils';
+import { sanitizeSvgContent } from '../../utils/sanitizeSvgContent';
 
 const ICONIFY_API_BASE = 'https://api.iconify.design';
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
@@ -7,6 +8,7 @@ const CURRENT_COLOR_PATTERN = /\bcurrentColor\b/gi;
 const DEFINITION_LIKE_TAGS = new Set(['defs', 'desc', 'metadata', 'style', 'title']);
 const MONO_HEX_PATTERN = /#(?:000|000000|fff|ffffff)\b/gi;
 const MONO_NAMED_PATTERN = /\b(?:black|white)\b/gi;
+const iconifySvgCache = new Map<string, string>();
 
 export const ICONS_PER_PAGE = 24;
 export const MAX_SEARCH_RESULTS = 96;
@@ -189,6 +191,37 @@ export const buildIconSvgUrl = (
 
   const params = new URLSearchParams({ height: String(options.height) });
   return `${baseUrl}?${params.toString()}`;
+};
+
+export const getIconifyCacheKey = (prefix: string, iconName: string): string => (
+  `${prefix}:${iconName}`
+);
+
+export const getCachedIconifySvg = (iconId: string): string | null => (
+  iconifySvgCache.get(iconId) ?? null
+);
+
+export const loadIconifySvg = async (
+  prefix: string,
+  iconName: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<string> => {
+  const iconId = getIconifyCacheKey(prefix, iconName);
+  const cached = getCachedIconifySvg(iconId);
+  if (cached) {
+    return cached;
+  }
+
+  const response = await fetch(buildIconSvgUrl(prefix, iconName), {
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    throw new Error(`Icon request failed with ${response.status}`);
+  }
+
+  const svg = sanitizeSvgContent(await response.text(), { allowExternalUrls: false });
+  iconifySvgCache.set(iconId, svg);
+  return svg;
 };
 
 export const parseCollectionsResponse = (payload: unknown): IconifyCollectionSummary[] => {
@@ -395,6 +428,24 @@ const extractSvgBounds = (svg: Element): { minX: number; minY: number; width: nu
   }
 
   return null;
+};
+
+export const getIconifySvgBounds = (
+  rawSvg: string,
+): { minX: number; minY: number; width: number; height: number } | null => {
+  if (typeof DOMParser === 'undefined') {
+    return null;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(rawSvg, 'image/svg+xml');
+  const svg = doc.querySelector('svg');
+
+  if (!svg || doc.querySelector('parsererror')) {
+    return null;
+  }
+
+  return extractSvgBounds(svg);
 };
 
 const normalizeMonoPreviewColor = (value: string): string | null => {

@@ -3,7 +3,9 @@ import type { PenPath } from '../types';
 import { pathDataToPenPath } from './pathConverter';
 import { distance } from '../../../utils/math';
 import { closestPointOnLineSegment, closestPointOnCubicBezier } from '../../../utils/geometry';
-import { toLocalPointForElement, toWorldPenPath } from './penPathTransforms';
+import { toWorldPenPath } from './penPathTransforms';
+import { getAccumulatedTransformMatrix } from '../../../utils/elementTransformUtils';
+import { applyToPoint, getMatrixAxisScales, inverseMatrix } from '../../../utils/matrixUtils';
 
 const HIT_THRESHOLD = 8; // pixels
 
@@ -23,7 +25,18 @@ export function findPathAtPoint(
         if (element.type !== 'path') continue;
 
         const pathElement = element as PathElement;
-        const localPoint = toLocalPointForElement(point, pathElement.id, elements);
+        const accumulatedMatrix = getAccumulatedTransformMatrix(pathElement.id, elements);
+        const inverse = inverseMatrix(accumulatedMatrix);
+        const localPoint = inverse ? applyToPoint(inverse, point) : point;
+        const axisScales = getMatrixAxisScales(accumulatedMatrix);
+        const effectiveScale = Math.max(
+            Math.sqrt(
+                Math.max(axisScales.x, 1e-6) *
+                Math.max(axisScales.y, 1e-6)
+            ),
+            1e-6
+        );
+        const localThreshold = threshold / effectiveScale;
 
         // Check each subpath
         for (let subIndex = 0; subIndex < pathElement.data.subPaths.length; subIndex++) {
@@ -31,7 +44,7 @@ export function findPathAtPoint(
             const localPenPath = pathDataToPenPath(subPath, pathElement.id);
 
             // Check if point is close to any segment or anchor
-            if (isPointNearPath(localPoint, localPenPath, threshold)) {
+            if (isPointNearPath(localPoint, localPenPath, localThreshold)) {
                 const worldPenPath = toWorldPenPath(localPenPath, pathElement.id, elements);
                 return { pathId: pathElement.id, penPath: worldPenPath, subPathIndex: subIndex };
             }

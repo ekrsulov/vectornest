@@ -102,6 +102,24 @@ export function inverseMatrix(matrix: Matrix): Matrix | null {
   ];
 }
 
+export interface MatrixAxisScales {
+  x: number;
+  y: number;
+}
+
+/**
+ * Returns the visual scale applied to the matrix basis vectors.
+ * Useful when UI overlays are rendered inside a transformed group and need to
+ * compensate their own size back to a constant screen-space footprint.
+ */
+export function getMatrixAxisScales(matrix: Matrix): MatrixAxisScales {
+  const [a, b, c, d] = matrix;
+  return {
+    x: Math.hypot(a, b),
+    y: Math.hypot(c, d),
+  };
+}
+
 /**
  * Decomposed matrix components
  */

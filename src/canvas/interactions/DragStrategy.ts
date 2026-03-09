@@ -8,8 +8,7 @@ import type { CanvasElement, SubPath, ControlPointInfo, Command, PathData } from
 import { getDragPointInfo } from '../../utils/dragUtils';
 import { type DragContext as PluginDragContext, type DragPointInfo } from '../../types/extensionPoints';
 import type { PointDragContext as ModifierDragContext } from '../../types/interaction';
-import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
-import { inverseMatrix, applyToPoint } from '../../utils/matrixUtils';
+import { transformDeltaToElementLocal, transformPointToElementLocal } from '../../utils/elementTransformUtils';
 import { buildElementMap } from '../../utils/elementMapUtils';
 
 let cachedCanvasSvgRef: WeakRef<SVGSVGElement> | null = null;
@@ -107,56 +106,6 @@ export const calculateDragPosition = (
     return { canvasX: modifiedPoint.x, canvasY: modifiedPoint.y };
 };
 
-/**
- * Transforms a point from global canvas coordinates to the local coordinate space of an element.
- * This is necessary when the element is inside a group that has transformations (rotation, scale, etc.)
- */
-const transformToLocalCoordinates = (
-    globalX: number,
-    globalY: number,
-    element: CanvasElement,
-    elements: CanvasElement[] | Map<string, CanvasElement>
-): { x: number; y: number } => {
-    // Get the accumulated transform matrix from parent groups
-    const parentMatrix = getParentCumulativeTransformMatrix(element, elements);
-    const invParent = inverseMatrix(parentMatrix);
-    
-    if (!invParent) {
-        // Matrix is not invertible (e.g., scale 0), return original coordinates
-        return { x: globalX, y: globalY };
-    }
-    
-    // Transform the point to local coordinates
-    return applyToPoint(invParent, { x: globalX, y: globalY });
-};
-
-/**
- * Transforms a delta vector from global canvas coordinates to the local coordinate space of an element.
- * This preserves the magnitude and direction of the delta relative to the element's local space.
- */
-const transformDeltaToLocal = (
-    deltaX: number,
-    deltaY: number,
-    element: CanvasElement,
-    elements: CanvasElement[] | Map<string, CanvasElement>
-): { x: number; y: number } => {
-    // Get the accumulated transform matrix from parent groups
-    const parentMatrix = getParentCumulativeTransformMatrix(element, elements);
-    const invParent = inverseMatrix(parentMatrix);
-    
-    if (!invParent) {
-        // Matrix is not invertible, return original delta
-        return { x: deltaX, y: deltaY };
-    }
-    
-    // Transform delta by applying inverse to both origin and delta point, then subtracting
-    // This correctly handles rotation, scale, and skew
-    const p0 = applyToPoint(invParent, { x: 0, y: 0 });
-    const p1 = applyToPoint(invParent, { x: deltaX, y: deltaY });
-    
-    return { x: p1.x - p0.x, y: p1.y - p0.y };
-};
-
 export const updateSinglePointPath = (
     dragPoint: DragPointInfo,
     canvasX: number,
@@ -180,7 +129,7 @@ export const updateSinglePointPath = (
         if (pointToUpdate) {
             // Transform global canvas coordinates to local element coordinates
             // This handles the case when the path is inside a group with transformations
-            const localCoords = transformToLocalCoordinates(canvasX, canvasY, element, elementsById);
+            const localCoords = transformPointToElementLocal({ x: canvasX, y: canvasY }, element, elementsById);
             const newX = formatToPrecision(localCoords.x, PATH_DECIMAL_PRECISION);
             const newY = formatToPrecision(localCoords.y, PATH_DECIMAL_PRECISION);
 
@@ -304,9 +253,8 @@ export const updateGroupDragPaths = (
                 const element = elementsById.get(initialPos.elementId);
                 if (element) {
                     // Transform the global delta to local coordinates for this element
-                    localDeltaCache[initialPos.elementId] = transformDeltaToLocal(
-                        globalDeltaX,
-                        globalDeltaY,
+                    localDeltaCache[initialPos.elementId] = transformDeltaToElementLocal(
+                        { x: globalDeltaX, y: globalDeltaY },
                         element,
                         elementsById
                     );

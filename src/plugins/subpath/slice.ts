@@ -10,6 +10,7 @@ import { formatToPrecision } from '../../utils/numberUtils';
 import { translateCommands, scaleCommands } from '../../utils/transformationUtils';
 import { groupSubpathsByElement, moveSubpathsWithinElement, deleteSubpathsFromElement } from '../../utils/subpathHelpers';
 import { cloneValue } from '../../utils/clone';
+import { transformDeltaToElementLocal } from '../../utils/elementTransformUtils';
 
 // Helper interface for subpath bounds
 interface SubpathWithBounds {
@@ -475,9 +476,11 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
         const pathData = element.data as PathData;
         const newSubPaths = [...pathData.subPaths];
 
+        const localDelta = transformDeltaToElementLocal({ x: deltaX, y: deltaY }, element, state.elements);
+
         subpathIndices.forEach(subpathIndex => {
           if (subpathIndex < newSubPaths.length) {
-            newSubPaths[subpathIndex] = translateCommands(newSubPaths[subpathIndex], deltaX, deltaY, {
+            newSubPaths[subpathIndex] = translateCommands(newSubPaths[subpathIndex], localDelta.x, localDelta.y, {
               precision: precision,
               roundToIntegers: precision === 0
             });
@@ -666,9 +669,6 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     const deltaX = canvasX - draggingSubpaths.startX;
     const deltaY = canvasY - draggingSubpaths.startY;
 
-    const incrementalDeltaX = deltaX - (draggingSubpaths.currentDeltaX || 0);
-    const incrementalDeltaY = deltaY - (draggingSubpaths.currentDeltaY || 0);
-
     // Update dragging state for tracking
     set((currentState) => {
       if (currentState.draggingSubpaths) {
@@ -717,15 +717,16 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     });
 
     // Apply all transformations per element in one update
-    elementUpdates.forEach(({ pathData, subpathUpdates }, elementId) => {
+    elementUpdates.forEach(({ element, pathData, subpathUpdates }, elementId) => {
       const allCommands = pathData.subPaths.flat();
       const subpaths = extractSubpaths(allCommands);
+      const localDelta = transformDeltaToElementLocal({ x: deltaX, y: deltaY }, element, state.elements);
 
       // Apply transformations to all subpaths of this element
       subpathUpdates.forEach(({ subpathIndex, originalCommands }) => {
         if (subpaths[subpathIndex]) {
           // Apply transformation to the ORIGINAL commands, not the current ones
-          const transformedCommands = translateCommands(originalCommands, incrementalDeltaX, incrementalDeltaY);
+          const transformedCommands = translateCommands(originalCommands, localDelta.x, localDelta.y);
           subpaths[subpathIndex] = { ...subpaths[subpathIndex], commands: transformedCommands };
         }
       });

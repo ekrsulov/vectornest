@@ -1,12 +1,10 @@
 import type { CanvasElement, GroupElement } from '../../types';
 import {
   IDENTITY_MATRIX,
-  applyToPoint,
   createTranslateMatrix,
-  inverseMatrix,
   multiplyMatrices,
 } from '../../utils/matrixUtils';
-import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
+import { transformDeltaToElementLocal } from '../../utils/elementTransformUtils';
 import type { AnimationTransformDelta } from './movementTypes';
 
 const DEFAULT_GROUP_TRANSFORM = {
@@ -23,18 +21,7 @@ export const resolveLocalDelta = (
   element: CanvasElement,
   elements: CanvasElement[]
 ): { x: number; y: number } => {
-  const parentMatrix = getParentCumulativeTransformMatrix(element, elements);
-  const invParent = inverseMatrix(parentMatrix);
-  if (!invParent) {
-    return { x: deltaX, y: deltaY };
-  }
-
-  const origin = applyToPoint(invParent, { x: 0, y: 0 });
-  const translated = applyToPoint(invParent, { x: deltaX, y: deltaY });
-  return {
-    x: translated.x - origin.x,
-    y: translated.y - origin.y,
-  };
+  return transformDeltaToElementLocal({ x: deltaX, y: deltaY }, element, elements);
 };
 
 export const moveGroupByLocalDelta = (

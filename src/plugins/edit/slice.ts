@@ -5,8 +5,7 @@ import { formatToPrecision } from '../../utils/numberUtils';
 import type { CanvasElement, Point, PathData, Command, SelectedCommand, PointUpdate } from '../../types';
 import type { CanvasStore } from '../../store/canvasStore';
 import { snapManager } from '../../snap/SnapManager';
-import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
-import { inverseMatrix, applyToPoint } from '../../utils/matrixUtils';
+import { transformDeltaToElementLocal } from '../../utils/elementTransformUtils';
 import { logger } from '../../utils/logger';
 
 // Type for the full store state (needed for get() calls)
@@ -1292,21 +1291,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         const allCommands = pathData.subPaths.flat();
         const newCommands = [...allCommands];
 
-        // Transform global delta to local coordinates for this element
-        // This handles the case when the path is inside a group with transformations
-        const parentMatrix = getParentCumulativeTransformMatrix(element, state.elements);
-        const invParent = inverseMatrix(parentMatrix);
-        
-        let localDeltaX = deltaX;
-        let localDeltaY = deltaY;
-        
-        if (invParent) {
-          // Transform delta by applying inverse to both origin and delta point
-          const p0 = applyToPoint(invParent, { x: 0, y: 0 });
-          const p1 = applyToPoint(invParent, { x: deltaX, y: deltaY });
-          localDeltaX = p1.x - p0.x;
-          localDeltaY = p1.y - p0.y;
-        }
+        const localDelta = transformDeltaToElementLocal({ x: deltaX, y: deltaY }, element, state.elements);
+        const localDeltaX = localDelta.x;
+        const localDeltaY = localDelta.y;
 
         commands.forEach(({ commandIndex, pointIndex }) => {
           if (commandIndex < newCommands.length) {

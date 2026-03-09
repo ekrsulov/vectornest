@@ -65,6 +65,27 @@ describe('findPathAtPoint', () => {
     expect(result?.penPath.anchors[1].position).toEqual({ x: 110, y: 50 });
   });
 
+  it('scales the local hit threshold for paths inside scaled groups', () => {
+    const path = createPathElement('path-3', 'group-2', [
+      { type: 'M', position: { x: 0, y: 0 } },
+      { type: 'L', position: { x: 10, y: 0 } },
+    ]);
+    const group = createGroupElement('group-2', ['path-3'], {
+      translateX: 200,
+      translateY: 300,
+      rotation: 0,
+      scaleX: 23.841475,
+      scaleY: 23.841475,
+    });
+    const elements: CanvasElement[] = [group, path];
+
+    const nearResult = findPathAtPoint({ x: 200 + 23.841475 * 5, y: 300 + 4 }, elements, 1);
+    const farResult = findPathAtPoint({ x: 200 + 23.841475 * 5, y: 300 + 9 }, elements, 1);
+
+    expect(nearResult).not.toBeNull();
+    expect(farResult).toBeNull();
+  });
+
   it('applies element transformMatrix when detecting path hit', () => {
     const path = createPathElement(
       'path-2',

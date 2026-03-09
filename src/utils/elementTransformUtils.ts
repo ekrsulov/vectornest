@@ -1,10 +1,12 @@
 import type { CanvasElement, GroupData, PathData } from '../types';
 import {
+    applyToPoint,
     type Matrix,
     IDENTITY_MATRIX,
     createTranslateMatrix,
     createRotateMatrix,
     createScaleMatrix,
+    inverseMatrix,
     multiplyMatrices
 } from './matrixUtils';
 import { buildElementMap } from './elementMapUtils';
@@ -101,4 +103,49 @@ export function getParentCumulativeTransformMatrix(
 ): Matrix {
     if (!element.parentId) return IDENTITY_MATRIX;
     return getAccumulatedTransformMatrix(element.parentId, elements);
+}
+
+/**
+ * Transforms a world/canvas point into the local coordinate space of an element,
+ * compensating for all ancestor group transforms.
+ */
+export function transformPointToElementLocal(
+    point: { x: number; y: number },
+    element: CanvasElement,
+    elements: CanvasElement[] | Map<string, CanvasElement>
+): { x: number; y: number } {
+    const parentMatrix = getParentCumulativeTransformMatrix(element, elements);
+    const invParent = inverseMatrix(parentMatrix);
+
+    if (!invParent) {
+        return point;
+    }
+
+    return applyToPoint(invParent, point);
+}
+
+/**
+ * Transforms a world/canvas delta vector into the local coordinate space of an
+ * element, compensating for ancestor scale/rotation/skew while ignoring
+ * translation.
+ */
+export function transformDeltaToElementLocal(
+    delta: { x: number; y: number },
+    element: CanvasElement,
+    elements: CanvasElement[] | Map<string, CanvasElement>
+): { x: number; y: number } {
+    const parentMatrix = getParentCumulativeTransformMatrix(element, elements);
+    const invParent = inverseMatrix(parentMatrix);
+
+    if (!invParent) {
+        return delta;
+    }
+
+    const origin = applyToPoint(invParent, { x: 0, y: 0 });
+    const translated = applyToPoint(invParent, delta);
+
+    return {
+        x: translated.x - origin.x,
+        y: translated.y - origin.y,
+    };
 }

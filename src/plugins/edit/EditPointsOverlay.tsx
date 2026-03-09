@@ -5,7 +5,7 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { getEffectiveShift } from '../../utils/effectiveShift';
 import { useColorModeValue } from '@chakra-ui/react';
 import { getParentCumulativeTransformMatrix } from '../../utils/elementTransformUtils';
-import { inverseMatrix, applyToPoint } from '../../utils/matrixUtils';
+import { inverseMatrix, applyToPoint, getMatrixAxisScales } from '../../utils/matrixUtils';
 import type { Point, PathData, Command, CanvasElement } from '../../types';
 import type { SmoothBrush } from '../smoothBrush/slice';
 import { NO_TAP_HIGHLIGHT } from '../../constants';
@@ -116,6 +116,17 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
     ? `matrix(${parentTransformMatrix.join(',')})`
     : undefined;
 
+  const parentAxisScales = useMemo(() => {
+    const scales = getMatrixAxisScales(parentTransformMatrix);
+    const scaleX = Math.max(scales.x, 1e-6);
+    const scaleY = Math.max(scales.y, 1e-6);
+    return {
+      x: scaleX,
+      y: scaleY,
+      uniform: Math.max(Math.sqrt(scaleX * scaleY), 1e-6),
+    };
+  }, [parentTransformMatrix]);
+
   // Compute local drag position by transforming global dragPosition to local coordinates
   // This is needed because the overlay is rendered inside a transformed <g> element
   const localDragPosition = useMemo(() => {
@@ -180,18 +191,25 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
 
         const pointStyle = getPointStyle(point, selectedCommands, element, commands, pathData, toolState, canvasBgColor, isDarkMode);
 
-        // Calculate larger hit area for better touch/mouse interaction
-        // Use a minimum size in screen pixels (12px) regardless of zoom
-        const hitAreaSize = Math.max(12 / viewport.zoom, pointStyle.size / viewport.zoom);
+        const pointRadiusX = pointStyle.size / (viewport.zoom * parentAxisScales.x);
+        const pointRadiusY = pointStyle.size / (viewport.zoom * parentAxisScales.y);
+        const pointStrokeWidth = 2 / (viewport.zoom * parentAxisScales.uniform);
+
+        // Keep hit area usable on-screen even when the edited path sits inside a scaled group.
+        const hitAreaRadiusX = Math.max(12, pointStyle.size) / (viewport.zoom * parentAxisScales.x);
+        const hitAreaRadiusY = Math.max(12, pointStyle.size) / (viewport.zoom * parentAxisScales.y);
+        const controlWidth = pointStyle.size / (viewport.zoom * parentAxisScales.x);
+        const controlHeight = pointStyle.size / (viewport.zoom * parentAxisScales.y);
 
         return (
           <g key={index}>
             {/* Transparent overlay for easier interaction */}
-            <circle
+            <ellipse
               data-edit-point-hit="true"
               cx={displayX}
               cy={displayY}
-              r={hitAreaSize}
+              rx={hitAreaRadiusX}
+              ry={hitAreaRadiusY}
               fill="transparent"
               stroke="none"
               style={{
@@ -203,30 +221,26 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
             {/* Visible point */}
             {point.isControl ? (
               // Draw square for control points
-              (() => {
-                const size = pointStyle.size / viewport.zoom;
-                return (
-                  <rect
-                    x={displayX - size / 2}
-                    y={displayY - size / 2}
-                    width={size}
-                    height={size}
-                    fill={pointStyle.color}
-                    stroke={pointStyle.strokeColor}
-                    strokeWidth={2 / viewport.zoom}
-                    style={{ pointerEvents: 'none' }} // Let the overlay handle interactions
-                  />
-                );
-              })()
-            ) : (
-              // Draw circle for command points
-              <circle
-                cx={displayX}
-                cy={displayY}
-                r={pointStyle.size / viewport.zoom}
+              <rect
+                x={displayX - controlWidth / 2}
+                y={displayY - controlHeight / 2}
+                width={controlWidth}
+                height={controlHeight}
                 fill={pointStyle.color}
                 stroke={pointStyle.strokeColor}
-                strokeWidth={2 / viewport.zoom}
+                strokeWidth={pointStrokeWidth}
+                style={{ pointerEvents: 'none' }} // Let the overlay handle interactions
+              />
+            ) : (
+              // Draw circle for command points
+              <ellipse
+                cx={displayX}
+                cy={displayY}
+                rx={pointRadiusX}
+                ry={pointRadiusY}
+                fill={pointStyle.color}
+                stroke={pointStyle.strokeColor}
+                strokeWidth={pointStrokeWidth}
                 style={{ pointerEvents: 'none' }} // Let the overlay handle interactions
               />
             )}
@@ -242,6 +256,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
         editingPoint={editingPoint}
         dragPosition={localDragPosition}
         parentTransformMatrix={parentTransformMatrix}
+        parentScale={parentAxisScales.uniform}
         viewport={viewport}
         isDarkMode={isDarkMode}
       />
@@ -457,13 +472,14 @@ const ControlPointLines: React.FC<{
   } | null;
   dragPosition: Point | null;
   parentTransformMatrix: number[];
+  parentScale: number;
   viewport: {
     zoom: number;
     panX: number;
     panY: number;
   };
   isDarkMode: boolean;
-}> = ({ commands, points, element, editingPoint, dragPosition, parentTransformMatrix, viewport, isDarkMode }) => {
+}> = ({ commands, points, element, editingPoint, dragPosition, parentTransformMatrix, parentScale, viewport, isDarkMode }) => {
   // Use high contrast color for control point lines in dark mode
   const lineColor = isDarkMode ? '#22d3ee' : '#0ea5e9'; // cyan-400 in dark, sky-500 in light
 
@@ -492,16 +508,13 @@ const ControlPointLines: React.FC<{
 
             // Update control point positions if being dragged
             if (editingPoint?.isDragging && editingPoint.elementId === element.id) {
-              // Use dragPosition if available, otherwise transform editingPoint offset to local coordinates
               let dragX: number;
               let dragY: number;
-              
+
               if (dragPosition) {
-                // dragPosition is already in local coordinates
                 dragX = dragPosition.x;
                 dragY = dragPosition.y;
               } else {
-                // Transform editingPoint offset from global to local coordinates
                 const invParent = inverseMatrix(parentTransformMatrix as [number, number, number, number, number, number]);
                 if (invParent) {
                   const localPoint = applyToPoint(invParent, { x: editingPoint.offsetX, y: editingPoint.offsetY });
@@ -530,7 +543,7 @@ const ControlPointLines: React.FC<{
                   x2={control1X}
                   y2={control1Y}
                   stroke={lineColor}
-                  strokeWidth={1 / viewport.zoom}
+                  strokeWidth={1 / (viewport.zoom * parentScale)}
                   pointerEvents="none"
                 />
                 <line
@@ -539,7 +552,7 @@ const ControlPointLines: React.FC<{
                   x2={endX}
                   y2={endY}
                   stroke={lineColor}
-                  strokeWidth={1 / viewport.zoom}
+                  strokeWidth={1 / (viewport.zoom * parentScale)}
                   pointerEvents="none"
                 />
               </g>

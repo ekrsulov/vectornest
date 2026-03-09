@@ -140,14 +140,6 @@ export const FilePanel: React.FC = () => {
   return (
     <Panel>
       <VStack spacing={2} align="stretch">
-        {/* Import */}
-        <PanelStyledButton onClick={handleImportSVG} width="full" size="sm">
-          <HStack spacing={1.5}>
-            <Upload size={11} />
-            <span>Import SVG</span>
-          </HStack>
-        </PanelStyledButton>
-
         {/* Export */}
         <Box>
           <Text
@@ -202,6 +194,14 @@ export const FilePanel: React.FC = () => {
           </HStack>
         </Box>
 
+        {/* Import */}
+        <PanelStyledButton onClick={handleImportSVG} width="full" size="sm">
+          <HStack spacing={1.5}>
+            <Upload size={11} />
+            <span>Import SVG</span>
+          </HStack>
+        </PanelStyledButton>
+
         {/* Hidden file input for SVG import */}
         <input
           ref={svgInputRef}
@@ -212,26 +212,28 @@ export const FilePanel: React.FC = () => {
           onChange={handleSVGFileSelected}
         />
 
-        <FilePanelAdvancedSection
-          exportPadding={settings.exportPadding}
-          onExportPaddingChange={(value) => updateSettings({ exportPadding: value })}
-          pngSelectedOnly={pngSelectedOnly}
-          onPngSelectedOnlyChange={setPngSelectedOnly}
-          svgSelectedOnly={svgSelectedOnly}
-          onSvgSelectedOnlyChange={setSvgSelectedOnly}
-          addFrame={addFrame}
-          onAddFrameChange={setAddFrame}
-          applyUnion={applyUnion}
-          onApplyUnionChange={setApplyUnion}
-          resizeImport={resizeImport}
-          onResizeImportChange={setResizeImport}
-          resizeWidth={resizeWidth}
-          onResizeWidthChange={setResizeWidth}
-          resizeHeight={resizeHeight}
-          onResizeHeightChange={setResizeHeight}
-          onSave={handleSave}
-          onLoad={handleLoad}
-        />
+        <Box mt={-2}>
+          <FilePanelAdvancedSection
+            exportPadding={settings.exportPadding}
+            onExportPaddingChange={(value) => updateSettings({ exportPadding: value })}
+            pngSelectedOnly={pngSelectedOnly}
+            onPngSelectedOnlyChange={setPngSelectedOnly}
+            svgSelectedOnly={svgSelectedOnly}
+            onSvgSelectedOnlyChange={setSvgSelectedOnly}
+            addFrame={addFrame}
+            onAddFrameChange={setAddFrame}
+            applyUnion={applyUnion}
+            onApplyUnionChange={setApplyUnion}
+            resizeImport={resizeImport}
+            onResizeImportChange={setResizeImport}
+            resizeWidth={resizeWidth}
+            onResizeWidthChange={setResizeWidth}
+            resizeHeight={resizeHeight}
+            onResizeHeightChange={setResizeHeight}
+            onSave={handleSave}
+            onLoad={handleLoad}
+          />
+        </Box>
 
         {/* Reset Application */}
         <Box pt={0}>

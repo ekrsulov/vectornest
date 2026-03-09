@@ -6,49 +6,13 @@ import type {
 } from './CanvasRendererRegistry';
 import { canvasRendererRegistry } from './CanvasRendererRegistry';
 import { collectExtensionAttributes, collectExtensionChildren } from './rendererExtensionRegistry';
-import { areViewportsEqual } from './renderingUtils';
+import { areViewportsEqual, haveSameGroupSubtree } from './renderingUtils';
 import { getClipRuntimeId, getMaskRuntimeId } from '../../utils/maskUtils';
 
 interface GroupElementRendererProps {
     element: GroupElement;
     context: CanvasRenderContext;
 }
-
-const haveSameGroupChildren = (
-    previous: GroupElementRendererProps,
-    next: GroupElementRendererProps
-): boolean => {
-    const childIds = Array.isArray(next.element.data.childIds) ? next.element.data.childIds : [];
-
-    for (const childId of childIds) {
-        const previousChild = previous.context.elementMap.get(childId);
-        const nextChild = next.context.elementMap.get(childId);
-
-        if (previousChild !== nextChild) {
-            return false;
-        }
-
-        const wasHidden = previous.context.isElementHidden?.(childId) ?? false;
-        const isHidden = next.context.isElementHidden?.(childId) ?? false;
-        if (wasHidden !== isHidden) {
-            return false;
-        }
-
-        const wasSelected = previous.context.isElementSelected?.(childId) ?? false;
-        const isSelected = next.context.isElementSelected?.(childId) ?? false;
-        if (wasSelected !== isSelected) {
-            return false;
-        }
-
-        const wasLocked = previous.context.isElementLocked?.(childId) ?? false;
-        const isLocked = next.context.isElementLocked?.(childId) ?? false;
-        if (wasLocked !== isLocked) {
-            return false;
-        }
-    }
-
-    return true;
-};
 
 const areGroupRendererPropsEqual = (
     previous: GroupElementRendererProps,
@@ -81,7 +45,7 @@ const areGroupRendererPropsEqual = (
         return false;
     }
 
-    return haveSameGroupChildren(previous, next);
+    return haveSameGroupSubtree(previous.context, next.context, groupId);
 };
 
 const GroupElementRendererView = ({

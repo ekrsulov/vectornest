@@ -20,7 +20,7 @@ export const PencilPanel: React.FC<PencilPanelProps> = ({ hideTitle = false }) =
 
   return (
     <Panel title="Pencil" hideHeader={hideTitle}>
-      <VStack spacing={2} align="stretch" pb={0.5}>
+      <VStack spacing={1} align="stretch" pb={0.5}>
         {/* Path Mode Selection */}
         <HStack spacing={1} justify="space-between">
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>Path Mode</Text>

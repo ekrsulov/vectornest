@@ -5,6 +5,7 @@ import type { InlineTextEditSlice } from './inlineEditSlice';
 import type { NativeTextElement } from './types';
 import { buildSpansPreservingGlyphTransforms } from './inlineTextSpanUtils';
 import { measureNativeTextBounds } from '../../utils/measurementUtils';
+import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
 import {
   computeNativeTextTransformAttr,
   getNativeTextEditorBox,
@@ -590,6 +591,125 @@ const placeCaretAtEnd = (element: HTMLDivElement) => {
   selection.addRange(range);
 };
 
+const applyInlineLineBaselineMarkerStyle = (marker: HTMLSpanElement) => {
+  marker.dataset.inlineLineBaseline = '1';
+  marker.style.display = 'inline-block';
+  marker.style.width = '0';
+  marker.style.height = '1px';
+  marker.style.padding = '0';
+  marker.style.margin = '0';
+  marker.style.overflow = 'hidden';
+  marker.style.verticalAlign = 'baseline';
+  marker.contentEditable = 'false';
+  marker.setAttribute('aria-hidden', 'true');
+};
+
+const ensureInlineLineBaselineMarker = (lineNode: HTMLDivElement): HTMLSpanElement => {
+  const existing = lineNode.querySelector('[data-inline-line-baseline="1"]');
+  if (existing instanceof HTMLSpanElement) {
+    applyInlineLineBaselineMarkerStyle(existing);
+    return existing;
+  }
+
+  const marker = document.createElement('span');
+  applyInlineLineBaselineMarkerStyle(marker);
+  lineNode.appendChild(marker);
+  return marker;
+};
+
+const getEditableLineNodes = (editor: HTMLDivElement): HTMLDivElement[] => {
+  const directDivChildren = Array.from(editor.children).filter(
+    (node): node is HTMLDivElement => node instanceof HTMLDivElement
+  );
+  if (directDivChildren.length > 0) {
+    return directDivChildren;
+  }
+
+  const fallbackLine = document.createElement('div');
+  while (editor.firstChild) {
+    fallbackLine.appendChild(editor.firstChild);
+  }
+  if (fallbackLine.childNodes.length === 0) {
+    fallbackLine.appendChild(document.createElement('br'));
+  }
+  editor.appendChild(fallbackLine);
+  return [fallbackLine];
+};
+
+const applyEditorVisualOffset = (
+  editor: HTMLDivElement,
+  nextOffset: { x: number; y: number },
+  previousOffsetRef: React.MutableRefObject<{ x: number; y: number }>
+) => {
+  const previousOffset = previousOffsetRef.current;
+  if (previousOffset.x === nextOffset.x && previousOffset.y === nextOffset.y) {
+    return;
+  }
+
+  previousOffsetRef.current = nextOffset;
+  editor.style.transform = `translate(${nextOffset.x}px, ${nextOffset.y}px)`;
+};
+
+const syncEditableLineLayout = (
+  editor: HTMLDivElement,
+  data: NativeTextElement['data'],
+  desiredLineOffsets: Map<number, {
+    leftOffset: number;
+    naturalTopOffset: number;
+    desiredTopOffset: number;
+    desiredBaselineY: number;
+  }>,
+  paddingX: number,
+  paddingY: number,
+) => {
+  const lineNodes = getEditableLineNodes(editor);
+
+  lineNodes.forEach((lineNode, lineIndex) => {
+    lineNode.dataset.inlineLine = String(lineIndex);
+    lineNode.style.display = 'block';
+    lineNode.style.width = 'max-content';
+    lineNode.style.transformOrigin = 'top left';
+
+    if (lineNode.childNodes.length === 0) {
+      lineNode.appendChild(document.createElement('br'));
+    }
+
+    ensureInlineLineBaselineMarker(lineNode);
+
+    const desiredOffset = desiredLineOffsets.get(lineIndex);
+    const leftOffset = desiredOffset?.leftOffset ?? paddingX;
+    const naturalTopOffset = desiredOffset?.naturalTopOffset ?? (paddingY + lineIndex * data.fontSize * INLINE_EDITOR_LINE_HEIGHT);
+    const desiredTopOffset = desiredOffset?.desiredTopOffset ?? (paddingY + lineIndex * data.fontSize * (data.lineHeight ?? 1.2));
+    const relativeTopOffset = desiredTopOffset - naturalTopOffset;
+    const relativeLeftOffset = leftOffset - paddingX;
+    lineNode.style.transform = `translate(${relativeLeftOffset}px, ${relativeTopOffset}px)`;
+  });
+};
+
+const buildInlineEditedNativeTextData = (
+  data: NativeTextElement['data'],
+  plainText: string,
+): NativeTextElement['data'] => ({
+  ...data,
+  text: plainText,
+  richText: plainText,
+  spans: buildSpansPreservingGlyphTransforms(
+    plainText,
+    data.text ?? '',
+    data.spans,
+    {
+      fontWeight: data.fontWeight ?? undefined,
+      fontStyle: data.fontStyle ?? undefined,
+    }
+  ),
+});
+
+const hasInlineEditorVisualTransform = (data: NativeTextElement['data']): boolean =>
+  Boolean(
+    data.transformMatrix ||
+    data.transform
+  );
+
 export const NativeTextInlineEditorLayer: React.FC = () => {
   const editingElementId = useCanvasStore(
     (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null
@@ -599,28 +719,153 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
   const stopInlineTextEdit = useCanvasStore(
     (state) => (state as unknown as InlineTextEditSlice).stopInlineTextEdit
   );
+  const setInlineTextEditPreviewBounds = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).setInlineTextEditPreviewBounds
+  );
+  const setInlineTextEditReady = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).setInlineTextEditReady
+  );
+  const isInlineEditorReady = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.isEditorReady ?? false
+  );
   const viewportZoom = useCanvasStore((state) => state.viewport.zoom);
   const editorRef = useRef<HTMLDivElement>(null);
   const previousEditingIdRef = useRef<string | null>(null);
   const originalElementRef = useRef<NativeTextElement | null>(null);
+  const liveElementDataRef = useRef<NativeTextElement['data'] | null>(null);
+  const skipBlurCommitRef = useRef(false);
+  const pendingVisualSyncFrameRef = useRef<number | null>(null);
+  const editorVisualOffsetRef = useRef({ x: 0, y: 0 });
   const [editorHtml, setEditorHtml] = useState('');
-  const [editorVisualOffset, setEditorVisualOffset] = useState({ x: 0, y: 0 });
 
   const element = useMemo(() => {
     if (!editingElementId) return null;
     const candidate = elements.find((entry) => entry.id === editingElementId);
     return candidate?.type === 'nativeText' ? candidate as NativeTextElement : null;
   }, [editingElementId, elements]);
+  const elementMap = useMemo(() => new Map(elements.map((entry) => [entry.id, entry])), [elements]);
 
-  const isDesktopNativeTextEditing = Boolean(element) && !isTouchDevice();
+  const isInlineNativeTextEditing = Boolean(element) && !isTouchDevice();
+
+  const syncEditorVisualOffset = useCallback((
+    data: NativeTextElement['data'],
+  ) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const editorBox = getNativeTextEditorBox(data);
+    const measuredBounds = editorBox.bounds ?? measureNativeTextBounds(data);
+    const { lineBoxes, glyphMetrics } = measureTextLayout(data);
+    const desiredLineOffsets = computeDesiredLineOffsets(
+      data,
+      measuredBounds,
+      lineBoxes,
+      glyphMetrics,
+      editorBox.paddingX,
+      editorBox.paddingY,
+    );
+    syncEditableLineLayout(
+      editor,
+      data,
+      desiredLineOffsets,
+      editorBox.paddingX,
+      editorBox.paddingY,
+    );
+    if (hasInlineEditorVisualTransform(data)) {
+      // `getBoundingClientRect()` is screen-space after the element matrix is applied.
+      // The scalar correction below only works for untransformed text; with affine
+      // transforms it overcompensates and shifts the editor away from the glyphs.
+      applyEditorVisualOffset(editor, { x: 0, y: 0 }, editorVisualOffsetRef);
+      return;
+    }
+    const liveOffsets = measureLiveEditorOffsets(editor, viewportZoom);
+    const firstLine = Array.from(desiredLineOffsets.keys()).sort((left, right) => left - right)[0];
+
+    if (firstLine === undefined) {
+      applyEditorVisualOffset(editor, { x: 0, y: 0 }, editorVisualOffsetRef);
+      return;
+    }
+
+    const desired = desiredLineOffsets.get(firstLine);
+    const actual = liveOffsets.get(firstLine);
+    if (!desired || !actual) {
+      applyEditorVisualOffset(editor, { x: 0, y: 0 }, editorVisualOffsetRef);
+      return;
+    }
+
+    applyEditorVisualOffset(editor, {
+      x: desired.leftOffset - actual.left,
+      y: desired.desiredBaselineY !== undefined
+        ? desired.desiredBaselineY - actual.baseline
+        : desired.desiredTopOffset - actual.top,
+    }, editorVisualOffsetRef);
+  }, [viewportZoom]);
+
+  const scheduleVisualSync = useCallback((data: NativeTextElement['data']) => {
+    if (pendingVisualSyncFrameRef.current !== null) {
+      window.cancelAnimationFrame(pendingVisualSyncFrameRef.current);
+    }
+
+    pendingVisualSyncFrameRef.current = window.requestAnimationFrame(() => {
+      pendingVisualSyncFrameRef.current = null;
+      syncEditorVisualOffset(data);
+    });
+  }, [syncEditorVisualOffset]);
+
+  const measureDraftBounds = useCallback((draftData: NativeTextElement['data']) => {
+    const originalElement = originalElementRef.current;
+    if (!originalElement) {
+      return null;
+    }
+
+    return elementContributionRegistry.getBounds(
+      {
+        ...originalElement,
+        data: draftData,
+      },
+      {
+        viewport: {
+          zoom: viewportZoom,
+          panX: 0,
+          panY: 0,
+        },
+        elementMap,
+      }
+    );
+  }, [elementMap, viewportZoom]);
+
+  const syncDraftFeedback = useCallback((draftData: NativeTextElement['data']) => {
+    liveElementDataRef.current = draftData;
+    setInlineTextEditPreviewBounds?.(measureDraftBounds(draftData));
+    scheduleVisualSync(draftData);
+  }, [measureDraftBounds, scheduleVisualSync, setInlineTextEditPreviewBounds]);
+
+  const syncLiveElementText = useCallback((editor: HTMLDivElement) => {
+    const originalElement = originalElementRef.current;
+    if (!originalElement) {
+      return;
+    }
+
+    const plainText = parseEditablePlainText(editor);
+    const baseData = liveElementDataRef.current ?? originalElement.data;
+    if (plainText === (baseData.text ?? '') && plainText === (baseData.richText ?? '')) {
+      scheduleVisualSync(baseData);
+      return;
+    }
+
+    const nextData = buildInlineEditedNativeTextData(baseData, plainText);
+    syncDraftFeedback(nextData);
+  }, [scheduleVisualSync, syncDraftFeedback]);
 
   useEffect(() => {
-    if (!isDesktopNativeTextEditing || !element) return;
+    if (!isInlineNativeTextEditing || !element) return;
     if (previousEditingIdRef.current === element.id) return;
 
     previousEditingIdRef.current = element.id;
     originalElementRef.current = element;
-    setEditorVisualOffset({ x: 0, y: 0 });
+    skipBlurCommitRef.current = false;
+    editorVisualOffsetRef.current = { x: 0, y: 0 };
+    setInlineTextEditReady?.(false);
     const editorBox = getNativeTextEditorBox(element.data);
     const measuredBounds = editorBox.bounds ?? measureNativeTextBounds(element.data);
     const { lineBoxes, glyphMetrics } = measureTextLayout(element.data);
@@ -635,32 +880,17 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
     setEditorHtml(initialHtml);
 
     let innerFrame = 0;
+    let revealFrame = 0;
     const frame = window.requestAnimationFrame(() => {
       innerFrame = window.requestAnimationFrame(() => {
         const editor = editorRef.current;
         if (!editor) return;
-        const desiredLineOffsets = computeDesiredLineOffsets(
-          element.data,
-          measuredBounds,
-          lineBoxes,
-          glyphMetrics,
-          editorBox.paddingX,
-          editorBox.paddingY,
-        );
-        const liveOffsets = measureLiveEditorOffsets(editor, viewportZoom);
-        const firstLine = Array.from(desiredLineOffsets.keys()).sort((left, right) => left - right)[0];
-        if (firstLine !== undefined) {
-          const desired = desiredLineOffsets.get(firstLine);
-          const actual = liveOffsets.get(firstLine);
-          if (desired && actual) {
-            setEditorVisualOffset({
-              x: desired.leftOffset - actual.left,
-              y: desired.desiredBaselineY !== undefined ? desired.desiredBaselineY - actual.baseline : desired.desiredTopOffset - actual.top,
-            });
-          }
-        }
+        syncDraftFeedback(element.data);
         editor.focus();
         placeCaretAtEnd(editor);
+        revealFrame = window.requestAnimationFrame(() => {
+          setInlineTextEditReady?.(true);
+        });
       });
     });
 
@@ -669,16 +899,37 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
       if (innerFrame) {
         window.cancelAnimationFrame(innerFrame);
       }
+      if (revealFrame) {
+        window.cancelAnimationFrame(revealFrame);
+      }
     };
-  }, [element, isDesktopNativeTextEditing, viewportZoom]);
+  }, [element, isInlineNativeTextEditing, setInlineTextEditReady, syncDraftFeedback]);
+
+  useEffect(() => {
+    liveElementDataRef.current = element?.data ?? null;
+  }, [element]);
+
+  useEffect(() => {
+    if (!isInlineNativeTextEditing) return;
+    const currentData = liveElementDataRef.current ?? element?.data;
+    if (!currentData) return;
+    scheduleVisualSync(currentData);
+  }, [element?.id, isInlineNativeTextEditing, scheduleVisualSync, viewportZoom]);
 
   useEffect(() => {
     if (editingElementId) return;
     previousEditingIdRef.current = null;
     originalElementRef.current = null;
+    liveElementDataRef.current = null;
+    skipBlurCommitRef.current = false;
+    editorVisualOffsetRef.current = { x: 0, y: 0 };
+    setInlineTextEditReady?.(false);
+    if (pendingVisualSyncFrameRef.current !== null) {
+      window.cancelAnimationFrame(pendingVisualSyncFrameRef.current);
+      pendingVisualSyncFrameRef.current = null;
+    }
     setEditorHtml('');
-    setEditorVisualOffset({ x: 0, y: 0 });
-  }, [editingElementId]);
+  }, [editingElementId, setInlineTextEditReady]);
 
   const commitEdit = useCallback(() => {
     const originalElement = originalElementRef.current;
@@ -689,30 +940,23 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
     }
 
     const plainText = parseEditablePlainText(editor);
+    const nextData = buildInlineEditedNativeTextData(
+      liveElementDataRef.current ?? originalElement.data,
+      plainText,
+    );
+    liveElementDataRef.current = nextData;
     updateElement(originalElement.id, {
-      data: {
-        ...originalElement.data,
-        text: plainText,
-        richText: plainText,
-        spans: buildSpansPreservingGlyphTransforms(
-          plainText,
-          originalElement.data.text ?? '',
-          originalElement.data.spans,
-          {
-            fontWeight: originalElement.data.fontWeight ?? undefined,
-            fontStyle: originalElement.data.fontStyle ?? undefined,
-          }
-        ),
-      },
+      data: nextData,
     });
     stopInlineTextEdit?.();
   }, [stopInlineTextEdit, updateElement]);
 
   const cancelEdit = useCallback(() => {
+    skipBlurCommitRef.current = true;
     stopInlineTextEdit?.();
   }, [stopInlineTextEdit]);
 
-  if (!isDesktopNativeTextEditing || !element) {
+  if (!isInlineNativeTextEditing || !element) {
     return null;
   }
 
@@ -733,9 +977,17 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
       >
         <div
           {...({ xmlns: 'http://www.w3.org/1999/xhtml' } as Record<string, string>)}
-          style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            pointerEvents: isInlineEditorReady ? 'auto' : 'none',
+            opacity: isInlineEditorReady ? 1 : 0,
+          }}
           onPointerDown={(event) => event.stopPropagation()}
           onDoubleClick={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+          onTouchMove={(event) => event.stopPropagation()}
+          onTouchEnd={(event) => event.stopPropagation()}
         >
           <div
             ref={editorRef}
@@ -746,7 +998,20 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
             spellCheck={false}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
-            onBlur={commitEdit}
+            onTouchStart={(event) => event.stopPropagation()}
+            onTouchMove={(event) => event.stopPropagation()}
+            onTouchEnd={(event) => event.stopPropagation()}
+            onInput={(event) => {
+              event.stopPropagation();
+              syncLiveElementText(event.currentTarget);
+            }}
+            onBlur={() => {
+              if (skipBlurCommitRef.current) {
+                skipBlurCommitRef.current = false;
+                return;
+              }
+              commitEdit();
+            }}
             onKeyDown={(event) => {
               event.stopPropagation();
               if (event.key === 'Escape') {
@@ -759,15 +1024,15 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
               height: '100%',
               boxSizing: 'border-box',
               overflow: 'visible',
-              border: '1px solid var(--chakra-colors-blue-400, #63B3ED)',
-              borderRadius: '6px',
+              border: 'none',
+              borderRadius: 0,
               outline: 'none',
               padding: `${box.paddingY}px ${box.paddingX}px`,
               margin: 0,
-              background: 'rgba(255,255,255,0.36)',
+              background: 'transparent',
               color: element.data.fillColor ?? 'var(--chakra-colors-chakra-body-text, #1A202C)',
               caretColor: 'var(--chakra-colors-blue-500, #3182CE)',
-              boxShadow: '0 0 0 1px rgba(49,130,206,0.12), 0 8px 18px rgba(15, 23, 42, 0.08)',
+              boxShadow: 'none',
               fontFamily: element.data.fontFamily,
               fontSize: `${element.data.fontSize}px`,
               fontWeight: element.data.fontWeight ?? 'normal',
@@ -785,7 +1050,7 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
               userSelect: 'text',
               WebkitUserSelect: 'text',
               position: 'relative',
-              transform: `translate(${editorVisualOffset.x}px, ${editorVisualOffset.y}px)`,
+              transform: 'translate(0px, 0px)',
             }}
             dangerouslySetInnerHTML={{ __html: editorHtml }}
           />

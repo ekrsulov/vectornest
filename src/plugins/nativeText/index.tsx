@@ -10,6 +10,7 @@ import { createInlineTextEditSlice, type InlineTextEditSlice } from './inlineEdi
 import { NativeTextRenderer } from './NativeTextRenderer';
 import { InlineTextEditorOverlay } from './InlineTextEditorOverlay';
 import { NativeTextInlineEditorLayer } from './NativeTextInlineEditorLayer';
+import { NativeTextInlinePreviewOverlay } from './NativeTextInlinePreviewOverlay';
 import { isMonoColor, transformMonoColor } from '../../utils/colorModeSyncUtils';
 import type { ElementContribution } from '../../utils/elementContributionRegistry';
 import type { NativeTextElement } from './types';
@@ -21,6 +22,7 @@ import { escapeXmlAttribute, escapeXmlText } from '../../utils/xmlEscapeUtils';
 import { createPluginSlice } from '../../utils/pluginUtils';
 import { pluginManager } from '../../utils/pluginManager';
 import { cloneValue } from '../../utils/clone';
+import { isTouchDevice } from '../../utils/domHelpers';
 
 type AffineMatrix = [number, number, number, number, number, number];
 const NativeTextPanel = React.lazy(() =>
@@ -532,9 +534,14 @@ export const nativeTextPlugin: PluginDefinition<CanvasStore> = {
       render: (ctx) => renderTextPaths(ctx),
     },
     {
+      id: 'native-text-inline-preview',
+      placement: 'midground',
+      render: () => (isTouchDevice() ? null : <NativeTextInlinePreviewOverlay />),
+    },
+    {
       id: 'native-text-inline-editor-layer',
       placement: 'foreground',
-      render: () => <NativeTextInlineEditorLayer />,
+      render: () => (isTouchDevice() ? null : <NativeTextInlineEditorLayer />),
     },
   ],
   canvasOverlays: [
@@ -546,7 +553,10 @@ export const nativeTextPlugin: PluginDefinition<CanvasStore> = {
         const editingId = state.inlineTextEdit?.editingElementId;
         if (!editingId) return false;
         const element = state.elements.find((candidate) => candidate.id === editingId);
-        return Boolean(element?.type === 'path' && (element as PathElement).data.textPath);
+        return Boolean(
+          (element?.type === 'path' && (element as PathElement).data.textPath) ||
+          (isTouchDevice() && element?.type === 'nativeText')
+        );
       },
     },
   ],

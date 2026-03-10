@@ -3,6 +3,9 @@ import { useSelectionBounds } from '../hooks/useSelectionBounds';
 import { SelectionRects } from './SelectionRects';
 import { pluginManager } from '../utils/pluginManager';
 import type { Matrix } from '../utils/matrixUtils';
+import { useCanvasStore } from '../store/canvasStore';
+import type { InlineTextEditSlice } from '../plugins/nativeText/inlineEditSlice';
+import { isTouchDevice } from '../utils/domHelpers';
 
 interface SelectionOverlayProps {
   element: {
@@ -32,6 +35,14 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = React.memo(func
   selectedSubpaths,
   transformMatrix,
 }) {
+  const editingElementId = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null
+  );
+  const shouldHideWhileInlineEditing =
+    !isTouchDevice() &&
+    element.type === 'nativeText' &&
+    element.id === editingElementId;
+
   // Use shared hook to compute selection bounds
   // Check if the active plugin wants to skip subpath measurements via behavior flags
   const skipSubpathMeasurements = pluginManager.shouldSkipSubpathMeasurements();
@@ -50,6 +61,10 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = React.memo(func
     skipSubpathMeasurements,
     transformMatrix,
   });
+
+  if (shouldHideWhileInlineEditing) {
+    return null;
+  }
 
   return (
     <g key={`selection-${element.id}`}>

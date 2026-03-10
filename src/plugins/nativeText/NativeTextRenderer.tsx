@@ -51,7 +51,12 @@ const NativeTextRendererInner: React.FC<{
   const transformAttr = computeNativeTextTransformAttr(data);
   const wireframeState = (useCanvasStore.getState() as unknown as WireframePluginSlice | undefined)?.wireframe;
   const isWireframe = Boolean(wireframeState?.enabled);
-  const editingElementId = useCanvasStore((state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null);
+  const editingElementId = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null
+  );
+  const isInlineEditorReady = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.isEditorReady ?? false
+  );
   const removeWireframeFill = Boolean(isWireframe && wireframeState?.removeFill);
   const disableFilter =
     isWireframe
@@ -94,7 +99,7 @@ const NativeTextRendererInner: React.FC<{
   // This ensures consistent double-click behavior across all element types
 
   const isTouch = isTouchDevice();
-  const isEditingInline = editingElementId === element.id && !isTouch;
+  const isEditingInline = editingElementId === element.id && !isTouch && isInlineEditorReady;
   const doubleClickHandler = eventHandlers.onDoubleClick;
 
   const nativeFill = data.fillColor ?? 'none';

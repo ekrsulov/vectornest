@@ -4,6 +4,8 @@ import type { InlineTextEditSlice } from './inlineEditSlice';
 import type { PathElement } from '../../types';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { buildSpansPreservingGlyphTransforms } from './inlineTextSpanUtils';
+import type { NativeTextElement } from './types';
+import { isTouchDevice } from '../../utils/domHelpers';
 
 interface InlineTextEditorOverlayProps {
   viewport: { zoom: number; panX: number; panY: number };
@@ -15,6 +17,8 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
   canvasSize: _canvasSize,
 }) => {
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const previousEditingIdRef = useRef<string | null>(null);
+  const isTouch = isTouchDevice();
 
   const editingElementId = useCanvasStore(
     (s) => (s as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null
@@ -24,19 +28,46 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
   );
   const elements = useCanvasStore((s) => s.elements);
   const updateElement = useCanvasStore((s) => s.updateElement);
-  const textPathElement = useMemo(() => {
+  const editingTarget = useMemo(() => {
     if (!editingElementId) return null;
-    const el = elements.find((e) => e.id === editingElementId && e.type === 'path') as PathElement | undefined;
+    const el = elements.find((e) => e.id === editingElementId);
     if (!el) return null;
-    return el.data.textPath ? el : null;
-  }, [elements, editingElementId]);
+
+    if (el.type === 'path') {
+      const pathEl = el as PathElement;
+      if (!pathEl.data.textPath) return null;
+      return {
+        kind: 'textPath' as const,
+        element: pathEl,
+        text: pathEl.data.textPath.text ?? '',
+        fontWeight: pathEl.data.textPath.fontWeight ?? undefined,
+        fontStyle: pathEl.data.textPath.fontStyle ?? undefined,
+      };
+    }
+
+    if (isTouch && el.type === 'nativeText') {
+      const nativeTextEl = el as NativeTextElement;
+      return {
+        kind: 'nativeText' as const,
+        element: nativeTextEl,
+        text: nativeTextEl.data.text ?? '',
+        fontWeight: nativeTextEl.data.fontWeight ?? undefined,
+        fontStyle: nativeTextEl.data.fontStyle ?? undefined,
+      };
+    }
+
+    return null;
+  }, [elements, editingElementId, isTouch]);
 
   const originalTextRef = useRef<string>('');
   const [draftText, setDraftText] = useState('');
 
   useEffect(() => {
-    if (!textPathElement) return;
-    const text = textPathElement.data.textPath?.text ?? '';
+    if (!editingTarget) return;
+    if (previousEditingIdRef.current === editingElementId) return;
+
+    previousEditingIdRef.current = editingElementId;
+    const text = editingTarget.text;
     originalTextRef.current = text;
     setDraftText(text);
 
@@ -49,30 +80,57 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [textPathElement]);
+  }, [editingElementId, editingTarget]);
+
+  useEffect(() => {
+    if (editingElementId) return;
+    previousEditingIdRef.current = null;
+    setDraftText('');
+  }, [editingElementId]);
 
   const applyText = useCallback((plainText: string) => {
-    if (!editingElementId || !updateElement || !textPathElement?.data.textPath) return;
+    if (!editingElementId || !updateElement || !editingTarget) return;
+
+    if (editingTarget.kind === 'textPath') {
+      updateElement(editingElementId, {
+        data: {
+          ...editingTarget.element.data,
+          textPath: {
+            ...editingTarget.element.data.textPath,
+            text: plainText,
+            richText: plainText,
+            spans: buildSpansPreservingGlyphTransforms(
+              plainText,
+              editingTarget.element.data.textPath?.text ?? '',
+              editingTarget.element.data.textPath?.spans,
+              {
+                fontWeight: editingTarget.fontWeight,
+                fontStyle: editingTarget.fontStyle,
+              }
+            ),
+          },
+        },
+      });
+      return;
+    }
+
     updateElement(editingElementId, {
       data: {
-        ...textPathElement.data,
-        textPath: {
-          ...textPathElement.data.textPath,
-          text: plainText,
-          richText: plainText,
-          spans: buildSpansPreservingGlyphTransforms(
-            plainText,
-            textPathElement.data.textPath.text ?? '',
-            textPathElement.data.textPath.spans,
-            {
-              fontWeight: textPathElement.data.textPath.fontWeight ?? undefined,
-              fontStyle: textPathElement.data.textPath.fontStyle ?? undefined,
-            }
-          ),
-        },
+        ...editingTarget.element.data,
+        text: plainText,
+        richText: plainText,
+        spans: buildSpansPreservingGlyphTransforms(
+          plainText,
+          editingTarget.element.data.text ?? '',
+          editingTarget.element.data.spans,
+          {
+            fontWeight: editingTarget.fontWeight,
+            fontStyle: editingTarget.fontStyle,
+          }
+        ),
       },
     });
-  }, [editingElementId, textPathElement, updateElement]);
+  }, [editingElementId, editingTarget, updateElement]);
 
   const commitEdit = useCallback(() => {
     applyText(draftText);
@@ -98,7 +156,7 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
     },
     [cancelEdit]
   );
-  if (!textPathElement) return null;
+  if (!editingTarget) return null;
 
   return (
     <div
@@ -136,12 +194,12 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
         }}>
-          Edit path text
+          {editingTarget.kind === 'textPath' ? 'Edit path text' : 'Edit text'}
         </div>
         <textarea
           ref={editorRef}
           value={draftText}
-          aria-label="Path text editor"
+          aria-label={editingTarget.kind === 'textPath' ? 'Path text editor' : 'Text editor'}
           spellCheck={false}
           onChange={(e) => {
             const nextText = e.target.value;

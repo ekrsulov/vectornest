@@ -9,6 +9,7 @@ import { createNativeTextSlice, type NativeTextPluginSlice } from './slice';
 import { createInlineTextEditSlice, type InlineTextEditSlice } from './inlineEditSlice';
 import { NativeTextRenderer } from './NativeTextRenderer';
 import { InlineTextEditorOverlay } from './InlineTextEditorOverlay';
+import { NativeTextInlineEditorLayer } from './NativeTextInlineEditorLayer';
 import { isMonoColor, transformMonoColor } from '../../utils/colorModeSyncUtils';
 import type { ElementContribution } from '../../utils/elementContributionRegistry';
 import type { NativeTextElement } from './types';
@@ -530,13 +531,23 @@ export const nativeTextPlugin: PluginDefinition<CanvasStore> = {
       placement: 'midground',
       render: (ctx) => renderTextPaths(ctx),
     },
+    {
+      id: 'native-text-inline-editor-layer',
+      placement: 'foreground',
+      render: () => <NativeTextInlineEditorLayer />,
+    },
   ],
   canvasOverlays: [
     {
       id: 'nativeText-inline-editor',
       component: InlineTextEditorOverlay,
-      condition: (ctx) =>
-        Boolean((ctx.state as CanvasStore & InlineTextEditSlice).inlineTextEdit?.editingElementId),
+      condition: (ctx) => {
+        const state = ctx.state as CanvasStore & InlineTextEditSlice;
+        const editingId = state.inlineTextEdit?.editingElementId;
+        if (!editingId) return false;
+        const element = state.elements.find((candidate) => candidate.id === editingId);
+        return Boolean(element?.type === 'path' && (element as PathElement).data.textPath);
+      },
     },
   ],
   expandablePanel: () => React.createElement(NativeTextPanel, { hideTitle: true }),

@@ -13,6 +13,7 @@ import {
   getTextEffectLayersFromMetadata,
   renderInlineTextEffectAnimations,
 } from '../textEffectsLibrary/renderLayerUtils';
+import { computeNativeTextTransformAttr } from './nativeTextEditorGeometry';
 
 type TextRendererOverrides = {
   fill?: string;
@@ -23,18 +24,6 @@ type TextRendererOverrides = {
   mode?: 'wireframe' | 'normal';
   scaleStrokeWithZoom?: boolean;
   disableFilter?: boolean;
-};
-
-const computeTransformAttr = (data: NativeTextElement['data']) => {
-  if (data.transformMatrix) {
-    return `matrix(${data.transformMatrix.join(' ')})`;
-  }
-  if (data.transform) {
-    const cx = data.x;
-    const cy = data.y;
-    return `translate(${data.transform.translateX ?? 0} ${data.transform.translateY ?? 0}) rotate(${data.transform.rotation ?? 0} ${cx} ${cy}) scale(${data.transform.scaleX ?? 1} ${data.transform.scaleY ?? 1})`;
-  }
-  return undefined;
 };
 
 const composeTransforms = (...parts: Array<string | undefined>): string | undefined => {
@@ -59,15 +48,10 @@ const NativeTextRendererInner: React.FC<{
   const { viewport, scaleStrokeWithZoom, eventHandlers, isElementSelected, isElementLocked, isPathInteractionDisabled, pathCursorMode, rendererOverrides, extensionsContext } = context;
   const data = element.data;
   const textOverrides = (rendererOverrides?.element?.nativeText as TextRendererOverrides | undefined) ?? undefined;
-  const transformAttr = computeTransformAttr(data);
+  const transformAttr = computeNativeTextTransformAttr(data);
   const wireframeState = (useCanvasStore.getState() as unknown as WireframePluginSlice | undefined)?.wireframe;
   const isWireframe = Boolean(wireframeState?.enabled);
-  // Reactive selector — re-renders whenever editingElementId changes
   const editingElementId = useCanvasStore((state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null);
-  // SVG text stays VISIBLE during inline editing — the transparent overlay
-  // captures keystrokes and updates the element in real-time, so the SVG
-  // is the display layer. No hiding needed.
-  void editingElementId;
   const removeWireframeFill = Boolean(isWireframe && wireframeState?.removeFill);
   const disableFilter =
     isWireframe
@@ -110,6 +94,7 @@ const NativeTextRendererInner: React.FC<{
   // This ensures consistent double-click behavior across all element types
 
   const isTouch = isTouchDevice();
+  const isEditingInline = editingElementId === element.id && !isTouch;
   const doubleClickHandler = eventHandlers.onDoubleClick;
 
   const nativeFill = data.fillColor ?? 'none';
@@ -275,62 +260,66 @@ const NativeTextRendererInner: React.FC<{
       transform={transformAttr}
     >
       {groupAnimationNodes}
-      {underlays.map(renderEffectLayer)}
-      <text
-        data-element-id={element.id}
-        x={data.x}
-        y={data.y}
-        fontSize={data.fontSize}
-        fontFamily={data.fontFamily}
-        fontWeight={data.fontWeight ?? 'normal'}
-        fontStyle={data.fontStyle ?? 'normal'}
-        fill={fill}
-        fillOpacity={opacity}
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
-        strokeOpacity={data.strokeOpacity ?? 1}
-        strokeLinecap={data.strokeLinecap}
-        strokeLinejoin={data.strokeLinejoin}
-        strokeDasharray={strokeDasharray}
-        textAnchor={data.textAnchor ?? 'start'}
-        textDecoration={data.textDecoration ?? 'none'}
-        dominantBaseline={dominantBaseline}
-        writingMode={writingMode}
-        direction={direction}
-        wordSpacing={wordSpacing}
-        unicodeBidi={unicodeBidi}
-        rotate={rotate ? rotate.join(' ') : undefined}
-        filter={filterAttr}
-        opacity={data.opacity}
-        letterSpacing={letterSpacing}
-        lengthAdjust={data.lengthAdjust}
-        textLength={data.textLength}
-        {...(!isTouch && pointerDownHandler && { onPointerDown: (event) => pointerDownHandler(element.id, event) })}
-        {...(!isTouch && pointerUpHandler && { onPointerUp: (event) => pointerUpHandler(element.id, event) })}
-        {...(!isTouch && doubleClickHandler && { onDoubleClick: (event) => doubleClickHandler(element.id, event) })}
-        style={{
-          cursor:
-            pathCursorMode === 'select'
-              ? isLocked
-                ? 'default'
-                : isSelected
-                  ? 'move'
-                  : 'text'
-              : 'text',
-          pointerEvents: isPathInteractionDisabled ? 'none' : 'auto',
-          textDecoration: data.textDecoration ?? 'none',
-          ...(textTransform ? { textTransform } : {}),
-          ...(disableFilter ? { filter: 'none' } : {}),
-          ...blendStyle,
-        }}
-        {...clipAttr}
-        {...maskAttr}
-      >
-        {animationNodes}
-        {renderInlineTextEffectAnimations(inlineBaseAnimations, `${element.id}-textfx-base`, restartKey)}
-        {renderTextContent(element.id, fill, true)}
-      </text>
-      {overlays.map(renderEffectLayer)}
+      {!isEditingInline && underlays.map(renderEffectLayer)}
+      {!isEditingInline && (
+        <>
+          <text
+            data-element-id={element.id}
+            x={data.x}
+            y={data.y}
+            fontSize={data.fontSize}
+            fontFamily={data.fontFamily}
+            fontWeight={data.fontWeight ?? 'normal'}
+            fontStyle={data.fontStyle ?? 'normal'}
+            fill={fill}
+            fillOpacity={opacity}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeOpacity={data.strokeOpacity ?? 1}
+            strokeLinecap={data.strokeLinecap}
+            strokeLinejoin={data.strokeLinejoin}
+            strokeDasharray={strokeDasharray}
+            textAnchor={data.textAnchor ?? 'start'}
+            textDecoration={data.textDecoration ?? 'none'}
+            dominantBaseline={dominantBaseline}
+            writingMode={writingMode}
+            direction={direction}
+            wordSpacing={wordSpacing}
+            unicodeBidi={unicodeBidi}
+            rotate={rotate ? rotate.join(' ') : undefined}
+            filter={filterAttr}
+            opacity={data.opacity}
+            letterSpacing={letterSpacing}
+            lengthAdjust={data.lengthAdjust}
+            textLength={data.textLength}
+            {...(!isTouch && pointerDownHandler && { onPointerDown: (event) => pointerDownHandler(element.id, event) })}
+            {...(!isTouch && pointerUpHandler && { onPointerUp: (event) => pointerUpHandler(element.id, event) })}
+            {...(!isTouch && doubleClickHandler && { onDoubleClick: (event) => doubleClickHandler(element.id, event) })}
+            style={{
+              cursor:
+                pathCursorMode === 'select'
+                  ? isLocked
+                    ? 'default'
+                    : isSelected
+                      ? 'move'
+                      : 'text'
+                  : 'text',
+              pointerEvents: isPathInteractionDisabled ? 'none' : 'auto',
+              textDecoration: data.textDecoration ?? 'none',
+              ...(textTransform ? { textTransform } : {}),
+              ...(disableFilter ? { filter: 'none' } : {}),
+              ...blendStyle,
+            }}
+            {...clipAttr}
+            {...maskAttr}
+          >
+            {animationNodes}
+            {renderInlineTextEffectAnimations(inlineBaseAnimations, `${element.id}-textfx-base`, restartKey)}
+            {renderTextContent(element.id, fill, true)}
+          </text>
+          {overlays.map(renderEffectLayer)}
+        </>
+      )}
     </g>
   );
 };

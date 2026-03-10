@@ -1,6 +1,8 @@
 import type { GlyphInfo } from './slice';
 import type { NativeTextElement } from '../nativeText/types';
 
+type EditableSpan = NonNullable<NativeTextElement['data']['spans']>[number];
+
 /**
  * Parse a space-separated list of numbers from a string.
  * Returns an array of parsed values.
@@ -8,6 +10,27 @@ import type { NativeTextElement } from '../nativeText/types';
 export function parseNumberList(value: string | undefined): number[] {
   if (!value || !value.trim()) return [];
   return value.trim().split(/[\s,]+/).map(Number).filter(Number.isFinite);
+}
+
+function getRotateValueForGlyph(values: number[], index: number): number {
+  if (values.length === 0) return 0;
+  return values[index] ?? values[values.length - 1] ?? 0;
+}
+
+function normalizeTextSpans(data: NativeTextElement['data']): EditableSpan[] {
+  if (data.spans && data.spans.length > 0) {
+    return data.spans;
+  }
+
+  return (data.text ?? '').split(/\r?\n/).map((lineText, lineIndex) => ({
+    text: lineText,
+    line: lineIndex,
+    fontWeight: data.fontWeight ?? undefined,
+    fontStyle: data.fontStyle ?? undefined,
+    textDecoration: data.textDecoration ?? undefined,
+    fontSize: data.fontSize,
+    fillColor: data.fillColor ?? undefined,
+  }));
 }
 
 /**
@@ -27,56 +50,22 @@ export function measureGlyphs(
   );
   if (!textEl) return [];
 
-  const spans = data.spans ?? [];
+  const spans = normalizeTextSpans(data);
   const glyphs: GlyphInfo[] = [];
+  let globalCharIndex = 0;
 
-  if (spans.length > 0) {
-    // Build a map: for each span, parse its dx/dy/rotate arrays
-    let globalCharIndex = 0;
-    for (let si = 0; si < spans.length; si++) {
-      const span = spans[si];
-      const text = span.text;
-      const dxValues = parseNumberList(span.dx);
-      const dyValues = parseNumberList(span.dy);
-      const rotateValues = parseNumberList(span.rotate);
+  for (let si = 0; si < spans.length; si++) {
+    const span = spans[si];
+    const text = span.text;
+    const dxValues = parseNumberList(span.dx);
+    const dyValues = parseNumberList(span.dy);
+    const rotateValues = parseNumberList(span.rotate);
 
-      for (let ci = 0; ci < text.length; ci++) {
-        let bbox: GlyphInfo['bbox'] = null;
-        try {
-          if (globalCharIndex < textEl.getNumberOfChars()) {
-            const extent = textEl.getExtentOfChar(globalCharIndex);
-            bbox = {
-              x: extent.x,
-              y: extent.y,
-              width: extent.width,
-              height: extent.height,
-            };
-          }
-        } catch {
-          // getExtentOfChar can throw for whitespace/newlines
-        }
-
-        glyphs.push({
-          index: globalCharIndex,
-          char: text[ci],
-          spanIndex: si,
-          indexInSpan: ci,
-          dx: dxValues[ci] ?? 0,
-          dy: dyValues[ci] ?? 0,
-          rotate: rotateValues[ci] ?? 0,
-          bbox,
-        });
-        globalCharIndex++;
-      }
-    }
-  } else {
-    // No spans, just plain text
-    const text = data.text ?? '';
     for (let ci = 0; ci < text.length; ci++) {
       let bbox: GlyphInfo['bbox'] = null;
       try {
-        if (ci < textEl.getNumberOfChars()) {
-          const extent = textEl.getExtentOfChar(ci);
+        if (globalCharIndex < textEl.getNumberOfChars()) {
+          const extent = textEl.getExtentOfChar(globalCharIndex);
           bbox = {
             x: extent.x,
             y: extent.y,
@@ -89,15 +78,16 @@ export function measureGlyphs(
       }
 
       glyphs.push({
-        index: ci,
+        index: globalCharIndex,
         char: text[ci],
-        spanIndex: 0,
+        spanIndex: si,
         indexInSpan: ci,
-        dx: 0,
-        dy: 0,
-        rotate: 0,
+        dx: dxValues[ci] ?? 0,
+        dy: dyValues[ci] ?? 0,
+        rotate: getRotateValueForGlyph(rotateValues, ci),
         bbox,
       });
+      globalCharIndex++;
     }
   }
 
@@ -113,8 +103,7 @@ export function updateGlyphInSpans(
   glyphIndex: number,
   updates: { dx?: number; dy?: number; rotate?: number },
 ): NativeTextElement['data']['spans'] {
-  const spans = data.spans;
-  if (!spans || spans.length === 0) return spans;
+  const spans = normalizeTextSpans(data);
 
   let globalIdx = 0;
   const newSpans = spans.map((span) => {

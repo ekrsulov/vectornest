@@ -1,0 +1,522 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCanvasStore } from '../../store/canvasStore';
+import { isTouchDevice } from '../../utils/domHelpers';
+import type { InlineTextEditSlice } from './inlineEditSlice';
+import type { NativeTextElement } from './types';
+import { buildSpansPreservingGlyphTransforms } from './inlineTextSpanUtils';
+import { measureNativeTextBounds } from '../../utils/measurementUtils';
+import {
+  computeNativeTextTransformAttr,
+  getNativeTextEditorBox,
+  isVerticalWritingMode,
+} from './nativeTextEditorGeometry';
+
+type EditableSpan = NonNullable<NativeTextElement['data']['spans']>[number];
+type Bounds = { minX: number; minY: number; maxX: number; maxY: number };
+type EditableVisualSpan = EditableSpan & { editorLine: number };
+type GlyphMetric = {
+  originX: number;
+  originY: number;
+};
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+const escapeHtml = (text: string): string =>
+  text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const parseNumberList = (value?: string): number[] => {
+  if (!value || !value.trim()) return [];
+  return value
+    .trim()
+    .split(/[\s,]+/)
+    .map(Number)
+    .filter(Number.isFinite);
+};
+
+const getRotateValueForGlyph = (values: number[], index: number): number => {
+  if (values.length === 0) return 0;
+  return values[index] ?? values[values.length - 1] ?? 0;
+};
+
+const getNumericValueForGlyph = (values: number[], index: number): number => values[index] ?? 0;
+
+const serializeStyle = (style: Record<string, string | number | undefined>) => Object.entries(style)
+  .filter(([, value]) => value !== undefined && value !== '')
+  .map(([key, value]) => `${key}:${String(value)}`)
+  .join(';');
+
+const normalizeLineSpans = (data: NativeTextElement['data']): EditableSpan[] => {
+  if (data.spans && data.spans.length > 0) {
+    return data.spans;
+  }
+
+  return (data.text ?? '').split(/\r?\n/).map((lineText, lineIndex) => ({
+    text: lineText,
+    line: lineIndex,
+    fontWeight: data.fontWeight ?? undefined,
+    fontStyle: data.fontStyle ?? undefined,
+    textDecoration: data.textDecoration ?? undefined,
+    fillColor: data.fillColor ?? undefined,
+  }));
+};
+
+const resolveVisualSpans = (data: NativeTextElement['data']): EditableVisualSpan[] => {
+  const spans = normalizeLineSpans(data);
+  let currentEditorLine = 0;
+
+  return spans.map((span, index) => {
+    if (index === 0) {
+      return { ...span, editorLine: currentEditorLine };
+    }
+
+    const previousSpan = spans[index - 1];
+    const sameDeclaredLine = span.line === previousSpan.line;
+    const hasMeaningfulDy = parseNumberList(span.dy).some((value) => value !== 0);
+    const shouldStartNewVisualLine = span.line > previousSpan.line || (sameDeclaredLine && hasMeaningfulDy);
+
+    if (shouldStartNewVisualLine) {
+      currentEditorLine += 1;
+    }
+
+    return { ...span, editorLine: currentEditorLine };
+  });
+};
+
+const mergeBounds = (current: Bounds | undefined, next: DOMRect): Bounds => {
+  if (!current) {
+    return {
+      minX: next.x,
+      minY: next.y,
+      maxX: next.x + next.width,
+      maxY: next.y + next.height,
+    };
+  }
+
+  return {
+    minX: Math.min(current.minX, next.x),
+    minY: Math.min(current.minY, next.y),
+    maxX: Math.max(current.maxX, next.x + next.width),
+    maxY: Math.max(current.maxY, next.y + next.height),
+  };
+};
+
+const findPreviousVisualSpan = (
+  spans: EditableVisualSpan[],
+  editorLine: number,
+): EditableVisualSpan | undefined => {
+  for (let index = spans.length - 1; index >= 0; index -= 1) {
+    const candidate = spans[index];
+    if (candidate && candidate.editorLine < editorLine) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+};
+
+const resolveSpanDy = (
+  span: EditableVisualSpan,
+  spans: EditableVisualSpan[],
+  data: NativeTextElement['data'],
+): string | undefined => {
+  if (span.dy) return span.dy;
+  if (span.editorLine <= 0) return undefined;
+
+  const previousSpan = findPreviousVisualSpan(spans, span.editorLine);
+  const previousEditorLine = previousSpan?.editorLine ?? (span.editorLine - 1);
+  const delta = span.editorLine - previousEditorLine;
+  const lineHeight = data.lineHeight ?? 1.2;
+  return String(data.fontSize * lineHeight * delta);
+};
+
+const createMeasurementText = (
+  svg: SVGSVGElement,
+  data: NativeTextElement['data'],
+  spans: EditableVisualSpan[],
+  includeRotate: boolean,
+) => {
+  const textEl = document.createElementNS(SVG_NS, 'text');
+  textEl.setAttribute('x', String(data.x));
+  textEl.setAttribute('y', String(data.y));
+  textEl.setAttribute('font-size', String(data.fontSize));
+  textEl.setAttribute('font-family', data.fontFamily);
+  textEl.setAttribute('font-weight', data.fontWeight ?? 'normal');
+  textEl.setAttribute('font-style', data.fontStyle ?? 'normal');
+  textEl.setAttribute('text-decoration', data.textDecoration ?? 'none');
+  textEl.setAttribute('text-anchor', data.textAnchor ?? 'start');
+  textEl.setAttribute('dominant-baseline', data.dominantBaseline ?? 'alphabetic');
+  if (data.letterSpacing !== undefined) textEl.setAttribute('letter-spacing', String(data.letterSpacing));
+  if (data.writingMode && data.writingMode !== 'horizontal-tb') textEl.setAttribute('writing-mode', data.writingMode);
+  if (data.direction) textEl.setAttribute('direction', data.direction);
+  if (data.unicodeBidi) textEl.setAttribute('unicode-bidi', data.unicodeBidi);
+
+  spans.forEach((span) => {
+    const tspan = document.createElementNS(SVG_NS, 'tspan');
+    tspan.setAttribute('x', String(data.x));
+    const dyValue = resolveSpanDy(span, spans, data);
+    if (dyValue) tspan.setAttribute('dy', dyValue);
+    if (span.dx) tspan.setAttribute('dx', span.dx);
+    if (includeRotate && span.rotate) tspan.setAttribute('rotate', span.rotate);
+    if (span.fontWeight) tspan.setAttribute('font-weight', span.fontWeight);
+    if (span.fontStyle) tspan.setAttribute('font-style', span.fontStyle);
+    if (span.textDecoration && span.textDecoration !== 'none') tspan.setAttribute('text-decoration', span.textDecoration);
+    if (span.fillColor) tspan.setAttribute('fill', span.fillColor);
+    tspan.textContent = span.text || ' ';
+    textEl.appendChild(tspan);
+  });
+
+  svg.appendChild(textEl);
+  return textEl;
+};
+
+const measureTextLayout = (
+  data: NativeTextElement['data'],
+): { lineBoxes: Map<number, Bounds>; glyphMetrics: GlyphMetric[] } => {
+  if (typeof document === 'undefined') {
+    return { lineBoxes: new Map(), glyphMetrics: [] };
+  }
+
+  const spans = resolveVisualSpans(data);
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.style.position = 'absolute';
+  svg.style.left = '-100000px';
+  svg.style.top = '-100000px';
+  svg.style.visibility = 'hidden';
+  const rotatedTextEl = createMeasurementText(svg, data, spans, true);
+  const baseTextEl = createMeasurementText(svg, data, spans, false);
+  document.body.appendChild(svg);
+
+  const lineBoxes = new Map<number, Bounds>();
+  const glyphMetrics: GlyphMetric[] = [];
+
+  Array.from(rotatedTextEl.children).forEach((node, index) => {
+    if (!(node instanceof SVGTextPositioningElement)) return;
+    const span = spans[index];
+    if (!span) return;
+    const bbox = node.getBBox();
+    if (!Number.isFinite(bbox.x) || !Number.isFinite(bbox.y)) return;
+    lineBoxes.set(span.editorLine, mergeBounds(lineBoxes.get(span.editorLine), bbox));
+  });
+
+  let glyphIndex = 0;
+  spans.forEach((span) => {
+    for (let charIndex = 0; charIndex < span.text.length; charIndex += 1) {
+      try {
+        const extent = baseTextEl.getExtentOfChar(glyphIndex);
+        const start = baseTextEl.getStartPositionOfChar(glyphIndex);
+        glyphMetrics.push({
+          originX: start.x - extent.x,
+          originY: start.y - extent.y,
+        });
+      } catch {
+        glyphMetrics.push({ originX: 0, originY: data.fontSize });
+      }
+      glyphIndex += 1;
+    }
+  });
+
+  svg.remove();
+  return { lineBoxes, glyphMetrics };
+};
+
+const buildInitialEditorHtml = (
+  data: NativeTextElement['data'],
+  bounds: Bounds,
+  lineBoxes: Map<number, Bounds>,
+  glyphMetrics: GlyphMetric[],
+  paddingX: number,
+  paddingY: number,
+): string => {
+  const spans = resolveVisualSpans(data);
+  const lines = new Map<number, string[]>();
+  const lineStartOffsets = new Map<number, { dx: number; dy: number }>();
+  let glyphCursor = 0;
+  const lineBaseOffsetX = isVerticalWritingMode(data.writingMode)
+    ? 0
+    : Math.max(0, data.x - bounds.minX);
+
+  spans.forEach((span) => {
+    const fragments = lines.get(span.editorLine) ?? [];
+    const dxValues = parseNumberList(span.dx);
+    const dyValues = parseNumberList(span.dy);
+    const rotateValues = parseNumberList(span.rotate);
+    let accumulatedDx = 0;
+    let accumulatedDy = 0;
+
+    for (let index = 0; index < span.text.length; index += 1) {
+      const character = span.text[index];
+      const glyphMetric = glyphMetrics[glyphCursor] ?? { originX: 0, originY: data.fontSize };
+      accumulatedDx += getNumericValueForGlyph(dxValues, index);
+      accumulatedDy += getNumericValueForGlyph(dyValues, index);
+      const rotate = getRotateValueForGlyph(rotateValues, index);
+      const lineStartOffset = lineStartOffsets.get(span.editorLine) ?? (() => {
+        const offset = { dx: accumulatedDx, dy: accumulatedDy };
+        lineStartOffsets.set(span.editorLine, offset);
+        return offset;
+      })();
+      const relativeDx = accumulatedDx - lineStartOffset.dx;
+      const relativeDy = accumulatedDy - lineStartOffset.dy;
+      const transforms: string[] = [];
+      if (relativeDx !== 0 || relativeDy !== 0) {
+        transforms.push(`translate(${relativeDx}px, ${relativeDy}px)`);
+      }
+      const wrapperStyle = serializeStyle({
+        display: 'inline-block',
+        'white-space': 'pre',
+        transform: transforms.length > 0 ? transforms.join(' ') : undefined,
+        'transform-origin': transforms.length > 0 ? '0 0' : undefined,
+        position: 'relative',
+        overflow: 'visible',
+      });
+      const glyphStyle = serializeStyle({
+        display: 'inline-block',
+        'white-space': 'pre',
+        'font-weight': span.fontWeight,
+        'font-style': span.fontStyle,
+        'text-decoration': span.textDecoration !== 'none' ? span.textDecoration : undefined,
+        color: span.fillColor,
+        transform: rotate !== 0 ? `rotate(${rotate}deg)` : undefined,
+        'transform-origin': rotate !== 0 ? `${glyphMetric.originX}px ${glyphMetric.originY}px` : undefined,
+        'line-height': '1',
+        overflow: 'visible',
+      });
+      fragments.push(
+        `<span${wrapperStyle ? ` style="${wrapperStyle}"` : ''}><span${glyphStyle ? ` style="${glyphStyle}"` : ''}>${escapeHtml(character === ' ' ? '\u00A0' : character)}</span></span>`
+      );
+      glyphCursor += 1;
+    }
+
+    if (span.text.length === 0) {
+      fragments.push('<span><br></span>');
+    }
+
+    lines.set(span.editorLine, fragments);
+  });
+
+  const lineIndices = Array.from(lines.keys()).sort((left, right) => left - right);
+  if (lineIndices.length === 0) {
+    return '<div data-inline-line="0"><br></div>';
+  }
+
+  return lineIndices
+    .map((lineIndex, index) => {
+      const lineBounds = lineBoxes.get(lineIndex);
+      const topOffset = lineBounds ? (lineBounds.minY - bounds.minY + paddingY) : paddingY;
+      const leftOffset = lineBounds
+        ? Math.max(paddingX, lineBounds.minX - bounds.minX + paddingX)
+        : paddingX + lineBaseOffsetX;
+      const naturalTopOffset = paddingY + index * data.fontSize * (data.lineHeight ?? 1.2);
+      const relativeTopOffset = topOffset - naturalTopOffset;
+      const relativeLeftOffset = leftOffset - paddingX;
+      const lineStyle = serializeStyle({
+        display: 'block',
+        width: 'max-content',
+        transform: `translate(${relativeLeftOffset}px, ${relativeTopOffset}px)`,
+        'transform-origin': 'top left',
+      });
+      return `<div data-inline-line="${lineIndex}"${lineStyle ? ` style="${lineStyle}"` : ''}>${(lines.get(lineIndex) ?? []).join('') || '<br>'}</div>`;
+    })
+    .join('');
+};
+
+const parseEditablePlainText = (root: HTMLDivElement): string => {
+  const clone = root.cloneNode(true) as HTMLDivElement;
+  clone.querySelectorAll('br').forEach((br) => br.replaceWith('\n'));
+
+  const lineNodes = Array.from(clone.children);
+  if (lineNodes.length > 0) {
+    return lineNodes
+      .map((lineNode) => lineNode.textContent?.replace(/\u00A0/g, ' ') ?? '')
+      .join('\n');
+  }
+
+  return (clone.textContent ?? '').replace(/\u00A0/g, ' ');
+};
+
+const placeCaretAtEnd = (element: HTMLDivElement) => {
+  const selection = window.getSelection();
+  if (!selection) return;
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  range.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(range);
+};
+
+export const NativeTextInlineEditorLayer: React.FC = () => {
+  const editingElementId = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null
+  );
+  const elements = useCanvasStore((state) => state.elements);
+  const updateElement = useCanvasStore((state) => state.updateElement);
+  const stopInlineTextEdit = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).stopInlineTextEdit
+  );
+  const editorRef = useRef<HTMLDivElement>(null);
+  const previousEditingIdRef = useRef<string | null>(null);
+  const originalElementRef = useRef<NativeTextElement | null>(null);
+  const [editorHtml, setEditorHtml] = useState('');
+
+  const element = useMemo(() => {
+    if (!editingElementId) return null;
+    const candidate = elements.find((entry) => entry.id === editingElementId);
+    return candidate?.type === 'nativeText' ? candidate as NativeTextElement : null;
+  }, [editingElementId, elements]);
+
+  const isDesktopNativeTextEditing = Boolean(element) && !isTouchDevice();
+
+  useEffect(() => {
+    if (!isDesktopNativeTextEditing || !element) return;
+    if (previousEditingIdRef.current === element.id) return;
+
+    previousEditingIdRef.current = element.id;
+    originalElementRef.current = element;
+    const editorBox = getNativeTextEditorBox(element.data);
+    const measuredBounds = editorBox.bounds ?? measureNativeTextBounds(element.data);
+    const { lineBoxes, glyphMetrics } = measureTextLayout(element.data);
+    setEditorHtml(buildInitialEditorHtml(
+      element.data,
+      measuredBounds,
+      lineBoxes,
+      glyphMetrics,
+      editorBox.paddingX,
+      editorBox.paddingY,
+    ));
+
+    const frame = window.requestAnimationFrame(() => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      editor.focus();
+      placeCaretAtEnd(editor);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [element, isDesktopNativeTextEditing]);
+
+  useEffect(() => {
+    if (editingElementId) return;
+    previousEditingIdRef.current = null;
+    originalElementRef.current = null;
+    setEditorHtml('');
+  }, [editingElementId]);
+
+  const commitEdit = useCallback(() => {
+    const originalElement = originalElementRef.current;
+    const editor = editorRef.current;
+    if (!originalElement || !editor || !updateElement) {
+      stopInlineTextEdit?.();
+      return;
+    }
+
+    const plainText = parseEditablePlainText(editor);
+    updateElement(originalElement.id, {
+      data: {
+        ...originalElement.data,
+        text: plainText,
+        richText: plainText,
+        spans: buildSpansPreservingGlyphTransforms(
+          plainText,
+          originalElement.data.text ?? '',
+          originalElement.data.spans,
+          {
+            fontWeight: originalElement.data.fontWeight ?? undefined,
+            fontStyle: originalElement.data.fontStyle ?? undefined,
+          }
+        ),
+      },
+    });
+    stopInlineTextEdit?.();
+  }, [stopInlineTextEdit, updateElement]);
+
+  const cancelEdit = useCallback(() => {
+    stopInlineTextEdit?.();
+  }, [stopInlineTextEdit]);
+
+  if (!isDesktopNativeTextEditing || !element) {
+    return null;
+  }
+
+  const box = getNativeTextEditorBox(element.data);
+  const transform = computeNativeTextTransformAttr(element.data);
+
+  return (
+    <g transform={transform} data-element-id={`${element.id}-inline-editor-layer`}>
+      <foreignObject
+        x={box.x}
+        y={box.y}
+        width={box.width}
+        height={box.height}
+        clipPath={element.data.clipPathId ? `url(#${element.data.clipPathId})` : undefined}
+        mask={element.data.maskId ? `url(#${element.data.maskId})` : undefined}
+        opacity={element.data.opacity}
+        style={{ overflow: 'visible', pointerEvents: 'auto' }}
+      >
+        <div
+          {...({ xmlns: 'http://www.w3.org/1999/xhtml' } as Record<string, string>)}
+          style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}
+          onPointerDown={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+        >
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            role="textbox"
+            aria-label="Inline text editor"
+            spellCheck={false}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            onBlur={commitEdit}
+            onKeyDown={(event) => {
+              event.stopPropagation();
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                cancelEdit();
+              }
+            }}
+            style={{
+              width: '100%',
+              height: '100%',
+              boxSizing: 'border-box',
+              overflow: 'visible',
+              border: '1px solid var(--chakra-colors-blue-400, #63B3ED)',
+              borderRadius: '8px',
+              outline: 'none',
+              padding: `${box.paddingY}px ${box.paddingX}px`,
+              margin: 0,
+              background: 'var(--chakra-colors-chakra-body-bg, rgba(255,255,255,0.96))',
+              color: element.data.fillColor ?? 'var(--chakra-colors-chakra-body-text, #1A202C)',
+              caretColor: 'var(--chakra-colors-blue-500, #3182CE)',
+              boxShadow: '0 0 0 1px rgba(49,130,206,0.14), 0 10px 24px rgba(15, 23, 42, 0.12)',
+              fontFamily: element.data.fontFamily,
+              fontSize: `${element.data.fontSize}px`,
+              fontWeight: element.data.fontWeight ?? 'normal',
+              fontStyle: element.data.fontStyle ?? 'normal',
+              lineHeight: String(element.data.lineHeight ?? 1.2),
+              letterSpacing: element.data.letterSpacing !== undefined ? `${element.data.letterSpacing}px` : undefined,
+              textAlign: 'left',
+              textDecoration: element.data.textDecoration !== 'none' ? element.data.textDecoration : undefined,
+              textTransform: element.data.textTransform !== 'none' ? element.data.textTransform : undefined,
+              writingMode: isVerticalWritingMode(element.data.writingMode)
+                ? element.data.writingMode as React.CSSProperties['writingMode']
+                : undefined,
+              direction: element.data.direction,
+              whiteSpace: 'pre',
+              userSelect: 'text',
+              WebkitUserSelect: 'text',
+              position: 'relative',
+            }}
+            dangerouslySetInnerHTML={{ __html: editorHtml }}
+          />
+        </div>
+      </foreignObject>
+    </g>
+  );
+};
+
+NativeTextInlineEditorLayer.displayName = 'NativeTextInlineEditorLayer';

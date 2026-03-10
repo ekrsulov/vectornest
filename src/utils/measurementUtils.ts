@@ -198,9 +198,45 @@ export const measureNativeTextBounds = (
   data: NativeTextElement['data']
 ): { minX: number; minY: number; maxX: number; maxY: number } => {
   // Build a cache key from the properties that affect text measurement
-  const spansKey = data.spans ? data.spans.map(s => `${s.text}|${s.line}|${s.fontWeight ?? ''}|${s.fontStyle ?? ''}|${s.fontSize ?? ''}`).join(';') : data.text;
-  // Add textTransform and dominantBaseline to cache key for accuracy
-  const cacheKey = `${data.x}|${data.y}|${spansKey}|${data.fontSize}|${data.fontFamily}|${data.fontWeight ?? ''}|${data.fontStyle ?? ''}|${data.letterSpacing ?? ''}|${data.textAnchor ?? ''}|${data.strokeWidth ?? 0}|${data.lineHeight ?? ''}|${data.writingMode ?? ''}|${data.textTransform ?? ''}|${data.dominantBaseline ?? ''}`;
+  const spansKey = data.spans
+    ? data.spans
+      .map((span) => [
+        span.text,
+        span.line,
+        span.fontWeight ?? '',
+        span.fontStyle ?? '',
+        span.fontSize ?? '',
+        span.dx ?? '',
+        span.dy ?? '',
+        span.rotate ?? '',
+        span.textDecoration ?? '',
+        span.fillColor ?? '',
+      ].join('|'))
+      .join(';')
+    : data.text;
+  // Include all text-layout-affecting properties so bbox cache invalidates when glyph offsets change.
+  const cacheKey = [
+    data.x,
+    data.y,
+    spansKey,
+    data.fontSize,
+    data.fontFamily,
+    data.fontWeight ?? '',
+    data.fontStyle ?? '',
+    data.letterSpacing ?? '',
+    data.wordSpacing ?? '',
+    data.textAnchor ?? '',
+    data.strokeWidth ?? 0,
+    data.lineHeight ?? '',
+    data.writingMode ?? '',
+    data.textTransform ?? '',
+    data.dominantBaseline ?? '',
+    data.direction ?? '',
+    data.unicodeBidi ?? '',
+    data.textLength ?? '',
+    data.lengthAdjust ?? '',
+    data.rotate?.join(',') ?? '',
+  ].join('|');
 
   const cached = textMeasurementCache.get(cacheKey);
   if (cached) {

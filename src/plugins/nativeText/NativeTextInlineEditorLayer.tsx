@@ -66,8 +66,6 @@ const getRotateValueForGlyph = (values: number[], index: number): number => {
   return values[index] ?? values[values.length - 1] ?? 0;
 };
 
-const getNumericValueForGlyph = (values: number[], index: number): number => values[index] ?? 0;
-
 const serializeStyle = (style: Record<string, string | number | undefined>) => Object.entries(style)
   .filter(([, value]) => value !== undefined && value !== '')
   .map(([key, value]) => `${key}:${String(value)}`)
@@ -479,33 +477,22 @@ const buildInitialEditorHtml = (
 ): string => {
   const spans = resolveVisualSpans(data);
   const lines = new Map<number, string[]>();
-  const lineStartOffsets = new Map<number, { dx: number; dy: number }>();
   const desiredLineOffsets = computeDesiredLineOffsets(data, bounds, lineBoxes, glyphMetrics, paddingX, paddingY);
   let glyphCursor = 0;
 
   spans.forEach((span) => {
     const fragments = lines.get(span.editorLine) ?? [];
-    const dxValues = parseNumberList(span.dx);
-    const dyValues = parseNumberList(span.dy);
     const rotateValues = parseNumberList(span.rotate);
-    let accumulatedDx = 0;
-    let accumulatedDy = 0;
 
     for (let index = 0; index < span.text.length; index += 1) {
       const character = span.text[index];
       const glyphMetric = glyphMetrics[glyphCursor] ?? DEFAULT_GLYPH_METRIC;
-      accumulatedDx += getNumericValueForGlyph(dxValues, index);
-      accumulatedDy += getNumericValueForGlyph(dyValues, index);
       const rotate = getRotateValueForGlyph(rotateValues, index);
-      const lineStartOffset = lineStartOffsets.get(span.editorLine) ?? (() => {
-        const offset = { dx: accumulatedDx, dy: accumulatedDy };
-        lineStartOffsets.set(span.editorLine, offset);
-        return offset;
-      })();
-      const kerningDx = glyphMetric.svgStartX - glyphMetric.htmlStartX;
-      const kerningDy = glyphMetric.svgBaselineY - glyphMetric.htmlBaselineY;
-      const relativeDx = accumulatedDx - lineStartOffset.dx + kerningDx;
-      const relativeDy = accumulatedDy - lineStartOffset.dy + kerningDy;
+      // Use the measured delta between the SVG glyph layout and the natural HTML
+      // inline flow. This already captures per-glyph dx/dy offsets, so adding the
+      // parsed SVG values again would double-apply moved glyph positions.
+      const relativeDx = glyphMetric.svgStartX - glyphMetric.htmlStartX;
+      const relativeDy = glyphMetric.svgBaselineY - glyphMetric.htmlBaselineY;
       const transforms: string[] = [];
       if (relativeDx !== 0 || relativeDy !== 0) {
         transforms.push(`translate(${relativeDx}px, ${relativeDy}px)`);

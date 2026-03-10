@@ -37,10 +37,22 @@ const resolveInheritedFontSize = (element: Element | null, defaults?: GlobalText
 };
 
 export const resolveTextStyle = (element: Element, defaults?: GlobalTextStyle) => {
-    const sizeAttr = element.getAttribute('font-size');
-    const familyAttr = element.getAttribute('font-family');
-    const weightAttr = element.getAttribute('font-weight');
-    const styleAttr = element.getAttribute('font-style');
+    // Read from both element attributes and inline style
+    const styleProps: Record<string, string> = {};
+    const styleStr = element.getAttribute('style');
+    if (styleStr) {
+        styleStr.split(';').forEach((prop) => {
+            const colonIdx = prop.indexOf(':');
+            if (colonIdx === -1) return;
+            const key = prop.slice(0, colonIdx).trim();
+            const value = prop.slice(colonIdx + 1).trim();
+            if (key && value) styleProps[key] = value;
+        });
+    }
+    const sizeAttr = element.getAttribute('font-size') ?? styleProps['font-size'] ?? null;
+    const familyAttr = element.getAttribute('font-family') ?? styleProps['font-family'] ?? null;
+    const weightAttr = element.getAttribute('font-weight') ?? styleProps['font-weight'] ?? null;
+    const styleAttr = element.getAttribute('font-style') ?? styleProps['font-style'] ?? null;
     const baseSize = resolveInheritedFontSize(element.parentElement, defaults);
 
     return {

@@ -52,6 +52,7 @@ import { artboardPlugin } from './artboard';
 import { perspectiveGridPlugin } from './perspectiveGrid';
 import { commandPalettePlugin } from './commandPalette';
 import { contextActionsPlugin } from './contextActions';
+import { glyphsPlugin } from './glyphs';
 
 export type DeferredPluginBatchId = 'libraryShell' | 'advancedTool' | 'longTail' | 'utility';
 
@@ -197,6 +198,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   usePlugin,
   commandPalettePlugin,
   contextActionsPlugin,
+  glyphsPlugin,
   // pluginSelectorPlugin must be last so its init() runs after all other plugins are registered
   pluginSelectorPlugin,
 ];

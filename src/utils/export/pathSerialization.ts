@@ -211,10 +211,11 @@ const serializeTextPathSpans = (textPath: TextPathData): string => {
   return spans.map((span, index) => {
     const previousSpan = index > 0 ? spans[index - 1] : undefined;
     const isLineStart = index === 0 || span.line !== previousSpan?.line;
-    const dy =
-      isLineStart && span.line > 0
+    const dy = span.dy
+      ? ` dy="${span.dy}"`
+      : (isLineStart && span.line > 0
         ? ` dy="${textPath.fontSize * (span.line - (previousSpan?.line ?? 0))}"`
-        : '';
+        : '');
     const styleAttrs = [
       span.fontWeight ? `font-weight="${span.fontWeight}"` : null,
       span.fontStyle ? `font-style="${span.fontStyle}"` : null,
@@ -226,8 +227,9 @@ const serializeTextPathSpans = (textPath: TextPathData): string => {
       .filter(Boolean)
       .join(' ');
     const dx = span.dx ? ` dx="${span.dx}"` : '';
+    const rotateAttr = span.rotate ? ` rotate="${span.rotate}"` : '';
 
-    return `<tspan${dy}${dx}${styleAttrs ? ` ${styleAttrs}` : ''}>${escapeXmlText(
+    return `<tspan${dy}${dx}${rotateAttr}${styleAttrs ? ` ${styleAttrs}` : ''}>${escapeXmlText(
       span.text
     )}</tspan>`;
   }).join('');

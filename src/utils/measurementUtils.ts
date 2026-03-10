@@ -270,12 +270,17 @@ export const measureNativeTextBounds = (
       const previousSpan = idx > 0 ? spans[idx - 1] : undefined;
       if (idx === 0 || span.line !== previousSpan?.line) {
         tspan.setAttribute('x', data.x.toString());
-        if (span.line > 0) {
+        // Use stored per-glyph dy if available, otherwise compute from line height
+        if (span.dy) {
+          tspan.setAttribute('dy', span.dy);
+        } else if (span.line > 0) {
           const prevLine = previousSpan?.line ?? 0;
           const delta = span.line - prevLine;
           tspan.setAttribute('dy', (data.fontSize * lineHeight * delta).toString());
         }
       }
+      if (span.dx) tspan.setAttribute('dx', span.dx);
+      if (span.rotate) tspan.setAttribute('rotate', span.rotate);
       if (span.fontWeight) tspan.setAttribute('font-weight', span.fontWeight);
       if (span.fontStyle) tspan.setAttribute('font-style', span.fontStyle);
       if (span.fontSize) tspan.setAttribute('font-size', span.fontSize.toString());

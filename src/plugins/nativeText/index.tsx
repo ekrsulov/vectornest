@@ -312,10 +312,14 @@ const nativeTextContribution: ElementContribution<NativeTextElement> = {
     if (spans && spans.length > 0) {
       const tspanStr = spans.map((span, idx) => {
         const isLineStart = idx === 0 || span.line !== spans[idx - 1].line;
-        const dy = isLineStart && span.line > 0
-          ? ` dy="${fontSize * lh * (span.line - (spans[idx - 1]?.line ?? 0))}"`
-          : '';
+        // Use stored per-glyph dy if available, otherwise compute from line height
+        const dy = span.dy
+          ? ` dy="${span.dy}"`
+          : (isLineStart && span.line > 0
+            ? ` dy="${fontSize * lh * (span.line - (spans[idx - 1]?.line ?? 0))}"`
+            : '');
         const dx = span.dx ? ` dx="${span.dx}"` : '';
+        const rotateAttr = span.rotate ? ` rotate="${span.rotate}"` : '';
         const xAttr = isLineStart ? ` x="${x}"` : '';
         const styleAttrs = [
           span.fontWeight ? `font-weight="${span.fontWeight}"` : null,
@@ -324,7 +328,7 @@ const nativeTextContribution: ElementContribution<NativeTextElement> = {
           span.textDecoration && span.textDecoration !== 'none' ? `text-decoration="${span.textDecoration}"` : null,
           span.fillColor ? `fill="${span.fillColor}"` : null,
         ].filter(Boolean).join(' ');
-        return `<tspan${xAttr}${dy}${dx}${styleAttrs ? ` ${styleAttrs}` : ''}>${escapeXmlText(span.text)}</tspan>`;
+        return `<tspan${xAttr}${dy}${dx}${rotateAttr}${styleAttrs ? ` ${styleAttrs}` : ''}>${escapeXmlText(span.text)}</tspan>`;
       }).join('');
       const richAttr = richText ? ` data-rich-text="${escapeXmlAttribute(encodeURIComponent(richText))}"` : '';
       return `<text ${attrs.join(' ')}${richAttr}>${tspanStr}</text>`;

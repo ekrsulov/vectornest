@@ -178,12 +178,17 @@ const NativeTextRendererInner: React.FC<{
     spans
       ? spans.map((span, idx) => {
         const isLineStart = idx === 0 || span.line !== spans[idx - 1].line;
+        // Use stored per-glyph dy if available, otherwise compute from line height
+        const dyValue = span.dy
+          ? span.dy
+          : (isLineStart ? (span.line === 0 ? 0 : data.fontSize * lineHeight * (span.line - (spans[idx - 1]?.line ?? 0))) : undefined);
         return (
           <tspan
             key={`${keyPrefix}-tspan-${idx}`}
             x={isLineStart ? data.x : undefined}
-            dy={isLineStart ? (span.line === 0 ? 0 : data.fontSize * lineHeight * (span.line - (spans[idx - 1]?.line ?? 0))) : undefined}
+            dy={dyValue}
             dx={span.dx}
+            rotate={span.rotate}
             fontWeight={span.fontWeight}
             fontStyle={span.fontStyle}
             fontSize={span.fontSize}

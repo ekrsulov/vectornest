@@ -15,27 +15,47 @@ export function shapeToNativeText(
 
     const style = extractStyleAttributes(element);
     const filterId = (style as { filterId?: string }).filterId;
-    const x = parseFloat(element.getAttribute('x') || '0');
-    const y = parseFloat(element.getAttribute('y') || '0');
-    const fontSizeAttr = element.getAttribute('font-size');
+
+    // Helper to read from element attributes OR inline style
+    const styleProps: Record<string, string> = {};
+    const styleAttrStr = element.getAttribute('style');
+    if (styleAttrStr) {
+        styleAttrStr.split(';').forEach((prop) => {
+            const colonIdx = prop.indexOf(':');
+            if (colonIdx === -1) return;
+            const key = prop.slice(0, colonIdx).trim();
+            const value = prop.slice(colonIdx + 1).trim();
+            if (key && value) styleProps[key] = value;
+        });
+    }
+    const getVal = (attrName: string, styleName?: string): string | null =>
+        element.getAttribute(attrName) ?? styleProps[styleName ?? attrName] ?? null;
+
+    // Fall back to first tspan's x/y when the text element doesn't have them
+    const firstTspan = element.querySelector('tspan');
+    const xAttrVal = getVal('x') ?? firstTspan?.getAttribute('x');
+    const yAttrVal = getVal('y') ?? firstTspan?.getAttribute('y');
+    const x = parseFloat(xAttrVal || '0');
+    const y = parseFloat(yAttrVal || '0');
+    const fontSizeAttr = getVal('font-size');
     const { fontSize: resolvedSize, fontFamily, fontWeight, fontStyle } = resolveTextStyle(element);
     const fontSize = parseFontSize(fontSizeAttr, resolvedSize ?? 16) ?? resolvedSize ?? 16;
-    const textAnchor = (element.getAttribute('text-anchor') as 'start' | 'middle' | 'end' | null) || 'start';
-    const dominantBaseline = (element.getAttribute('dominant-baseline') as 'alphabetic' | 'middle' | 'hanging' | 'ideographic' | null) ?? undefined;
-    const lengthAdjustAttr = element.getAttribute('lengthAdjust') as 'spacing' | 'spacingAndGlyphs' | null;
-    const textLengthAttr = element.getAttribute('textLength');
+    const textAnchor = (getVal('text-anchor') as 'start' | 'middle' | 'end' | null) || 'start';
+    const dominantBaseline = (getVal('dominant-baseline') as 'alphabetic' | 'middle' | 'hanging' | 'ideographic' | null) ?? undefined;
+    const lengthAdjustAttr = getVal('lengthAdjust') as 'spacing' | 'spacingAndGlyphs' | null;
+    const textLengthAttr = getVal('textLength');
     const lengthAdjust = lengthAdjustAttr === 'spacing' || lengthAdjustAttr === 'spacingAndGlyphs' ? lengthAdjustAttr : undefined;
-    const textLength = textLengthAttr !== null ? parseFloat(textLengthAttr) : undefined;
+    const textLength = textLengthAttr !== null ? parseFloat(textLengthAttr!) : undefined;
 
     // Parse rotate attribute (per-glyph rotation values)
-    const rotateAttr = element.getAttribute('rotate');
+    const rotateAttr = getVal('rotate');
     const rotate = rotateAttr ? rotateAttr.trim().split(/[\s,]+/).map(v => parseFloat(v)).filter(v => Number.isFinite(v)) : undefined;
 
     // Parse direction, unicode-bidi and word-spacing attributes
-    const direction = element.getAttribute('direction') as 'ltr' | 'rtl' | null ?? undefined;
-    const unicodeBidi = element.getAttribute('unicode-bidi') as NativeTextElement['data']['unicodeBidi'] | null ?? undefined;
-    const wordSpacingAttr = element.getAttribute('word-spacing');
-    const wordSpacing = wordSpacingAttr !== null ? parseFloat(wordSpacingAttr) : undefined;
+    const direction = getVal('direction') as 'ltr' | 'rtl' | null ?? undefined;
+    const unicodeBidi = getVal('unicode-bidi') as NativeTextElement['data']['unicodeBidi'] | null ?? undefined;
+    const wordSpacingAttr = getVal('word-spacing');
+    const wordSpacing = wordSpacingAttr !== null ? parseFloat(wordSpacingAttr!) : undefined;
 
     const normalizeTextContent = (value: string): string => {
         const lines = value.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.length > 0);
@@ -43,11 +63,11 @@ export function shapeToNativeText(
     };
 
     const textContent = normalizeTextContent(element.textContent ?? '');
-    const textDecoration = (element.getAttribute('text-decoration') as 'none' | 'underline' | 'line-through' | null) ?? 'none';
-    const letterSpacingAttr = element.getAttribute('letter-spacing');
-    const letterSpacing = letterSpacingAttr !== null ? parseFloat(letterSpacingAttr) : undefined;
-    const textTransform = (element.getAttribute('text-transform') as 'none' | 'uppercase' | 'lowercase' | 'capitalize' | null) ?? 'none';
-    const writingModeAttr = element.getAttribute('writing-mode') ?? (element as SVGElement).style?.getPropertyValue?.('writing-mode') ?? undefined;
+    const textDecoration = (getVal('text-decoration') as 'none' | 'underline' | 'line-through' | null) ?? 'none';
+    const letterSpacingAttr = getVal('letter-spacing');
+    const letterSpacing = letterSpacingAttr !== null ? parseFloat(letterSpacingAttr!) : undefined;
+    const textTransform = (getVal('text-transform') as 'none' | 'uppercase' | 'lowercase' | 'capitalize' | null) ?? 'none';
+    const writingModeAttr = getVal('writing-mode');
     const writingMode = writingModeAttr ? writingModeAttr.trim() as NativeTextElement['data']['writingMode'] : undefined;
     const resolvedFillColor = style.fillColor ?? '#000000';
 
@@ -59,11 +79,24 @@ export function shapeToNativeText(
     if (tspanNodes.length > 0) {
         let line = 0;
         const dxQueue: number[] = [];
+        const dyQueue: number[] = [];
+        const rotateQueue: number[] = [];
 
         spans = tspanNodes.map((node, idx) => {
-            if (idx > 0 && (node.getAttribute('dy') !== null || node.getAttribute('x') !== null)) {
+            const hasDy = node.getAttribute('dy') !== null;
+            const hasX = node.getAttribute('x') !== null;
+            // Detect line breaks: only increment line when dy/x is present AND
+            // no per-glyph dy values exist (per-glyph dy means glyph positioning, not line breaks)
+            const dyAttr = node.getAttribute('dy') ?? (node as SVGElement).style?.getPropertyValue?.('dy') ?? undefined;
+            const parsedDy = (dyAttr ?? '').trim();
+            const dyValues = parsedDy.length ? parsedDy.split(/[\s,]+/).map((v) => parseFloat(v)).filter((v) => Number.isFinite(v)) : [];
+            const isPerGlyphDy = dyValues.length > 1;
+
+            if (idx > 0 && (hasDy || hasX) && !isPerGlyphDy) {
                 line += 1;
             }
+
+            // Parse dx
             const dxAttr = node.getAttribute('dx') ?? (node as SVGElement).style?.getPropertyValue?.('dx') ?? undefined;
             const parsedDx = (dxAttr ?? '').trim();
             if (parsedDx.length) {
@@ -72,9 +105,26 @@ export function shapeToNativeText(
                     dxQueue.push(...list);
                 }
             }
+
+            // Parse dy (only per-glyph values, not single-value line breaks)
+            if (isPerGlyphDy) {
+                dyQueue.push(...dyValues);
+            }
+
+            // Parse rotate (per-glyph values)
+            const rotateAttrTspan = node.getAttribute('rotate');
+            if (rotateAttrTspan) {
+                const rotateValues = rotateAttrTspan.trim().split(/[\s,]+/).map((v) => parseFloat(v)).filter((v) => Number.isFinite(v));
+                if (rotateValues.length) {
+                    rotateQueue.push(...rotateValues);
+                }
+            }
+
             const rawText = node.textContent ?? '';
             const textContent = rawText.trim();
             const glyphCount = Math.max(1, textContent.length);
+
+            // Consume dx
             const consumedDx: number[] = [];
             for (let i = 0; i < glyphCount; i += 1) {
                 if (!dxQueue.length) break;
@@ -82,6 +132,25 @@ export function shapeToNativeText(
                 if (val !== undefined) consumedDx.push(val);
             }
             const dx = consumedDx.length ? consumedDx.join(' ') : undefined;
+
+            // Consume dy
+            const consumedDy: number[] = [];
+            for (let i = 0; i < glyphCount; i += 1) {
+                if (!dyQueue.length) break;
+                const val = dyQueue.shift();
+                if (val !== undefined) consumedDy.push(val);
+            }
+            const dy = consumedDy.length ? consumedDy.join(' ') : undefined;
+
+            // Consume rotate
+            const consumedRotate: number[] = [];
+            for (let i = 0; i < glyphCount; i += 1) {
+                if (!rotateQueue.length) break;
+                const val = rotateQueue.shift();
+                if (val !== undefined) consumedRotate.push(val);
+            }
+            const spanRotate = consumedRotate.length ? consumedRotate.join(' ') : undefined;
+
             return {
                 text: textContent,
                 line,
@@ -91,6 +160,8 @@ export function shapeToNativeText(
                 textDecoration: (node.getAttribute('text-decoration') as 'none' | 'underline' | 'line-through' | null) ?? undefined,
                 fillColor: node.getAttribute('fill') ?? undefined,
                 dx,
+                dy,
+                rotate: spanRotate,
             };
         });
 

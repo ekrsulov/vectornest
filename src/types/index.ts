@@ -113,6 +113,8 @@ export interface PathData extends StrokeProperties, FillProperties, Presentation
       textDecoration?: 'none' | 'underline' | 'line-through';
       fillColor?: string;
       dx?: string;
+      dy?: string;
+      rotate?: string;
     }>;
     fontSize: number;
     fontFamily: string;

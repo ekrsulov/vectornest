@@ -26,6 +26,8 @@ export type NativeTextElement = CanvasElementBase<'nativeText', {
     fontSize?: number;
     fillColor?: string;
     dx?: string;
+    dy?: string;
+    rotate?: string;
   }>;
   fontSize: number;
   fontFamily: string;

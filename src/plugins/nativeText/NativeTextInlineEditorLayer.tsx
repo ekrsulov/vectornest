@@ -358,8 +358,8 @@ const measureTextLayout = (
         const boxY = lineBox ? baseExtent.y - lineBox.minY : 0;
         const htmlLineBaselineY = lineBaselines.get(span.editorLine) ?? data.fontSize;
         glyphMetrics.push({
-          originX: start.x - baseExtent.x,
-          originY: start.y - baseExtent.y,
+          originX: 0,
+          originY: htmlLineBaselineY - htmlBox.top,
           boxX,
           boxY,
           svgStartX: lineBox ? start.x - lineBox.minX : 0,
@@ -422,6 +422,7 @@ const computeDesiredLineOffsets = (
   const lineIndices = Array.from(new Set(spans.map((span) => span.editorLine))).sort((left, right) => left - right);
   return new Map(lineIndices.map((lineIndex, index) => {
     const lineBounds = lineBoxes.get(lineIndex);
+    const baselineOffsets = lineBaselineOffsets.get(lineIndex);
     const leftOffset = lineBounds
       ? Math.max(paddingX, lineBounds.minX - bounds.minX + paddingX)
       : paddingX + lineBaseOffsetX;
@@ -430,11 +431,13 @@ const computeDesiredLineOffsets = (
       ? (lineBounds.minY - bounds.minY + paddingY)
       : naturalTopOffset;
     const desiredTopOffset = lineBounds ? lineTopOffset : paddingY;
+    const desiredBaselineY = desiredTopOffset + (baselineOffsets?.htmlBaselineY ?? 0);
 
     return [lineIndex, {
       leftOffset,
       naturalTopOffset,
       desiredTopOffset,
+      desiredBaselineY,
     }];
   }));
 };
@@ -652,7 +655,7 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
           if (desired && actual) {
             setEditorVisualOffset({
               x: desired.leftOffset - actual.left,
-              y: desired.desiredTopOffset - actual.top,
+              y: desired.desiredBaselineY !== undefined ? desired.desiredBaselineY - actual.baseline : desired.desiredTopOffset - actual.top,
             });
           }
         }

@@ -17,9 +17,31 @@ type EditableVisualSpan = EditableSpan & { editorLine: number };
 type GlyphMetric = {
   originX: number;
   originY: number;
+  boxX: number;
+  boxY: number;
+  svgStartX: number;
+  htmlBoxX: number;
+  htmlBoxY: number;
+  htmlStartX: number;
+  svgBaselineY: number;
+  htmlBaselineY: number;
+};
+
+const DEFAULT_GLYPH_METRIC: GlyphMetric = {
+  originX: 0,
+  originY: 0,
+  boxX: 0,
+  boxY: 0,
+  svgStartX: 0,
+  htmlBoxX: 0,
+  htmlBoxY: 0,
+  htmlStartX: 0,
+  svgBaselineY: 0,
+  htmlBaselineY: 0,
 };
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const INLINE_EDITOR_LINE_HEIGHT = 1;
 
 const escapeHtml = (text: string): string =>
   text
@@ -174,6 +196,127 @@ const createMeasurementText = (
   return textEl;
 };
 
+const measureHtmlGlyphBoxes = (
+  data: NativeTextElement['data'],
+  spans: EditableVisualSpan[],
+): {
+  glyphs: Array<{ left: number; top: number; startX: number }>;
+  lineBaselines: Map<number, number>;
+} => {
+  if (typeof document === 'undefined') {
+    return { glyphs: [], lineBaselines: new Map() };
+  }
+
+  const host = document.createElement('div');
+  host.style.position = 'absolute';
+  host.style.left = '-100000px';
+  host.style.top = '-100000px';
+  host.style.visibility = 'hidden';
+  host.style.pointerEvents = 'none';
+  host.style.whiteSpace = 'pre';
+  host.style.fontFamily = data.fontFamily;
+  host.style.fontSize = `${data.fontSize}px`;
+  host.style.fontWeight = data.fontWeight ?? 'normal';
+  host.style.fontStyle = data.fontStyle ?? 'normal';
+  host.style.lineHeight = String(INLINE_EDITOR_LINE_HEIGHT);
+  if (data.letterSpacing !== undefined) {
+    host.style.letterSpacing = `${data.letterSpacing}px`;
+  }
+  if (data.direction) {
+    host.style.direction = data.direction;
+  }
+  const verticalWritingMode = isVerticalWritingMode(data.writingMode)
+    ? data.writingMode as React.CSSProperties['writingMode']
+    : undefined;
+  if (verticalWritingMode) {
+    host.style.writingMode = verticalWritingMode;
+  }
+
+  const charNodes: Array<{ wrapper: HTMLSpanElement; glyph: HTMLSpanElement; line: number }> = [];
+  const lines = new Map<number, HTMLDivElement>();
+  const lineBaselineMarkers = new Map<number, HTMLSpanElement>();
+
+  spans.forEach((span) => {
+    let lineNode = lines.get(span.editorLine);
+    if (!lineNode) {
+      lineNode = document.createElement('div');
+      lineNode.style.display = 'block';
+      lineNode.style.width = 'max-content';
+      lineNode.style.position = 'relative';
+      lines.set(span.editorLine, lineNode);
+      host.appendChild(lineNode);
+
+      const lineBaseline = document.createElement('span');
+      lineBaseline.style.display = 'inline-block';
+      lineBaseline.style.width = '0';
+      lineBaseline.style.height = '1px';
+      lineBaseline.style.padding = '0';
+      lineBaseline.style.margin = '0';
+      lineBaseline.style.overflow = 'hidden';
+      lineBaseline.style.verticalAlign = 'baseline';
+      lineBaselineMarkers.set(span.editorLine, lineBaseline);
+    }
+
+    for (let index = 0; index < span.text.length; index += 1) {
+      const wrapper = document.createElement('span');
+      wrapper.style.display = 'inline-block';
+      wrapper.style.whiteSpace = 'pre';
+      wrapper.style.position = 'relative';
+      wrapper.style.overflow = 'visible';
+
+      const glyph = document.createElement('span');
+      glyph.style.display = 'inline-block';
+      glyph.style.whiteSpace = 'pre';
+      glyph.style.lineHeight = '1';
+      glyph.style.overflow = 'visible';
+      if (span.fontWeight) glyph.style.fontWeight = span.fontWeight;
+      if (span.fontStyle) glyph.style.fontStyle = span.fontStyle;
+      if (span.textDecoration && span.textDecoration !== 'none') glyph.style.textDecoration = span.textDecoration;
+      glyph.textContent = span.text[index] === ' ' ? '\u00A0' : span.text[index] ?? '';
+
+      wrapper.appendChild(glyph);
+      lineNode.appendChild(wrapper);
+      charNodes.push({ wrapper, glyph, line: span.editorLine });
+    }
+
+    if (span.text.length === 0) {
+      const empty = document.createElement('span');
+      empty.innerHTML = '<br>';
+      lineNode.appendChild(empty);
+    }
+  });
+
+  lineBaselineMarkers.forEach((marker, line) => {
+    const lineNode = lines.get(line);
+    lineNode?.appendChild(marker);
+  });
+
+  document.body.appendChild(host);
+
+  const lineBaselines = new Map<number, number>();
+  lineBaselineMarkers.forEach((marker, line) => {
+    const lineNode = lines.get(line);
+    const lineRect = lineNode?.getBoundingClientRect();
+    const markerRect = marker.getBoundingClientRect();
+    lineBaselines.set(line, lineRect ? markerRect.bottom - lineRect.top : 0);
+  });
+
+  const glyphs = charNodes.map(({ wrapper, glyph, line }) => {
+    const lineNode = lines.get(line) ?? null;
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const glyphRect = glyph.getBoundingClientRect();
+    const lineRect = lineNode?.getBoundingClientRect();
+    return {
+      left: lineRect ? glyphRect.left - lineRect.left : 0,
+      top: lineRect ? glyphRect.top - lineRect.top : 0,
+      startX: lineRect ? wrapperRect.left - lineRect.left : 0,
+    };
+  });
+
+  host.remove();
+  return { glyphs, lineBaselines };
+};
+
 const measureTextLayout = (
   data: NativeTextElement['data'],
 ): { lineBoxes: Map<number, Bounds>; glyphMetrics: GlyphMetric[] } => {
@@ -187,14 +330,14 @@ const measureTextLayout = (
   svg.style.left = '-100000px';
   svg.style.top = '-100000px';
   svg.style.visibility = 'hidden';
-  const rotatedTextEl = createMeasurementText(svg, data, spans, true);
   const baseTextEl = createMeasurementText(svg, data, spans, false);
   document.body.appendChild(svg);
+  const { glyphs: htmlGlyphBoxes, lineBaselines } = measureHtmlGlyphBoxes(data, spans);
 
   const lineBoxes = new Map<number, Bounds>();
   const glyphMetrics: GlyphMetric[] = [];
 
-  Array.from(rotatedTextEl.children).forEach((node, index) => {
+  Array.from(baseTextEl.children).forEach((node, index) => {
     if (!(node instanceof SVGTextPositioningElement)) return;
     const span = spans[index];
     if (!span) return;
@@ -207,14 +350,38 @@ const measureTextLayout = (
   spans.forEach((span) => {
     for (let charIndex = 0; charIndex < span.text.length; charIndex += 1) {
       try {
-        const extent = baseTextEl.getExtentOfChar(glyphIndex);
+        const baseExtent = baseTextEl.getExtentOfChar(glyphIndex);
         const start = baseTextEl.getStartPositionOfChar(glyphIndex);
+        const htmlBox = htmlGlyphBoxes[glyphIndex] ?? { left: 0, top: 0, startX: 0 };
+        const lineBox = lineBoxes.get(span.editorLine);
+        const boxX = lineBox ? baseExtent.x - lineBox.minX : 0;
+        const boxY = lineBox ? baseExtent.y - lineBox.minY : 0;
+        const htmlLineBaselineY = lineBaselines.get(span.editorLine) ?? data.fontSize;
         glyphMetrics.push({
-          originX: start.x - extent.x,
-          originY: start.y - extent.y,
+          originX: start.x - baseExtent.x,
+          originY: start.y - baseExtent.y,
+          boxX,
+          boxY,
+          svgStartX: lineBox ? start.x - lineBox.minX : 0,
+          htmlBoxX: htmlBox.left,
+          htmlBoxY: htmlBox.top,
+          htmlStartX: htmlBox.startX,
+          svgBaselineY: boxY + (start.y - baseExtent.y),
+          htmlBaselineY: htmlLineBaselineY,
         });
       } catch {
-        glyphMetrics.push({ originX: 0, originY: data.fontSize });
+        glyphMetrics.push({
+          originX: 0,
+          originY: data.fontSize,
+          boxX: 0,
+          boxY: 0,
+          svgStartX: 0,
+          htmlBoxX: 0,
+          htmlBoxY: 0,
+          htmlStartX: 0,
+          svgBaselineY: data.fontSize,
+          htmlBaselineY: data.fontSize,
+        });
       }
       glyphIndex += 1;
     }
@@ -224,6 +391,78 @@ const measureTextLayout = (
   return { lineBoxes, glyphMetrics };
 };
 
+const computeDesiredLineOffsets = (
+  data: NativeTextElement['data'],
+  bounds: Bounds,
+  lineBoxes: Map<number, Bounds>,
+  glyphMetrics: GlyphMetric[],
+  paddingX: number,
+  paddingY: number,
+) => {
+  const spans = resolveVisualSpans(data);
+  const lineBaselineOffsets = new Map<number, { svgBaselineY: number; htmlBaselineY: number }>();
+  let glyphCursor = 0;
+  const lineBaseOffsetX = isVerticalWritingMode(data.writingMode)
+    ? 0
+    : Math.max(0, data.x - bounds.minX);
+
+  spans.forEach((span) => {
+    for (let index = 0; index < span.text.length; index += 1) {
+      const glyphMetric = glyphMetrics[glyphCursor] ?? DEFAULT_GLYPH_METRIC;
+      if (!lineBaselineOffsets.has(span.editorLine)) {
+        lineBaselineOffsets.set(span.editorLine, {
+          svgBaselineY: glyphMetric.svgBaselineY,
+          htmlBaselineY: glyphMetric.htmlBaselineY,
+        });
+      }
+      glyphCursor += 1;
+    }
+  });
+
+  const lineIndices = Array.from(new Set(spans.map((span) => span.editorLine))).sort((left, right) => left - right);
+  return new Map(lineIndices.map((lineIndex, index) => {
+    const lineBounds = lineBoxes.get(lineIndex);
+    const leftOffset = lineBounds
+      ? Math.max(paddingX, lineBounds.minX - bounds.minX + paddingX)
+      : paddingX + lineBaseOffsetX;
+    const naturalTopOffset = paddingY + index * data.fontSize * INLINE_EDITOR_LINE_HEIGHT;
+    const lineTopOffset = lineBounds
+      ? (lineBounds.minY - bounds.minY + paddingY)
+      : naturalTopOffset;
+    const desiredTopOffset = lineBounds ? lineTopOffset : paddingY;
+
+    return [lineIndex, {
+      leftOffset,
+      naturalTopOffset,
+      desiredTopOffset,
+    }];
+  }));
+};
+
+const measureLiveEditorOffsets = (
+  editor: HTMLDivElement,
+  zoom: number,
+): Map<number, { left: number; top: number; baseline: number }> => {
+  const editorRect = editor.getBoundingClientRect();
+  const contentOriginX = editorRect.left + editor.clientLeft;
+  const contentOriginY = editorRect.top + editor.clientTop;
+  const lineNodes = Array.from(editor.querySelectorAll('[data-inline-line]')) as HTMLDivElement[];
+  const safeZoom = zoom > 0 ? zoom : 1;
+  return new Map(lineNodes.map((lineNode) => {
+    const value = Number(lineNode.dataset.inlineLine ?? '-1');
+    const rect = lineNode.getBoundingClientRect();
+    const baselineMarker = lineNode.querySelector('[data-inline-line-baseline="1"]') as HTMLSpanElement | null;
+    const baselineRect = baselineMarker?.getBoundingClientRect();
+    return [value, {
+      left: (rect.left - contentOriginX) / safeZoom,
+      top: (rect.top - contentOriginY) / safeZoom,
+      baseline: baselineRect
+        ? (baselineRect.bottom - contentOriginY) / safeZoom
+        : (rect.top - contentOriginY) / safeZoom,
+    }];
+  }));
+};
+
 const buildInitialEditorHtml = (
   data: NativeTextElement['data'],
   bounds: Bounds,
@@ -231,14 +470,14 @@ const buildInitialEditorHtml = (
   glyphMetrics: GlyphMetric[],
   paddingX: number,
   paddingY: number,
+  globalOffsetX: number = 0,
+  globalOffsetY: number = 0,
 ): string => {
   const spans = resolveVisualSpans(data);
   const lines = new Map<number, string[]>();
   const lineStartOffsets = new Map<number, { dx: number; dy: number }>();
+  const desiredLineOffsets = computeDesiredLineOffsets(data, bounds, lineBoxes, glyphMetrics, paddingX, paddingY);
   let glyphCursor = 0;
-  const lineBaseOffsetX = isVerticalWritingMode(data.writingMode)
-    ? 0
-    : Math.max(0, data.x - bounds.minX);
 
   spans.forEach((span) => {
     const fragments = lines.get(span.editorLine) ?? [];
@@ -250,7 +489,7 @@ const buildInitialEditorHtml = (
 
     for (let index = 0; index < span.text.length; index += 1) {
       const character = span.text[index];
-      const glyphMetric = glyphMetrics[glyphCursor] ?? { originX: 0, originY: data.fontSize };
+      const glyphMetric = glyphMetrics[glyphCursor] ?? DEFAULT_GLYPH_METRIC;
       accumulatedDx += getNumericValueForGlyph(dxValues, index);
       accumulatedDy += getNumericValueForGlyph(dyValues, index);
       const rotate = getRotateValueForGlyph(rotateValues, index);
@@ -259,8 +498,10 @@ const buildInitialEditorHtml = (
         lineStartOffsets.set(span.editorLine, offset);
         return offset;
       })();
-      const relativeDx = accumulatedDx - lineStartOffset.dx;
-      const relativeDy = accumulatedDy - lineStartOffset.dy;
+      const kerningDx = glyphMetric.svgStartX - glyphMetric.htmlStartX;
+      const kerningDy = glyphMetric.svgBaselineY - glyphMetric.htmlBaselineY;
+      const relativeDx = accumulatedDx - lineStartOffset.dx + kerningDx;
+      const relativeDy = accumulatedDy - lineStartOffset.dy + kerningDy;
       const transforms: string[] = [];
       if (relativeDx !== 0 || relativeDy !== 0) {
         transforms.push(`translate(${relativeDx}px, ${relativeDy}px)`);
@@ -286,7 +527,7 @@ const buildInitialEditorHtml = (
         overflow: 'visible',
       });
       fragments.push(
-        `<span${wrapperStyle ? ` style="${wrapperStyle}"` : ''}><span${glyphStyle ? ` style="${glyphStyle}"` : ''}>${escapeHtml(character === ' ' ? '\u00A0' : character)}</span></span>`
+        `<span${wrapperStyle ? ` style="${wrapperStyle}"` : ''}><span data-inline-glyph="1"${glyphStyle ? ` style="${glyphStyle}"` : ''}>${escapeHtml(character === ' ' ? '\u00A0' : character)}</span></span>`
       );
       glyphCursor += 1;
     }
@@ -304,22 +545,20 @@ const buildInitialEditorHtml = (
   }
 
   return lineIndices
-    .map((lineIndex, index) => {
-      const lineBounds = lineBoxes.get(lineIndex);
-      const topOffset = lineBounds ? (lineBounds.minY - bounds.minY + paddingY) : paddingY;
-      const leftOffset = lineBounds
-        ? Math.max(paddingX, lineBounds.minX - bounds.minX + paddingX)
-        : paddingX + lineBaseOffsetX;
-      const naturalTopOffset = paddingY + index * data.fontSize * (data.lineHeight ?? 1.2);
-      const relativeTopOffset = topOffset - naturalTopOffset;
+    .map((lineIndex) => {
+      const desiredOffset = desiredLineOffsets.get(lineIndex);
+      const leftOffset = desiredOffset?.leftOffset ?? paddingX;
+      const naturalTopOffset = desiredOffset?.naturalTopOffset ?? paddingY;
+      const desiredTopOffset = desiredOffset?.desiredTopOffset ?? paddingY;
+      const relativeTopOffset = desiredTopOffset - naturalTopOffset;
       const relativeLeftOffset = leftOffset - paddingX;
       const lineStyle = serializeStyle({
         display: 'block',
         width: 'max-content',
-        transform: `translate(${relativeLeftOffset}px, ${relativeTopOffset}px)`,
+        transform: `translate(${relativeLeftOffset + globalOffsetX}px, ${relativeTopOffset + globalOffsetY}px)`,
         'transform-origin': 'top left',
       });
-      return `<div data-inline-line="${lineIndex}"${lineStyle ? ` style="${lineStyle}"` : ''}>${(lines.get(lineIndex) ?? []).join('') || '<br>'}</div>`;
+      return `<div data-inline-line="${lineIndex}"${lineStyle ? ` style="${lineStyle}"` : ''}>${(lines.get(lineIndex) ?? []).join('') || '<br>'}<span data-inline-line-baseline="1" style="display:inline-block;width:0;height:1px;padding:0;margin:0;overflow:hidden;vertical-align:baseline"></span></div>`;
     })
     .join('');
 };
@@ -357,10 +596,12 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
   const stopInlineTextEdit = useCanvasStore(
     (state) => (state as unknown as InlineTextEditSlice).stopInlineTextEdit
   );
+  const viewportZoom = useCanvasStore((state) => state.viewport.zoom);
   const editorRef = useRef<HTMLDivElement>(null);
   const previousEditingIdRef = useRef<string | null>(null);
   const originalElementRef = useRef<NativeTextElement | null>(null);
   const [editorHtml, setEditorHtml] = useState('');
+  const [editorVisualOffset, setEditorVisualOffset] = useState({ x: 0, y: 0 });
 
   const element = useMemo(() => {
     if (!editingElementId) return null;
@@ -376,33 +617,64 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
 
     previousEditingIdRef.current = element.id;
     originalElementRef.current = element;
+    setEditorVisualOffset({ x: 0, y: 0 });
     const editorBox = getNativeTextEditorBox(element.data);
     const measuredBounds = editorBox.bounds ?? measureNativeTextBounds(element.data);
     const { lineBoxes, glyphMetrics } = measureTextLayout(element.data);
-    setEditorHtml(buildInitialEditorHtml(
+    const initialHtml = buildInitialEditorHtml(
       element.data,
       measuredBounds,
       lineBoxes,
       glyphMetrics,
       editorBox.paddingX,
       editorBox.paddingY,
-    ));
+    );
+    setEditorHtml(initialHtml);
 
+    let innerFrame = 0;
     const frame = window.requestAnimationFrame(() => {
-      const editor = editorRef.current;
-      if (!editor) return;
-      editor.focus();
-      placeCaretAtEnd(editor);
+      innerFrame = window.requestAnimationFrame(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        const desiredLineOffsets = computeDesiredLineOffsets(
+          element.data,
+          measuredBounds,
+          lineBoxes,
+          glyphMetrics,
+          editorBox.paddingX,
+          editorBox.paddingY,
+        );
+        const liveOffsets = measureLiveEditorOffsets(editor, viewportZoom);
+        const firstLine = Array.from(desiredLineOffsets.keys()).sort((left, right) => left - right)[0];
+        if (firstLine !== undefined) {
+          const desired = desiredLineOffsets.get(firstLine);
+          const actual = liveOffsets.get(firstLine);
+          if (desired && actual) {
+            setEditorVisualOffset({
+              x: desired.leftOffset - actual.left,
+              y: desired.desiredTopOffset - actual.top,
+            });
+          }
+        }
+        editor.focus();
+        placeCaretAtEnd(editor);
+      });
     });
 
-    return () => window.cancelAnimationFrame(frame);
-  }, [element, isDesktopNativeTextEditing]);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (innerFrame) {
+        window.cancelAnimationFrame(innerFrame);
+      }
+    };
+  }, [element, isDesktopNativeTextEditing, viewportZoom]);
 
   useEffect(() => {
     if (editingElementId) return;
     previousEditingIdRef.current = null;
     originalElementRef.current = null;
     setEditorHtml('');
+    setEditorVisualOffset({ x: 0, y: 0 });
   }, [editingElementId]);
 
   const commitEdit = useCallback(() => {
@@ -485,19 +757,19 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
               boxSizing: 'border-box',
               overflow: 'visible',
               border: '1px solid var(--chakra-colors-blue-400, #63B3ED)',
-              borderRadius: '8px',
+              borderRadius: '6px',
               outline: 'none',
               padding: `${box.paddingY}px ${box.paddingX}px`,
               margin: 0,
-              background: 'var(--chakra-colors-chakra-body-bg, rgba(255,255,255,0.96))',
+              background: 'rgba(255,255,255,0.36)',
               color: element.data.fillColor ?? 'var(--chakra-colors-chakra-body-text, #1A202C)',
               caretColor: 'var(--chakra-colors-blue-500, #3182CE)',
-              boxShadow: '0 0 0 1px rgba(49,130,206,0.14), 0 10px 24px rgba(15, 23, 42, 0.12)',
+              boxShadow: '0 0 0 1px rgba(49,130,206,0.12), 0 8px 18px rgba(15, 23, 42, 0.08)',
               fontFamily: element.data.fontFamily,
               fontSize: `${element.data.fontSize}px`,
               fontWeight: element.data.fontWeight ?? 'normal',
               fontStyle: element.data.fontStyle ?? 'normal',
-              lineHeight: String(element.data.lineHeight ?? 1.2),
+              lineHeight: String(INLINE_EDITOR_LINE_HEIGHT),
               letterSpacing: element.data.letterSpacing !== undefined ? `${element.data.letterSpacing}px` : undefined,
               textAlign: 'left',
               textDecoration: element.data.textDecoration !== 'none' ? element.data.textDecoration : undefined,
@@ -510,6 +782,7 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
               userSelect: 'text',
               WebkitUserSelect: 'text',
               position: 'relative',
+              transform: `translate(${editorVisualOffset.x}px, ${editorVisualOffset.y}px)`,
             }}
             dangerouslySetInnerHTML={{ __html: editorHtml }}
           />

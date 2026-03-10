@@ -34,11 +34,11 @@ export const getNativeTextEditorBox = (data: NativeTextElement['data']) => {
   const baseWidth = Math.max(bounds.maxX - bounds.minX, data.fontSize * 0.75);
   const baseHeight = Math.max(bounds.maxY - bounds.minY, data.fontSize * (data.lineHeight ?? 1.2));
   const strokePadding = (data.strokeWidth ?? 0) / 2;
-  const paddingX = Math.max(8, data.fontSize * 0.35 + strokePadding);
-  const paddingY = Math.max(8, data.fontSize * 0.25 + strokePadding + 4);
+  const paddingX = Math.max(4, data.fontSize * 0.14 + strokePadding);
+  const paddingY = Math.max(3, data.fontSize * 0.1 + strokePadding + 1);
   const widthSlack = Math.max(
-    6,
-    data.fontSize * 0.45 + Math.max(0, data.letterSpacing ?? 0)
+    3,
+    data.fontSize * 0.18 + Math.max(0, data.letterSpacing ?? 0)
   );
   const width = baseWidth + paddingX * 2 + widthSlack;
   const height = baseHeight + paddingY * 2;

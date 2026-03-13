@@ -58,7 +58,10 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
           },
         },
         '& .chakra-checkbox__label': {
-          color: panelToggle.textColor,
+          color: 'gray.600',
+          _dark: {
+            color: 'gray.400',
+          },
         }
       }}
     >

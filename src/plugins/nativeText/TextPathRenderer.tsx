@@ -46,6 +46,18 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
     const pathData = (element as PathElement).data;
     const textPath = pathData.textPath;
     if (!textPath || !textPath.text) return;
+    const textPathReference = textPath as typeof textPath & { href?: string };
+    const textPathHref = typeof textPathReference.href === 'string' ? textPathReference.href.trim() : '';
+    const textPathReferenceId = textPathHref.startsWith('#') ? textPathHref.slice(1) : null;
+    const referencedPath = textPathReferenceId
+      ? sortedElements.find((candidate): candidate is PathElement => (
+        candidate.type === 'path' && (
+          candidate.id === textPathReferenceId ||
+          candidate.data.sourceId === textPathReferenceId
+        )
+      ))
+      : null;
+    const animationTargetElementId = referencedPath?.id ?? element.id;
     const maskUrl = textPath.maskId ?? pathData.maskId;
     const textFilterId = textPath.filterId ?? pathData.filterId;
     const clipRuntimeId = getClipRuntimeId(
@@ -79,11 +91,11 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
     // the visible path rendered by PathElementRenderer.
     const transformAnimations: SVGAnimation[] = animations.filter(
       (anim) =>
-        anim.targetElementId === element.id &&
+        anim.targetElementId === animationTargetElementId &&
         (anim.type === 'animateTransform' || anim.type === 'animateMotion')
     );
     const groupAnimationNodes = transformAnimations.length > 0
-      ? renderAnimationsForElement(element.id, transformAnimations, animationState, animations)
+      ? renderAnimationsForElement(animationTargetElementId, transformAnimations, animationState, animations)
       : null;
     const transformAttr = (() => {
       if (textPath.transformMatrix) return `matrix(${textPath.transformMatrix.join(' ')})`;
@@ -98,17 +110,17 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
 
     const textPathAnimations: SVGAnimation[] = animations.filter(
       (anim) =>
-        anim.targetElementId === element.id &&
+        anim.targetElementId === animationTargetElementId &&
         anim.attributeName === 'startOffset'
     );
     const pathGeometryAnimations: SVGAnimation[] = animations.filter(
       (anim) =>
-        anim.targetElementId === element.id &&
+        anim.targetElementId === animationTargetElementId &&
         anim.attributeName === 'd'
     );
     const textAttributeAnimations: SVGAnimation[] = animations.filter(
       (anim) =>
-        anim.targetElementId === element.id &&
+        anim.targetElementId === animationTargetElementId &&
         anim.attributeName !== 'd' &&
         anim.attributeName !== 'startOffset' &&
         anim.type !== 'animateTransform' &&
@@ -229,7 +241,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
           pointerEvents="stroke"
         >
           {pathGeometryAnimations.length > 0
-            ? renderAnimationsForElement(element.id, pathGeometryAnimations, animationState, animations)
+            ? renderAnimationsForElement(animationTargetElementId, pathGeometryAnimations, animationState, animations)
             : null}
         </path>
         {underlays.map(renderEffectLayer)}
@@ -255,7 +267,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
           filter={wireframeEnabled ? undefined : (textFilterId ? `url(#${textFilterId})` : undefined)}
         >
           {textAttributeAnimations.length > 0
-            ? renderAnimationsForElement(element.id, textAttributeAnimations, animationState, animations)
+            ? renderAnimationsForElement(animationTargetElementId, textAttributeAnimations, animationState, animations)
             : null}
           {renderInlineTextEffectAnimations(inlineBaseAnimations.filter((animation) => animation.attributeName !== 'startOffset'), `${element.id}-textfx-base`, restartKey)}
           <textPath

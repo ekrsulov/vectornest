@@ -14,6 +14,7 @@ import { resolvePatternTileGeometry } from './patternPreviewUtils';
 import { useCanvasStore } from '../../store/canvasStore';
 import { collectUsedPaintIds } from '../../utils/paintUsageUtils';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
+import { renderAnimationsForElement } from '../animationSystem/renderAnimations';
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/shallow';
 import { generateShortId } from '../../utils/idGenerator';
@@ -187,7 +188,8 @@ const injectAnimationsIntoPatternContent = (
   rawContent: string,
   patternId: string,
   animations: SVGAnimation[],
-  chainDelays: Map<string, number>
+  chainDelays: Map<string, number>,
+  includePatternLevelAnimations: boolean = true,
 ): string => {
   // Find animations targeting this pattern's children
   const patternAnimations = animations.filter(
@@ -211,7 +213,9 @@ const injectAnimationsIntoPatternContent = (
   );
   if (doc.querySelector('parsererror')) {
     // If parsing fails, fallback to prepending pattern-level animations
-    const animMarkup = patternLevelAnimations.map((a) => serializePatternAnimation(a, chainDelays)).join('\n');
+    const animMarkup = includePatternLevelAnimations
+      ? patternLevelAnimations.map((a) => serializePatternAnimation(a, chainDelays)).join('\n')
+      : '';
     return animMarkup ? `${animMarkup}\n${rawContent}` : rawContent;
   }
   
@@ -276,7 +280,7 @@ const injectAnimationsIntoPatternContent = (
     .join('\n      ');
   
   // Add pattern-level animations at the start if any
-  if (patternLevelAnimations.length > 0) {
+  if (includePatternLevelAnimations && patternLevelAnimations.length > 0) {
     const animMarkup = patternLevelAnimations.map((a) => serializePatternAnimation(a, chainDelays)).join('\n');
     result = `${animMarkup}\n${result}`;
   }
@@ -582,6 +586,8 @@ defsContributionRegistry.register({
     const isActive = (patternState.animationState?.isPlaying ?? false)
       || (patternState.animationState?.hasPlayed ?? false)
       || (patternState.animationState?.isWorkspaceOpen ?? false);
+    const hasPatternAnimations = animations.some((anim) => anim.patternTargetId !== undefined);
+    const shouldInjectAnimations = isActive || hasPatternAnimations;
     const restartKey = patternState.animationState?.restartKey ?? 0;
     
     const filtered = patterns.filter((p) => used.has(p.id));
@@ -591,15 +597,14 @@ defsContributionRegistry.register({
     return (
       <>
         {filtered.map((p) => {
-          const patternAnimations = isActive ? animations.filter((anim) => anim.patternTargetId === p.id) : [];
-          const hasPatternChildAnimations = patternAnimations.some((a) => a.patternChildIndex !== undefined);
+          const patternAnimations = shouldInjectAnimations ? animations.filter((anim) => anim.patternTargetId === p.id) : [];
+          const patternLevelAnimations = patternAnimations.filter((a) => a.patternChildIndex === undefined);
           const geometry = resolvePatternTileGeometry(p);
 
           if (p.type === 'raw' && p.rawContent) {
             const rewrittenRawContent = rewritePatternSymbolReferencesInContent(p.rawContent, symbolIds);
-            // If there are animations targeting child elements, inject them properly
-            if (hasPatternChildAnimations) {
-              const contentWithAnimations = injectAnimationsIntoPatternContent(rewrittenRawContent, p.id, animations, chainDelays);
+            if (patternAnimations.length > 0) {
+              const contentWithAnimations = injectAnimationsIntoPatternContent(rewrittenRawContent, p.id, animations, chainDelays, false);
               return (
                 <pattern
                   id={p.id}
@@ -610,16 +615,14 @@ defsContributionRegistry.register({
                   {...(geometry.viewBox ? { viewBox: geometry.viewBox } : {})}
                   {...(p.patternTransform ? { patternTransform: p.patternTransform } : {})}
                 >
+                  {patternLevelAnimations.length > 0
+                    ? renderAnimationsForElement(p.id, patternLevelAnimations, patternState.animationState, animations)
+                    : null}
                   <PatternContent content={contentWithAnimations} />
                 </pattern>
               );
             }
-            
-            // For pattern-level animations only, prepend to content
-            const patternLevelAnimations = patternAnimations.filter((a) => a.patternChildIndex === undefined);
-            const animMarkup = patternLevelAnimations.map((a) => serializePatternAnimation(a, chainDelays)).join('\n');
-            const animBlock = animMarkup ? `${animMarkup}\n` : '';
-            const inner = `${animBlock}${rewrittenRawContent}`;
+
             return (
               <pattern
                 id={p.id}
@@ -628,7 +631,7 @@ defsContributionRegistry.register({
                 width={geometry.tileWidth}
                 height={geometry.tileHeight}
                 {...(geometry.viewBox ? { viewBox: geometry.viewBox } : {})}
-                dangerouslySetInnerHTML={{ __html: inner }}
+                dangerouslySetInnerHTML={{ __html: rewrittenRawContent }}
                 {...(p.patternTransform ? { patternTransform: p.patternTransform } : {})}
               />
             );
@@ -789,8 +792,11 @@ const PatternDefs: React.FC = () => {
         if (p.type === 'raw' && p.rawContent) {
           // Inject animations into content if animation system is active
           const content = shouldInjectAnimations 
-            ? injectAnimationsIntoPatternContent(p.rawContent, p.id, animations, chainDelays)
+            ? injectAnimationsIntoPatternContent(p.rawContent, p.id, animations, chainDelays, false)
             : p.rawContent;
+          const patternLevelAnimations = animations.filter(
+            (animation) => animation.patternTargetId === p.id && animation.patternChildIndex === undefined
+          );
           
           // Check if this pattern has animations that need injection
           const patternHasAnimations = animations.some(
@@ -810,6 +816,9 @@ const PatternDefs: React.FC = () => {
                 viewBox={geometry.viewBox}
                 patternTransform={p.patternTransform ?? undefined}
               >
+                {patternLevelAnimations.length > 0
+                  ? renderAnimationsForElement(p.id, patternLevelAnimations, (animationState as AnimationPluginSlice['animationState']) ?? undefined, animations)
+                  : null}
                 <PatternContent content={content} />
               </pattern>
             );

@@ -89,7 +89,7 @@ test('imports animateMotion mpath refs inside expanded use content and preserves
 
   expect(initial.systemUseCount).toBe(2);
   expect(initial.animateMotionCount).toBe(3);
-  expect(initial.mpathHref).toMatch(/^#el-/);
+  expect(initial.mpathHref).toMatch(/^#(?:el-|orbit$)/);
   expect(initial.mpathTargetExists).toBeTruthy();
   expect(initial.rect).not.toBeNull();
   expect(later).not.toBeNull();

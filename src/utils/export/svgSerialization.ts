@@ -229,15 +229,33 @@ function serializeNode(node: ExportNode, indentLevel: number, state?: CanvasStor
       : null;
     const exportHrefId = definitionSourceId
       ?? ((referencedPath?.data as PresentationAttributes | undefined)?.sourceId || referencedPath?.id || groupElement.id);
+    const railMarkup = referencedPath
+      ? serializePathElement(
+        {
+          ...referencedPath,
+          id: exportHrefId,
+          data: {
+            ...referencedPath.data,
+            sourceId: exportHrefId,
+            textPath: undefined,
+            display: 'none',
+          },
+        },
+        indent,
+        undefined,
+        { includeTextPath: false },
+      )
+      : '';
     const proxyPathElement = {
       ...groupElement,
       type: 'path',
       data: groupElement.data as unknown as PathElement['data'],
     } as PathElement;
-    return serializeTextPathOnlyElement(proxyPathElement, indent, state, {
+    const textMarkup = serializeTextPathOnlyElement(proxyPathElement, indent, state, {
       textPathHrefId: exportHrefId,
       animationTargetElementId: referencedPath?.id ?? groupElement.id,
     });
+    return [railMarkup, textMarkup].filter(Boolean).join('\n');
   }
 
   const attributes: string[] = [`id="${groupElement.id}"`];

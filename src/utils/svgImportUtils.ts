@@ -376,24 +376,52 @@ export async function importSVGWithDimensions(
 
         // Attach textPaths to their referenced paths.
         if (attachments.length) {
-          const attachmentMap = new Map<string, TextPathAttachment>();
-          attachments.forEach((a) => attachmentMap.set(a.targetId, a));
-          const attachedTargets = new Set<string>();
+          const attachmentMap = new Map<string, TextPathAttachment[]>();
+          attachments.forEach((attachment) => {
+            const existing = attachmentMap.get(attachment.targetId) ?? [];
+            existing.push(attachment);
+            attachmentMap.set(attachment.targetId, existing);
+          });
+          const attachedCounts = new Map<string, number>();
           const attach = (els: ImportedElement[], allowRefTargets: boolean): void => {
-            els.forEach((el) => {
+            els.forEach((el, index) => {
               if (el.type === 'path') {
                 const sourceId = (el.data as PathData).sourceId;
                 if (!sourceId) return;
-                if (attachedTargets.has(sourceId)) return;
-                const att = attachmentMap.get(sourceId);
-                if (!att || !att.textPath?.text) return;
+                const attachmentList = attachmentMap.get(sourceId);
+                const attachedCount = attachedCounts.get(sourceId) ?? 0;
+                const pendingAttachments = attachmentList?.slice(attachedCount).filter((att) => att.textPath?.text) ?? [];
+                if (!pendingAttachments.length) return;
                 const isRef = Boolean((el.data as { isTextPathRef?: boolean }).isTextPathRef);
                 if (isRef && !allowRefTargets) return;
-                const nextTextPath = shouldApplyDarkModeImportTransform
-                  ? transformImportedMonoColorValue(att.textPath)
-                  : att.textPath;
-                el.data.textPath = { ...(nextTextPath as typeof att.textPath) };
-                attachedTargets.add(sourceId);
+
+                const basePathData = { ...(el.data as PathData) };
+                const applyAttachment = (attachment: TextPathAttachment): NonNullable<PathData['textPath']> => {
+                  const nextTextPath = shouldApplyDarkModeImportTransform
+                    ? transformImportedMonoColorValue(attachment.textPath)
+                    : attachment.textPath;
+                  return nextTextPath as NonNullable<PathData['textPath']>;
+                };
+
+                el.data = {
+                  ...basePathData,
+                  textPath: applyAttachment(pendingAttachments[0]),
+                };
+
+                const extraAttachments = pendingAttachments.slice(1);
+                if (extraAttachments.length > 0) {
+                  const clones = extraAttachments.map((attachment) => ({
+                    type: 'path' as const,
+                    data: {
+                      ...basePathData,
+                      sourceId: undefined,
+                      textPath: applyAttachment(attachment),
+                    },
+                  }));
+                  els.splice(index + 1, 0, ...clones);
+                }
+
+                attachedCounts.set(sourceId, attachedCount + pendingAttachments.length);
               } else if (el.type === 'group') {
                 attach(el.children, allowRefTargets);
               }

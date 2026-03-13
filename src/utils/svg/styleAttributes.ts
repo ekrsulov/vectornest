@@ -178,6 +178,7 @@ export function extractStyleAttributes(
     clipPathId: _clipPathId,
     clipPathTemplateId: _clipPathTemplateId,
     filterId: _filterId,
+    maskId: _maskId,
     opacity: _opacity,
     mixBlendMode: _mixBlendMode,
     isolation: _isolation,

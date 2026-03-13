@@ -12,6 +12,30 @@ type TextPathReferenceLike = {
   href?: string;
 };
 
+const HREF_REFERENCE_GLOBAL_REGEX = /\b(?:xlink:href|href)=(?:"|')#([^"']+)(?:"|')/gi;
+const URL_REFERENCE_GLOBAL_REGEX = /url\(#([^)]+)\)/gi;
+
+const collectRawContentReferenceIds = (rawContent: string): string[] => {
+  const ids = new Set<string>();
+  let match: RegExpExecArray | null;
+
+  HREF_REFERENCE_GLOBAL_REGEX.lastIndex = 0;
+  while ((match = HREF_REFERENCE_GLOBAL_REGEX.exec(rawContent)) !== null) {
+    if (match[1]) {
+      ids.add(match[1]);
+    }
+  }
+
+  URL_REFERENCE_GLOBAL_REGEX.lastIndex = 0;
+  while ((match = URL_REFERENCE_GLOBAL_REGEX.exec(rawContent)) !== null) {
+    if (match[1]) {
+      ids.add(match[1]);
+    }
+  }
+
+  return Array.from(ids);
+};
+
 const getUseHref = (element: CanvasElement): string | null => {
   if (element.type !== 'use') {
     return null;
@@ -33,6 +57,15 @@ const getTextPathHref = (element: CanvasElement): string | null => {
   }
 
   return href.startsWith('#') ? href.slice(1) : href;
+};
+
+const getRawContentReferenceIds = (element: CanvasElement): string[] => {
+  const rawContent = (element.data as { rawContent?: unknown } | undefined)?.rawContent;
+  if (typeof rawContent !== 'string' || rawContent.trim().length === 0) {
+    return [];
+  }
+
+  return collectRawContentReferenceIds(rawContent);
 };
 
 const buildChildrenByParent = (elements: CanvasElement[]): Map<string, CanvasElement[]> => {
@@ -142,6 +175,16 @@ export const expandElementsWithReferencedDefinitions = (
           changed = true;
         }
       }
+
+      getRawContentReferenceIds(element).forEach((refId) => {
+        const target = elementMap.get(refId);
+        if (!target || !isDefinitionElement(target) || included.has(target.id)) {
+          return;
+        }
+
+        includeElementSubtree(target, childrenByParent, included);
+        changed = true;
+      });
 
       getAnimationReferencedIds(element.id, state).forEach((refId) => {
         const target = elementMap.get(refId);

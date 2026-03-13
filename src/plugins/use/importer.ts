@@ -348,6 +348,7 @@ export function importUse(
   
   // Try to find the referenced element
   const targetElement = doc?.getElementById(rawId);
+  const shouldPreserveHrefOnExport = Boolean(targetElement?.closest('defs'));
   
   // If target is a <symbol>, let symbols plugin handle it
   if (targetElement?.tagName.toLowerCase() === 'symbol') {
@@ -442,6 +443,7 @@ export function importUse(
 
   const useData: UseElementData = {
     href: rawId,
+    originalHref: rawId,
     referenceType,
     x: 0, // Position is in the matrix
     y: 0,
@@ -449,6 +451,7 @@ export function importUse(
     height,
     transformMatrix: matrix,
     sourceId: element.getAttribute('id') ?? undefined,
+    ...(shouldPreserveHrefOnExport ? { preserveHrefOnExport: true } : {}),
     ...(cachedPathData ? { cachedPathData } : {}),
     ...(rawContent ? { rawContent } : {}),
     ...(cachedBounds ? { cachedBounds } : {}),

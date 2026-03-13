@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Layers } from 'lucide-react';
-import { lazy } from 'react';
+import React, { lazy } from 'react';
 import type {
   PluginDefinition,
   PluginSliceFactory,
@@ -23,7 +23,6 @@ import { useSymbolPlacementHook } from './hooks/useSymbolPlacementHook';
 import { importUse, measureSymbolContentBounds, resolveImplicitViewportViewBox } from './importer';
 import { Box, useColorMode, useColorModeValue } from '@chakra-ui/react';
 import { registerStateKeys } from '../../store/persistenceRegistry';
-import type React from 'react';
 import { BlockingOverlay } from '../../overlays/BlockingOverlay';
 import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
 import { AspectPlacementPreview } from '../../overlays/AspectPlacementPreview';
@@ -91,6 +90,33 @@ const serializeSymbolContent = (doc: Document): string => {
       return node.textContent ?? '';
     })
     .join('\n      ');
+};
+
+const SymbolContent: React.FC<{ content: string }> = ({ content }) => {
+  const groupRef = React.useRef<SVGGElement>(null);
+
+  React.useLayoutEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(
+      `<svg xmlns="http://www.w3.org/2000/svg"><g id="__root__">${content}</g></svg>`,
+      'image/svg+xml'
+    );
+    const root = doc.querySelector('#__root__');
+    if (!root) return;
+
+    while (group.firstChild) {
+      group.removeChild(group.firstChild);
+    }
+
+    Array.from(root.childNodes).forEach((node) => {
+      group.appendChild(document.importNode(node, true));
+    });
+  }, [content]);
+
+  return <g ref={groupRef} />;
 };
 
 const findChildElementByIndex = (doc: Document, childIndex: number): Element | null => {
@@ -503,8 +529,9 @@ const renderSymbolNode = (
         viewBox={`${symbol.bounds.minX} ${symbol.bounds.minY} ${symbol.bounds.width} ${symbol.bounds.height}`}
         preserveAspectRatio="xMidYMid meet"
         overflow="visible"
-        dangerouslySetInnerHTML={{ __html: content }}
-      />
+      >
+        <SymbolContent content={content} />
+      </symbol>
     );
   }
   const pathD = commandsToString(symbol.pathData.subPaths.flat());

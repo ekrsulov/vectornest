@@ -1,3 +1,4 @@
+import React from 'react';
 import type { CanvasElement, GroupElement, PathElement } from '../../types';
 import type { CanvasStore } from '../../store/canvasStore';
 import { animationContributionRegistry } from '../../utils/animationContributionRegistry';
@@ -12,6 +13,37 @@ import {
 
 const sortByZIndex = (left: CanvasElement, right: CanvasElement): number => left.zIndex - right.zIndex;
 const HREF_REFERENCE_REGEX = /\b(xlink:href|href)=("|')#([^"']+)\2/g;
+
+const ImportedDefinitionMarkup: React.FC<{ markup: string }> = ({ markup }) => {
+  const containerRef = React.useRef<SVGGElement>(null);
+
+  React.useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(
+      `<svg xmlns="http://www.w3.org/2000/svg"><g id="__imported_defs__">${markup}</g></svg>`,
+      'image/svg+xml',
+    );
+    const root = doc.querySelector('#__imported_defs__');
+    if (!root) {
+      return;
+    }
+
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+
+    Array.from(root.childNodes).forEach((node) => {
+      container.appendChild(document.importNode(node, true));
+    });
+  }, [markup]);
+
+  return React.createElement('g', { ref: containerRef });
+};
 
 const applyHiddenDisplay = (markup: string, isHidden: boolean): string => {
   if (!isHidden) {
@@ -187,7 +219,56 @@ const serializeDefinitionTree = (
 defsContributionRegistry.register({
   id: 'imported-definitions',
   collectUsedIds: (elements) => collectReferencedDefinitionIds(elements),
-  renderDefs: () => null,
+  renderDefs: (state, usedIds) => {
+    const elements = state.elements ?? [];
+    if (!elements.length || usedIds.size === 0) {
+      return null;
+    }
+
+    const elementMap = new Map(elements.map((element) => [element.id, element]));
+    const childrenByParent = new Map<string, CanvasElement[]>();
+    elements.forEach((element) => {
+      if (!element.parentId) {
+        return;
+      }
+      const existing = childrenByParent.get(element.parentId) ?? [];
+      existing.push(element);
+      existing.sort(sortByZIndex);
+      childrenByParent.set(element.parentId, existing);
+    });
+
+    const roots = Array.from(usedIds)
+      .map((id) => elementMap.get(id))
+      .filter((element): element is CanvasElement => Boolean(element && isDefinitionElement(element)))
+      .filter((element) => {
+        let currentParentId = element.parentId;
+        while (currentParentId) {
+          if (usedIds.has(currentParentId)) {
+            return false;
+          }
+          currentParentId = elementMap.get(currentParentId)?.parentId ?? null;
+        }
+        return true;
+      })
+      .sort(sortByZIndex);
+    const exportIdMap = buildDefinitionExportIdMap(elements);
+    const markups = roots
+      .map((root) => serializeDefinitionTree(root, childrenByParent, state, exportIdMap))
+      .filter((value): value is string => Boolean(value));
+
+    if (!markups.length) {
+      return null;
+    }
+
+    return React.createElement(
+      React.Fragment,
+      null,
+      ...markups.map((markup, index) => React.createElement(ImportedDefinitionMarkup, {
+        key: `imported-def-${index}`,
+        markup,
+      }))
+    );
+  },
   serializeDefs: (state, usedIds) => {
     const elements = state.elements ?? [];
     if (!elements.length || usedIds.size === 0) {

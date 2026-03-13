@@ -23,6 +23,7 @@ import type { AnimationState, SVGAnimation } from '../animationSystem/types';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { importUse } from './importer';
 import { cloneValue } from '../../utils/clone';
+import './importedDefinitionsContribution';
 
 // Register persistence
 registerStateKeys('use', [], 'persist');
@@ -797,6 +798,11 @@ const createUseContribution = (): ElementContribution => {
       // Dimension attributes
       const widthAttr = data.width !== undefined ? ` width="${data.width}"` : '';
       const heightAttr = data.height !== undefined ? ` height="${data.height}"` : '';
+
+      if (data.referenceType === 'element' && data.preserveHrefOnExport) {
+        const preservedHref = data.originalHref ?? data.href;
+        return `<use id="${id}" href="#${preservedHref}"${widthAttr}${heightAttr}${transformAttr}${clipAttr}${filterAttr}${maskAttr}${styleAttrs} />`;
+      }
 
       if (data.referenceType === 'element' && data.rawContent) {
         return `<g id="${id}"${transformAttr}${clipAttr}${filterAttr}${maskAttr}${styleAttrs}>${data.rawContent}</g>`;

@@ -153,6 +153,14 @@ const serializeExpandedNode = (element: Element): string => {
   return new XMLSerializer().serializeToString(element);
 };
 
+type UseReferenceCache = {
+  cachedPathData?: PathData;
+  cachedBounds?: { minX: number; minY: number; width: number; height: number };
+  rawContent?: string;
+  width: number;
+  height: number;
+};
+
 /**
  * Build path data directly from a path element
  */
@@ -230,6 +238,72 @@ const buildPathDataFromShape = (
   };
 
   return { pathData, bounds };
+};
+
+export const buildUseReferenceCache = (
+  targetElement: Element,
+  rawId: string,
+  useStyleAttrs: Record<string, unknown>,
+  initialWidth = 0,
+  initialHeight = 0
+): UseReferenceCache => {
+  const targetTagName = targetElement.tagName.toLowerCase();
+  let width = initialWidth;
+  let height = initialHeight;
+  let cachedPathData: PathData | undefined;
+  let cachedBounds: UseElementData['cachedBounds'];
+  let rawContent: string | undefined;
+
+  if (targetTagName === 'path') {
+    const parsed = buildPathDataFromPath(targetElement as SVGPathElement, useStyleAttrs);
+    if (parsed) {
+      cachedPathData = parsed.pathData;
+      cachedBounds = measureElementBBox(targetElement) ?? parsed.bounds;
+      if (width === 0) width = cachedBounds.width;
+      if (height === 0) height = cachedBounds.height;
+    }
+  } else if (targetTagName === 'g') {
+    const expandedTarget = cloneExpandedNode(targetElement, new Set([rawId]));
+    if (expandedTarget) {
+      rawContent = serializeExpandedNode(expandedTarget);
+      cachedBounds = measureElementBBox(expandedTarget) ?? measureElementBBox(targetElement) ?? undefined;
+      if (cachedBounds) {
+        if (width === 0) width = cachedBounds.width;
+        if (height === 0) height = cachedBounds.height;
+      }
+    }
+  } else if (targetTagName === 'image') {
+    const imgWidth = parseFloat(targetElement.getAttribute('width') || '0');
+    const imgHeight = parseFloat(targetElement.getAttribute('height') || '0');
+    const imgX = parseFloat(targetElement.getAttribute('x') || '0');
+    const imgY = parseFloat(targetElement.getAttribute('y') || '0');
+
+    cachedBounds = {
+      minX: imgX,
+      minY: imgY,
+      width: imgWidth,
+      height: imgHeight,
+    };
+
+    if (width === 0) width = imgWidth;
+    if (height === 0) height = imgHeight;
+  } else {
+    const parsed = buildPathDataFromShape(targetElement, useStyleAttrs);
+    if (parsed) {
+      cachedPathData = parsed.pathData;
+      cachedBounds = parsed.bounds;
+      if (width === 0) width = cachedBounds.width;
+      if (height === 0) height = cachedBounds.height;
+    }
+  }
+
+  return {
+    width,
+    height,
+    ...(cachedPathData ? { cachedPathData } : {}),
+    ...(cachedBounds ? { cachedBounds } : {}),
+    ...(rawContent ? { rawContent } : {}),
+  };
 };
 
 /**
@@ -323,71 +397,18 @@ export function importUse(
   let width = parseFloat(element.getAttribute('width') || '0');
   let height = parseFloat(element.getAttribute('height') || '0');
   
-  // Build data based on element type
-  let cachedPathData: PathData | undefined;
-  let cachedBounds: UseElementData['cachedBounds'];
-  let rawContent: string | undefined;
-  
-  // Element reference - clone the element's visual
-  if (targetElement instanceof SVGPathElement) {
-    const parsed = buildPathDataFromPath(targetElement, useStyleAttrs);
-    if (parsed) {
-      cachedPathData = parsed.pathData;
-      cachedBounds = measureElementBBox(targetElement) ?? parsed.bounds;
-      if (width === 0) width = cachedBounds.width;
-      if (height === 0) height = cachedBounds.height;
-    }
-  } else if (targetElement.tagName.toLowerCase() === 'circle') {
-    const parsed = buildPathDataFromShape(targetElement, useStyleAttrs);
-    if (parsed) {
-      cachedPathData = parsed.pathData;
-      cachedBounds = parsed.bounds;
-      if (width === 0) width = cachedBounds.width;
-      if (height === 0) height = cachedBounds.height;
-    }
-  } else if (targetElement.tagName.toLowerCase() === 'rect') {
-    const parsed = buildPathDataFromShape(targetElement, useStyleAttrs);
-    if (parsed) {
-      cachedPathData = parsed.pathData;
-      cachedBounds = parsed.bounds;
-      if (width === 0) width = cachedBounds.width;
-      if (height === 0) height = cachedBounds.height;
-    }
-  } else if (targetElement.tagName.toLowerCase() === 'ellipse') {
-    const parsed = buildPathDataFromShape(targetElement, useStyleAttrs);
-    if (parsed) {
-      cachedPathData = parsed.pathData;
-      cachedBounds = parsed.bounds;
-      if (width === 0) width = cachedBounds.width;
-      if (height === 0) height = cachedBounds.height;
-    }
-  } else if (targetElement.tagName.toLowerCase() === 'image') {
-    // Handle <image> elements - get dimensions from attributes
-    const imgWidth = parseFloat(targetElement.getAttribute('width') || '0');
-    const imgHeight = parseFloat(targetElement.getAttribute('height') || '0');
-    const imgX = parseFloat(targetElement.getAttribute('x') || '0');
-    const imgY = parseFloat(targetElement.getAttribute('y') || '0');
-    
-    cachedBounds = {
-      minX: imgX,
-      minY: imgY,
-      width: imgWidth,
-      height: imgHeight,
-    };
-    
-    if (width === 0) width = imgWidth;
-    if (height === 0) height = imgHeight;
-  } else if (targetElement.tagName.toLowerCase() === 'g') {
-    const expandedTarget = cloneExpandedNode(targetElement, new Set([rawId]));
-    if (expandedTarget) {
-      rawContent = serializeExpandedNode(expandedTarget);
-      cachedBounds = measureElementBBox(expandedTarget) ?? measureElementBBox(targetElement) ?? undefined;
-      if (cachedBounds) {
-        if (width === 0) width = cachedBounds.width;
-        if (height === 0) height = cachedBounds.height;
-      }
-    }
-  }
+  const cache = buildUseReferenceCache(
+    targetElement,
+    rawId,
+    useStyleAttrs,
+    width,
+    height
+  );
+  const cachedPathData = cache.cachedPathData;
+  const cachedBounds = cache.cachedBounds;
+  const rawContent = cache.rawContent;
+  width = cache.width;
+  height = cache.height;
   // Add more element types as needed
   
   // Default dimensions

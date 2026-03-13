@@ -161,7 +161,7 @@ export const FilePanel: React.FC = () => {
             mb={1.5}
             pt="3px"
           >
-            EXPORT
+            Export
           </Text>
 
           {/* Name inline row */}
@@ -244,7 +244,7 @@ export const FilePanel: React.FC = () => {
             _dark={{ color: 'gray.300' }}
             mb={1.5}
           >
-            IMPORT
+            Import
           </Text>
 
           <FilePanelImportOptions

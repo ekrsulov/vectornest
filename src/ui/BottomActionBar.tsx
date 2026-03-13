@@ -160,9 +160,28 @@ export const BottomActionBar: React.FC = () => {
     return activeTool ? { isActive: true, icon: activeTool.icon } : { isActive: false, icon: defaultIcon };
   }, [activeMode]);
 
+  const getDisplayedToolInGroup = useCallback((
+    group: 'creation' | 'advanced',
+    tools: Array<{ id: string; icon: ToolIcon }>,
+    defaultIcon: ToolIcon
+  ) => {
+    const activeState = getActiveToolInGroup(tools, defaultIcon);
+    if (activeState.isActive) {
+      return activeState;
+    }
+
+    const lastUsedToolId = lastUsedToolByGroup[group];
+    const lastUsedTool = lastUsedToolId ? tools.find((tool) => tool.id === lastUsedToolId) : undefined;
+
+    return {
+      isActive: false,
+      icon: lastUsedTool?.icon ?? activeState.icon,
+    };
+  }, [getActiveToolInGroup, lastUsedToolByGroup]);
+
   const basicGroupState = getActiveToolInGroup(basicTools, MousePointer);
-  const creationGroupState = getActiveToolInGroup(creationTools, PenTool);
-  const advancedGroupState = getActiveToolInGroup(advancedTools, Wrench);
+  const creationGroupState = getDisplayedToolInGroup('creation', creationTools, PenTool);
+  const advancedGroupState = getDisplayedToolInGroup('advanced', advancedTools, Wrench);
 
   const pluginBottomActions = pluginManager.getActions('bottom');
 

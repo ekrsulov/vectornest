@@ -150,6 +150,18 @@ export const SettingsPanel: React.FC = () => {
             size="sm"
             width="full"
             title="Reset Application - This will clear all data and reload the page"
+            color="red.600"
+            borderColor="red.400"
+            _hover={{
+              bg: 'red.50',
+            }}
+            _dark={{
+              color: 'red.300',
+              borderColor: 'red.400',
+              _hover: {
+                bg: 'rgba(239, 68, 68, 0.14)',
+              },
+            }}
           >
             Reset App
           </PanelStyledButton>

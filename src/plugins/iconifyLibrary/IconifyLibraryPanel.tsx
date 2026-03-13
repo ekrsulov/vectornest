@@ -535,14 +535,16 @@ export const IconifyLibraryPanel: React.FC = () => {
             ) : null
           }
         />
-        <PanelTextInput
-          value={iconifyLibrary.query}
-          onChange={setIconifyQuery}
-          placeholder="Search the Iconify API"
-          width="full"
-          height="26px"
-          leftIcon={<Search size={13} />}
-        />
+        <Box px="2px">
+          <PanelTextInput
+            value={iconifyLibrary.query}
+            onChange={setIconifyQuery}
+            placeholder="Search the Iconify API"
+            width="full"
+            height="26px"
+            leftIcon={<Search size={13} />}
+          />
+        </Box>
 
         {!isSearchMode && (
           <>
@@ -590,14 +592,16 @@ export const IconifyLibraryPanel: React.FC = () => {
                 </Text>
               }
             />
-            <PanelTextInput
-              value={iconifyLibrary.collectionQuery}
-              onChange={setIconifyCollectionQuery}
-              placeholder="Filter icon sets"
-              width="full"
-              height="24px"
-              leftIcon={<Library size={12} />}
-            />
+            <Box px="2px">
+              <PanelTextInput
+                value={iconifyLibrary.collectionQuery}
+                onChange={setIconifyCollectionQuery}
+                placeholder="Filter icon sets"
+                width="full"
+                height="24px"
+                leftIcon={<Library size={12} />}
+              />
+            </Box>
             <VStack
               spacing={1}
               align="stretch"

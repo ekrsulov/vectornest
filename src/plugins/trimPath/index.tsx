@@ -1,4 +1,4 @@
-import { Scissors } from 'lucide-react';
+import { SplitSquareVertical } from 'lucide-react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createTrimPathPluginSlice, type TrimPathPluginSlice } from './slice';
@@ -25,7 +25,7 @@ export const trimPathPlugin: PluginDefinition<CanvasStore> = {
   id: 'trimPath',
   metadata: {
     label: 'Trim Path',
-    icon: Scissors,
+    icon: SplitSquareVertical,
     cursor: 'crosshair',
     disablePathInteraction: true,
   },

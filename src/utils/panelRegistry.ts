@@ -128,7 +128,6 @@ export const panelRegistry = new PanelRegistry();
 
 import { FilePanel } from '../sidebar/panels/FilePanel';
 import { SettingsPanel } from '../sidebar/panels/SettingsPanel';
-import { DocumentationPanel } from '../sidebar/panels/DocumentationPanel';
 import { SnapPointsPanel } from '../sidebar/panels/SnapPointsPanel';
 
 /**
@@ -155,15 +154,6 @@ const CORE_PANELS: PanelConfig[] = [
 ];
 
 /**
- * Documentation panel (shown in settings).
- */
-const DOCUMENTATION_PANEL: PanelConfig = {
-  key: 'documentation',
-  condition: (ctx) => ctx.showSettingsPanel,
-  component: DocumentationPanel,
-};
-
-/**
  * Initialize the panel registry with core panels.
  * Call this once during app startup.
  */
@@ -174,10 +164,6 @@ export function initializePanelRegistry(): void {
 
   // Register core panels first
   panelRegistry.registerAll(CORE_PANELS);
-
-  // Documentation panel is registered but positioned at the end
-  // Plugin panels will be inserted before it
-  panelRegistry.register(DOCUMENTATION_PANEL);
 
   panelRegistry.markInitialized();
 }
@@ -190,7 +176,7 @@ export function initializePanelRegistry(): void {
  * @param panels - Array of panel configurations
  */
 export function registerPluginPanels(pluginId: string, panels: PanelConfig[]): void {
-  // Insert plugin panels before documentation panel
+  // Insert plugin panels after core panels
   const docIndex = panelRegistry.getAll().findIndex(p => p.key === 'documentation');
   const insertPosition = docIndex >= 0 ? docIndex : 'end';
 

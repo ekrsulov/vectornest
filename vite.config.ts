@@ -1,8 +1,28 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
+import { execSync } from 'child_process'
 import { readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
+
+function getGitBuildInfo() {
+  try {
+    const commitHash = execSync('git log -1 --format=%h', { encoding: 'utf-8' }).trim()
+    const commitDate = execSync('git log -1 --format=%cd --date=format:%Y%m%d-%H%M', {
+      encoding: 'utf-8'
+    }).trim()
+
+    return {
+      commitHash,
+      commitDate,
+    }
+  } catch {
+    return {
+      commitHash: 'unknown',
+      commitDate: 'unknown',
+    }
+  }
+}
 
 // Plugin to inject BASE_URL into manifest.json
 function manifestPlugin(): Plugin {
@@ -41,6 +61,7 @@ export default defineConfig(() => {
   const env =
     (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ??
     {}
+  const gitBuildInfo = getGitBuildInfo()
 
   const basePath = env.BASE_PATH?.trim()
 
@@ -51,6 +72,10 @@ export default defineConfig(() => {
 
   return {
     base: normalizedBase,
+    define: {
+      __APP_COMMIT_HASH__: JSON.stringify(gitBuildInfo.commitHash),
+      __APP_COMMIT_DATE__: JSON.stringify(gitBuildInfo.commitDate),
+    },
     plugins: [react(), manifestPlugin()],
     server: {
       host: '0.0.0.0',

@@ -14,8 +14,10 @@ import { SliderControl } from '../../ui/SliderControl';
 import type { SourcePluginSlice } from '../../plugins/source/sourcePluginSlice';
 import { SourceDialog } from '../../plugins/source/SourceDialog';
 import { PanelSwitch } from '../../ui/PanelSwitch';
+import { DocumentationCTA } from '../../ui/DocumentationCTA';
 
 const HIDDEN_INPUT_STYLE: React.CSSProperties = { display: 'none' };
+const buildVersionLabel = `${__APP_COMMIT_HASH__} ${__APP_COMMIT_DATE__}`;
 
 export const FilePanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
@@ -301,6 +303,10 @@ export const FilePanel: React.FC = () => {
             </HStack>
           </Box>
         )}
+
+        <Box pt={3}>
+          <DocumentationCTA versionLabel={buildVersionLabel} />
+        </Box>
       </VStack>
       <SourceDialog />
     </Panel>

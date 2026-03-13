@@ -22,7 +22,7 @@ interface SidebarUtilityButtonProps {
   inactiveBorderColor?: string;
   activeBorderColor?: string;
   inactiveBg?: string;
-  visualStyle?: 'default' | 'tab';
+  visualStyle?: 'default' | 'tab' | 'segment';
   minWidth?: string | number;
   tabShape?: 'full' | 'left' | 'right' | 'none';
   tabPaddingX?: string | number;
@@ -63,14 +63,16 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   } = useThemeColors();
 
   const isTab = visualStyle === 'tab';
+  const isSegment = visualStyle === 'segment';
   const tabInactiveHoverBg = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   const tabActiveHoverBg = useColorModeValue('gray.900', 'gray.100');
   const tabActiveOutlineColor = useColorModeValue('blackAlpha.200', 'whiteAlpha.300');
   const tabInactiveTextColor = useColorModeValue('gray.800', 'gray.100');
   const tabActiveTextColor = useColorModeValue('gray.50', 'gray.700');
+  const segmentHoverBg = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   const showBorder = !borderless;
-  const dimension = iconOnly ? '26px' : undefined;
-  const controlHeight = isTab ? '26px' : (dimension ?? 'auto');
+  const dimension = iconOnly ? (isSegment ? '28px' : '26px') : undefined;
+  const controlHeight = isTab ? '26px' : isSegment ? (dimension ?? '28px') : (dimension ?? 'auto');
   const tabRadius = {
     topLeft: tabShape === 'full' || tabShape === 'left' ? '9px' : '0',
     bottomLeft: tabShape === 'full' || tabShape === 'left' ? '9px' : '0',
@@ -88,11 +90,19 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       size="xs"
       fontSize={fontSize}
       data-active={isActive}
-      bg={isTab && isActive ? 'transparent' : (isActive ? activeBg : (inactiveBg ?? 'transparent'))}
+      bg={
+        isTab && isActive
+          ? 'transparent'
+          : isSegment
+            ? (isActive ? activeBg : (inactiveBg ?? 'transparent'))
+            : (isActive ? activeBg : (inactiveBg ?? 'transparent'))
+      }
       isDisabled={isDisabled}
       color={
         isTab && !iconOnly
           ? (isActive ? tabActiveTextColor : tabInactiveTextColor)
+          : isSegment
+            ? (isActive ? activeColor : inactiveColor)
           : (isActive ? activeColor : inactiveColor)
       }
       border={showBorder ? `${borderWidth} solid` : 'none'}
@@ -101,13 +111,13 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
           ? (isActive ? (activeBorderColor ?? activeBg) : (inactiveBorderColor ?? inactiveBorder))
           : 'transparent'
       }
-      borderRadius={isTab ? undefined : 'full'}
+          borderRadius={isSegment ? 'full' : isTab ? undefined : 'full'}
       borderTopLeftRadius={isTab ? (selectedTopRadius ?? tabRadius.topLeft) : undefined}
       borderBottomLeftRadius={isTab ? (isActive ? '0' : tabRadius.bottomLeft) : undefined}
       borderTopRightRadius={isTab ? (selectedTopRadius ?? tabRadius.topRight) : undefined}
       borderBottomRightRadius={isTab ? (isActive ? '0' : tabRadius.bottomRight) : undefined}
-      fontWeight="bold"
-      transition="all 0.2s"
+          fontWeight={isSegment ? 'semibold' : 'bold'}
+          transition="background-color 0.18s ease, color 0.18s ease, transform 0.18s ease"
       width={iconOnly ? dimension : (fullWidth ? 'full' : 'auto')}
       flex={fullWidth ? '1 1 0' : flex}
       alignSelf={fullWidth ? 'stretch' : undefined}
@@ -121,11 +131,14 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       _hover={{
         bg: isTab
           ? (isActive ? 'transparent' : tabInactiveHoverBg)
+          : isSegment
+            ? (isActive ? activeHoverBg : segmentHoverBg)
           : (isActive ? activeHoverBg : inactiveHoverBg),
+        transform: isSegment ? 'translateY(-1px)' : undefined,
       }}
       _focus={{ outline: 'none', boxShadow: 'none' }}
       sx={{
-        px: iconOnly ? 0 : (isTab ? (tabPaddingX ?? 1) : 2),
+        px: iconOnly ? 0 : (isTab ? (tabPaddingX ?? 1) : isSegment ? 2 : 2),
         py: 0,
         display: 'flex',
         alignItems: 'center',
@@ -164,6 +177,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
+          gap: isSegment && !iconOnly ? '6px' : undefined,
           width: '100%',
           height: '100%',
           transform: isTab && isActive ? 'translateY(-1px)' : 'translateY(0)',

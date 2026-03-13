@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
-import { Pin, PinOff } from 'lucide-react';
+import { FolderOpen, FolderTree, LibraryBig, Pin, PinOff, Settings2, ShieldCheck } from 'lucide-react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { SidebarUtilityButton, SIDEBAR_UTILITY_BORDER_WIDTH } from '../../ui/SidebarUtilityButton';
@@ -14,13 +14,15 @@ import { useThemeColors } from '../../hooks/useThemeColors';
 interface ToolConfig {
   name: string;
   label: string;
+  tooltip: string;
+  icon: React.ComponentType<{ size?: number }>;
 }
 
 // Plugin configuration - only utility/settings tools
 const UTILITY_TOOLS: ToolConfig[] = [
-  { name: 'file', label: 'File' },
-  { name: 'library', label: 'Lib' },
-  { name: 'settings', label: 'Prefs' },
+  { name: 'file', label: 'File', tooltip: 'File', icon: FolderOpen },
+  { name: 'library', label: 'Library', tooltip: 'Library', icon: LibraryBig },
+  { name: 'settings', label: 'Preferences', tooltip: 'Preferences', icon: Settings2 },
 ];
 
 /**
@@ -29,7 +31,6 @@ const UTILITY_TOOLS: ToolConfig[] = [
  * are now in the ActionBar at the bottom of the screen
  */
 export const SidebarToolGrid: React.FC = () => {
-  const pinBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   const defaultTopRowBorderColor = useColorModeValue('blackAlpha.300', 'whiteAlpha.400');
   const {
     toggle: {
@@ -80,18 +81,41 @@ export const SidebarToolGrid: React.FC = () => {
     ...effectiveUtilityTools.map((plugin) => ({
       key: plugin.name,
       label: plugin.label,
+      tooltip: plugin.tooltip,
+      icon: plugin.icon,
+      iconOnly: true,
       isActive: isToolActive(plugin.name),
       onClick: () => onToolClick(plugin.name),
     })),
     ...effectiveSidebarToolbarButtons.map((button) => {
-      let label = button.label ?? pluginManager.getPlugin(button.pluginId)?.metadata.label ?? button.id;
-      if (button.pluginId === 'svgStructure') {
-        label = 'Struct';
-      }
+      const pluginLabel = pluginManager.getPlugin(button.pluginId)?.metadata.label ?? button.id;
+      const label =
+        button.pluginId === 'svgStructure'
+          ? 'Structure'
+          : button.label ?? pluginLabel;
+      const tooltip =
+        button.pluginId === 'svgStructure'
+          ? 'Structure'
+          : button.pluginId === 'generatorLibrary'
+            ? 'Generators'
+            : button.pluginId === 'animLibrary'
+              ? 'Animation'
+          : button.pluginId === 'auditLibrary'
+            ? 'Audit'
+            : button.label ?? pluginLabel;
+      const icon =
+        button.pluginId === 'svgStructure'
+          ? FolderTree
+          : button.pluginId === 'auditLibrary'
+            ? ShieldCheck
+            : button.icon;
 
       return {
         key: `${button.pluginId}:${button.id}`,
         label,
+        tooltip,
+        icon,
+        iconOnly: true,
         isActive: activePlugin === button.pluginId,
         onClick: () => onToolClick(button.pluginId),
       };
@@ -111,9 +135,11 @@ export const SidebarToolGrid: React.FC = () => {
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
       <HStack
         w="full"
-        spacing={0}
-        h="26px"
-        alignItems="stretch"
+        spacing={1}
+        minH="34px"
+        alignItems="center"
+        px={1.5}
+        py={1}
         borderBottomWidth={SIDEBAR_UTILITY_BORDER_WIDTH}
         borderBottomStyle="solid"
         borderColor={topRowBorderColor}
@@ -122,7 +148,8 @@ export const SidebarToolGrid: React.FC = () => {
           <SidebarTabStrip
             items={tabItems}
             scrollable={shouldUseHorizontalScroll}
-            flat
+            tabWidth={shouldUseHorizontalScroll ? '28px' : undefined}
+            variant="iconRail"
           />
         </Box>
         {canPinSidebar && (
@@ -130,10 +157,7 @@ export const SidebarToolGrid: React.FC = () => {
             flexShrink={0}
             display="flex"
             alignItems="center"
-            h="26px"
-            borderLeftWidth="2px"
-            borderLeftStyle="solid"
-            borderColor={pinBorderColor}
+            justifyContent="center"
           >
             <ConditionalTooltip label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}>
               <SidebarUtilityButton
@@ -146,8 +170,7 @@ export const SidebarToolGrid: React.FC = () => {
                 onClick={onTogglePin}
                 isActive={false}
                 isDisabled={!canPinSidebar}
-                visualStyle="tab"
-                tabShape="none"
+                visualStyle="segment"
                 borderless
               />
             </ConditionalTooltip>

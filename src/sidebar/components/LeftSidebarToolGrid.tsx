@@ -1,9 +1,8 @@
 import React from 'react';
 import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
-import { Pin, PinOff } from 'lucide-react';
+import { Clapperboard, FolderTree, LayoutGrid, LibraryBig, Pin, PinOff } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
-import ConditionalTooltip from '../../ui/ConditionalTooltip';
-import { SidebarUtilityButton, SIDEBAR_UTILITY_BORDER_WIDTH } from '../../ui/SidebarUtilityButton';
+import { SIDEBAR_UTILITY_BORDER_WIDTH } from '../../ui/SidebarUtilityButton';
 import { SidebarTabStrip, type SidebarTabStripItem } from '../../ui/SidebarTabStrip';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -11,7 +10,6 @@ import { useThemeColors } from '../../hooks/useThemeColors';
 
 export const LeftSidebarToolGrid: React.FC = () => {
   const { canPinSidebar } = useResponsive();
-  const pinBorderColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   const defaultTopRowBorderColor = useColorModeValue('blackAlpha.300', 'whiteAlpha.400');
   const {
     toggle: {
@@ -61,26 +59,50 @@ export const LeftSidebarToolGrid: React.FC = () => {
 
   const buttons: SidebarTabStripItem[] = [
     {
+      key: 'pin',
+      label: isLeftSidebarPinned ? 'Unpin sidebar' : 'Pin sidebar',
+      tooltip: isLeftSidebarPinned ? 'Unpin sidebar' : 'Pin sidebar',
+      icon: isLeftSidebarPinned ? PinOff : Pin,
+      iconOnly: true,
+      isActive: false,
+      onClick: () => {
+        if (!canPinSidebar) return;
+        setIsLeftSidebarPinned(!isLeftSidebarPinned);
+      },
+    },
+    {
       key: 'structure',
-      label: 'Struct',
+      label: 'Structure',
+      tooltip: 'Structure',
+      icon: FolderTree,
+      iconOnly: true,
       isActive: leftSidebarActivePanel === 'structure',
       onClick: () => switchPanel('structure'),
     },
     {
       key: 'library',
-      label: 'Lib',
+      label: 'Library',
+      tooltip: 'Library',
+      icon: LibraryBig,
+      iconOnly: true,
       isActive: leftSidebarActivePanel === 'library',
       onClick: () => switchPanel('library'),
     },
     {
       key: 'generatorLibrary',
-      label: 'Gen',
+      label: 'Generator Library',
+      tooltip: 'Generators',
+      icon: LayoutGrid,
+      iconOnly: true,
       isActive: leftSidebarActivePanel === 'generatorLibrary',
       onClick: () => switchPanel('generatorLibrary'),
     },
     {
       key: 'animLibrary',
-      label: 'Anim',
+      label: 'Animation Library',
+      tooltip: 'Animation',
+      icon: Clapperboard,
+      iconOnly: true,
       isActive: leftSidebarActivePanel === 'animLibrary',
       onClick: () => switchPanel('animLibrary'),
     },
@@ -99,42 +121,16 @@ export const LeftSidebarToolGrid: React.FC = () => {
       <HStack
         w="full"
         spacing={0}
-        h="26px"
-        alignItems="stretch"
+        minH="34px"
+        alignItems="center"
+        px={1.5}
+        py={1}
         borderBottomWidth={SIDEBAR_UTILITY_BORDER_WIDTH}
         borderBottomStyle="solid"
         borderColor={topRowBorderColor}
       >
-        <Box
-          display="flex"
-          alignItems="center"
-          h="26px"
-          borderRightWidth="2px"
-          borderRightStyle="solid"
-          borderColor={pinBorderColor}
-        >
-          <ConditionalTooltip label={isLeftSidebarPinned ? 'Unpin sidebar' : 'Pin sidebar'}>
-            <SidebarUtilityButton
-              label={isLeftSidebarPinned ? 'Unpin sidebar' : 'Pin sidebar'}
-              icon={isLeftSidebarPinned ? PinOff : Pin}
-              iconOnly
-              fontSize="xs"
-              visualStyle="tab"
-              tabShape="none"
-              borderless
-              onClick={() => {
-                if (!canPinSidebar) return;
-                setIsLeftSidebarPinned(!isLeftSidebarPinned);
-              }}
-              isActive={false}
-              isDisabled={!canPinSidebar}
-              flex={0}
-              fullWidth={false}
-            />
-          </ConditionalTooltip>
-        </Box>
         <Box flex={1} display="flex" minW={0}>
-          <SidebarTabStrip items={buttons} flat />
+          <SidebarTabStrip items={buttons} variant="iconRail" distribution="space-between" />
         </Box>
       </HStack>
     </Box>

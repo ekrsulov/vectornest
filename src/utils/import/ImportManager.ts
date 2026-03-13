@@ -11,6 +11,7 @@ import { updateGridLayout, INITIAL_GRID_LAYOUT, type GridLayoutState } from '../
 import { mergeImportedResources } from '../importContributionRegistry';
 import { DEFAULT_MODE } from '../../constants';
 import type { ImportedArtboardMetadata } from '../svg/importTypes';
+import { deleteElementsBatch } from '../../store/slices/base/baseSliceDeletion';
 
 export interface ImportOptions {
     appendMode?: boolean;
@@ -23,16 +24,8 @@ export interface ImportOptions {
 
 export class ImportManager {
     static async importFiles(files: FileList | File[], options: ImportOptions = {}): Promise<number> {
-        const state = canvasStoreApi.getState();
-        const {
-            settings,
-            addElement,
-            updateElement,
-            clearSelection,
-            selectElements,
-            setActivePlugin
-        } = state;
-
+        let state = canvasStoreApi.getState();
+        const { settings } = state;
         const {
             appendMode = false,
             resizeImport = settings.importResize,
@@ -45,10 +38,26 @@ export class ImportManager {
         if (!files || files.length === 0) return 0;
 
         try {
-
             if (!appendMode) {
-                clearSelection();
+                if (state.elements.length > 0) {
+                    const clearedCanvasState = deleteElementsBatch(
+                        state,
+                        state.elements.map((element) => element.id),
+                        { clearSelection: true }
+                    );
+                    canvasStoreApi.setState(clearedCanvasState);
+                } else {
+                    state.clearSelection();
+                }
+                state = canvasStoreApi.getState();
             }
+
+            const {
+                addElement,
+                updateElement,
+                selectElements,
+                setActivePlugin
+            } = state;
 
             const selectionIds: string[] = [];
             let importedPathCount = 0;

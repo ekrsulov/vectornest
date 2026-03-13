@@ -901,7 +901,7 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
     const currentData = liveElementDataRef.current ?? element?.data;
     if (!currentData) return;
     scheduleVisualSync(currentData);
-  }, [element?.id, isInlineNativeTextEditing, scheduleVisualSync, viewportZoom]);
+  }, [element?.data, element?.id, isInlineNativeTextEditing, scheduleVisualSync]);
 
   useEffect(() => {
     if (editingElementId) return;

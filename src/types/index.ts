@@ -34,6 +34,7 @@ export interface AppSettings {
   defaultStrokeColor: string;
   scaleStrokeWithZoom: boolean;
   exportPadding: number;
+  importAppendToExisting: boolean;
   importResize: boolean;
   importResizeWidth: number;
   importResizeHeight: number;

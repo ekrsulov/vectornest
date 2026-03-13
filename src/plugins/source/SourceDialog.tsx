@@ -112,7 +112,7 @@ export const SourceDialog: React.FC = () => {
             const file = new File([blob], 'source.svg', { type: 'image/svg+xml' });
 
             await ImportManager.importFiles([file], {
-                appendMode: false // Clears selection then adds elements (same behavior as the original useSvgImport default)
+                appendMode: false,
             });
 
             toast({

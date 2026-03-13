@@ -6,10 +6,14 @@ import { useCanvasStore } from '../../store/canvasStore';
 
 import { logger } from '../../utils/logger';
 import { Panel } from '../../ui/Panel';
-import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { useSvgImport } from '../../hooks/useSvgImport';
 import { ExportManager } from '../../utils/export/ExportManager';
-import { FilePanelAdvancedSection } from './file/FilePanelAdvancedSection';
+import { FilePanelImportOptions } from './file/FilePanelAdvancedSection';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
+import { SliderControl } from '../../ui/SliderControl';
+import type { SourcePluginSlice } from '../../plugins/source/sourcePluginSlice';
+import { SourceDialog } from '../../plugins/source/SourceDialog';
+import { PanelToggle } from '../../ui/PanelToggle';
 
 const HIDDEN_INPUT_STYLE: React.CSSProperties = { display: 'none' };
 
@@ -22,6 +26,7 @@ export const FilePanel: React.FC = () => {
   const toast = useToast();
 
   const {
+    importAppendToExisting: appendToExisting = true,
     importResize: resizeImport,
     importResizeWidth: resizeWidth,
     importResizeHeight: resizeHeight,
@@ -29,20 +34,23 @@ export const FilePanel: React.FC = () => {
     importAddFrame: addFrame
   } = settings;
 
+  const setAppendToExisting = (value: boolean) => updateSettings({ importAppendToExisting: value });
   const setResizeImport = (value: boolean) => updateSettings({ importResize: value });
   const setResizeWidth = (value: number) => updateSettings({ importResizeWidth: value });
   const setResizeHeight = (value: number) => updateSettings({ importResizeHeight: value });
   const setApplyUnion = (value: boolean) => updateSettings({ importApplyUnion: value });
   const setAddFrame = (value: boolean) => updateSettings({ importAddFrame: value });
 
-  const [pngSelectedOnly, setPngSelectedOnly] = useState(false);
-  const [svgSelectedOnly, setSvgSelectedOnly] = useState(false);
+  const [saveSelectedOnly, setSaveSelectedOnly] = useState(false);
   const svgInputRef = useRef<HTMLInputElement>(null);
 
 
   // Document name state
   const documentName = useCanvasStore(state => state.documentName);
   const setDocumentName = useCanvasStore(state => state.setDocumentName);
+  const setSourceDialogOpen = useCanvasStore(
+    (state) => (state as unknown as SourcePluginSlice).setSourceDialogOpen
+  );
   const [localDocumentName, setLocalDocumentName] = useState(documentName);
   const [isSaving, setIsSaving] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -85,16 +93,16 @@ export const FilePanel: React.FC = () => {
   };
 
   const handleSaveAsSvg = () => {
-    ExportManager.exportSelection('svg', documentName, svgSelectedOnly, settings.exportPadding);
+    ExportManager.exportSelection('svg', documentName, saveSelectedOnly, settings.exportPadding);
   };
 
   const handleSaveAsPng = () => {
-    ExportManager.exportSelection('png', documentName, pngSelectedOnly, settings.exportPadding);
+    ExportManager.exportSelection('png', documentName, saveSelectedOnly, settings.exportPadding);
   };
 
   const handleLoad = async () => {
     try {
-      await loadDocument(true); // Always append for now
+      await loadDocument(appendToExisting);
     } catch (error) {
       logger.error('Failed to load document', error);
       toast({
@@ -111,6 +119,10 @@ export const FilePanel: React.FC = () => {
     svgInputRef.current?.click();
   };
 
+  const handleOpenSourceDialog = () => {
+    setSourceDialogOpen?.(true);
+  };
+
   const { importSvgFiles } = useSvgImport();
 
   const handleSVGFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,7 +135,7 @@ export const FilePanel: React.FC = () => {
     setLocalDocumentName(firstName);
 
     await importSvgFiles(files, {
-      appendMode: true, // Always append in FilePanel for now, or we could add a toggle
+      appendMode: appendToExisting,
       resizeImport,
       resizeWidth,
       resizeHeight,
@@ -140,10 +152,10 @@ export const FilePanel: React.FC = () => {
   return (
     <Panel>
       <VStack spacing={2} align="stretch">
-        {/* Export */}
         <Box>
           <Text
             fontSize="12px"
+            fontWeight="bold"
             color="gray.700"
             _dark={{ color: 'gray.300' }}
             mb={1.5}
@@ -178,6 +190,27 @@ export const FilePanel: React.FC = () => {
             )}
           </HStack>
 
+          <Box pr={0.5} mb={1.5}>
+            <SliderControl
+              label="Export Padding:"
+              value={settings.exportPadding}
+              min={0}
+              max={100}
+              step={5}
+              onChange={(value) => updateSettings({ exportPadding: value })}
+              title="Padding in pixels around exported SVG/PNG"
+            />
+          </Box>
+
+          <Box mb={1.5}>
+            <PanelToggle
+              isChecked={saveSelectedOnly}
+              onChange={(event) => setSaveSelectedOnly(event.target.checked)}
+            >
+              Save selected elements only
+            </PanelToggle>
+          </Box>
+
           <HStack spacing={1}>
             <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm">
               <HStack spacing={1.5}>
@@ -192,34 +225,28 @@ export const FilePanel: React.FC = () => {
               </HStack>
             </PanelStyledButton>
           </HStack>
+
+          <Box mt={1}>
+            <PanelStyledButton onClick={handleOpenSourceDialog} width="full" size="sm">
+              SVG Source
+            </PanelStyledButton>
+          </Box>
         </Box>
 
-        {/* Import */}
-        <PanelStyledButton onClick={handleImportSVG} width="full" size="sm">
-          <HStack spacing={1.5}>
-            <Upload size={11} />
-            <span>Import SVG</span>
-          </HStack>
-        </PanelStyledButton>
+        <Box pt={2}>
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="gray.700"
+            _dark={{ color: 'gray.300' }}
+            mb={1.5}
+          >
+            IMPORT
+          </Text>
 
-        {/* Hidden file input for SVG import */}
-        <input
-          ref={svgInputRef}
-          type="file"
-          accept=".svg,image/svg+xml"
-          multiple
-          style={HIDDEN_INPUT_STYLE}
-          onChange={handleSVGFileSelected}
-        />
-
-        <Box mt={-2}>
-          <FilePanelAdvancedSection
-            exportPadding={settings.exportPadding}
-            onExportPaddingChange={(value) => updateSettings({ exportPadding: value })}
-            pngSelectedOnly={pngSelectedOnly}
-            onPngSelectedOnlyChange={setPngSelectedOnly}
-            svgSelectedOnly={svgSelectedOnly}
-            onSvgSelectedOnlyChange={setSvgSelectedOnly}
+          <FilePanelImportOptions
+            appendToExisting={appendToExisting}
+            onAppendToExistingChange={setAppendToExisting}
             addFrame={addFrame}
             onAddFrameChange={setAddFrame}
             applyUnion={applyUnion}
@@ -230,28 +257,49 @@ export const FilePanel: React.FC = () => {
             onResizeWidthChange={setResizeWidth}
             resizeHeight={resizeHeight}
             onResizeHeightChange={setResizeHeight}
-            onSave={handleSave}
-            onLoad={handleLoad}
+          />
+
+          <PanelStyledButton onClick={handleImportSVG} width="full" size="sm">
+            <HStack spacing={1.5}>
+              <Upload size={11} />
+              <span>Import SVG</span>
+            </HStack>
+          </PanelStyledButton>
+
+          <input
+            ref={svgInputRef}
+            type="file"
+            accept=".svg,image/svg+xml"
+            multiple
+            style={HIDDEN_INPUT_STYLE}
+            onChange={handleSVGFileSelected}
           />
         </Box>
 
-        {/* Reset Application */}
-        <Box pt={0}>
-          <PanelStyledButton
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              useCanvasStore.persist.clearStorage();
-              window.location.reload();
-            }}
-            size="sm"
-            width="full"
-            title="Reset Application - This will clear all data and reload the page"
-          >
-            Reset App
-          </PanelStyledButton>
-        </Box>
+        {import.meta.env.DEV && (
+          <Box pt={2}>
+            <Text
+              fontSize="12px"
+              fontWeight="bold"
+              color="gray.700"
+              _dark={{ color: 'gray.300' }}
+              mb={1.5}
+            >
+              JSON
+            </Text>
+
+            <HStack spacing={1}>
+              <PanelStyledButton onClick={handleSave} flex={1} size="sm">
+                Save
+              </PanelStyledButton>
+              <PanelStyledButton onClick={handleLoad} flex={1} size="sm">
+                Load
+              </PanelStyledButton>
+            </HStack>
+          </Box>
+        )}
       </VStack>
+      <SourceDialog />
     </Panel>
   );
 };

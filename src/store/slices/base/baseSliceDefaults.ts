@@ -10,6 +10,7 @@ const createDefaultSettings = (): BaseSlice['settings'] => ({
   defaultStrokeColor: '#000000',
   scaleStrokeWithZoom: true,
   exportPadding: 0,
+  importAppendToExisting: true,
   importResize: false,
   importResizeWidth: 64,
   importResizeHeight: 64,

@@ -14,6 +14,7 @@ const AppChrome = lazy(() => import('./ui/AppChrome').then((module) => ({ defaul
 function App() {
   const { importSvgFiles } = useSvgImport();
   const isWithoutDistractionMode = useCanvasStore((state) => Boolean(state.settings.withoutDistractionMode));
+  const importAppendToExisting = useCanvasStore((state) => state.settings.importAppendToExisting ?? true);
   const activePlugin = useCanvasStore((state) => state.activePlugin);
   const setMode = useCanvasStore((state) => state.setMode);
   const setShowFilePanel = useCanvasStore((state) => state.setShowFilePanel);
@@ -66,9 +67,9 @@ function App() {
       if (svgFile) {
         setDocumentName(svgFile.name.replace(/\.svg$/i, ''));
       }
-      await importSvgFiles(files, { appendMode: true });
+      await importSvgFiles(files, { appendMode: importAppendToExisting });
     }
-  }, [importSvgFiles, setDocumentName]);
+  }, [importAppendToExisting, importSvgFiles, setDocumentName]);
 
   return (
     <div

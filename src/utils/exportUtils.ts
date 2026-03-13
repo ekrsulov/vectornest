@@ -224,7 +224,7 @@ export function exportSelection(
 
   const result = serializePathsForExport(elements, selectedIds, {
     selectedOnly,
-    padding: selectedOnly ? 0 : padding,
+    padding,
     defs: defsContent,
     state: exportState,
     normalizeMetadataToLightMode: colorMode === 'dark',

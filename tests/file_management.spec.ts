@@ -26,10 +26,6 @@ test.describe('File Management & Export/Import Tests', () => {
     // Open file panel
     await page.locator('[aria-label="File"]').click();
 
-    // Save button now lives inside the collapsed Advanced section
-    const advancedHeader = page.getByRole('heading', { name: 'Advanced' });
-    await advancedHeader.click();
-
     // Wait for save button to be visible and clickable
     await page.locator('button:has-text("Save")').waitFor({ state: 'visible' });
     await page.locator('button:has-text("Save")').click();

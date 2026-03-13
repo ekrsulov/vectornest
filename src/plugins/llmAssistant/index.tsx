@@ -3,6 +3,7 @@ import React from 'react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createLlmAssistantSlice } from './slice';
+import { createSettingsPanel } from '../../utils/pluginFactories';
 
 const LlmAssistantPanel = React.lazy(() =>
   import('./LlmAssistantPanel').then((module) => ({ default: module.LlmAssistantPanel }))
@@ -28,11 +29,9 @@ export const llmAssistantPlugin: PluginDefinition<CanvasStore> = {
         (!ctx.activePlugin || ctx.activePlugin === 'select'),
       component: LlmAssistantPanel,
     },
-    {
-      key: 'llm-assistant-settings',
-      condition: (ctx) => ctx.showFilePanel,
-      component: LlmAssistantSettingsPanel,
-    },
+    createSettingsPanel('llm-assistant-settings', LlmAssistantSettingsPanel, {
+      title: 'LLM Assistant',
+    }),
   ],
   handler: () => { },
 };

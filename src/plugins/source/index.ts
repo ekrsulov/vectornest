@@ -24,7 +24,7 @@ export const sourcePlugin: PluginDefinition<CanvasStore> = {
     sidebarPanels: [
         {
             key: 'source',
-            condition: (ctx) => ctx.showFilePanel,
+            condition: () => false,
             component: SourcePanel,
         },
     ],

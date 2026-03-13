@@ -19,6 +19,7 @@ import { PanelSwitch } from '../../ui/PanelSwitch';
 import { SliderControl } from '../../ui/SliderControl';
 import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { CustomSelect } from '../../ui/CustomSelect';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { useFullscreen } from './settings/useFullscreen';
 import { DEFAULT_MODE } from '../../constants';
 
@@ -111,13 +112,20 @@ export const SettingsPanel: React.FC = () => {
     { value: LogLevel.ERROR.toString(), label: 'ERROR' },
   ];
 
+  const handleResetApp = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    useCanvasStore.persist.clearStorage();
+    window.location.reload();
+  };
+
   return (
     <Panel>
       <VStack spacing={1} align="stretch">
         {/* Theme - Always visible at the top */}
         <FormControl>
           <Flex align="center" gap={2}>
-            <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.400' }} mb={0} minW="40px">
+            <FormLabel fontSize="12px" fontWeight="bold" color="gray.600" _dark={{ color: 'gray.400' }} mb={0} minW="42px">
               Theme
             </FormLabel>
             <JoinedButtonGroup
@@ -133,6 +141,17 @@ export const SettingsPanel: React.FC = () => {
             />
           </Flex>
         </FormControl>
+
+        <Box pt={0.5}>
+          <PanelStyledButton
+            onClick={handleResetApp}
+            size="sm"
+            width="full"
+            title="Reset Application - This will clear all data and reload the page"
+          >
+            Reset App
+          </PanelStyledButton>
+        </Box>
 
         {/* Configuration Panel */}
         <Panel

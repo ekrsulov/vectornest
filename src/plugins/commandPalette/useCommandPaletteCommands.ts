@@ -40,7 +40,6 @@ import {
   SlidersHorizontal,
   RotateCcw,
   FileCode,
-  Bot,
   Settings2,
   Magnet,
   FolderTree,
@@ -131,7 +130,6 @@ function collectRelatedPanels(
 function collectFilePanelCommands(): PaletteCommand[] {
   const filePanel = getRegisteredPanelComponent('file');
   const sourcePanel = getRegisteredPanelComponent('source:source');
-  const llmAssistantSettingsPanel = getRegisteredPanelComponent('llmAssistant:llm-assistant-settings');
 
   return [
     {
@@ -159,7 +157,7 @@ function collectFilePanelCommands(): PaletteCommand[] {
           if (!target.files?.length) return;
           const { settings } = useCanvasStore.getState();
           await ImportManager.importFiles(target.files, {
-            appendMode: true,
+            appendMode: settings.importAppendToExisting ?? true,
             resizeImport: settings.importResize,
             resizeWidth: settings.importResizeWidth,
             resizeHeight: settings.importResizeHeight,
@@ -195,24 +193,24 @@ function collectFilePanelCommands(): PaletteCommand[] {
     },
     {
       id: 'file-advanced',
-      label: 'Advanced Options',
+      label: 'File Options',
       category: 'File',
       icon: SlidersHorizontal,
       execute: () => {},
       panelComponent: filePanel,
       panelLabel: 'File',
-      keywords: ['advanced', 'options', 'import', 'export', 'padding', 'resize', 'frame'],
+      keywords: ['file', 'options', 'import', 'export', 'padding', 'resize', 'frame', 'json'],
     },
     {
       id: 'file-reset-app',
       label: 'Reset App',
-      category: 'File',
+      category: 'Prefs',
       icon: RotateCcw,
       execute: () => {
         useCanvasStore.persist.clearStorage();
         window.location.reload();
       },
-      keywords: ['reset', 'clear', 'restart', 'reload', 'delete'],
+      keywords: ['reset', 'clear', 'restart', 'reload', 'delete', 'prefs', 'settings'],
     },
     {
       id: 'file-svg-source',
@@ -223,16 +221,6 @@ function collectFilePanelCommands(): PaletteCommand[] {
       panelComponent: sourcePanel,
       panelLabel: 'SVG Source',
       keywords: ['source', 'svg', 'code', 'xml', 'raw', 'markup'],
-    },
-    {
-      id: 'file-llm-assistant',
-      label: 'LLM Assistant',
-      category: 'File',
-      icon: Bot,
-      execute: () => {},
-      panelComponent: llmAssistantSettingsPanel,
-      panelLabel: 'LLM Assistant',
-      keywords: ['llm', 'assistant', 'ai', 'openai', 'gpt', 'api', 'configuration'],
     },
   ];
 }

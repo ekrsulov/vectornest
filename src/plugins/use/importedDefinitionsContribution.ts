@@ -50,12 +50,8 @@ const applyHiddenDisplay = (markup: string, isHidden: boolean): string => {
     return markup;
   }
 
-  const withReplacedDisplay = markup.replace(/^(\s*<[^>]*?)\sdisplay="[^"]*"/, '$1 display="none"');
-  if (withReplacedDisplay !== markup) {
-    return withReplacedDisplay;
-  }
-
-  return markup.replace(/^(\s*<\w+)/, '$1 display="none"');
+  const withoutDisplay = markup.replace(/\sdisplay="[^"]*"/g, '');
+  return withoutDisplay.replace(/^(\s*<\w+)/, '$1 display="none"');
 };
 
 const getDefinitionExportId = (element: CanvasElement): string => {
@@ -72,6 +68,17 @@ const buildDefinitionExportIdMap = (elements: CanvasElement[]): Map<string, stri
     exportIdMap.set(element.id, getDefinitionExportId(element));
   });
   return exportIdMap;
+};
+
+const buildDefinitionRuntimeIdMap = (elements: CanvasElement[]): Map<string, string> => {
+  const runtimeIdMap = new Map<string, string>();
+  elements.forEach((element) => {
+    if (!isDefinitionElement(element)) {
+      return;
+    }
+    runtimeIdMap.set(element.id, element.id);
+  });
+  return runtimeIdMap;
 };
 
 const rewriteDefinitionReferenceIds = (
@@ -251,9 +258,9 @@ defsContributionRegistry.register({
         return true;
       })
       .sort(sortByZIndex);
-    const exportIdMap = buildDefinitionExportIdMap(elements);
+    const runtimeIdMap = buildDefinitionRuntimeIdMap(elements);
     const markups = roots
-      .map((root) => serializeDefinitionTree(root, childrenByParent, state, exportIdMap))
+      .map((root) => serializeDefinitionTree(root, childrenByParent, state, runtimeIdMap))
       .filter((value): value is string => Boolean(value));
 
     if (!markups.length) {

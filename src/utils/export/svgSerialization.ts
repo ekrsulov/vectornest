@@ -17,6 +17,7 @@ import { parseSeconds } from '../svgLengthUtils';
 import { serializePathElement, serializeTextPathOnlyElement } from './pathSerialization';
 import { safeChildIdsFromElement as safeChildIds } from '../groupTraversalUtils';
 import { isMonoColor, transformMonoColor } from '../colorModeSyncUtils';
+import { IDENTITY_MATRIX, multiplyMatrices, type Matrix } from '../matrixUtils';
 
 export interface ExportOptions {
   selectedOnly: boolean;
@@ -151,7 +152,42 @@ const serializeArtboardMetadata = (
   return encodeURIComponent(JSON.stringify(payload));
 };
 
-function serializeElementWithContribution(element: CanvasElement, indent: string, state?: CanvasStore): string | null {
+const resolveGroupWorldTransform = (
+  groupElement: GroupElement,
+  ancestorTransformMatrix: Matrix,
+): Matrix => {
+  if (groupElement.data.transformMatrix) {
+    return [...groupElement.data.transformMatrix] as Matrix;
+  }
+
+  const transform = groupElement.data.transform;
+  if (!transform) {
+    return ancestorTransformMatrix;
+  }
+
+  const { translateX = 0, translateY = 0, scaleX = 1, scaleY = 1 } = transform;
+  const rotation = transform.rotation ?? 0;
+  const radians = (rotation * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const localMatrix: Matrix = [
+    cos * scaleX,
+    sin * scaleX,
+    -sin * scaleY,
+    cos * scaleY,
+    translateX,
+    translateY,
+  ];
+
+  return multiplyMatrices(ancestorTransformMatrix, localMatrix);
+};
+
+function serializeElementWithContribution(
+  element: CanvasElement,
+  indent: string,
+  state?: CanvasStore,
+  ancestorTransformMatrix: Matrix = IDENTITY_MATRIX,
+): string | null {
   const isDefinition = Boolean((element.data as PresentationAttributes | undefined)?.isDefinition);
   if (isDefinition) {
     return null;
@@ -160,15 +196,14 @@ function serializeElementWithContribution(element: CanvasElement, indent: string
   const isHidden = state?.isElementHidden?.(element.id) ?? false;
   const applyHiddenDisplay = (markup: string): string => {
     if (!isHidden) return markup;
-    const withReplacedDisplay = markup.replace(/^(\s*<[^>]*?)\sdisplay="[^"]*"/, '$1 display="none"');
-    if (withReplacedDisplay !== markup) {
-      return withReplacedDisplay;
-    }
-    return markup.replace(/^(\s*<\w+)/, '$1 display="none"');
+    const withoutDisplay = markup.replace(/\sdisplay="[^"]*"/g, '');
+    return withoutDisplay.replace(/^(\s*<\w+)/, '$1 display="none"');
   };
 
   if (element.type === 'path') {
-    return serializePathElement(element as PathElement, indent, state);
+    return serializePathElement(element as PathElement, indent, state, {
+      relativeTextTransformTo: ancestorTransformMatrix,
+    });
   }
 
   const serialized = elementContributionRegistry.serializeElement(element);
@@ -203,14 +238,20 @@ function serializeElementWithContribution(element: CanvasElement, indent: string
 /**
  * Serialize an export node (group or path) recursively
  */
-function serializeNode(node: ExportNode, indentLevel: number, state?: CanvasStore): string {
+function serializeNode(
+  node: ExportNode,
+  indentLevel: number,
+  state?: CanvasStore,
+  ancestorTransformMatrix: Matrix = IDENTITY_MATRIX,
+): string {
   const indent = '  '.repeat(indentLevel);
 
   if (node.element.type !== 'group') {
-    return serializeElementWithContribution(node.element, indent, state) ?? '';
+    return serializeElementWithContribution(node.element, indent, state, ancestorTransformMatrix) ?? '';
   }
 
   const groupElement = node.element as GroupElement;
+  const currentGroupTransformMatrix = resolveGroupWorldTransform(groupElement, ancestorTransformMatrix);
   const groupPathData = groupElement.data as PresentationAttributes & {
     textPath?: { text?: string; href?: string };
   };
@@ -229,7 +270,13 @@ function serializeNode(node: ExportNode, indentLevel: number, state?: CanvasStor
       : null;
     const exportHrefId = definitionSourceId
       ?? ((referencedPath?.data as PresentationAttributes | undefined)?.sourceId || referencedPath?.id || groupElement.id);
-    const railMarkup = referencedPath
+    const referencedPathData = referencedPath?.data as (PresentationAttributes & { isTextPathRef?: boolean }) | undefined;
+    const shouldEmitInlineRail = Boolean(
+      referencedPath &&
+      !referencedPathData?.isDefinition &&
+      !referencedPathData?.isTextPathRef
+    );
+    const railMarkup = shouldEmitInlineRail && referencedPath
       ? serializePathElement(
         {
           ...referencedPath,
@@ -254,6 +301,7 @@ function serializeNode(node: ExportNode, indentLevel: number, state?: CanvasStor
     const textMarkup = serializeTextPathOnlyElement(proxyPathElement, indent, state, {
       textPathHrefId: exportHrefId,
       animationTargetElementId: referencedPath?.id ?? groupElement.id,
+      relativeTextTransformTo: ancestorTransformMatrix,
     });
     return [railMarkup, textMarkup].filter(Boolean).join('\n');
   }
@@ -308,7 +356,9 @@ function serializeNode(node: ExportNode, indentLevel: number, state?: CanvasStor
     return `${indent}<g${attributes.length ? ' ' + attributes.join(' ') : ''} />`;
   }
 
-  const childrenContent = node.children.map(child => serializeNode(child, indentLevel + 1, state)).join('\n');
+  const childrenContent = node.children
+    .map((child) => serializeNode(child, indentLevel + 1, state, currentGroupTransformMatrix))
+    .join('\n');
 
   let result = `${indent}<g${attributes.length ? ' ' + attributes.join(' ') : ''}>\n`;
   if (hasAnimations) {

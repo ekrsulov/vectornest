@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 2000" width="1000" height="2000">
+  <g transform="translate(0 1230)">
+    <defs>
+      <path id="a" d="M20 120c40-80 120 40 160-40" fill="none"/>
+    </defs>
+    <path d="M20 120c40-80 120 40 160-40" fill="none" stroke="#000" stroke-dasharray="4 3"/>
+    <text font-family="ui-sans-serif, system-ui" font-size="14">
+      <textPath href="#a" startOffset="0%">
+        TextPath
+        <animate attributeName="startOffset" values="0%;100%;0%" dur="2s" repeatCount="indefinite"/>
+      </textPath>
+    </text>
+  </g>
+</svg>

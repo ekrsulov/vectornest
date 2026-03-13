@@ -137,10 +137,13 @@ export const injectAnimationsIntoSymbolContent = (
   animations: SVGAnimation[],
   chainDelays: Map<string, number>,
   animationState?: AnimationState,
-  idPrefix?: string
+  idPrefix?: string,
+  options?: { forceRender?: boolean }
 ): string => {
   // Only inject if animations should render
-  const allowRender = animationState
+  const allowRender = options?.forceRender
+    ? true
+    : animationState
     ? (animationState.isPlaying || animationState.hasPlayed || animationState.isWorkspaceOpen)
     : true;
   if (!allowRender) return rawContent;
@@ -605,7 +608,15 @@ defsContributionRegistry.register({
       .map((symbol) => {
         if (symbol.rawContent) {
           // Inject animations for child elements
-          const animatedContent = injectAnimationsIntoSymbolContent(symbol.rawContent, symbol.id, animations, chainDelays, animationState);
+          const animatedContent = injectAnimationsIntoSymbolContent(
+            symbol.rawContent,
+            symbol.id,
+            animations,
+            chainDelays,
+            animationState,
+            undefined,
+            { forceRender: true }
+          );
           const content = rewriteSymbolReferencesInContent(animatedContent, filteredIds);
           return `<symbol id="symbol-${symbol.id}" viewBox="${symbol.bounds.minX} ${symbol.bounds.minY} ${symbol.bounds.width} ${symbol.bounds.height}" preserveAspectRatio="xMidYMid meet" overflow="visible">${content}</symbol>`;
         }

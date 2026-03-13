@@ -5,6 +5,7 @@ import { animationContributionRegistry } from '../animationContributionRegistry'
 import { serializeAnimationFromContributions } from '../exportContributionRegistry';
 import { normalizeMarkerId } from '../markerUtils';
 import { shouldSerializeDefinitionPresentationAttribute } from '../sourcePresentationAttributes';
+import { IDENTITY_MATRIX, inverseMatrix, multiplyMatrices, type Matrix } from '../matrixUtils';
 import { escapeXmlAttribute, escapeXmlText } from '../xmlEscapeUtils';
 import { getEffectiveStrokeColor } from '../pathDataBehaviors';
 import { generateShortId } from '../idGenerator';
@@ -31,9 +32,35 @@ interface PathSerializationOptions {
   includeTextPath?: boolean;
   textPathHrefId?: string;
   animationTargetElementId?: string;
+  relativeTextTransformTo?: Matrix;
 }
 
 type TextPathData = NonNullable<PathData['textPath']>;
+
+const matricesAlmostEqual = (left: Matrix, right: Matrix, epsilon = 1e-6): boolean => (
+  left.every((value, index) => Math.abs(value - right[index]) <= epsilon)
+);
+
+const resolveRelativeTextTransformMatrix = (
+  textTransformMatrix: Matrix | undefined,
+  ancestorTransformMatrix: Matrix | undefined,
+): Matrix | undefined => {
+  if (!textTransformMatrix) {
+    return undefined;
+  }
+
+  if (!ancestorTransformMatrix) {
+    return matricesAlmostEqual(textTransformMatrix, IDENTITY_MATRIX) ? undefined : textTransformMatrix;
+  }
+
+  const inverseAncestor = inverseMatrix(ancestorTransformMatrix);
+  if (!inverseAncestor) {
+    return matricesAlmostEqual(textTransformMatrix, IDENTITY_MATRIX) ? undefined : textTransformMatrix;
+  }
+
+  const relativeMatrix = multiplyMatrices(inverseAncestor, textTransformMatrix);
+  return matricesAlmostEqual(relativeMatrix, IDENTITY_MATRIX) ? undefined : relativeMatrix;
+};
 
 const resolvePathAnimationContext = (
   pathElement: PathElement,
@@ -262,7 +289,8 @@ const serializeTextPathElement = (
   chainDelays: Map<string, number>,
   textPathAnimations: Array<Record<string, unknown>>,
   indent: string,
-  pathHrefId: string = pathElement.id
+  pathHrefId: string = pathElement.id,
+  relativeTextTransformTo?: Matrix,
 ): string => {
   const textPath = pathData.textPath;
   if (!textPath || !textPath.text) {
@@ -320,8 +348,12 @@ const serializeTextPathElement = (
       : '';
   const methodAttr = textPath.method ? ` method="${textPath.method}"` : '';
   const spacingAttr = textPath.spacing ? ` spacing="${textPath.spacing}"` : '';
-  const transformAttr = textPath.transformMatrix
-    ? ` transform="matrix(${textPath.transformMatrix.join(' ')})"`
+  const textTransformMatrix = resolveRelativeTextTransformMatrix(
+    textPath.transformMatrix as Matrix | undefined,
+    relativeTextTransformTo,
+  );
+  const transformAttr = textTransformMatrix
+    ? ` transform="matrix(${textTransformMatrix.join(' ')})"`
     : '';
   const textDisplayAttr = isHidden ? ' display="none"' : '';
   const textPathContent =
@@ -356,7 +388,7 @@ export function serializeTextPathOnlyElement(
   pathElement: PathElement,
   indent: string,
   state?: CanvasStore,
-  options: Pick<PathSerializationOptions, 'textPathHrefId' | 'animationTargetElementId'> = {},
+  options: Pick<PathSerializationOptions, 'textPathHrefId' | 'animationTargetElementId' | 'relativeTextTransformTo'> = {},
 ): string {
   const pathData = pathElement.data as PathData;
   const textPath = pathData.textPath;
@@ -388,6 +420,7 @@ export function serializeTextPathOnlyElement(
     textPathAnimations,
     indent,
     options.textPathHrefId ?? pathElement.id,
+    options.relativeTextTransformTo,
   ).replace(/^\n/, '');
 }
 
@@ -446,6 +479,7 @@ export function serializePathElement(
       textPathAnimations,
       innerIndent,
       options.textPathHrefId ?? pathElement.id,
+      options.relativeTextTransformTo,
     );
     return `${indent}<g>\n${animLines}\n${pathTag}${textTag}\n${indent}</g>`;
   }
@@ -464,6 +498,7 @@ export function serializePathElement(
     textPathAnimations,
     indent,
     options.textPathHrefId ?? pathElement.id,
+    options.relativeTextTransformTo,
   );
 
   return result;

@@ -42,10 +42,11 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
 
   sortedElements.forEach((element) => {
     if (element.type !== 'path') return;
-    if (isElementHidden?.(element.id)) return;
     const pathData = (element as PathElement).data;
     const textPath = pathData.textPath;
     if (!textPath || !textPath.text) return;
+    const isDefinitionCarrier = Boolean(pathData.isDefinition || pathData.isTextPathRef);
+    if (isElementHidden?.(element.id) && !isDefinitionCarrier) return;
     const textPathReference = textPath as typeof textPath & { href?: string };
     const textPathHref = typeof textPathReference.href === 'string' ? textPathReference.href.trim() : '';
     const textPathReferenceId = textPathHref.startsWith('#') ? textPathHref.slice(1) : null;

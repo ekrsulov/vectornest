@@ -9,9 +9,11 @@ import { createAnimationSlice } from './slice';
 import type { AnimationPluginSlice, SVGAnimation, AnimationType } from './types';
 import { useAnimationTimer } from './hooks/useAnimationTimer';
 import { animationContributionRegistry } from '../../utils/animationContributionRegistry';
+import { defsContributionRegistry } from '../../utils/defsContributionRegistry';
 import { definitionTranslationRegistry } from '../../utils/definitionTranslationRegistry';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
 import { generateShortId } from '../../utils/idGenerator';
+import { commandsToString } from '../../utils/pathParserUtils';
 import './importContribution';
 import './exportContribution';
 import { registerAnimationCleanupHook } from './cleanupHook';
@@ -242,7 +244,7 @@ function getDefAncestorInfo(animEl: Element): {
   // Check for symbol ancestor first (symbols contain reusable graphics)
   const symbolAncestor = animEl.closest('symbol');
   if (symbolAncestor) {
-    const symbolId = symbolAncestor.getAttribute('id') ?? undefined;
+    const symbolId = symbolAncestor.getAttribute('id')?.replace(/^symbol-/, '') ?? undefined;
     // Find which child element inside the symbol the animation is attached to
     const parentElement = animEl.parentElement;
     let symbolChildIndex: number | undefined;
@@ -819,6 +821,47 @@ function hasPathDrawAnimation(animations: SVGAnimation[], elementId: string): bo
       anim.attributeName === 'stroke-dashoffset'
   );
 }
+
+defsContributionRegistry.register({
+  id: 'animation-motion-path-runtime',
+  collectUsedIds: (_elements) => new Set<string>(),
+  renderDefs: (state) => {
+    const animState = state as unknown as AnimationPluginSlice;
+    const animations = animState.animations ?? [];
+    const motionPathIds = new Set(
+      animations
+        .filter((animation) => animation.type === 'animateMotion' && typeof animation.mpath === 'string' && animation.mpath.trim().length > 0)
+        .map((animation) => animation.mpath as string)
+    );
+
+    if (motionPathIds.size === 0) {
+      return null;
+    }
+
+    const motionPaths = (state.elements ?? [])
+      .filter((element) => element.type === 'path' && motionPathIds.has(element.id))
+      .map((element) => {
+        const pathData = element.data as { subPaths: Array<Array<unknown>>; transformMatrix?: number[] };
+        const pathD = commandsToString(pathData.subPaths.flat() as never[]);
+        return (
+          <path
+            key={`motion-path-${element.id}`}
+            id={element.id}
+            d={pathD}
+            transform={pathData.transformMatrix ? `matrix(${pathData.transformMatrix.join(' ')})` : undefined}
+            fill="none"
+            stroke="none"
+            visibility="hidden"
+            display="none"
+            pointerEvents="none"
+          />
+        );
+      });
+
+    return motionPaths.length > 0 ? <>{motionPaths}</> : null;
+  },
+  serializeDefs: () => [],
+});
 
 // Register animation contribution for export
 animationContributionRegistry.register({

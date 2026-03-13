@@ -7,9 +7,13 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { GlyphsPluginSlice, GlyphInfo } from './slice';
 import type { NativeTextElement } from '../nativeText/types';
+import type { PathElement } from '../../types';
 import { updateGlyphInSpans } from './glyphUtils';
 
 type GlyphsStore = CanvasStore & GlyphsPluginSlice;
+type GlyphTarget =
+  | { kind: 'nativeText'; element: NativeTextElement }
+  | { kind: 'textPath'; element: PathElement };
 
 export const GlyphsPanel: React.FC = () => {
   const {
@@ -27,11 +31,17 @@ export const GlyphsPanel: React.FC = () => {
     })
   );
 
-  const element = useMemo(() => {
+  const target = useMemo<GlyphTarget | null>(() => {
     if (selectedIds.length !== 1) return null;
     const el = elements.find((e) => e.id === selectedIds[0]);
-    if (!el || el.type !== 'nativeText') return null;
-    return el as NativeTextElement;
+    if (!el) return null;
+    if (el.type === 'nativeText') {
+      return { kind: 'nativeText', element: el as NativeTextElement };
+    }
+    if (el.type === 'path' && (el as PathElement).data.textPath?.text) {
+      return { kind: 'textPath', element: el as PathElement };
+    }
+    return null;
   }, [selectedIds, elements]);
 
   const glyphs = glyphsState?.glyphs ?? [];
@@ -40,24 +50,41 @@ export const GlyphsPanel: React.FC = () => {
   const selectedGlyph: GlyphInfo | null = selectedGlyphIndex !== null ? glyphs[selectedGlyphIndex] ?? null : null;
 
   const applyUpdate = useCallback((updates: { dx?: number; dy?: number; rotate?: number }) => {
-    if (!element || selectedGlyphIndex === null) return;
+    if (!target || selectedGlyphIndex === null) return;
     const state = useCanvasStore.getState();
-    const newSpans = updateGlyphInSpans(element.data, selectedGlyphIndex, updates);
+    const targetData = target.kind === 'nativeText'
+      ? target.element.data
+      : target.element.data.textPath;
+    if (!targetData) return;
+    const newSpans = updateGlyphInSpans(targetData, selectedGlyphIndex, updates);
     if (!newSpans) return;
-    state.updateElement(element.id, {
-      data: { ...element.data, spans: newSpans },
+    if (target.kind === 'nativeText') {
+      state.updateElement(target.element.id, {
+        data: { ...target.element.data, spans: newSpans },
+      });
+      return;
+    }
+
+    state.updateElement(target.element.id, {
+      data: {
+        ...target.element.data,
+        textPath: {
+          ...target.element.data.textPath,
+          spans: newSpans,
+        },
+      },
     });
-  }, [element, selectedGlyphIndex]);
+  }, [target, selectedGlyphIndex]);
 
   const handleSelectGlyph = useCallback((idx: number) => {
     updateGlyphsState?.({ selectedGlyphIndex: idx });
   }, [updateGlyphsState]);
 
-  if (!element) {
+  if (!target) {
     return (
       <Panel title="Glyphs" isCollapsible defaultOpen>
         <Text fontSize="xs" color="gray.500" px={2} py={3}>
-          Select a text element to edit individual glyphs.
+          Select a text or text path element to edit individual glyphs.
         </Text>
       </Panel>
     );

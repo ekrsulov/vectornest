@@ -69,6 +69,26 @@ const GradientSvgContent: React.FC<{ content: string; gradientKey?: string }> = 
   return <g ref={gRef} style={{ display: 'none' }} />;
 };
 
+const SVG_ANIMATION_SELECTOR = 'animate, animateTransform, animateMotion, animateColor, set';
+
+const hasAnimatedGradientContent = (node: Element): boolean => (
+  node.querySelector(SVG_ANIMATION_SELECTOR) !== null
+);
+
+const collectGradientReferencesFromRawContent = (rawContent?: string): string[] => {
+  if (!rawContent) return [];
+
+  const refs: string[] = [];
+  const regex = /url\(#([^)]+)\)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(rawContent)) !== null) {
+    refs.push(match[1]);
+  }
+
+  return refs;
+};
+
 const gradientsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   return createPluginSlice(createGradientsSlice)(set, get, api);
 };
@@ -531,9 +551,8 @@ const importGradientDefs = (doc: Document): Record<string, GradientDef[]> | null
       baseDef.extraAttributes = extraAttributes;
     }
 
-    // For userSpaceOnUse gradients, store the raw SVG content so coordinates
-    // are preserved correctly relative to the original element positions
-    if (gradientUnits === 'userSpaceOnUse') {
+    // Preserve raw markup when absolute coordinates or embedded SMIL are present.
+    if (gradientUnits === 'userSpaceOnUse' || hasAnimatedGradientContent(node)) {
       baseDef.rawContent = node.outerHTML;
     }
 
@@ -945,7 +964,9 @@ defsContributionRegistry.register({
   id: 'gradients',
   collectUsedIds: (elements) => collectUsedPaintIds(elements),
   renderDefs: (state, usedIds) => {
-    const gradientState = state as unknown as GradientsSlice & AnimationPluginSlice;
+    const gradientState = state as unknown as GradientsSlice & AnimationPluginSlice & {
+      symbols?: Array<{ rawContent?: string }>;
+    };
     const gradients = gradientState.gradients ?? [];
     const animations = gradientState.animations ?? [];
     const chainDelays = gradientState.calculateChainDelays ? gradientState.calculateChainDelays() : new Map<string, number>();
@@ -967,7 +988,17 @@ defsContributionRegistry.register({
         maskGradientIds.add(match[1]);
       }
     });
-    const initialUsed = new Set<string>([...Array.from(usedIds), ...Array.from(maskGradientIds)]);
+    const symbolGradientIds = new Set<string>();
+    (gradientState.symbols ?? []).forEach((symbol) => {
+      collectGradientReferencesFromRawContent(symbol.rawContent).forEach((id) => {
+        symbolGradientIds.add(id);
+      });
+    });
+    const initialUsed = new Set<string>([
+      ...Array.from(usedIds),
+      ...Array.from(maskGradientIds),
+      ...Array.from(symbolGradientIds),
+    ]);
     const used = expandGradientUsageWithReferences(gradients, initialUsed);
     
     return (
@@ -1057,7 +1088,9 @@ defsContributionRegistry.register({
     );
   },
   serializeDefs: (state, usedIds) => {
-    const gradientState = state as unknown as GradientsSlice & AnimationPluginSlice;
+    const gradientState = state as unknown as GradientsSlice & AnimationPluginSlice & {
+      symbols?: Array<{ rawContent?: string }>;
+    };
     const gradients = gradientState.gradients ?? [];
     const animations = gradientState.animations ?? [];
     const chainDelays = gradientState.calculateChainDelays ? gradientState.calculateChainDelays() : new Map<string, number>();
@@ -1075,7 +1108,17 @@ defsContributionRegistry.register({
         maskGradientIds.add(match[1]);
       }
     });
-    const initialUsed = new Set<string>([...Array.from(usedIds), ...Array.from(maskGradientIds)]);
+    const symbolGradientIds = new Set<string>();
+    (gradientState.symbols ?? []).forEach((symbol) => {
+      collectGradientReferencesFromRawContent(symbol.rawContent).forEach((id) => {
+        symbolGradientIds.add(id);
+      });
+    });
+    const initialUsed = new Set<string>([
+      ...Array.from(usedIds),
+      ...Array.from(maskGradientIds),
+      ...Array.from(symbolGradientIds),
+    ]);
     
     const expandedUsed = expandGradientUsageWithReferences(gradients, initialUsed);
     const filtered = gradients.filter((g) => expandedUsed.has(g.id));

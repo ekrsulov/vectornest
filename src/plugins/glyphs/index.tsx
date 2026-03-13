@@ -29,11 +29,13 @@ export const glyphsPlugin: PluginDefinition<CanvasStore> = {
       const { selectedIds, elements } = store;
       if (selectedIds.length !== 1) return true;
       const el = elements.find((e) => e.id === selectedIds[0]);
-      return el?.type !== 'nativeText';
+      if (!el) return true;
+      if (el.type === 'nativeText') return false;
+      return !(el.type === 'path' && Boolean((el.data as { textPath?: { text?: string } }).textPath?.text));
     },
   },
   modeConfig: {
-    description: 'Edit individual glyph positions and rotation in text elements',
+    description: 'Edit individual glyph positions and rotation in text and text path elements',
   },
   behaviorFlags: {
     preventsSelection: true,

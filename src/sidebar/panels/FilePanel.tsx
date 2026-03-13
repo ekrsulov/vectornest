@@ -215,13 +215,13 @@ export const FilePanel: React.FC = () => {
           </Flex>
 
           <HStack spacing={1} pb={1.5}>
-            <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm">
+            <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm" h="40px">
               <HStack spacing={1.5}>
                 <Download size={11} />
                 <span>SVG</span>
               </HStack>
             </PanelStyledButton>
-            <PanelStyledButton onClick={handleSaveAsPng} flex={1} size="sm">
+            <PanelStyledButton onClick={handleSaveAsPng} flex={1} size="sm" h="40px">
               <HStack spacing={1.5}>
                 <Download size={11} />
                 <span>PNG</span>
@@ -262,7 +262,7 @@ export const FilePanel: React.FC = () => {
             onResizeHeightChange={setResizeHeight}
           />
 
-          <PanelStyledButton onClick={handleImportSVG} width="full" size="sm">
+          <PanelStyledButton onClick={handleImportSVG} width="full" size="sm" h="40px">
             <HStack spacing={1.5}>
               <Upload size={11} />
               <span>Import SVG</span>

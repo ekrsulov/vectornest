@@ -3,9 +3,13 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { GlyphsPluginSlice } from './slice';
 import type { NativeTextElement } from '../nativeText/types';
+import type { PathElement } from '../../types';
 import { measureGlyphs, updateGlyphInSpans } from './glyphUtils';
 
 type GlyphsStore = CanvasStore & GlyphsPluginSlice;
+type GlyphTarget =
+  | { kind: 'nativeText'; element: NativeTextElement }
+  | { kind: 'textPath'; element: PathElement };
 
 const HANDLE_SIZE = 7;
 const ROTATE_HANDLE_OFFSET = 20;
@@ -42,17 +46,23 @@ export const GlyphsOverlay: React.FC = () => {
   } | null>(null);
 
   // Find selected nativeText element
-  const element = useMemo(() => {
+  const target = useMemo<GlyphTarget | null>(() => {
     if (activePlugin !== 'glyphs') return null;
     if (selectedIds.length !== 1) return null;
     const el = elements.find((e) => e.id === selectedIds[0]);
-    if (!el || el.type !== 'nativeText') return null;
-    return el as NativeTextElement;
+    if (!el) return null;
+    if (el.type === 'nativeText') {
+      return { kind: 'nativeText', element: el as NativeTextElement };
+    }
+    if (el.type === 'path' && (el as PathElement).data.textPath?.text) {
+      return { kind: 'textPath', element: el as PathElement };
+    }
+    return null;
   }, [activePlugin, selectedIds, elements]);
 
   // Measure glyphs when element changes
   useEffect(() => {
-    if (!element) {
+    if (!target) {
       if (glyphsState?.targetElementId) {
         updateGlyphsState?.({ glyphs: [], targetElementId: null, selectedGlyphIndex: null });
       }
@@ -61,11 +71,13 @@ export const GlyphsOverlay: React.FC = () => {
 
     // Schedule measurement after render
     const raf = requestAnimationFrame(() => {
-      const measured = measureGlyphs(element.id, element.data);
-      updateGlyphsState?.({ glyphs: measured, targetElementId: element.id });
+      const targetData = target.kind === 'nativeText' ? target.element.data : target.element.data.textPath;
+      if (!targetData) return;
+      const measured = measureGlyphs(target.element.id, targetData);
+      updateGlyphsState?.({ glyphs: measured, targetElementId: target.element.id });
     });
     return () => cancelAnimationFrame(raf);
-  }, [element, element?.data, updateGlyphsState, glyphsState?.targetElementId]);
+  }, [target, updateGlyphsState, glyphsState?.targetElementId]);
 
   const invZoom = 1 / zoom;
   const glyphs = useMemo(() => glyphsState?.glyphs ?? [], [glyphsState?.glyphs]);
@@ -75,33 +87,65 @@ export const GlyphsOverlay: React.FC = () => {
 
   // Get the text element's transform to wrap the overlay
   const textTransform = useMemo(() => {
-    if (!element) return undefined;
-    const data = element.data;
-    if (data.transformMatrix) {
-      return `matrix(${data.transformMatrix.join(' ')})`;
+    if (!target) return undefined;
+    if (target.kind === 'nativeText') {
+      const data = target.element.data;
+      if (data.transformMatrix) {
+        return `matrix(${data.transformMatrix.join(' ')})`;
+      }
+      if (data.transform) {
+        const cx = data.x;
+        const cy = data.y;
+        return `translate(${data.transform.translateX ?? 0} ${data.transform.translateY ?? 0}) rotate(${data.transform.rotation ?? 0} ${cx} ${cy}) scale(${data.transform.scaleX ?? 1} ${data.transform.scaleY ?? 1})`;
+      }
+      return undefined;
     }
-    if (data.transform) {
-      const cx = data.x;
-      const cy = data.y;
-      return `translate(${data.transform.translateX ?? 0} ${data.transform.translateY ?? 0}) rotate(${data.transform.rotation ?? 0} ${cx} ${cy}) scale(${data.transform.scaleX ?? 1} ${data.transform.scaleY ?? 1})`;
+
+    const pathData = target.element.data;
+    const textPath = pathData.textPath;
+    if (textPath?.transformMatrix) {
+      return `matrix(${textPath.transformMatrix.join(' ')})`;
+    }
+    if (pathData.transformMatrix) {
+      return `matrix(${pathData.transformMatrix.join(' ')})`;
+    }
+    if (pathData.transform) {
+      return `translate(${pathData.transform.translateX ?? 0} ${pathData.transform.translateY ?? 0}) rotate(${pathData.transform.rotation ?? 0}) scale(${pathData.transform.scaleX ?? 1} ${pathData.transform.scaleY ?? 1})`;
     }
     return undefined;
-  }, [element]);
+  }, [target]);
 
   const handleGlyphSelect = useCallback((idx: number) => {
     updateGlyphsState?.({ selectedGlyphIndex: idx });
   }, [updateGlyphsState]);
 
   const applyGlyphUpdate = useCallback((glyphIndex: number, updates: { dx?: number; dy?: number; rotate?: number }) => {
-    if (!element) return;
+    if (!target) return;
     const state = useCanvasStore.getState();
-    const newSpans = updateGlyphInSpans(element.data, glyphIndex, updates);
+    const targetData = target.kind === 'nativeText'
+      ? target.element.data
+      : target.element.data.textPath;
+    if (!targetData) return;
+    const newSpans = updateGlyphInSpans(targetData, glyphIndex, updates);
     if (!newSpans) return;
 
-    state.updateElement(element.id, {
-      data: { ...element.data, spans: newSpans },
+    if (target.kind === 'nativeText') {
+      state.updateElement(target.element.id, {
+        data: { ...target.element.data, spans: newSpans },
+      });
+      return;
+    }
+
+    state.updateElement(target.element.id, {
+      data: {
+        ...target.element.data,
+        textPath: {
+          ...target.element.data.textPath,
+          spans: newSpans,
+        },
+      },
     });
-  }, [element]);
+  }, [target]);
 
   const handlePointerDown = useCallback((
     e: React.PointerEvent,
@@ -110,6 +154,7 @@ export const GlyphsOverlay: React.FC = () => {
   ) => {
     e.stopPropagation();
     e.preventDefault();
+    if (!target) return;
 
     const glyph = glyphs[glyphIdx];
     if (!glyph?.bbox) return;
@@ -118,9 +163,10 @@ export const GlyphsOverlay: React.FC = () => {
 
     const svgCanvas = document.querySelector('svg[data-canvas="true"]') as SVGSVGElement | null;
     if (!svgCanvas) return;
+    const targetElementId = target.element.id;
 
     const textEl = svgCanvas.querySelector<SVGTextElement>(
-      `text[data-element-id="${CSS.escape(element!.id)}"]`
+      `text[data-element-id="${CSS.escape(targetElementId)}"]`
     );
     if (!textEl) return;
 
@@ -196,9 +242,9 @@ export const GlyphsOverlay: React.FC = () => {
 
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
-  }, [glyphs, element, updateGlyphsState, applyGlyphUpdate]);
+  }, [glyphs, target, updateGlyphsState, applyGlyphUpdate]);
 
-  if (!element || glyphs.length === 0) return null;
+  if (!target || glyphs.length === 0) return null;
 
   const handleSize = HANDLE_SIZE * invZoom;
   const rotateOffset = ROTATE_HANDLE_OFFSET * invZoom;

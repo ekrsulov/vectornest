@@ -1,7 +1,9 @@
 import type { GlyphInfo } from './slice';
 import type { NativeTextElement } from '../nativeText/types';
+import type { PathData } from '../../types';
 
 type EditableSpan = NonNullable<NativeTextElement['data']['spans']>[number];
+export type EditableGlyphData = NativeTextElement['data'] | NonNullable<PathData['textPath']>;
 
 /**
  * Parse a space-separated list of numbers from a string.
@@ -17,7 +19,7 @@ function getRotateValueForGlyph(values: number[], index: number): number {
   return values[index] ?? values[values.length - 1] ?? 0;
 }
 
-function normalizeTextSpans(data: NativeTextElement['data']): EditableSpan[] {
+function normalizeTextSpans(data: EditableGlyphData): EditableSpan[] {
   if (data.spans && data.spans.length > 0) {
     return data.spans;
   }
@@ -39,7 +41,7 @@ function normalizeTextSpans(data: NativeTextElement['data']): EditableSpan[] {
  */
 export function measureGlyphs(
   elementId: string,
-  data: NativeTextElement['data'],
+  data: EditableGlyphData,
 ): GlyphInfo[] {
   const svgCanvas = document.querySelector('svg[data-canvas="true"]') as SVGSVGElement | null;
   if (!svgCanvas) return [];
@@ -99,10 +101,10 @@ export function measureGlyphs(
  * Returns a new spans array (or undefined if no spans).
  */
 export function updateGlyphInSpans(
-  data: NativeTextElement['data'],
+  data: EditableGlyphData,
   glyphIndex: number,
   updates: { dx?: number; dy?: number; rotate?: number },
-): NativeTextElement['data']['spans'] {
+): EditableSpan[] {
   const spans = normalizeTextSpans(data);
 
   let globalIdx = 0;

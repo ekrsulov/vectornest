@@ -100,9 +100,15 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
         anim.targetElementId === element.id &&
         anim.attributeName === 'startOffset'
     );
+    const pathGeometryAnimations: SVGAnimation[] = animations.filter(
+      (anim) =>
+        anim.targetElementId === element.id &&
+        anim.attributeName === 'd'
+    );
     const textAttributeAnimations: SVGAnimation[] = animations.filter(
       (anim) =>
         anim.targetElementId === element.id &&
+        anim.attributeName !== 'd' &&
         anim.attributeName !== 'startOffset' &&
         anim.type !== 'animateTransform' &&
         anim.type !== 'animateMotion'
@@ -125,6 +131,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
               key={`${keyPrefix}-tp-span-${idx}`}
               dy={isLineStart && span.line > 0 ? textPath.fontSize * (span.line - (previousSpan?.line ?? 0)) : undefined}
               dx={span.dx}
+              rotate={span.rotate}
               fontWeight={span.fontWeight}
               fontStyle={span.fontStyle}
               textDecoration={span.textDecoration}
@@ -219,7 +226,11 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
           stroke="transparent"
           strokeWidth={Math.max(pathData.strokeWidth, 12)}
           pointerEvents="stroke"
-        />
+        >
+          {pathGeometryAnimations.length > 0
+            ? renderAnimationsForElement(element.id, pathGeometryAnimations, animationState, animations)
+            : null}
+        </path>
         {underlays.map(renderEffectLayer)}
         <text
           data-element-id={element.id}

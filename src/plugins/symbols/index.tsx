@@ -26,6 +26,7 @@ import type React from 'react';
 import { BlockingOverlay } from '../../overlays/BlockingOverlay';
 import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
 import { AspectPlacementPreview } from '../../overlays/AspectPlacementPreview';
+import { getMaskRuntimeId } from '../../utils/maskUtils';
 import {
   calculateAspectPlacementRect,
   createAspectPlacementFeedback,
@@ -658,6 +659,9 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
   const matrix = ensureMatrix(data);
   const transformAttr = `matrix(${matrix.join(' ')})`;
   const clipAttr = data.clipPathId ? { clipPath: `url(#${data.clipPathId})` } : {};
+  const maskVersions = rendererContext.extensionsContext?.maskVersions as Map<string, number> | undefined;
+  const maskRuntimeId = getMaskRuntimeId(data.maskId, maskVersions);
+  const maskAttr = maskRuntimeId ? { mask: `url(#${maskRuntimeId})` } : {};
   const filterAttr = (symbolOverrides?.disableFilter ?? false)
     ? {}
     : (data.filterId ? { filter: `url(#${data.filterId})` } : {});
@@ -764,6 +768,7 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
       key={element.id}
       data-element-id={element.id}
       {...filterAttr}
+      {...maskAttr}
     >
       {transformAnimationNodes}
       <g transform={transformAttr} data-element-id={element.id}>

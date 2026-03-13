@@ -1,21 +1,13 @@
 import React from 'react';
-import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
+import { Box, HStack } from '@chakra-ui/react';
 import { Clapperboard, FolderTree, LayoutGrid, LibraryBig, Pin, PinOff } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
-import { SIDEBAR_UTILITY_BORDER_WIDTH } from '../../ui/SidebarUtilityButton';
 import { SidebarTabStrip, type SidebarTabStripItem } from '../../ui/SidebarTabStrip';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useResponsive } from '../../hooks/useResponsive';
-import { useThemeColors } from '../../hooks/useThemeColors';
 
 export const LeftSidebarToolGrid: React.FC = () => {
   const { canPinSidebar } = useResponsive();
-  const defaultTopRowBorderColor = useColorModeValue('blackAlpha.300', 'whiteAlpha.400');
-  const {
-    toggle: {
-      active: { bg: activeTabFill },
-    },
-  } = useThemeColors();
 
   const {
     leftSidebarActivePanel,
@@ -107,8 +99,6 @@ export const LeftSidebarToolGrid: React.FC = () => {
       onClick: () => switchPanel('animLibrary'),
     },
   ];
-  const hasActiveTab = buttons.some((item) => item.isActive);
-  const topRowBorderColor = hasActiveTab ? activeTabFill : defaultTopRowBorderColor;
 
   return (
     <Box
@@ -125,9 +115,6 @@ export const LeftSidebarToolGrid: React.FC = () => {
         alignItems="center"
         px={1.5}
         py={1}
-        borderBottomWidth={SIDEBAR_UTILITY_BORDER_WIDTH}
-        borderBottomStyle="solid"
-        borderColor={topRowBorderColor}
       >
         <Box flex={1} display="flex" minW={0}>
           <SidebarTabStrip items={buttons} variant="iconRail" distribution="space-between" />

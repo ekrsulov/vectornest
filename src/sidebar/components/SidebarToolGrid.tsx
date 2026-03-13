@@ -1,15 +1,15 @@
 import React from 'react';
-import { Box, HStack, useColorModeValue } from '@chakra-ui/react';
+import { Box, HStack } from '@chakra-ui/react';
 import { FolderOpen, FolderTree, LibraryBig, Pin, PinOff, Settings2, ShieldCheck } from 'lucide-react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
-import { SidebarUtilityButton, SIDEBAR_UTILITY_BORDER_WIDTH } from '../../ui/SidebarUtilityButton';
+import { SidebarUtilityButton } from '../../ui/SidebarUtilityButton';
 import { SidebarTabStrip, type SidebarTabStripItem } from '../../ui/SidebarTabStrip';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { pluginManager } from '../../utils/pluginManager';
 import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
 import { useCanvasStore } from '../../store/canvasStore';
-import { useThemeColors } from '../../hooks/useThemeColors';
+import { DEFAULT_MODE } from '../../constants';
 
 interface ToolConfig {
   name: string;
@@ -31,12 +31,6 @@ const UTILITY_TOOLS: ToolConfig[] = [
  * are now in the ActionBar at the bottom of the screen
  */
 export const SidebarToolGrid: React.FC = () => {
-  const defaultTopRowBorderColor = useColorModeValue('blackAlpha.300', 'whiteAlpha.400');
-  const {
-    toggle: {
-      active: { bg: activeTabFill },
-    },
-  } = useThemeColors();
   // Get values from context
   const {
     activePlugin,
@@ -50,6 +44,7 @@ export const SidebarToolGrid: React.FC = () => {
   } = useSidebarContext();
   const showLeftSidebar = useCanvasStore((state) => state.settings.showLeftSidebar);
   useEnabledPlugins();
+  const lastNonSidebarModeRef = React.useRef(DEFAULT_MODE);
   const sidebarToolbarButtons = pluginManager.getSidebarToolbarButtons();
   const effectiveUtilityTools = showLeftSidebar
     ? UTILITY_TOOLS.filter((tool) => tool.name !== 'library')
@@ -59,7 +54,45 @@ export const SidebarToolGrid: React.FC = () => {
       (button) => button.pluginId !== 'svgStructure' && button.pluginId !== 'generatorLibrary' && button.pluginId !== 'animLibrary'
     )
     : sidebarToolbarButtons;
-  const shouldUseHorizontalScroll = !showLeftSidebar;
+  const shouldUseHorizontalScroll = !showLeftSidebar && canPinSidebar;
+  const includePinInRail = showLeftSidebar && canPinSidebar;
+
+  const isSidebarPanelMode = React.useCallback((pluginId: string | null | undefined) => {
+    if (!pluginId) {
+      return false;
+    }
+
+    return pluginManager.getBehaviorFlagsManager().getPluginBehaviorFlags(pluginId).isSidebarPanelMode ?? false;
+  }, []);
+
+  const shouldUseVirtualModeButton = React.useCallback((pluginId: string | null | undefined) => {
+    if (!pluginId) {
+      return false;
+    }
+
+    if (pluginId === 'svgStructure') {
+      return false;
+    }
+
+    return !isSidebarPanelMode(pluginId);
+  }, [isSidebarPanelMode]);
+
+  React.useEffect(() => {
+    if (!activePlugin || !shouldUseVirtualModeButton(activePlugin)) {
+      return;
+    }
+
+    lastNonSidebarModeRef.current = activePlugin;
+  }, [activePlugin, shouldUseVirtualModeButton]);
+
+  const resolvedModePluginId = activePlugin && shouldUseVirtualModeButton(activePlugin)
+    ? activePlugin
+    : lastNonSidebarModeRef.current || DEFAULT_MODE;
+  const resolvedModePlugin = pluginManager.getPlugin(resolvedModePluginId);
+  const fallbackModePlugin = pluginManager.getPlugin(DEFAULT_MODE);
+  const modeButtonPluginId = resolvedModePlugin?.id ?? fallbackModePlugin?.id ?? DEFAULT_MODE;
+  const modeButtonLabel = resolvedModePlugin?.metadata.label ?? fallbackModePlugin?.metadata.label ?? 'Select';
+  const modeButtonIcon = resolvedModePlugin?.metadata.icon ?? fallbackModePlugin?.metadata.icon;
 
   const isToolActive = (toolName: string) => {
     let isActive = false;
@@ -78,6 +111,15 @@ export const SidebarToolGrid: React.FC = () => {
   };
 
   const tabItems: SidebarTabStripItem[] = [
+    {
+      key: `mode:${modeButtonPluginId}`,
+      label: modeButtonLabel,
+      tooltip: modeButtonLabel,
+      icon: modeButtonIcon,
+      iconOnly: true,
+      isActive: activePlugin === modeButtonPluginId,
+      onClick: () => onToolClick(modeButtonPluginId),
+    },
     ...effectiveUtilityTools.map((plugin) => ({
       key: plugin.name,
       label: plugin.label,
@@ -100,9 +142,9 @@ export const SidebarToolGrid: React.FC = () => {
             ? 'Generators'
             : button.pluginId === 'animLibrary'
               ? 'Animation'
-          : button.pluginId === 'auditLibrary'
-            ? 'Audit'
-            : button.label ?? pluginLabel;
+              : button.pluginId === 'auditLibrary'
+                ? 'Audit'
+                : button.label ?? pluginLabel;
       const icon =
         button.pluginId === 'svgStructure'
           ? FolderTree
@@ -120,9 +162,18 @@ export const SidebarToolGrid: React.FC = () => {
         onClick: () => onToolClick(button.pluginId),
       };
     }),
+    ...(includePinInRail
+      ? [{
+        key: 'pin',
+        label: isPinned ? 'Unpin sidebar' : 'Pin sidebar',
+        tooltip: isPinned ? 'Unpin sidebar' : 'Pin sidebar',
+        icon: isPinned ? PinOff : Pin,
+        iconOnly: true,
+        isActive: false,
+        onClick: onTogglePin,
+      } satisfies SidebarTabStripItem]
+      : []),
   ];
-  const hasActiveTab = tabItems.some((item) => item.isActive);
-  const topRowBorderColor = hasActiveTab ? activeTabFill : defaultTopRowBorderColor;
 
   return (
     <Box
@@ -140,9 +191,6 @@ export const SidebarToolGrid: React.FC = () => {
         alignItems="center"
         px={1.5}
         py={1}
-        borderBottomWidth={SIDEBAR_UTILITY_BORDER_WIDTH}
-        borderBottomStyle="solid"
-        borderColor={topRowBorderColor}
       >
         <Box flex={1} minW={0} display="flex" alignItems="stretch">
           <SidebarTabStrip
@@ -150,9 +198,11 @@ export const SidebarToolGrid: React.FC = () => {
             scrollable={shouldUseHorizontalScroll}
             tabWidth={shouldUseHorizontalScroll ? '28px' : undefined}
             variant="iconRail"
+            distribution={showLeftSidebar || !canPinSidebar ? 'space-between' : 'fill'}
+            itemSpacing={showLeftSidebar ? 0.5 : 0}
           />
         </Box>
-        {canPinSidebar && (
+        {!includePinInRail && canPinSidebar && (
           <Box
             flexShrink={0}
             display="flex"

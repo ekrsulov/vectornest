@@ -117,7 +117,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       borderTopRightRadius={isTab ? (selectedTopRadius ?? tabRadius.topRight) : undefined}
       borderBottomRightRadius={isTab ? (isActive ? '0' : tabRadius.bottomRight) : undefined}
           fontWeight={isSegment ? 'semibold' : 'bold'}
-          transition="background-color 0.18s ease, color 0.18s ease, transform 0.18s ease"
+          transition="background-color 0.18s ease, color 0.18s ease"
       width={iconOnly ? dimension : (fullWidth ? 'full' : 'auto')}
       flex={fullWidth ? '1 1 0' : flex}
       alignSelf={fullWidth ? 'stretch' : undefined}
@@ -134,7 +134,6 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
           : isSegment
             ? (isActive ? activeHoverBg : segmentHoverBg)
           : (isActive ? activeHoverBg : inactiveHoverBg),
-        transform: isSegment ? 'translateY(-1px)' : undefined,
       }}
       _focus={{ outline: 'none', boxShadow: 'none' }}
       sx={{

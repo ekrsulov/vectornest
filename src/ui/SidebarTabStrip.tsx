@@ -25,6 +25,7 @@ interface SidebarTabStripProps {
   flat?: boolean;
   variant?: 'tabs' | 'iconRail';
   distribution?: 'fill' | 'space-between';
+  itemSpacing?: number;
 }
 
 export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
@@ -35,11 +36,13 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
   flat = false,
   variant = 'tabs',
   distribution = 'fill',
+  itemSpacing,
 }) => {
   const isIconRail = variant === 'iconRail';
   const useSpaceBetween = !scrollable && distribution === 'space-between';
   const separatorColor = useColorModeValue('blackAlpha.100', 'whiteAlpha.200');
   const { isMobile } = useResponsive();
+  const resolvedItemSpacing = itemSpacing ?? (isIconRail ? 0.5 : 0);
 
   if (items.length === 0) {
     return null;
@@ -47,7 +50,7 @@ export const SidebarTabStrip: React.FC<SidebarTabStripProps> = ({
 
   const rail = (
     <HStack
-      spacing={isIconRail ? 0.5 : 0}
+      spacing={useSpaceBetween ? 0 : resolvedItemSpacing}
       align="stretch"
       justify={useSpaceBetween ? 'space-between' : undefined}
       w={scrollable ? 'max-content' : 'full'}

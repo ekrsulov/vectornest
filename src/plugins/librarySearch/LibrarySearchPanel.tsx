@@ -390,7 +390,7 @@ export const LibrarySearchPanel: React.FC = () => {
     return (
         <Panel hideHeader isCollapsible={false} defaultOpen={true}>
             <VStack spacing={4} align="stretch">
-                <Box pt={1}>
+                <Box pt="5px">
                     <HStack spacing={2}>
                         <PanelTextInput
                             placeholder="Search library..."

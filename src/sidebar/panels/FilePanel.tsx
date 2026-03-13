@@ -159,6 +159,7 @@ export const FilePanel: React.FC = () => {
             color="gray.700"
             _dark={{ color: 'gray.300' }}
             mb={1.5}
+            pt="3px"
           >
             EXPORT
           </Text>

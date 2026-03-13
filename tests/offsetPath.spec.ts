@@ -1,14 +1,16 @@
 import { test, expect } from '@playwright/test';
-import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandPanelSection, getPanelContainer} from './helpers';
+import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandPanelSection, getPanelContainer, firstVisible} from './helpers';
 
 /**
  * Helper: open the Gen panel in the left sidebar, then expand the Offset Path
  * sub-panel (which starts collapsed by default).
  */
 async function openOffsetPathPanel(page: import('@playwright/test').Page) {
-  // Click "Gen" tab in the left sidebar to show the generator library
-  const genButton = page.locator('button[aria-label="Gen"]');
-  await genButton.click();
+  // Open the generator library from either the left or right sidebar layout.
+  const genButton = await firstVisible(
+    page.getByRole('button', { name: /Generator Library|Gen|Generators/ })
+  );
+  await genButton.click({ force: true });
   await page.waitForTimeout(300);
 
   const offsetPathHeading = page.getByRole('heading', { name: 'Offset Path' });

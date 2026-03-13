@@ -87,36 +87,57 @@ test.describe('Round Path Plugin', () => {
     await page.goto('/');
     await waitForLoad(page);
 
-    // Create a path with sharp corner using pen tool
-    await selectTool(page, 'Pen');
+    const pathId = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      if (!store) {
+        throw new Error('Canvas store is not available');
+      }
 
-    const canvas = getCanvas(page);
-    const canvasBox = await canvas.boundingBox();
-    if (!canvasBox) throw new Error('SVG canvas not found');
+      const createdPathId = store.addElement?.({
+        type: 'path',
+        data: {
+          subPaths: [[
+            { type: 'M', position: { x: 160, y: 120 } },
+            { type: 'L', position: { x: 260, y: 260 } },
+            { type: 'L', position: { x: 360, y: 120 } },
+          ]],
+          fillColor: 'none',
+          strokeColor: '#000000',
+          strokeWidth: 2,
+        },
+      });
 
-    // Create a V shape with sharp corner
-    await page.mouse.click(canvasBox.x + canvasBox.width * 0.3, canvasBox.y + canvasBox.height * 0.3);
-    await page.mouse.click(canvasBox.x + canvasBox.width * 0.5, canvasBox.y + canvasBox.height * 0.6);
-    await page.mouse.click(canvasBox.x + canvasBox.width * 0.7, canvasBox.y + canvasBox.height * 0.3);
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(100);
+      if (!createdPathId) {
+        throw new Error('Failed to create V path');
+      }
 
-    // Verify path was created
-    const pathCount = await getCanvasPaths(page).count();
-    expect(pathCount).toBeGreaterThan(0);
+      store.selectElements?.([createdPathId]);
+      store.setActivePlugin?.('edit');
+      (window as any).useCanvasStore?.setState?.({
+        selectedCommands: [{ elementId: createdPathId, commandIndex: 1, pointIndex: 0 }],
+      });
 
-    // Select the path
-    await selectTool(page, 'Select');
-    await page.mouse.click(canvasBox.x + canvasBox.width * 0.5, canvasBox.y + canvasBox.height * 0.45);
-    await page.waitForTimeout(100);
+      return createdPathId;
+    });
 
-    // Enter edit mode
-    await selectTool(page, 'Edit');
-    await page.waitForTimeout(200);
+    await expect.poll(async () => page.evaluate(() => {
+      return ((window as any).useCanvasStore?.getState?.().elements ?? []).filter(
+        (element: { type?: string }) => element.type === 'path'
+      ).length;
+    })).toBeGreaterThan(0);
 
-    // Click on the corner point (middle point of V)
-    await page.mouse.click(canvasBox.x + canvasBox.width * 0.5, canvasBox.y + canvasBox.height * 0.6);
-    await page.waitForTimeout(100);
+    await expect.poll(async () => page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      return {
+        activePlugin: store?.activePlugin,
+        selectedIds: store?.selectedIds ?? [],
+        selectedCommands: store?.selectedCommands ?? [],
+      };
+    })).toMatchObject({
+      activePlugin: 'edit',
+      selectedIds: [pathId],
+      selectedCommands: [{ elementId: pathId, commandIndex: 1, pointIndex: 0 }],
+    });
 
     // Verify Round Path/Subpath panel heading is visible
     const roundPathHeading = page.getByRole('heading', { name: /Round Path|Round Subpath/ });

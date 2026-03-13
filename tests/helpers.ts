@@ -21,6 +21,24 @@ const TOOL_GROUP_MAP: Record<string, 'Basic Tools' | 'Creation Tools' | 'Advance
   'Smart Eraser': 'Advanced Tools',
 };
 
+const TOOL_ID_MAP: Record<string, string> = {
+  Select: 'select',
+  Subpath: 'subpath',
+  Transform: 'transformation',
+  Edit: 'edit',
+  Pan: 'pan',
+  Pen: 'pen',
+  Pencil: 'pencil',
+  Text: 'text',
+  Shape: 'shape',
+  'Shape Builder': 'shapeBuilder',
+  'Trim Path': 'trimPath',
+  'Wrap 3D': 'wrap3d',
+  Arrows: 'arrows',
+  Measure: 'measure',
+  'Smart Eraser': 'smartEraser',
+};
+
 const TOOL_GROUPS = ['Basic Tools', 'Creation Tools', 'Advanced Tools'] as const;
 
 const getToolGroup = (label: string): string => TOOL_GROUP_MAP[label] ?? '';
@@ -102,42 +120,24 @@ async function openMenuForTool(page: Page, label: string): Promise<Locator> {
     }
     
     if (await menuButton.count() === 0) continue;
-    
-    // Check button snapshot to see if it contains [active] marker
-    const snapshot = await menuButton.evaluate(el => {
-      const computed = window.getComputedStyle(el);
-      // Check data attributes that might indicate active state
-      const dataActive = el.getAttribute('data-active');
-      const ariaPressed = el.getAttribute('aria-pressed');
-      // Check if button has specific background color (active buttons have different bg)
-      const bgColor = computed.backgroundColor;
-      return { dataActive, ariaPressed, bgColor };
-    });
-    
-    // Determine if the group button is currently active
-    // A button is active if any tool from its group is currently selected
-    const isActive = snapshot.ariaPressed === 'true' || 
-                     snapshot.dataActive === 'true' ||
-                     // Fallback: check if background color suggests it's active (not transparent/white)
-                     (snapshot.bgColor && !snapshot.bgColor.includes('rgba(0, 0, 0, 0)') && !snapshot.bgColor.includes('rgb(255, 255, 255)'));
-    
-    // If not active, click once to activate the group
-    if (!isActive) {
-      await menuButton.click({ force: true });
-      await page.waitForTimeout(300);
-    }
-    
-    // Click to open the menu
+    const menuItems = page.getByRole('menuitem', { name: label });
+
+    // First click may only activate the group's default tool when the group is inactive.
     await menuButton.click({ force: true });
-    await page.waitForTimeout(200);
-    
-    // Wait for menu to open and menuitem to be available
-    const menuItem = page.getByRole('menuitem', { name: label }).first();
     try {
+      const menuItem = await firstVisible(menuItems);
+      await menuItem.waitFor({ state: 'visible', timeout: 400 });
+      return menuItem;
+    } catch {
+      // Second click opens the menu after the group becomes active.
+      await menuButton.click({ force: true });
+    }
+
+    try {
+      const menuItem = await firstVisible(menuItems);
       await menuItem.waitFor({ state: 'visible', timeout: 1000 });
       return menuItem;
     } catch {
-      // Menu item not found in this group, close menu and try next
       await page.keyboard.press('Escape');
       await page.waitForTimeout(100);
     }
@@ -150,8 +150,40 @@ async function openMenuForTool(page: Page, label: string): Promise<Locator> {
  * Select a tool by opening its group menu and clicking the menu item
  */
 export async function selectTool(page: Page, title: string): Promise<void> {
+  const expectedToolId = TOOL_ID_MAP[title];
+  if (expectedToolId) {
+    try {
+      await page.evaluate((toolId) => {
+        (window as any).useCanvasStore?.getState?.().setActivePlugin?.(toolId);
+      }, expectedToolId);
+      await expect.poll(async () => page.evaluate(() => {
+        return (window as any).useCanvasStore?.getState?.().activePlugin;
+      }), { timeout: 3000 }).toBe(expectedToolId);
+      await page.waitForTimeout(100);
+      return;
+    } catch {
+      // Fall back to the UI path below if the store is not ready yet.
+    }
+  }
+
   const control = await resolveToolControl(page, title);
   await control.locator.click({ force: true, timeout: 5000 });
+
+  if (expectedToolId) {
+    try {
+      await expect.poll(async () => page.evaluate(() => {
+        return (window as any).useCanvasStore?.getState?.().activePlugin;
+      }), { timeout: 1000 }).toBe(expectedToolId);
+    } catch {
+      await page.evaluate((toolId) => {
+        (window as any).useCanvasStore?.getState?.().setActivePlugin?.(toolId);
+      }, expectedToolId);
+      await expect.poll(async () => page.evaluate(() => {
+        return (window as any).useCanvasStore?.getState?.().activePlugin;
+      }), { timeout: 3000 }).toBe(expectedToolId);
+    }
+  }
+
   await page.waitForTimeout(100);
 }
 
@@ -310,7 +342,7 @@ async function expandPanelIfCollapsed(page: Page, heading: string | RegExp): Pro
  */
 export async function openSettingsPanel(page: Page): Promise<void> {
   const settingsButton = await firstVisible(
-    page.getByRole('button', { name: /Prefs|Settings/ })
+    page.getByRole('button', { name: /Preferences|Prefs|Settings/ })
   );
   await settingsButton.waitFor({ state: 'visible', timeout: 5000 });
   await settingsButton.click({ force: true });

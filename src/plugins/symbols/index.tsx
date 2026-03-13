@@ -18,6 +18,7 @@ import { commandsToString } from '../../utils/pathParserUtils';
 import { parsePathD } from '../../utils/pathParserUtils';
 import { measurePath } from '../../utils/measurementUtils';
 import { generateShortId } from '../../utils/idGenerator';
+import { normalizeToMLCZ } from '../../utils/svg/normalizer';
 import { useSymbolPlacementHook } from './hooks/useSymbolPlacementHook';
 import { importUse } from './importer';
 import { Box, useColorMode, useColorModeValue } from '@chakra-ui/react';
@@ -717,6 +718,9 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
     }
     if (data.fillRule !== undefined) styleAttrs.fillRule = data.fillRule;
   }
+  if (isComplexSymbol && data.color !== undefined) {
+    styleAttrs.color = data.color;
+  }
   // For complex symbols, we don't apply fill/stroke styles to preserve internal element colors
 
   const blendStyle: React.CSSProperties = {};
@@ -870,7 +874,7 @@ const createSymbolInstanceContribution = (): ElementContribution => {
       const styleAttr = styleParts.length ? ` style="${styleParts.join(';')}"` : '';
 
       // When we have raw symbol content (no pathData), avoid overriding fills; use color instead
-      const useColorAttr = !data.pathData && data.fillColor ? ` color="${data.fillColor}"` : '';
+      const useColorAttr = !data.pathData && data.color ? ` color="${data.color}"` : '';
       const paintAttrs = (() => {
         if (!data.pathData) {
           return `${useColorAttr}${styleAttr}`;
@@ -949,7 +953,7 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
         const safeStrokeOpacity = Number.isFinite(strokeOpacity) ? strokeOpacity : 1;
         const safeFillOpacity = Number.isFinite(fillOpacity) ? fillOpacity : 1;
 
-        const parsedCommands = parsePathD(pathD);
+        const parsedCommands = parsePathD(normalizeToMLCZ(pathD));
         const subPaths = [parsedCommands];
         if (!viewBoxAttr) {
           const measured = measurePath(subPaths, strokeWidth, 1);

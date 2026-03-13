@@ -14,6 +14,7 @@ export interface SymbolInstanceData {
   symbolId: string;
   width: number;
   height: number;
+  color?: string;
   /** Path data for simple symbols. Omit for complex symbols with rawContent (uses <use> reference) */
   pathData?: PathData;
   transform?: SymbolInstanceTransform;

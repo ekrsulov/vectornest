@@ -391,12 +391,39 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
       if (overrides.strokeDasharray) attrs.strokeDasharray = overrides.strokeDasharray;
     }
     
-    // Ensure pickable
-    if (attrs.fill === 'none' || Number(attrs.fillOpacity) <= 0) {
+    const hasVisibleStroke =
+      strokeColor !== 'none' &&
+      Number(strokeOpacity) > 0 &&
+      Number(strokeWidth) > 0;
+
+    // Only synthesize a transparent fill when the referenced element would otherwise be completely unpainted.
+    if (!hasVisibleStroke && (attrs.fill === 'none' || Number(attrs.fillOpacity) <= 0)) {
       attrs.fill = '#000';
       attrs.fillOpacity = 0.001;
     }
     
+    return attrs;
+  };
+
+  const buildUseOverrideAttrs = () => {
+    const overrides = data.styleOverrides ?? {};
+    const attrs: Record<string, string | number | undefined> = {};
+
+    if (overrides.strokeColor !== undefined) attrs.stroke = overrides.strokeColor;
+    if (overrides.strokeWidth !== undefined) {
+      attrs.strokeWidth = rendererContext.scaleStrokeWithZoom
+        ? overrides.strokeWidth
+        : overrides.strokeWidth / rendererContext.viewport.zoom;
+    }
+    if (overrides.strokeOpacity !== undefined) attrs.strokeOpacity = overrides.strokeOpacity;
+    if (overrides.fillColor !== undefined) attrs.fill = overrides.fillColor;
+    if (overrides.fillOpacity !== undefined) attrs.fillOpacity = overrides.fillOpacity;
+    if (overrides.fillRule !== undefined) attrs.fillRule = overrides.fillRule;
+    if (overrides.strokeLinecap !== undefined) attrs.strokeLinecap = overrides.strokeLinecap;
+    if (overrides.strokeLinejoin !== undefined) attrs.strokeLinejoin = overrides.strokeLinejoin;
+    if (overrides.strokeDasharray !== undefined) attrs.strokeDasharray = overrides.strokeDasharray;
+    if (overrides.opacity !== undefined) attrs.opacity = overrides.opacity;
+
     return attrs;
   };
   
@@ -409,6 +436,24 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
       const elementData = e.data as Record<string, unknown>;
       return elementData.sourceId === data.href;
     });
+
+    if (data.rawContent) {
+      return (
+        <g
+          key={element.id}
+          data-element-id={element.id}
+          {...clipAttr}
+          {...filterAttr}
+          {...initialAttrs}
+          {...containerDoubleClickProps}
+        >
+          <g transform={transformAttr}>
+            <g dangerouslySetInnerHTML={{ __html: data.rawContent }} />
+          </g>
+          {animationNodes}
+        </g>
+      );
+    }
     
     if (!refElement) {
       // Reference not found, render placeholder
@@ -531,6 +576,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
           href={`#${data.href}`}
           data-element-id={element.id}
           {...clipAttr}
+          {...buildUseOverrideAttrs()}
           {...initialAttrs}
         >
           {animationNodes}
@@ -751,6 +797,10 @@ const createUseContribution = (): ElementContribution => {
       // Dimension attributes
       const widthAttr = data.width !== undefined ? ` width="${data.width}"` : '';
       const heightAttr = data.height !== undefined ? ` height="${data.height}"` : '';
+
+      if (data.referenceType === 'element' && data.rawContent) {
+        return `<g id="${id}"${transformAttr}${clipAttr}${filterAttr}${maskAttr}${styleAttrs}>${data.rawContent}</g>`;
+      }
 
       // If we have cached geometry for element references, inline a path to avoid missing defs on export
       if (data.referenceType === 'element' && data.cachedPathData) {

@@ -69,6 +69,7 @@ export interface ImportedEmbeddedSvgElement {
     viewBox?: string;
     preserveAspectRatio?: string;
     overflow?: string;
+    rootAttributes?: Record<string, string>;
     innerSvg: string;
     transformMatrix?: [number, number, number, number, number, number];
     sourceId?: string;

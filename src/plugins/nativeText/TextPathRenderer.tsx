@@ -129,7 +129,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
           return (
             <tspan
               key={`${keyPrefix}-tp-span-${idx}`}
-              dy={isLineStart && span.line > 0 ? textPath.fontSize * (span.line - (previousSpan?.line ?? 0)) : undefined}
+              dy={span.dy ?? (isLineStart && span.line > 0 ? textPath.fontSize * (span.line - (previousSpan?.line ?? 0)) : undefined)}
               dx={span.dx}
               rotate={span.rotate}
               fontWeight={span.fontWeight}

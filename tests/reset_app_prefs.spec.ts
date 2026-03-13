@@ -10,7 +10,8 @@ test.describe('Reset App location', () => {
     await fileButton.click({ force: true });
     await page.waitForTimeout(200);
 
-    await expect(page.getByRole('button', { name: 'Reset App' })).toHaveCount(0);
+    const sidebar = page.locator('[data-sidebar-scroll-area="true"]');
+    await expect(sidebar.getByRole('button', { name: 'Reset App' })).toHaveCount(0);
 
     await openSettingsPanel(page);
 

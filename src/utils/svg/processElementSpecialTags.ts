@@ -332,7 +332,9 @@ export const handleSpecialElementTags = ({
 
       const clonedChildren = recurse(refEl, useTransform, attachments, {
         ...context,
-        inheritedStyle: undefined,
+        // SVG <use> presentation attributes are inherited by the referenced subtree
+        // unless individual descendants override them explicitly.
+        inheritedStyle: sanitizedStyleAttrs,
         hiddenAncestor: effectiveHidden,
       });
 

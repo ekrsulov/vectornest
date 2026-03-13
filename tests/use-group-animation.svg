@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-120 -120 240 240">
+  <defs>
+    <path id="petal" d="M 0 0 C 18 -52 45 -24 54 0 C 45 24 18 52 0 0 Z" fill="none" stroke="#00e5ff">
+      <animateTransform attributeName="transform" type="scale" values="1;1.08;1" dur="2s" repeatCount="indefinite" />
+    </path>
+
+    <g id="cluster">
+      <use href="#petal" transform="rotate(0)" />
+      <use href="#petal" transform="rotate(120)" />
+      <use href="#petal" transform="rotate(240)" />
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="6s" repeatCount="indefinite" />
+    </g>
+
+    <g id="satellites">
+      <use href="#cluster" transform="translate(72 0) scale(0.45)" />
+      <use href="#cluster" transform="translate(-36 62.35) scale(0.45)" />
+      <use href="#cluster" transform="translate(-36 -62.35) scale(0.45)" />
+      <animateTransform attributeName="transform" type="rotate" from="360" to="0" dur="8s" repeatCount="indefinite" />
+    </g>
+  </defs>
+
+  <use href="#cluster" id="main-cluster" />
+  <use href="#satellites" id="orbit-cluster" />
+  <use href="#cluster" id="center-cluster" transform="scale(0.28)">
+    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite" additive="sum" />
+  </use>
+</svg>

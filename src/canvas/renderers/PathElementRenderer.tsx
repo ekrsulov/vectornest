@@ -165,6 +165,7 @@ const PathElementRendererView = ({
               : undefined)
         }
         strokeDashoffset={pathData.strokeDashoffset}
+        pathLength={pathData.pathLength}
         strokeMiterlimit={pathData.strokeMiterlimit}
         opacity={isDefElement ? 0 : pathData.opacity}
         visibility={visibility}

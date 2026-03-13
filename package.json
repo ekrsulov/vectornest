@@ -7,7 +7,7 @@
     "dev": "bunx --bun vite",
     "build": "bun run tsc -b && bunx --bun vite build",
     "lint": "bunx eslint .",
-    "test": "bun test src",
+    "test": "bunx vitest run",
     "test:vitest": "bunx vitest run",
     "test:e2e": "PLAYWRIGHT_EXTERNAL_SERVER=1 bunx playwright test",
     "test:e2e:managed": "PLAYWRIGHT_EXTERNAL_SERVER=0 bunx playwright test",

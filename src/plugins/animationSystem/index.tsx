@@ -130,6 +130,86 @@ export interface ImportedAnimation {
   animation: Omit<SVGAnimation, 'id' | 'targetElementId' | 'clipPathTargetId' | 'gradientTargetId' | 'patternTargetId' | 'filterTargetId' | 'maskTargetId' | 'markerTargetId' | 'symbolTargetId'>;
 }
 
+const getInlineStyleProperty = (element: Element, property: string): string | null => {
+  const styleAttr = element.getAttribute('style');
+  if (!styleAttr) {
+    return null;
+  }
+
+  const declarations = styleAttr
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  for (const declaration of declarations) {
+    const [key, ...rest] = declaration.split(':');
+    if (!key || rest.length === 0) {
+      continue;
+    }
+
+    if (key.trim() === property) {
+      return rest.join(':').trim();
+    }
+  }
+
+  return null;
+};
+
+const parseAbsoluteTransformOrigin = (element: Element): { x: number; y: number } | null => {
+  const rawOrigin = element.getAttribute('transform-origin') ?? getInlineStyleProperty(element, 'transform-origin');
+  if (!rawOrigin) {
+    return null;
+  }
+
+  const parts = rawOrigin.trim().split(/[\s,]+/).filter(Boolean);
+  if (parts.length < 2) {
+    return null;
+  }
+
+  const x = parseFloat(parts[0].replace(/px$/i, ''));
+  const y = parseFloat(parts[1].replace(/px$/i, ''));
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    return null;
+  }
+
+  return { x, y };
+};
+
+const normalizeRotateValueWithOrigin = (
+  value: string | undefined,
+  origin: { x: number; y: number } | null
+): string | undefined => {
+  if (!value || !origin) {
+    return value;
+  }
+
+  const numericParts = value.trim().split(/[\s,]+/).filter(Boolean);
+  if (numericParts.length !== 1) {
+    return value;
+  }
+
+  const angle = parseFloat(numericParts[0]);
+  if (!Number.isFinite(angle)) {
+    return value;
+  }
+
+  return `${angle} ${origin.x} ${origin.y}`;
+};
+
+const normalizeRotateValuesListWithOrigin = (
+  values: string | undefined,
+  origin: { x: number; y: number } | null
+): string | undefined => {
+  if (!values || !origin) {
+    return values;
+  }
+
+  return values
+    .split(';')
+    .map((token) => normalizeRotateValueWithOrigin(token.trim(), origin) ?? token.trim())
+    .join(';');
+};
+
 /**
  * Determine if an element is a def container (clipPath, gradient, pattern, filter, symbol)
  */
@@ -528,9 +608,12 @@ function importAnimationDefs(doc: Document): Record<string, unknown[]> | null {
       case 'animatetransform': {
         const attributeName = animEl.getAttribute('attributeName') ?? 'transform';
         const transformType = (animEl.getAttribute('type') as 'translate' | 'scale' | 'rotate' | 'skewX' | 'skewY') ?? 'translate';
-        const from = animEl.getAttribute('from') ?? undefined;
-        const to = animEl.getAttribute('to') ?? undefined;
-        const values = animEl.getAttribute('values') ?? undefined;
+        const transformOrigin = transformType === 'rotate'
+          ? parseAbsoluteTransformOrigin(parentElement)
+          : null;
+        const from = normalizeRotateValueWithOrigin(animEl.getAttribute('from') ?? undefined, transformOrigin);
+        const to = normalizeRotateValueWithOrigin(animEl.getAttribute('to') ?? undefined, transformOrigin);
+        const values = normalizeRotateValuesListWithOrigin(animEl.getAttribute('values') ?? undefined, transformOrigin);
         const additive = (animEl.getAttribute('additive') as 'replace' | 'sum') ?? 'replace';
         const accumulate = (animEl.getAttribute('accumulate') as 'none' | 'sum') ?? 'none';
 

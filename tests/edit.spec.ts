@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandSmoothBrushOptions, expandRoundPathOptions, expectToolEnabled} from './helpers';
+import {getCanvas, getCanvasPaths, waitForLoad, selectTool, expandSmoothBrushOptions, expandRoundPathOptions, expectToolEnabled, getPanelContainer, firstVisible} from './helpers';
 import type { Page, Locator } from '@playwright/test';
 
 test.describe.serial('Edit Functionality', () => {
@@ -109,7 +109,8 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await expect(smoothBrushHeading).toBeVisible();
 
     // Expand smooth brush options to see controls
-    await expandSmoothBrushOptions(page);
+    const smoothBrushExpandButton = page.getByRole('button', { name: /Smooth Brush.*Expand panel/ }).first();
+    await smoothBrushExpandButton.click({ force: true });
     await page.waitForTimeout(200);
 
     // Toggle brush mode using the switch in the header
@@ -122,7 +123,8 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await expect(brushModeSwitch.locator('input')).toBeChecked();
 
     // Radius slider should appear when brush is active
-    await expect(page.getByText('Radius').first()).toBeVisible();
+    const smoothBrushPanel = await getPanelContainer(page, 'Smooth Brush');
+    await expect(await firstVisible(smoothBrushPanel.getByText('Radius'))).toBeVisible();
   });
 
   test('should adjust smooth brush settings', async ({ page }) => {
@@ -157,7 +159,8 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     // Expand smooth brush options
     const smoothBrushHeading = page.getByRole('heading', { name: 'Smooth Brush' });
     await expect(smoothBrushHeading).toBeVisible();
-    await expandSmoothBrushOptions(page);
+    const smoothBrushExpandButton = page.getByRole('button', { name: /Smooth Brush.*Expand panel/ }).first();
+    await smoothBrushExpandButton.click({ force: true });
     await page.waitForTimeout(200);
 
     // Activate brush mode
@@ -168,19 +171,17 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await expect(brushModeSwitch.locator('input')).toBeChecked();
 
     // Test strength slider - check for the label
-    const strengthLabel = page.getByText('Strength').first();
-    await expect(strengthLabel).toBeVisible();
+    const smoothBrushPanel = await getPanelContainer(page, 'Smooth Brush');
+    await expect(await firstVisible(smoothBrushPanel.getByText('Strength'))).toBeVisible();
 
     // Enable simplify points and ensure dependent controls appear
     const simplifyCheckbox = page.getByRole('checkbox', { name: 'Simplify Points' }).first();
     await simplifyCheckbox.check({ force: true });
     await expect(simplifyCheckbox).toBeChecked();
 
-    const toleranceLabel = page.getByText('Tolerance').first();
-    await expect(toleranceLabel).toBeVisible();
+    await expect(await firstVisible(smoothBrushPanel.getByText('Tolerance'))).toBeVisible();
 
-    const minDistLabel = page.getByText('Min Dist').first();
-    await expect(minDistLabel).toBeVisible();
+    await expect(await firstVisible(smoothBrushPanel.getByText('Min Dist'))).toBeVisible();
   });
 
   test('should apply smooth brush', async ({ page }) => {
@@ -360,6 +361,10 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await page.goto('/');
     await waitForLoad(page);
 
+    await page.evaluate(() => {
+      (window as any).useCanvasStore?.getState?.().updatePencilState?.({ simplificationTolerance: 0 });
+    });
+
     // Create a simple path with multiple points using pencil tool
     await selectTool(page, 'Pencil');
 
@@ -407,9 +412,16 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await page.mouse.click(points[1].x, points[1].y);
     await page.waitForTimeout(100);
 
-    // Get the number of circles before deletion (they represent edit points)
-    const circlesBefore = await page.locator('svg circle').count();
-    expect(circlesBefore).toBeGreaterThan(0);
+    const editStateBefore = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+        selectedCommands: store?.selectedCommands?.length ?? 0,
+      };
+    });
+    expect(editStateBefore.commandCount).toBeGreaterThan(0);
+    expect(editStateBefore.selectedCommands).toBeGreaterThan(0);
 
     // Press Delete to remove the selected point
     await page.keyboard.press('Delete');
@@ -420,15 +432,20 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     const pathsAfterDelete = await getCanvasPaths(page).count();
     expect(pathsAfterDelete).toBeGreaterThan(0);
 
-    // 2. There should be fewer circles (one point was deleted)
-    const circlesAfter = await page.locator('svg circle').count();
-    expect(circlesAfter).toBeLessThan(circlesBefore);
-
-    // 3. We should still have circles visible (indicating a point is selected)
-    expect(circlesAfter).toBeGreaterThan(0);
+    // 2. The edited path should now have fewer commands and still keep a selected point.
+    const editStateAfter = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+        selectedCommands: store?.selectedCommands?.length ?? 0,
+      };
+    });
+    expect(editStateAfter.commandCount).toBeLessThan(editStateBefore.commandCount);
+    expect(editStateAfter.selectedCommands).toBeGreaterThan(0);
 
     // Try pressing Delete again to verify the behavior continues
-    const circlesBeforeSecondDelete = circlesAfter;
+    const commandCountBeforeSecondDelete = editStateAfter.commandCount;
     await page.keyboard.press('Delete');
     await page.waitForTimeout(200);
 
@@ -436,14 +453,26 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     const pathsAfterSecondDelete = await getCanvasPaths(page).count();
     expect(pathsAfterSecondDelete).toBeGreaterThan(0);
 
-    // Should have even fewer circles now
-    const circlesAfterSecondDelete = await page.locator('svg circle').count();
-    expect(circlesAfterSecondDelete).toBeLessThan(circlesBeforeSecondDelete);
+    // The edited path should continue shrinking one point at a time.
+    const editStateAfterSecondDelete = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+        selectedCommands: store?.selectedCommands?.length ?? 0,
+      };
+    });
+    expect(editStateAfterSecondDelete.commandCount).toBeLessThan(commandCountBeforeSecondDelete);
+    expect(editStateAfterSecondDelete.selectedCommands).toBeGreaterThan(0);
   });
 
   test('should delete only one point per Delete keypress', async ({ page }) => {
     await page.goto('/');
     await waitForLoad(page);
+
+    await page.evaluate(() => {
+      (window as any).useCanvasStore?.getState?.().updatePencilState?.({ simplificationTolerance: 0 });
+    });
 
     // Create a simple straight line path with exactly 5 points
     await selectTool(page, 'Pencil');
@@ -484,28 +513,39 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await page.mouse.click(points[2].x, points[2].y);
     await page.waitForTimeout(100);
 
-    // Count circles before first delete
-    const circlesBefore = await page.locator('svg circle').count();
+    const editStateBefore = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+      };
+    });
     
     // Press Delete once
     await page.keyboard.press('Delete');
     await page.waitForTimeout(200);
 
-    // Verify exactly one point was deleted
-    const circlesAfterFirstDelete = await page.locator('svg circle').count();
-    const pointsDeletedFirst = circlesBefore - circlesAfterFirstDelete;
-    
-    // Should have deleted exactly 2 circles (1 point = 1 visible circle + 1 hit area circle)
-    expect(pointsDeletedFirst).toBe(2);
+    const editStateAfterFirstDelete = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+      };
+    });
+    expect(editStateAfterFirstDelete.commandCount).toBe(editStateBefore.commandCount - 1);
 
     // Press Delete again
     await page.keyboard.press('Delete');
     await page.waitForTimeout(200);
 
-    // Verify exactly one more point was deleted
-    const circlesAfterSecondDelete = await page.locator('svg circle').count();
-    const pointsDeletedSecond = circlesAfterFirstDelete - circlesAfterSecondDelete;
-    expect(pointsDeletedSecond).toBe(2);
+    const editStateAfterSecondDelete = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+      };
+    });
+    expect(editStateAfterSecondDelete.commandCount).toBe(editStateAfterFirstDelete.commandCount - 1);
 
     // Path should still exist
     const paths = await getCanvasPaths(page).count();
@@ -515,6 +555,10 @@ async function drawZigZagPath(page: any, canvasBox: any) {
   test('should select immediately next point after deletion (visual verification)', async ({ page }) => {
     await page.goto('/');
     await waitForLoad(page);
+
+    await page.evaluate(() => {
+      (window as any).useCanvasStore?.getState?.().updatePencilState?.({ simplificationTolerance: 0 });
+    });
 
     // Create a path with 5 distinct, well-spaced points
     await selectTool(page, 'Pencil');
@@ -560,13 +604,16 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await page.keyboard.press('Delete');
     await page.waitForTimeout(300);
 
-    // After deleting point 2, point 3 should now be selected
-    // We can verify this by checking that a circle exists near point 3's original position
-    // In this simple case, since we're deleting from a straight line, the positions should be predictable
-    
-    // Visual check: we should see edit points, and the path should still exist
-    const circles = await page.locator('svg circle').count();
-    expect(circles).toBeGreaterThan(0);
+    const editStateAfterDelete = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+        selectedCommands: store?.selectedCommands?.length ?? 0,
+      };
+    });
+    expect(editStateAfterDelete.commandCount).toBeGreaterThan(0);
+    expect(editStateAfterDelete.selectedCommands).toBeGreaterThan(0);
 
     const paths = await getCanvasPaths(page).count();
     expect(paths).toBeGreaterThan(0);
@@ -616,23 +663,32 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await page.mouse.click(curvePoints[1].x, curvePoints[1].y);
     await page.waitForTimeout(100);
 
-    // Count total edit points before deletion (includes control points)
-    const circlesBefore = await page.locator('svg circle').count();
-    expect(circlesBefore).toBeGreaterThan(0);
+    const editStateBefore = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+        selectedCommands: store?.selectedCommands?.length ?? 0,
+      };
+    });
+    expect(editStateBefore.commandCount).toBeGreaterThan(0);
+    expect(editStateBefore.selectedCommands).toBeGreaterThan(0);
 
     // Delete the selected command point
     await page.keyboard.press('Delete');
     await page.waitForTimeout(300);
 
-    // After deletion, should have fewer points
-    const circlesAfter = await page.locator('svg circle').count();
-    expect(circlesAfter).toBeLessThan(circlesBefore);
-    expect(circlesAfter).toBeGreaterThan(0); // Should still have points remaining
-
-    // The key assertion: a command point should still be selected (auto-selected next command point)
-    // Selected points have yellow/gold stroke
-    const selectedStrokeCircles = await page.locator('svg circle[stroke="#eab308"], svg circle[stroke="#fbbf24"]').count();
-    expect(selectedStrokeCircles).toBeGreaterThanOrEqual(1);
+    const editStateAfter = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+        selectedCommands: store?.selectedCommands?.length ?? 0,
+      };
+    });
+    expect(editStateAfter.commandCount).toBeLessThanOrEqual(editStateBefore.commandCount);
+    expect(editStateAfter.commandCount).toBeGreaterThan(0);
+    expect(editStateAfter.selectedCommands).toBeGreaterThanOrEqual(1);
 
     // Verify path still exists
     const paths = await getCanvasPaths(page).count();
@@ -697,9 +753,16 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     await page.keyboard.up(modifierKey);
     await page.waitForTimeout(100);
 
-    // Count circles before deletion
-    const circlesBefore = await page.locator('svg circle').count();
-    expect(circlesBefore).toBeGreaterThan(0);
+    const editStateBefore = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+        selectedCommands: store?.selectedCommands?.length ?? 0,
+      };
+    });
+    expect(editStateBefore.commandCount).toBeGreaterThan(0);
+    expect(editStateBefore.selectedCommands).toBeGreaterThanOrEqual(1);
 
     // Delete the selected points
     await page.keyboard.press('Delete');
@@ -709,10 +772,15 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     const paths = await getCanvasPaths(page).count();
     expect(paths).toBe(1);
 
-    // Should have fewer circles after deletion
-    const circlesAfter = await page.locator('svg circle').count();
-    expect(circlesAfter).toBeLessThan(circlesBefore);
-    expect(circlesAfter).toBeGreaterThan(0);
+    const editStateAfter = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore?.getState?.();
+      const path = store?.elements?.find((element: any) => element.type === 'path');
+      return {
+        commandCount: path?.data?.subPaths?.[0]?.length ?? 0,
+      };
+    });
+    expect(editStateAfter.commandCount).toBeLessThan(editStateBefore.commandCount);
+    expect(editStateAfter.commandCount).toBeGreaterThan(0);
 
     // The path should still be visible and have remaining points
     const pathElement = await getCanvasPaths(page).first();

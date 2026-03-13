@@ -5,11 +5,12 @@ import {
     createTranslateMatrix,
     type Matrix as BaseMatrix,
 } from '../../utils/matrixUtils';
-import { parsePathD } from '../../utils/pathParserUtils';
+import { normalizePathCommands, parsePathD } from '../../utils/pathParserUtils';
 import { measurePath } from '../../utils/measurementUtils';
 import { scaleCommands, translateCommands } from '../../utils/transformationUtils';
 import type { PathData } from '../../types';
 import { shapeToPath } from '../../utils/import/shapeToPath';
+import { normalizeToMLCZ } from '../../utils/svg/normalizer';
 
 /** Extended PathData with computed bounds for symbol viewBox mapping. */
 type SymbolPathData = PathData & { x: number; y: number; width: number; height: number };
@@ -71,13 +72,26 @@ const resolvePrimarySymbolGraphicsElement = (symbolNode: Element | null | undefi
     return null;
 };
 
+const UNSUPPORTED_PATH_COMMAND_PATTERN = /[AHQSTVahqstv]/;
+
+const canConvertPathDataSafely = (pathD: string): boolean => !UNSUPPORTED_PATH_COMMAND_PATTERN.test(pathD);
+
 const buildPathData = (graphicsNode: Element | null, styleAttrs: Record<string, unknown>): SymbolPathData | null => {
     if (!graphicsNode) return null;
     const pathD = graphicsNode.tagName.toLowerCase() === 'path'
         ? graphicsNode.getAttribute('d')
         : shapeToPath(graphicsNode);
     if (!pathD) return null;
-    const subPaths = [parsePathD(pathD)];
+    if (!canConvertPathDataSafely(pathD)) {
+        return null;
+    }
+
+    const commands = normalizePathCommands(parsePathD(normalizeToMLCZ(pathD)));
+    if (commands.length === 0 || commands[0]?.type !== 'M') {
+        return null;
+    }
+
+    const subPaths = [commands];
     const strokeColor = (styleAttrs as { strokeColor?: string }).strokeColor ?? graphicsNode.getAttribute('stroke') ?? 'none';
     const strokeWidth = (styleAttrs as { strokeWidth?: number }).strokeWidth ?? parseFloat(graphicsNode.getAttribute('stroke-width') ?? '1');
     const fillColor = (styleAttrs as { fillColor?: string }).fillColor ?? graphicsNode.getAttribute('fill') ?? 'none';
@@ -101,6 +115,9 @@ const buildPathData = (graphicsNode: Element | null, styleAttrs: Record<string, 
 
 type ViewBox = { minX: number; minY: number; width: number; height: number };
 
+const IMPLICIT_VIEWPORT_WIDTH_ATTR = 'data-vectornest-implicit-viewport-width';
+const IMPLICIT_VIEWPORT_HEIGHT_ATTR = 'data-vectornest-implicit-viewport-height';
+
 const parseViewBox = (value: string | null | undefined): ViewBox | null => {
     if (!value) {
         return null;
@@ -120,9 +137,21 @@ const parseViewBox = (value: string | null | undefined): ViewBox | null => {
 };
 
 const resolveImplicitViewportSize = (element: Element): { width: number; height: number } | null => {
+    const preservedWidth = parseFloat(element.getAttribute(IMPLICIT_VIEWPORT_WIDTH_ATTR) || '');
+    const preservedHeight = parseFloat(element.getAttribute(IMPLICIT_VIEWPORT_HEIGHT_ATTR) || '');
+    if (Number.isFinite(preservedWidth) && preservedWidth > 0 && Number.isFinite(preservedHeight) && preservedHeight > 0) {
+        return { width: preservedWidth, height: preservedHeight };
+    }
+
     let current: Element | null = element.parentElement;
 
     while (current) {
+        const ancestorPreservedWidth = parseFloat(current.getAttribute(IMPLICIT_VIEWPORT_WIDTH_ATTR) || '');
+        const ancestorPreservedHeight = parseFloat(current.getAttribute(IMPLICIT_VIEWPORT_HEIGHT_ATTR) || '');
+        if (Number.isFinite(ancestorPreservedWidth) && ancestorPreservedWidth > 0 && Number.isFinite(ancestorPreservedHeight) && ancestorPreservedHeight > 0) {
+            return { width: ancestorPreservedWidth, height: ancestorPreservedHeight };
+        }
+
         if (current.tagName.toLowerCase() === 'svg') {
             const viewBox = parseViewBox(current.getAttribute('viewBox'));
             if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
@@ -289,11 +318,7 @@ export function importUse(
             parent = parent.parentElement;
         }
     }
-    if (colorAttr) {
-        const styleRecord = styleAttrs as Record<string, unknown>;
-        if (styleRecord.fillColor === undefined) styleRecord.fillColor = colorAttr;
-        if (styleRecord.strokeColor === undefined) styleRecord.strokeColor = colorAttr;
-    }
+    const inheritedColor = colorAttr ?? undefined;
 
     // If we have access to the symbol node, we can resolve some defaults like viewBox dimensions or inherited colors
     let finalWidth = widthAttr;
@@ -327,17 +352,23 @@ export function importUse(
         const symbolFillOpacity = symbolGraphicsNode?.getAttribute('fill-opacity');
         const symbolStrokeOpacity = symbolGraphicsNode?.getAttribute('stroke-opacity');
 
-        // logic from svgImportUtils
-        const colorAttr = element.getAttribute('color');
+        const usesCurrentColorFill = symbolFill === 'currentColor';
+        const usesCurrentColorStroke = symbolStroke === 'currentColor';
 
-        const resolvedFill =
-            styleAttrs.fillColor ??
-            (symbolFill === 'currentColor' ? colorAttr : symbolFill) ??
-            undefined;
-        const resolvedStroke =
-            styleAttrs.strokeColor ??
-            (symbolStroke === 'currentColor' ? colorAttr : symbolStroke) ??
-            undefined;
+        // currentColor is driven by the CSS color property, not by fill/stroke on <use>.
+        if (usesCurrentColorFill && inheritedColor === undefined) {
+            delete (styleAttrs as { fillColor?: string }).fillColor;
+        }
+        if (usesCurrentColorStroke && inheritedColor === undefined) {
+            delete (styleAttrs as { strokeColor?: string }).strokeColor;
+        }
+
+        const resolvedFill = usesCurrentColorFill
+            ? inheritedColor
+            : ((styleAttrs as { fillColor?: string }).fillColor ?? symbolFill ?? undefined);
+        const resolvedStroke = usesCurrentColorStroke
+            ? inheritedColor
+            : ((styleAttrs as { strokeColor?: string }).strokeColor ?? symbolStroke ?? undefined);
 
         if (resolvedFill !== undefined && resolvedFill !== null) {
             (styleAttrs as { fillColor?: string }).fillColor = resolvedFill;
@@ -396,6 +427,7 @@ export function importUse(
             width: finalWidth,
             height: finalHeight,
             ...styleAttrs,
+            ...(inheritedColor ? { color: inheritedColor } : {}),
             fillColor: (styleAttrs as { fillColor?: string }).fillColor ?? 'currentColor',
             mixBlendMode: (styleAttrs as { mixBlendMode?: string }).mixBlendMode,
             isolation: (styleAttrs as { isolation?: 'auto' | 'isolate' }).isolation,

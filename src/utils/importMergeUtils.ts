@@ -240,6 +240,19 @@ export const mergeImportedAnimations = (defs: ImportedAnimationPayload[] | undef
             anim.values ?? '',
             String((anim as Record<string, unknown>).from ?? ''),
             String((anim as Record<string, unknown>).to ?? ''),
+            String(anim.begin ?? ''),
+            String((anim as Record<string, unknown>).end ?? ''),
+            String((anim as Record<string, unknown>).dur ?? ''),
+            String((anim as Record<string, unknown>).repeatCount ?? ''),
+            String((anim as Record<string, unknown>).repeatDur ?? ''),
+            String((anim as Record<string, unknown>).calcMode ?? ''),
+            String((anim as Record<string, unknown>).keyTimes ?? ''),
+            String((anim as Record<string, unknown>).keySplines ?? ''),
+            String((anim as Record<string, unknown>).mpath ?? ''),
+            String((anim as Record<string, unknown>).path ?? ''),
+            String((anim as Record<string, unknown>).rotate ?? ''),
+            String((anim as Record<string, unknown>).additive ?? ''),
+            String((anim as Record<string, unknown>).accumulate ?? ''),
             String(anim.stopIndex ?? ''),
             String(anim.filterPrimitiveIndex ?? ''),
         ];
@@ -319,9 +332,10 @@ export const mergeImportedAnimations = (defs: ImportedAnimationPayload[] | undef
         .map((anim) => {
             const delaySeconds = parseBeginToSeconds(anim.begin);
             if (delaySeconds === null) return null;
+            if (delaySeconds <= 0) return null;
             return {
                 animationId: anim.id,
-                delay: Math.max(0, delaySeconds),
+                delay: delaySeconds,
                 trigger: 'start' as const,
             };
         })

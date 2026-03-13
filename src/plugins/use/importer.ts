@@ -3,18 +3,40 @@ import { extractStyleAttributes } from '../../utils/svgImportUtils';
 import { multiplyMatrices, createTranslateMatrix, type Matrix as BaseMatrix } from '../../utils/matrixUtils';
 import { parsePathD } from '../../utils/pathParserUtils';
 import { measurePath } from '../../utils/measurementUtils';
+import { parseTransform as parseSvgTransform } from '../../utils/svg/transform';
 import type { PathData } from '../../types';
 import type { UseElementData, UseReferenceType } from './types';
 import { shapeToPath } from '../../utils/import/shapeToPath';
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const USE_ATTRS_TO_SKIP_ON_WRAPPER = new Set([
+  'href',
+  'xlink:href',
+  'x',
+  'y',
+  'width',
+  'height',
+  'transform',
+  'id',
+]);
+const USE_CHILD_TAGS_TO_PRESERVE = new Set(['animate', 'animatetransform', 'animatemotion', 'set', 'desc', 'title']);
+
 // Helper to convert object matrix to array matrix
 const toArrayMatrix = (m: Matrix): BaseMatrix => [m.a, m.b, m.c, m.d, m.e, m.f];
+
+const isIdentityMatrix = (matrix: BaseMatrix): boolean => (
+  matrix[0] === 1 &&
+  matrix[1] === 0 &&
+  matrix[2] === 0 &&
+  matrix[3] === 1 &&
+  matrix[4] === 0 &&
+  matrix[5] === 0
+);
 
 const measureElementBBox = (element: Element): { minX: number; minY: number; width: number; height: number } | null => {
   if (typeof document === 'undefined') return null;
   try {
-    const svgNS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(svgNS, 'svg');
+    const svg = document.createElementNS(SVG_NS, 'svg');
     const clone = element.cloneNode(true) as SVGGraphicsElement;
     svg.appendChild(clone);
     svg.setAttribute('width', '0');
@@ -31,6 +53,104 @@ const measureElementBBox = (element: Element): { minX: number; minY: number; wid
     // ignore
   }
   return null;
+};
+
+const computeLocalUseMatrix = (element: Element): BaseMatrix => {
+  let matrix = toArrayMatrix(parseSvgTransform(element.getAttribute('transform') || ''));
+  const x = parseFloat(element.getAttribute('x') || '0');
+  const y = parseFloat(element.getAttribute('y') || '0');
+  if (x !== 0 || y !== 0) {
+    matrix = multiplyMatrices(matrix, createTranslateMatrix(x, y));
+  }
+  return matrix;
+};
+
+const copyNestedUseAttributesToWrapper = (source: Element, wrapper: Element): void => {
+  Array.from(source.attributes).forEach((attr) => {
+    const normalizedName = attr.name.toLowerCase();
+    if (normalizedName.startsWith('on') || USE_ATTRS_TO_SKIP_ON_WRAPPER.has(normalizedName)) {
+      return;
+    }
+    wrapper.setAttribute(attr.name, attr.value);
+  });
+};
+
+const cloneExpandedNode = (
+  source: Element,
+  visitedIds: Set<string>
+): Element | null => {
+  if (source.tagName.toLowerCase() === 'use') {
+    return expandNestedUse(source, visitedIds);
+  }
+
+  const clone = source.cloneNode(false) as Element;
+  Array.from(source.childNodes).forEach((child) => {
+    if (child.nodeType === Node.ELEMENT_NODE) {
+      const clonedChild = cloneExpandedNode(child as Element, visitedIds);
+      if (clonedChild) {
+        clone.appendChild(clonedChild);
+      }
+      return;
+    }
+    clone.appendChild(child.cloneNode(true));
+  });
+  return clone;
+};
+
+const expandNestedUse = (
+  useElement: Element,
+  visitedIds: Set<string>
+): Element | null => {
+  const href = useElement.getAttribute('href') || useElement.getAttribute('xlink:href');
+  if (!href || !href.startsWith('#')) {
+    return useElement.cloneNode(true) as Element;
+  }
+
+  const refId = href.slice(1);
+  if (visitedIds.has(refId)) {
+    return null;
+  }
+
+  const targetElement = useElement.ownerDocument?.getElementById(refId);
+  if (!targetElement) {
+    return useElement.cloneNode(true) as Element;
+  }
+
+  const wrapper = useElement.ownerDocument?.createElementNS(SVG_NS, 'g');
+  if (!wrapper) {
+    return null;
+  }
+
+  copyNestedUseAttributesToWrapper(useElement, wrapper);
+
+  const localMatrix = computeLocalUseMatrix(useElement);
+  if (!isIdentityMatrix(localMatrix)) {
+    wrapper.setAttribute('transform', `matrix(${localMatrix.join(' ')})`);
+  }
+
+  const expandedTarget = cloneExpandedNode(targetElement, new Set([...visitedIds, refId]));
+  if (expandedTarget) {
+    wrapper.appendChild(expandedTarget);
+  }
+
+  Array.from(useElement.childNodes).forEach((child) => {
+    if (child.nodeType !== Node.ELEMENT_NODE) {
+      wrapper.appendChild(child.cloneNode(true));
+      return;
+    }
+
+    const childElement = child as Element;
+    if (!USE_CHILD_TAGS_TO_PRESERVE.has(childElement.tagName.toLowerCase())) {
+      return;
+    }
+    wrapper.appendChild(childElement.cloneNode(true));
+  });
+
+  return wrapper;
+};
+
+const serializeExpandedNode = (element: Element): string => {
+  return new XMLSerializer().serializeToString(element);
 };
 
 /**
@@ -166,14 +286,6 @@ export function importUse(
     return null;
   }
   
-  // If target is a <g>, let the fallback handler in processElementSpecialTags
-  // inline the group's children. The use plugin only captures bounds for groups
-  // but not their visual content, so native <use href="#..."> would fail since
-  // the <g> from <defs> is not emitted in the rendered SVG.
-  if (targetElement.tagName.toLowerCase() === 'g') {
-    return null;
-  }
-  
   // Determine reference type - at this point it's an element reference
   const referenceType: UseReferenceType = 'element';
   
@@ -214,6 +326,7 @@ export function importUse(
   // Build data based on element type
   let cachedPathData: PathData | undefined;
   let cachedBounds: UseElementData['cachedBounds'];
+  let rawContent: string | undefined;
   
   // Element reference - clone the element's visual
   if (targetElement instanceof SVGPathElement) {
@@ -264,6 +377,16 @@ export function importUse(
     
     if (width === 0) width = imgWidth;
     if (height === 0) height = imgHeight;
+  } else if (targetElement.tagName.toLowerCase() === 'g') {
+    const expandedTarget = cloneExpandedNode(targetElement, new Set([rawId]));
+    if (expandedTarget) {
+      rawContent = serializeExpandedNode(expandedTarget);
+      cachedBounds = measureElementBBox(expandedTarget) ?? measureElementBBox(targetElement) ?? undefined;
+      if (cachedBounds) {
+        if (width === 0) width = cachedBounds.width;
+        if (height === 0) height = cachedBounds.height;
+      }
+    }
   }
   // Add more element types as needed
   
@@ -295,7 +418,7 @@ export function importUse(
   if ((useStyleAttrs as { strokeLinejoin?: string }).strokeLinejoin !== undefined) {
     styleOverrides.strokeLinejoin = (useStyleAttrs as { strokeLinejoin?: string }).strokeLinejoin as 'miter' | 'round' | 'bevel';
   }
-  
+
   const useData: UseElementData = {
     href: rawId,
     referenceType,
@@ -306,6 +429,7 @@ export function importUse(
     transformMatrix: matrix,
     sourceId: element.getAttribute('id') ?? undefined,
     ...(cachedPathData ? { cachedPathData } : {}),
+    ...(rawContent ? { rawContent } : {}),
     ...(cachedBounds ? { cachedBounds } : {}),
     ...(Object.keys(styleOverrides).length > 0 ? { styleOverrides } : {}),
   };

@@ -19,18 +19,18 @@ test.describe('File panel layout and import behavior', () => {
 
     const sidebar = page.locator('[data-sidebar-scroll-area="true"]');
     const nameLabel = await firstVisible(sidebar.getByText('Name'));
-    const exportPaddingLabel = await firstVisible(sidebar.getByText('Export Padding:'));
+    const exportPaddingLabel = await firstVisible(sidebar.getByText('Export Padding'));
     const saveSelectedOnlyToggle = await firstVisible(sidebar.getByText('Save selected elements only'));
     const svgButton = await firstVisible(sidebar.getByRole('button', { name: /^SVG$/ }));
     const pngButton = await firstVisible(sidebar.getByRole('button', { name: /^PNG$/ }));
     const svgSourceButton = await firstVisible(sidebar.getByRole('button', { name: 'SVG Source' }));
-    const importHeading = await firstVisible(sidebar.getByText(/^IMPORT$/));
+    const importHeading = await firstVisible(sidebar.getByText(/^Import$/i));
     const appendLabel = await firstVisible(sidebar.getByText('Append to existing'));
     const addFrameLabel = await firstVisible(sidebar.getByText('Add frame to imported SVG'));
     const applyUnionLabel = await firstVisible(sidebar.getByText('Apply union to imported paths'));
     const resizeLabel = await firstVisible(sidebar.getByText('Resize imported SVG'));
     const importButton = await firstVisible(sidebar.getByRole('button', { name: 'Import SVG' }));
-    const jsonHeading = await firstVisible(sidebar.getByText(/^JSON$/));
+    const jsonHeading = await firstVisible(sidebar.getByText(/^JSON$/i));
     const saveButton = await firstVisible(sidebar.getByRole('button', { name: 'Save' }));
     const loadButton = await firstVisible(sidebar.getByRole('button', { name: 'Load' }));
 

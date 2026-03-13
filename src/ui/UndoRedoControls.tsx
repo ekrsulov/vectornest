@@ -1,11 +1,11 @@
 import React from 'react';
 import { IconButton, VStack, useColorModeValue, Box } from '@chakra-ui/react';
-import { Undo2, Redo2, Search, PanelRightOpen, PanelRightClose, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import { Undo2, Redo2, Search, PanelRightOpen, PanelRightClose, PanelLeftOpen, PanelLeftClose, X } from 'lucide-react';
 import { useSidebarLayout } from '../hooks/useSidebarLayout';
 import { useTemporalState } from '../hooks/useTemporalState';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useIsGlobalUndoRedoDisabled } from '../utils/pluginManager';
-import { useCanvasStore } from '../store/canvasStore';
+import { useCanvasStore, type CanvasStore } from '../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import { OPEN_COMMAND_PALETTE_EVENT } from '../plugins/commandPalette/events';
 import ConditionalTooltip from './ConditionalTooltip';
@@ -29,11 +29,23 @@ export const UndoRedoControls: React.FC = () => {
             showLeftSidebar: state.settings.showLeftSidebar,
         }))
     );
+    const { stopAnimations, stopCanvasPreview } = useCanvasStore(
+        useShallow((state) => ({
+            stopAnimations: (state as CanvasStore & { stopAnimations?: () => void }).stopAnimations,
+            stopCanvasPreview: (state as CanvasStore & { stopCanvasPreview?: () => void }).stopCanvasPreview,
+        }))
+    );
 
     const canUndo = pastStates.length > 0;
     const canRedo = futureStates.length > 0;
     const openCommandPalette = () => {
         window.dispatchEvent(new CustomEvent(OPEN_COMMAND_PALETTE_EVENT));
+    };
+    const handleStopAndResetApp = () => {
+        stopAnimations?.();
+        stopCanvasPreview?.();
+        useCanvasStore.persist.clearStorage();
+        window.location.reload();
     };
 
     // Use unified theme colors to match VirtualShiftButton
@@ -55,6 +67,24 @@ export const UndoRedoControls: React.FC = () => {
         sx: {
             backdropFilter: 'blur(10px)',
         }
+    };
+    const dangerButtonProps = {
+        ...buttonProps,
+        bg: useColorModeValue('rgba(254, 226, 226, 0.98)', 'rgba(127, 29, 29, 0.95)'),
+        borderColor: useColorModeValue('red.300', 'red.500'),
+        color: useColorModeValue('red.700', 'red.200'),
+        _hover: {
+            bg: useColorModeValue('rgba(254, 202, 202, 0.98)', 'rgba(153, 27, 27, 0.98)'),
+        },
+        _dark: {
+            bg: 'rgba(127, 29, 29, 0.95)',
+            borderWidth: '1px',
+            borderColor: 'red.500',
+            color: 'red.200',
+            _hover: {
+                bg: 'rgba(153, 27, 27, 0.98)',
+            },
+        },
     };
 
     // Calculate dynamic right position based on sidebar state
@@ -111,6 +141,17 @@ export const UndoRedoControls: React.FC = () => {
                             onClick={openCommandPalette}
                         />
                     </ConditionalTooltip>
+
+                    {import.meta.env.DEV && (
+                        <ConditionalTooltip label="Stop Animations and Reset App" placement="left">
+                            <IconButton
+                                {...dangerButtonProps}
+                                aria-label="Stop Animations and Reset App"
+                                icon={<X size={18} />}
+                                onClick={handleStopAndResetApp}
+                            />
+                        </ConditionalTooltip>
+                    )}
 
                     <ConditionalTooltip label="Undo (Cmd+Z)" placement="left">
                         <IconButton

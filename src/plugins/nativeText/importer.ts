@@ -2,6 +2,7 @@ import type { Matrix, ImportedElement } from '../../utils/svgImportUtils';
 import { extractStyleAttributes } from '../../utils/svgImportUtils';
 import type { NativeTextElement } from './types';
 import { parseFontSize, resolveTextStyle } from './textStyleUtils';
+import { resolveCurrentColorValue } from '../../utils/svg/styleAttributes';
 
 type AffineMatrix = [number, number, number, number, number, number];
 
@@ -62,6 +63,21 @@ export function shapeToNativeText(
         return lines.join('\n');
     };
 
+    const normalizeInlineTextContent = (value: string): string => value.replace(/\s+/g, ' ');
+    const normalizeInlineTextSegment = (value: string, preserveLeading: boolean): string => {
+        const collapsed = normalizeInlineTextContent(value);
+        const trimmed = collapsed.trim();
+        if (!trimmed) {
+            return '';
+        }
+
+        const leadingSpace = preserveLeading && /^\s/.test(collapsed) ? ' ' : '';
+        const trailingSpace = /\s$/.test(collapsed) ? ' ' : '';
+        return `${leadingSpace}${trimmed}${trailingSpace}`;
+    };
+    const resolveSpanFillColor = (spanElement: Element): string | undefined =>
+        resolveCurrentColorValue(spanElement, spanElement.getAttribute('fill'));
+
     const textContent = normalizeTextContent(element.textContent ?? '');
     const textDecoration = (getVal('text-decoration') as 'none' | 'underline' | 'line-through' | null) ?? 'none';
     const letterSpacingAttr = getVal('letter-spacing');
@@ -76,13 +92,112 @@ export function shapeToNativeText(
     let spans: Array<NonNullable<NativeTextElement['data']['spans']>[number]> = [];
     let richText: string | undefined;
 
-    if (tspanNodes.length > 0) {
+    if (textPathNode) {
+        const textPathChildren = Array.from(textPathNode.childNodes);
+        spans = textPathChildren.flatMap((node) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = normalizeInlineTextContent(node.textContent ?? '');
+                if (!text.trim()) {
+                    return [];
+                }
+
+                return [{
+                    text,
+                    line: 0,
+                }];
+            }
+
+            if (node.nodeType !== Node.ELEMENT_NODE) {
+                return [];
+            }
+
+            const child = node as Element;
+            if (child.tagName.toLowerCase() !== 'tspan') {
+                const text = normalizeInlineTextContent(child.textContent ?? '');
+                if (!text.trim()) {
+                    return [];
+                }
+
+                return [{
+                    text,
+                    line: 0,
+                }];
+            }
+
+            const text = normalizeInlineTextContent(child.textContent ?? '');
+            if (!text.trim()) {
+                return [];
+            }
+
+            return [{
+                text,
+                line: 0,
+                fontWeight: child.getAttribute('font-weight') ?? undefined,
+                fontStyle: (child.getAttribute('font-style') as 'normal' | 'italic' | null) ?? undefined,
+                fontSize: parseFontSize(child.getAttribute('font-size'), fontSize),
+                textDecoration: (child.getAttribute('text-decoration') as 'none' | 'underline' | 'line-through' | null) ?? undefined,
+                fillColor: resolveSpanFillColor(child),
+                dx: child.getAttribute('dx') ?? undefined,
+                dy: child.getAttribute('dy') ?? undefined,
+                rotate: child.getAttribute('rotate') ?? undefined,
+            }];
+        });
+
+        if (spans.length > 0) {
+            richText = spans.map((span) => {
+                const styles = [
+                    span.fontWeight ? `font-weight:${span.fontWeight}` : null,
+                    span.fontStyle ? `font-style:${span.fontStyle}` : null,
+                    span.textDecoration ? `text-decoration:${span.textDecoration}` : null,
+                    span.fillColor ? `color:${span.fillColor}` : null,
+                ].filter(Boolean).join(';');
+
+                return styles ? `<span style="${styles}">${span.text}</span>` : span.text;
+            }).join('');
+        }
+    }
+
+    if (!textPathNode && tspanNodes.length > 0) {
         let line = 0;
         const dxQueue: number[] = [];
         const dyQueue: number[] = [];
         const rotateQueue: number[] = [];
 
-        spans = tspanNodes.map((node, idx) => {
+        const parsedSpans: Array<NonNullable<NativeTextElement['data']['spans']>[number]> = [];
+        let tspanIndex = 0;
+
+        Array.from(element.childNodes).forEach((childNode) => {
+            if (childNode.nodeType === Node.TEXT_NODE) {
+                const text = normalizeInlineTextSegment(childNode.textContent ?? '', parsedSpans.length > 0);
+                if (!text.trim()) {
+                    return;
+                }
+
+                parsedSpans.push({
+                    text,
+                    line,
+                });
+                return;
+            }
+
+            if (childNode.nodeType !== Node.ELEMENT_NODE) {
+                return;
+            }
+
+            const node = childNode as Element;
+            if (node.tagName.toLowerCase() !== 'tspan') {
+                const text = normalizeInlineTextSegment(node.textContent ?? '', parsedSpans.length > 0);
+                if (!text.trim()) {
+                    return;
+                }
+
+                parsedSpans.push({
+                    text,
+                    line,
+                });
+                return;
+            }
+
             const hasDy = node.getAttribute('dy') !== null;
             const hasX = node.getAttribute('x') !== null;
             // Detect line breaks: only increment line when dy/x is present AND
@@ -92,7 +207,7 @@ export function shapeToNativeText(
             const dyValues = parsedDy.length ? parsedDy.split(/[\s,]+/).map((v) => parseFloat(v)).filter((v) => Number.isFinite(v)) : [];
             const isPerGlyphDy = dyValues.length > 1;
 
-            if (idx > 0 && (hasDy || hasX) && !isPerGlyphDy) {
+            if (tspanIndex > 0 && (hasDy || hasX) && !isPerGlyphDy) {
                 line += 1;
             }
 
@@ -151,19 +266,23 @@ export function shapeToNativeText(
             }
             const spanRotate = consumedRotate.length ? consumedRotate.join(' ') : undefined;
 
-            return {
+            parsedSpans.push({
                 text: textContent,
                 line,
                 fontWeight: node.getAttribute('font-weight') ?? undefined,
                 fontStyle: (node.getAttribute('font-style') as 'normal' | 'italic' | null) ?? undefined,
                 fontSize: parseFontSize(node.getAttribute('font-size'), fontSize),
                 textDecoration: (node.getAttribute('text-decoration') as 'none' | 'underline' | 'line-through' | null) ?? undefined,
-                fillColor: node.getAttribute('fill') ?? undefined,
+                fillColor: resolveSpanFillColor(node),
                 dx,
                 dy,
                 rotate: spanRotate,
-            };
+            });
+
+            tspanIndex += 1;
         });
+
+        spans = parsedSpans;
 
         richText = spans.map((span, idx) => {
             const styles = [
@@ -193,7 +312,9 @@ export function shapeToNativeText(
                 ? parseFloat(startOffsetAttr.replace('%', ''))
                 : undefined;
             // Store as a path element with textPath data for later resolution
-            const tpText = textPathNode.textContent ?? textContent;
+            const tpText = spans.length > 0
+                ? spans.map((span) => span.text).join('')
+                : normalizeInlineTextContent(textPathNode.textContent ?? textContent);
             const tpLengthAdjustAttr = textPathNode.getAttribute('lengthAdjust') as 'spacing' | 'spacingAndGlyphs' | null;
             const tpTextLengthAttr = textPathNode.getAttribute('textLength');
             const tpLengthAdjust = tpLengthAdjustAttr === 'spacing' || tpLengthAdjustAttr === 'spacingAndGlyphs' ? tpLengthAdjustAttr : lengthAdjust;

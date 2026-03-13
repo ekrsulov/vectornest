@@ -9,6 +9,56 @@ import {
 } from '../import/textStyleUtils';
 import { parseColorOpacity, parseStyleRules } from './parser';
 
+const getInlineStyleProperty = (element: Element, property: string): string | null => {
+  const styleAttr = element.getAttribute('style');
+  if (!styleAttr) {
+    return null;
+  }
+
+  const declarations = styleAttr
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  for (const declaration of declarations) {
+    const [key, ...rest] = declaration.split(':');
+    if (!key || rest.length === 0) {
+      continue;
+    }
+
+    if (key.trim() === property) {
+      return rest.join(':').trim();
+    }
+  }
+
+  return null;
+};
+
+export const resolveInheritedColor = (element: Element): string | undefined => {
+  let current: Element | null = element;
+  while (current) {
+    const colorAttr = current.getAttribute('color') ?? getInlineStyleProperty(current, 'color');
+    if (colorAttr) {
+      return colorAttr;
+    }
+    current = current.parentElement;
+  }
+
+  return undefined;
+};
+
+export const resolveCurrentColorValue = (element: Element, value: string | null | undefined): string | undefined => {
+  if (!value) {
+    return value ?? undefined;
+  }
+
+  if (value !== 'currentColor') {
+    return value;
+  }
+
+  return resolveInheritedColor(element) ?? '#000000';
+};
+
 const applyStyleDeclarationsToElement = (
   element: Element,
   declarations: Record<string, string>
@@ -152,15 +202,11 @@ export function extractStyleAttributes(
     return styleProps[styleName || attrName] || getAttr(attrName);
   };
 
-  const stroke = getValue('stroke');
+  const stroke = resolveCurrentColorValue(element, getValue('stroke'));
   if (stroke && stroke !== 'none') {
     style.strokeColor = stroke;
   } else if (stroke === 'none') {
     style.strokeColor = 'none';
-  }
-  if (style.strokeColor === undefined) {
-    const inheritedStroke = (inheritable as Partial<PathData>).strokeColor;
-    style.strokeColor = inheritedStroke ?? 'none';
   }
 
   const strokeWidth = getValue('stroke-width', 'stroke-width');
@@ -173,7 +219,7 @@ export function extractStyleAttributes(
     style.strokeOpacity = parseFloat(strokeOpacity);
   }
 
-  const fill = getValue('fill');
+  const fill = resolveCurrentColorValue(element, getValue('fill'));
   if (fill && fill !== 'none') {
     style.fillColor = fill;
   } else if (fill === 'none') {
@@ -227,6 +273,14 @@ export function extractStyleAttributes(
     const dashoffsetValue = parseFloat(strokeDashoffset);
     if (Number.isFinite(dashoffsetValue)) {
       style.strokeDashoffset = dashoffsetValue;
+    }
+  }
+
+  const pathLength = getValue('pathLength', 'pathLength');
+  if (pathLength) {
+    const pathLengthValue = parseFloat(pathLength);
+    if (Number.isFinite(pathLengthValue) && pathLengthValue > 0) {
+      style.pathLength = pathLengthValue;
     }
   }
 

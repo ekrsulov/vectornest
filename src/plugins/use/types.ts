@@ -89,6 +89,11 @@ export interface UseElementData {
    * Cached path data for rendering (for symbol references or when element is resolved)
    */
   cachedPathData?: PathData;
+
+  /**
+   * Raw SVG content for referenced grouped definitions that should be rendered inline.
+   */
+  rawContent?: string;
   
   /**
    * Cached bounds for the referenced element

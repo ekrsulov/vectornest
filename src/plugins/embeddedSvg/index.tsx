@@ -16,6 +16,7 @@ type EmbeddedSvgData = {
   viewBox?: string;
   preserveAspectRatio?: string;
   overflow?: string;
+  rootAttributes?: Record<string, string>;
   innerSvg: string;
   transformMatrix?: [number, number, number, number, number, number];
   sourceId?: string;
@@ -74,12 +75,58 @@ const ensureMatrix = (data: EmbeddedSvgData | ForeignObjectData): Matrix => {
   return identityMatrix();
 };
 
+const parseInlineStyle = (styleValue: string): Record<string, string> => {
+  return styleValue.split(';').reduce<Record<string, string>>((acc, declaration) => {
+    const [rawProperty, rawValue] = declaration.split(':');
+    const property = rawProperty?.trim();
+    const value = rawValue?.trim();
+    if (!property || !value) {
+      return acc;
+    }
+
+    acc[property.replace(/-([a-z])/g, (_, char: string) => char.toUpperCase())] = value;
+    return acc;
+  }, {});
+};
+
+const toReactSvgProps = (attrs?: Record<string, string>): Record<string, unknown> | undefined => {
+  if (!attrs) {
+    return undefined;
+  }
+
+  const props = Object.entries(attrs).reduce<Record<string, unknown>>((acc, [name, value]) => {
+    if (name === 'class') {
+      acc.className = value;
+      return acc;
+    }
+    if (name === 'style') {
+      acc.style = parseInlineStyle(value);
+      return acc;
+    }
+
+    acc[name] = value;
+    return acc;
+  }, {});
+
+  return Object.keys(props).length > 0 ? props : undefined;
+};
+
+const serializeRootAttributes = (attrs?: Record<string, string>): string[] => {
+  if (!attrs) {
+    return [];
+  }
+
+  return Object.entries(attrs).map(([name, value]) => `${name}="${value}"`);
+};
+
 // Renderer for embedded/raw SVG nodes
 const renderEmbeddedSvg = (element: CanvasElement) => {
   const data = element.data as EmbeddedSvgData;
   const transform = data.transformMatrix ? `matrix(${data.transformMatrix.join(' ')})` : undefined;
+  const rootProps = toReactSvgProps(data.rootAttributes);
   return (
     <svg
+      {...rootProps}
       id={element.id}
       key={element.id}
       x={data.x}
@@ -97,7 +144,7 @@ const renderEmbeddedSvg = (element: CanvasElement) => {
 
 const serializeEmbeddedSvg = (element: CanvasElement): string => {
   const data = element.data as EmbeddedSvgData;
-  const attrs: string[] = [`id="${element.id}"`];
+  const attrs: string[] = [`id="${element.id}"`, ...serializeRootAttributes(data.rootAttributes)];
   if (data.x !== undefined) attrs.push(`x="${data.x}"`);
   if (data.y !== undefined) attrs.push(`y="${data.y}"`);
   if (data.width !== undefined) attrs.push(`width="${data.width}"`);

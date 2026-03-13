@@ -15,8 +15,16 @@ import {
 } from './helpers';
 
 async function openSidebarSection(page: Page, label: string) {
+  const labelPattern =
+    label === 'Gen'
+      ? /Generator Library|Gen|Generators/
+      : label === 'Audit'
+        ? /Audit|Audit Library/
+        : label === 'Prefs'
+          ? /Preferences|Prefs|Settings/
+          : new RegExp(`^${label}$`);
   const button = await firstVisible(
-    page.getByRole('button', { name: new RegExp(`^${label}$`) })
+    page.getByRole('button', { name: labelPattern })
   );
   await button.click({ force: true });
   await page.waitForTimeout(250);

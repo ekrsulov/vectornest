@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {getCanvas, getCanvasPaths, waitForLoad, selectTool, openSettingsPanel, getPanelContainer} from './helpers';
+import {getCanvas, getCanvasPaths, waitForLoad, selectTool, openSettingsPanel, getPanelContainer, firstVisible} from './helpers';
 
 test.describe('Grid Plugin', () => {
   async function getGridPanel(page: import('@playwright/test').Page) {
@@ -25,10 +25,10 @@ test.describe('Grid Plugin', () => {
     await waitForLoad(page);
 
     // Open settings panel
-    const gridPanel = await getGridPanel(page);
+    await getGridPanel(page);
 
     // Find the grid toggle checkbox
-    const gridCheckbox = gridPanel.getByRole('checkbox', { name: 'Show Grid' });
+    const gridCheckbox = await firstVisible(page.getByRole('checkbox', { name: 'Show Grid' }));
     
     const initialState = await gridCheckbox.isChecked();
 
@@ -83,9 +83,9 @@ test.describe('Grid Plugin', () => {
     await waitForLoad(page);
 
     // Enable grid first
-    const gridPanel = await getGridPanel(page);
+    await getGridPanel(page);
 
-    const gridCheckbox = gridPanel.getByRole('checkbox', { name: 'Show Grid' });
+    const gridCheckbox = await firstVisible(page.getByRole('checkbox', { name: 'Show Grid' }));
     if (!(await gridCheckbox.isChecked())) {
       await gridCheckbox.click({ force: true });
       await page.waitForTimeout(100);
@@ -119,9 +119,9 @@ test.describe('Grid Plugin', () => {
     await waitForLoad(page);
 
     // Enable grid
-    const gridPanel = await getGridPanel(page);
+    await getGridPanel(page);
 
-    const gridCheckbox = gridPanel.getByRole('checkbox', { name: 'Show Grid' });
+    const gridCheckbox = await firstVisible(page.getByRole('checkbox', { name: 'Show Grid' }));
     if (!(await gridCheckbox.isChecked())) {
       await gridCheckbox.click({ force: true });
       await page.waitForTimeout(100);

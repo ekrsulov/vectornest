@@ -177,6 +177,10 @@ test.describe('Pencil Drawing', () => {
     await selectTool(page, 'Pencil');
     await page.waitForFunction(() => (window as any).useCanvasStore?.getState?.().activePlugin === 'pencil');
 
+    await page.evaluate(() => {
+      (window as any).useCanvasStore?.getState?.().updatePencilState?.({ simplificationTolerance: 0 });
+    });
+
     const toleranceRow = page.getByText('Tolerance').first().locator('xpath=..');
     const toleranceSlider = toleranceRow.getByRole('slider');
 

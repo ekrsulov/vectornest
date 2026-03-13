@@ -133,6 +133,7 @@ export const processPathStage = ({
     strokeLinejoin: styleAttrs.strokeLinejoin,
     fillRule: styleAttrs.fillRule,
     strokeDasharray: styleAttrs.strokeDasharray,
+    pathLength: styleAttrs.pathLength,
     sourceId: element.getAttribute('id') ?? undefined,
     filterId: (styleAttrs as { filterId?: string }).filterId,
     clipPathId: (styleAttrs as { clipPathId?: string; clipPathTemplateId?: string }).clipPathId,

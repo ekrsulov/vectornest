@@ -89,4 +89,83 @@ test.describe('Use element import and rendering', () => {
     // The use panel should be visible in the sidebar
     // This depends on the exact UI implementation
   });
+
+  test('should import top-level use elements that reference animated groups', async ({ page }) => {
+    await page.locator('[aria-label="File"]').click();
+
+    const fileInput = page.locator('input[type="file"][accept=".svg,image/svg+xml"]');
+    await fileInput.setInputFiles('./tests/use-group-animation.svg');
+
+    await page.waitForTimeout(1000);
+
+    const imported = await page.evaluate(() => {
+      const testWindow = window as typeof window & {
+        useCanvasStore?: {
+          getState: () => {
+            elements?: Array<{
+              id: string;
+              type: string;
+              parentId?: string | null;
+              data?: { rawContent?: string };
+            }>;
+            animations?: Array<{
+              id: string;
+              type: string;
+              targetElementId?: string;
+              transformType?: string;
+            }>;
+          };
+        };
+      };
+
+      const store = testWindow.useCanvasStore?.getState() as {
+        elements?: Array<{
+          id: string;
+          type: string;
+          parentId?: string | null;
+          data?: { rawContent?: string };
+        }>;
+        animations?: Array<{
+          id: string;
+          type: string;
+          targetElementId?: string;
+          transformType?: string;
+        }>;
+      } | undefined;
+
+      if (!store) {
+        return null;
+      }
+
+      const rootUseElements = (store.elements ?? [])
+        .filter((element) => element.type === 'use' && (element.parentId ?? null) === null)
+        .map((element) => ({
+          id: element.id,
+          rawContent: element.data?.rawContent ?? '',
+        }));
+
+      return {
+        rootUseElements,
+        animations: store.animations ?? [],
+      };
+    });
+
+    expect(imported).not.toBeNull();
+
+    const rootUseElements = imported?.rootUseElements ?? [];
+    expect(rootUseElements).toHaveLength(3);
+    expect(rootUseElements.every((element) => element.rawContent.length > 0)).toBeTruthy();
+    expect(rootUseElements.every((element) => !/<use[\s>]/i.test(element.rawContent))).toBeTruthy();
+    expect(rootUseElements.some((element) => element.rawContent.includes('type="scale"'))).toBeTruthy();
+    expect(rootUseElements.some((element) => element.rawContent.includes('type="rotate"'))).toBeTruthy();
+
+    const rootUseIds = new Set(rootUseElements.map((element) => element.id));
+    expect(
+      (imported?.animations ?? []).some((animation) =>
+        animation.type === 'animateTransform' &&
+        animation.targetElementId !== undefined &&
+        rootUseIds.has(animation.targetElementId)
+      )
+    ).toBeTruthy();
+  });
 });

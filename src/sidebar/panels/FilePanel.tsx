@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { HStack, VStack, Text, Box, useToast } from '@chakra-ui/react';
+import { HStack, VStack, Text, Box, Flex, useToast } from '@chakra-ui/react';
 import { PanelTextInput } from '../../ui/PanelTextInput';
 import { Upload, Download } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -13,7 +13,7 @@ import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SliderControl } from '../../ui/SliderControl';
 import type { SourcePluginSlice } from '../../plugins/source/sourcePluginSlice';
 import { SourceDialog } from '../../plugins/source/SourceDialog';
-import { PanelToggle } from '../../ui/PanelToggle';
+import { PanelSwitch } from '../../ui/PanelSwitch';
 
 const HIDDEN_INPUT_STYLE: React.CSSProperties = { display: 'none' };
 
@@ -201,16 +201,19 @@ export const FilePanel: React.FC = () => {
             />
           </Box>
 
-          <Box pb={1}>
-            <PanelToggle
+          <Flex justify="space-between" align="center" pb={1.5}>
+            <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+              Save selected elements only
+            </Text>
+            <PanelSwitch
               isChecked={saveSelectedOnly}
               onChange={(event) => setSaveSelectedOnly(event.target.checked)}
-            >
-              Save selected elements only
-            </PanelToggle>
-          </Box>
+              title="Save selected elements only"
+              aria-label="Save selected elements only"
+            />
+          </Flex>
 
-          <HStack spacing={1} pb={1}>
+          <HStack spacing={1} pb={1.5}>
             <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm">
               <HStack spacing={1.5}>
                 <Download size={11} />

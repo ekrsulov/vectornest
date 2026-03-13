@@ -700,6 +700,16 @@ const ensureMatrix = (data: SymbolInstanceData): Matrix => {
   return matrix;
 };
 
+const ensurePlacedMatrix = (data: SymbolInstanceData): Matrix => {
+  const baseMatrix = ensureMatrix(data);
+  const x = data.x ?? 0;
+  const y = data.y ?? 0;
+  if (x === 0 && y === 0) {
+    return baseMatrix;
+  }
+  return multiplyMatrix(baseMatrix, translateMatrix(x, y));
+};
+
 type SymbolRendererOverrides = {
   strokeWidth?: number;
   strokeColor?: string;
@@ -730,7 +740,7 @@ const applyMatrix = (pt: { x: number; y: number }, matrix: Matrix) => ({
 });
 
 const computeSymbolBounds = (data: SymbolInstanceData) => {
-  const matrix = ensureMatrix(data);
+  const matrix = ensurePlacedMatrix(data);
   const halfStroke = (data.strokeWidth || 0) / 2;
   const localBounds = (() => {
     if (data.pathData) {
@@ -774,7 +784,7 @@ const SymbolInstanceThumbnail = ({ element }: { element: SymbolInstanceElement }
   const height = Math.max(1, bounds.maxY - bounds.minY);
   const padding = Math.max(width, height) * 0.1;
   const viewBox = `${bounds.minX - padding} ${bounds.minY - padding} ${width + padding * 2} ${height + padding * 2}`;
-  const matrix = ensureMatrix(data);
+  const matrix = ensurePlacedMatrix(data);
   const pathD = data.pathData ? commandsToString(data.pathData.subPaths.flat()) : null;
   const stroke = useColorModeValue('#000', '#fff');
   const strokeWidth = 1;
@@ -966,17 +976,22 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
       {...maskAttr}
     >
       {data.pathData ? (
-        <path
-          d={commandsToString(data.pathData.subPaths.flat())}
-          data-element-id={element.id}
+        <g
           transform={targetTransformAttr}
-          {...clipAttr}
-          {...styleAttrs}
-          style={Object.keys(blendStyle).length ? blendStyle : undefined}
-          {...nonTransformInitialAttrs}
         >
-          {allAnimationNodes}
-        </path>
+          <path
+            d={commandsToString(data.pathData.subPaths.flat())}
+            data-element-id={element.id}
+            transform={(data.x ?? 0) !== 0 || (data.y ?? 0) !== 0 ? `translate(${data.x ?? 0} ${data.y ?? 0})` : undefined}
+            {...clipAttr}
+            {...styleAttrs}
+            style={Object.keys(blendStyle).length ? blendStyle : undefined}
+            {...nonTransformInitialAttrs}
+          >
+            {attributeAnimationNodes}
+          </path>
+          {transformAnimationNodes}
+        </g>
       ) : (
         <use
           href={`#symbol-${data.symbolId}`}

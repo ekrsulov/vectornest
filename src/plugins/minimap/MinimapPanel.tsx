@@ -16,6 +16,7 @@ import {
 } from '../../utils/artboardViewportFitUtils';
 import {
   fitViewportToSelection,
+  fitViewportToSelectionWidth,
 } from '../../utils/selectionViewportFitUtils';
 
 interface MinimapOverlayProps {
@@ -174,6 +175,20 @@ const MinimizedMinimapPanel: React.FC<MinimapOverlayProps> = ({
     state.setViewport(nextViewport);
   }, []);
 
+  const handleFitSelectionWidth = useCallback(() => {
+    const state = useCanvasStore.getState();
+    const nextViewport = fitViewportToSelectionWidth({
+      viewport: state.viewport,
+      canvasSize: state.canvasSize,
+      elements: state.elements,
+      selectedIds: state.selectedIds,
+    });
+    if (!nextViewport) {
+      return;
+    }
+    state.setViewport(nextViewport);
+  }, []);
+
   const handleFitArtboard = useCallback(() => {
     const state = useCanvasStore.getState();
     const nextViewport = fitViewportToActiveArtboard({
@@ -206,6 +221,7 @@ const MinimizedMinimapPanel: React.FC<MinimapOverlayProps> = ({
         onResetZoom={handleResetZoom}
         hasSelectionToFit={hasSelectionToFit}
         onFitSelection={handleFitSelection}
+        onFitSelectionWidth={handleFitSelectionWidth}
         hasActiveArtboard={hasActiveArtboard}
         onFitArtboard={handleFitArtboard}
       />
@@ -335,6 +351,18 @@ const ExpandedMinimapPanel: React.FC<MinimapOverlayProps> = ({
   }, [artboard, canvasSize, setViewport, viewport]);
   const handleFitSelection = useCallback(() => {
     const nextViewport = fitViewportToSelection({
+      viewport,
+      canvasSize,
+      elements,
+      selectedIds,
+    });
+    if (!nextViewport) {
+      return;
+    }
+    setViewport(nextViewport);
+  }, [canvasSize, elements, selectedIds, setViewport, viewport]);
+  const handleFitSelectionWidth = useCallback(() => {
+    const nextViewport = fitViewportToSelectionWidth({
       viewport,
       canvasSize,
       elements,
@@ -586,6 +614,7 @@ const ExpandedMinimapPanel: React.FC<MinimapOverlayProps> = ({
         onResetZoom={resetZoom}
         hasSelectionToFit={hasSelectionToFit}
         onFitSelection={handleFitSelection}
+        onFitSelectionWidth={handleFitSelectionWidth}
         hasActiveArtboard={hasActiveArtboard}
         onFitArtboard={handleFitArtboard}
       />

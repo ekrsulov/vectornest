@@ -339,6 +339,9 @@ export function importUse(
   
   const rawId = href.slice(1);
   const doc = element.ownerDocument;
+  const originalXAttr = element.getAttribute('x')?.trim() || undefined;
+  const originalYAttr = element.getAttribute('y')?.trim() || undefined;
+  const originalTransformAttr = element.getAttribute('transform')?.trim() || undefined;
   
   // Check if this is a symbol reference - let symbols plugin handle those
   const isSymbolPrefix = rawId.startsWith('symbol-');
@@ -368,12 +371,10 @@ export function importUse(
   const x = parseFloat(element.getAttribute('x') || '0');
   const y = parseFloat(element.getAttribute('y') || '0');
   
-  // Build matrix with x/y offset
-  let matrix = toArrayMatrix(transform);
-  if (x !== 0 || y !== 0) {
-    // Apply the <use> x/y translation before the element's own transform
-    matrix = multiplyMatrices(matrix, createTranslateMatrix(x, y));
-  }
+  // Preserve <use> x/y separately from the transform matrix.
+  // SVG applies x/y as geometry positioning, while animateTransform targets only
+  // the transform property. Folding x/y into the matrix mispositions animated uses.
+  const matrix = toArrayMatrix(transform);
   
   // Extract style attributes from the <use> element (these override target styles)
   const useStyleAttrs = extractStyleAttributes(element);
@@ -433,6 +434,9 @@ export function importUse(
   if ((useStyleAttrs as { fillOpacity?: number }).fillOpacity !== undefined) {
     styleOverrides.fillOpacity = (useStyleAttrs as { fillOpacity?: number }).fillOpacity;
   }
+  if ((useStyleAttrs as { opacity?: number }).opacity !== undefined) {
+    styleOverrides.opacity = (useStyleAttrs as { opacity?: number }).opacity;
+  }
   // Add stroke linecap/linejoin for proper inheritance
   if ((useStyleAttrs as { strokeLinecap?: string }).strokeLinecap !== undefined) {
     styleOverrides.strokeLinecap = (useStyleAttrs as { strokeLinecap?: string }).strokeLinecap as 'butt' | 'round' | 'square';
@@ -444,9 +448,12 @@ export function importUse(
   const useData: UseElementData = {
     href: rawId,
     originalHref: rawId,
+    originalXAttr,
+    originalYAttr,
+    originalTransformAttr,
     referenceType,
-    x: 0, // Position is in the matrix
-    y: 0,
+    x,
+    y,
     width,
     height,
     transformMatrix: matrix,

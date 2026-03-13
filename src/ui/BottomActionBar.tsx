@@ -7,6 +7,7 @@ import {
   Maximize2,
   Maximize,
   Target,
+  ArrowLeftRight,
   MousePointer,
   PenTool,
   Wrench,
@@ -29,7 +30,7 @@ import {
   fitViewportToActiveArtboard,
   hasActiveArtboardForFit,
 } from '../utils/artboardViewportFitUtils';
-import { fitViewportToSelection } from '../utils/selectionViewportFitUtils';
+import { fitViewportToSelection, fitViewportToSelectionWidth } from '../utils/selectionViewportFitUtils';
 
 /**
  * BottomActionBar - Undo/Redo, Zoom controls, and context menu
@@ -101,6 +102,19 @@ export const BottomActionBar: React.FC = () => {
   const fitSelectionToViewport = useCallback(() => {
     const state = useCanvasStore.getState();
     const nextViewport = fitViewportToSelection({
+      viewport: state.viewport,
+      canvasSize: state.canvasSize,
+      elements: state.elements,
+      selectedIds: state.selectedIds,
+    });
+    if (!nextViewport) {
+      return;
+    }
+    state.setViewport(nextViewport);
+  }, []);
+  const fitSelectionWidthToViewport = useCallback(() => {
+    const state = useCanvasStore.getState();
+    const nextViewport = fitViewportToSelectionWidth({
       viewport: state.viewport,
       canvasSize: state.canvasSize,
       elements: state.elements,
@@ -282,6 +296,7 @@ export const BottomActionBar: React.FC = () => {
                   { id: 'zoom-in', label: 'Zoom In', icon: ZoomIn },
                   { id: 'zoom-out', label: 'Zoom Out', icon: ZoomOut },
                   { id: 'zoom-selection', label: 'Zoom to Selection', icon: Target, isDisabled: !hasSelectionToFit },
+                  { id: 'zoom-width', label: 'Zoom to Width', icon: ArrowLeftRight, isDisabled: !hasSelectionToFit },
                   ...(hasActiveArtboard
                     ? [{ id: 'fit-artboard', label: 'Fit Artboard', icon: Maximize }]
                     : []),
@@ -292,6 +307,7 @@ export const BottomActionBar: React.FC = () => {
                   if (id === 'zoom-in') zoomFromCenter(zoomFactor);
                   if (id === 'zoom-out') zoomFromCenter(1 / zoomFactor);
                   if (id === 'zoom-selection') fitSelectionToViewport();
+                  if (id === 'zoom-width') fitSelectionWidthToViewport();
                   if (id === 'fit-artboard') fitArtboardToViewport();
                   if (id === 'reset-zoom') useCanvasStore.getState().resetZoom();
                 }}

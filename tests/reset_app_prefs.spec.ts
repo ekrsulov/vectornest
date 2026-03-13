@@ -32,4 +32,23 @@ test.describe('Reset App location', () => {
     expect(resetBox!.y).toBeGreaterThan(themeBox!.y);
     expect(resetBox!.y).toBeLessThan(configurationBox!.y);
   });
+
+  test('asks for confirmation before resetting the app', async ({ page }) => {
+    await page.goto('/');
+    await waitForLoad(page);
+
+    await openSettingsPanel(page);
+
+    const resetButton = await firstVisible(page.getByRole('button', { name: 'Reset App' }));
+    await resetButton.click();
+
+    await expect(page.getByText('Confirm Reset App')).toBeVisible();
+    await expect(page.getByText('This will permanently remove all canvas content and reset the editor settings.')).toBeVisible();
+
+    const cancelButton = page.getByRole('button', { name: 'Cancel' });
+    await expect(cancelButton).toBeVisible();
+    await cancelButton.click();
+
+    await expect(page.getByText('Confirm Reset App')).toHaveCount(0);
+  });
 });

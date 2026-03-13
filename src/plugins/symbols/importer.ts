@@ -518,10 +518,11 @@ export function importUse(
         finalHeight = parsedViewBox?.height ?? implicitViewportViewBox?.height ?? measuredSymbolBounds?.height ?? 100;
     }
 
-    // Complex symbols should preserve <use> x/y separately from transform. Browsers do not fold
-    // these geometry attributes into the element's consolidated transform, and baking them into the
-    // matrix mispositions symbol instances that also carry transforms/animations.
-    const shouldPreserveUsePosition = !pathData;
+    // Preserve <use> x/y separately when the symbol instance is complex OR when it carries
+    // transform animations. Browsers keep x/y outside the transform property, and baking them
+    // into the matrix mispositions animated instances at runtime.
+    const hasTransformAnimation = element.querySelector('animateTransform, animateMotion') !== null;
+    const shouldPreserveUsePosition = !pathData || hasTransformAnimation;
     const matrix = shouldPreserveUsePosition
         ? transformMatrix
         : composeMatrices(transformMatrix, createTranslateMatrix(x, y));

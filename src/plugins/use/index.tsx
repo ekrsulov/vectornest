@@ -65,7 +65,7 @@ const rotateMatrix = (angleDegrees: number, cx: number, cy: number): Matrix => {
   );
 };
 
-const ensureMatrix = (data: UseElementData): Matrix => {
+const ensureBaseMatrix = (data: UseElementData): Matrix => {
   if (Array.isArray(data.transformMatrix)) {
     return [...data.transformMatrix] as Matrix;
   }
@@ -78,8 +78,7 @@ const ensureMatrix = (data: UseElementData): Matrix => {
     scaleY: 1,
   };
   
-  // Start with x/y translation from use element
-  let matrix = translateMatrix(data.x ?? 0, data.y ?? 0);
+  let matrix: Matrix = [1, 0, 0, 1, 0, 0];
   
   // Apply additional transform
   matrix = multiplyMatrix(translateMatrix(t.translateX ?? 0, t.translateY ?? 0), matrix);
@@ -94,6 +93,22 @@ const ensureMatrix = (data: UseElementData): Matrix => {
   }
   
   return matrix;
+};
+
+const ensureMatrix = (data: UseElementData): Matrix => {
+  const baseMatrix = ensureBaseMatrix(data);
+  const x = data.x ?? 0;
+  const y = data.y ?? 0;
+  if (x === 0 && y === 0) {
+    return baseMatrix;
+  }
+  return multiplyMatrix(baseMatrix, translateMatrix(x, y));
+};
+
+const getPositionTransformAttr = (data: UseElementData): string | undefined => {
+  const x = data.x ?? 0;
+  const y = data.y ?? 0;
+  return x !== 0 || y !== 0 ? `translate(${x} ${y})` : undefined;
 };
 
 const applyMatrix = (pt: { x: number; y: number }, matrix: Matrix) => ({
@@ -343,8 +358,9 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
   const elements = useCanvasStore(state => state.elements);
   const symbols = useCanvasStore(state => (state as unknown as SymbolPluginSlice).symbols ?? []);
   
-  const matrix = ensureMatrix(data);
-  const transformAttr = `matrix(${matrix.join(' ')})`;
+  const baseMatrix = ensureBaseMatrix(data);
+  const transformAttr = `matrix(${baseMatrix.join(' ')})`;
+  const positionTransformAttr = getPositionTransformAttr(data);
   
   const clipAttr = data.clipPathId ? { clipPath: `url(#${data.clipPathId})` } : {};
   const filterAttr = data.filterId ? { filter: `url(#${data.filterId})` } : {};
@@ -356,11 +372,27 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
     rendererContext.animationState as AnimationState | undefined
   );
   
-  const animationNodes = renderAnimationsForElement(
+  const isTransformAnimation = (anim: SVGAnimation) =>
+    (anim.type === 'animateTransform' && (anim.attributeName ?? 'transform') === 'transform') ||
+    anim.type === 'animateMotion';
+
+  const transformAnimationNodes = renderAnimationsForElement(
     element.id,
-    (rendererContext.animations as SVGAnimation[] | undefined) ?? [],
-    rendererContext.animationState as AnimationState | undefined
+    ((rendererContext.animations as SVGAnimation[] | undefined) ?? []).filter(isTransformAnimation),
+    rendererContext.animationState as AnimationState | undefined,
+    (rendererContext.animations as SVGAnimation[] | undefined) ?? []
   );
+
+  const attributeAnimationNodes = renderAnimationsForElement(
+    element.id,
+    ((rendererContext.animations as SVGAnimation[] | undefined) ?? []).filter((anim) => !isTransformAnimation(anim)),
+    rendererContext.animationState as AnimationState | undefined,
+    (rendererContext.animations as SVGAnimation[] | undefined) ?? []
+  );
+  const targetTransformAttr = initialAttrs.transform
+    ? String(initialAttrs.transform)
+    : transformAttr;
+  const { transform: _initialTransformAttr, ...nonTransformInitialAttrs } = initialAttrs;
   
   // Build style attributes with overrides
   const buildStyleAttrs = (baseData?: PathData) => {
@@ -386,6 +418,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
       attrs.strokeOpacity = strokeOpacity;
       attrs.fill = fillColor;
       attrs.fillOpacity = fillOpacity;
+      if (overrides.opacity !== undefined) attrs.opacity = overrides.opacity;
       if (fillRule) attrs.fillRule = fillRule;
       if (overrides.strokeLinecap) attrs.strokeLinecap = overrides.strokeLinecap;
       if (overrides.strokeLinejoin) attrs.strokeLinejoin = overrides.strokeLinejoin;
@@ -427,6 +460,10 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
 
     return attrs;
   };
+
+  const containerOpacityAttr = data.styleOverrides?.opacity !== undefined
+    ? { opacity: data.styleOverrides.opacity }
+    : {};
   
   // Render based on reference type
   if (data.referenceType === 'element') {
@@ -442,16 +479,17 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
       return (
         <g
           key={element.id}
+          transform={targetTransformAttr}
           data-element-id={element.id}
           {...clipAttr}
           {...filterAttr}
-          {...initialAttrs}
+          {...containerOpacityAttr}
+          {...nonTransformInitialAttrs}
           {...containerDoubleClickProps}
         >
-          <g transform={transformAttr}>
-            <g dangerouslySetInnerHTML={{ __html: data.rawContent }} />
-          </g>
-          {animationNodes}
+          <g transform={positionTransformAttr} dangerouslySetInnerHTML={{ __html: data.rawContent }} />
+          {transformAnimationNodes}
+          {attributeAnimationNodes}
         </g>
       );
     }
@@ -496,10 +534,11 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
       return (
         <g
           key={element.id}
-          transform={transformAttr}
+          transform={targetTransformAttr}
           data-element-id={element.id}
           {...clipAttr}
           {...filterAttr}
+          {...containerOpacityAttr}
           {...containerDoubleClickProps}
         >
           <image
@@ -509,12 +548,14 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
             width={imageData.width ?? data.width ?? 100}
             height={imageData.height ?? data.height ?? 100}
             preserveAspectRatio={imageData.preserveAspectRatio}
-            opacity={data.styleOverrides?.opacity ?? imageData.opacity ?? 1}
+            opacity={imageData.opacity ?? 1}
+            transform={positionTransformAttr}
             data-element-id={element.id}
-            {...initialAttrs}
+            {...nonTransformInitialAttrs}
           >
-            {animationNodes}
+            {attributeAnimationNodes}
           </image>
+          {transformAnimationNodes}
         </g>
       );
     }
@@ -546,43 +587,45 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
       return (
         <g
           key={element.id}
-          transform={transformAttr}
+          transform={targetTransformAttr}
           data-element-id={element.id}
           {...clipAttr}
           {...filterAttr}
+          {...containerOpacityAttr}
           {...containerDoubleClickProps}
+          {...nonTransformInitialAttrs}
         >
           <path
             d={pathD}
             data-element-id={element.id}
+            transform={positionTransformAttr}
             {...styleAttrs}
-            {...initialAttrs}
           >
-            {animationNodes}
+            {attributeAnimationNodes}
           </path>
+          {transformAnimationNodes}
         </g>
       );
     }
 
     // Fallback: native <use> (may not render if ref id doesn't exist)
     return (
-      <g
+      <use
         key={element.id}
-        transform={transformAttr}
+        transform={targetTransformAttr}
         data-element-id={element.id}
+        href={`#${data.href}`}
+        x={data.x ?? 0}
+        y={data.y ?? 0}
         {...filterAttr}
+        {...clipAttr}
+        {...buildUseOverrideAttrs()}
         {...containerDoubleClickProps}
+        {...nonTransformInitialAttrs}
       >
-        <use
-          href={`#${data.href}`}
-          data-element-id={element.id}
-          {...clipAttr}
-          {...buildUseOverrideAttrs()}
-          {...initialAttrs}
-        >
-          {animationNodes}
-        </use>
-      </g>
+        {transformAnimationNodes}
+        {attributeAnimationNodes}
+      </use>
     );
   }
   
@@ -600,45 +643,47 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
       return (
         <g
           key={element.id}
-          transform={transformAttr}
+          transform={targetTransformAttr}
           data-element-id={element.id}
           {...clipAttr}
           {...filterAttr}
+          {...containerOpacityAttr}
           {...containerDoubleClickProps}
+          {...nonTransformInitialAttrs}
         >
           <path
             d={pathD}
             data-element-id={element.id}
+            transform={positionTransformAttr}
             {...styleAttrs}
-            {...initialAttrs}
           >
-            {animationNodes}
+            {attributeAnimationNodes}
           </path>
+          {transformAnimationNodes}
         </g>
       );
     }
     
     // Fall back to <use> referencing the symbol
     return (
-      <g
+      <use
         key={element.id}
-        transform={transformAttr}
+        transform={targetTransformAttr}
         data-element-id={element.id}
+        href={`#symbol-${data.href}`}
+        x={data.x ?? 0}
+        y={data.y ?? 0}
+        width={width}
+        height={height}
+        {...clipAttr}
+        {...styleAttrs}
         {...filterAttr}
         {...containerDoubleClickProps}
+        {...nonTransformInitialAttrs}
       >
-        <use
-          href={`#symbol-${data.href}`}
-          width={width}
-          height={height}
-          data-element-id={element.id}
-          {...clipAttr}
-          {...styleAttrs}
-          {...initialAttrs}
-        >
-          {animationNodes}
-        </use>
-      </g>
+        {transformAnimationNodes}
+        {attributeAnimationNodes}
+      </use>
     );
   }
   
@@ -717,6 +762,9 @@ const createUseContribution = (): ElementContribution => {
         transform: undefined,
         x: 0,
         y: 0,
+        originalXAttr: undefined,
+        originalYAttr: undefined,
+        originalTransformAttr: undefined,
       },
     };
   };
@@ -801,7 +849,13 @@ const createUseContribution = (): ElementContribution => {
 
       if (data.referenceType === 'element' && data.preserveHrefOnExport) {
         const preservedHref = data.originalHref ?? data.href;
-        return `<use id="${id}" href="#${preservedHref}"${widthAttr}${heightAttr}${transformAttr}${clipAttr}${filterAttr}${maskAttr}${styleAttrs} />`;
+        const preservedXAttr = data.originalXAttr ? ` x="${data.originalXAttr}"` : '';
+        const preservedYAttr = data.originalYAttr ? ` y="${data.originalYAttr}"` : '';
+        const preservedTransformAttr = data.originalTransformAttr
+          ? ` transform="${data.originalTransformAttr}"`
+          : transformAttr;
+
+        return `<use id="${id}" href="#${preservedHref}"${preservedXAttr}${preservedYAttr}${widthAttr}${heightAttr}${preservedTransformAttr}${clipAttr}${filterAttr}${maskAttr}${styleAttrs} />`;
       }
 
       if (data.referenceType === 'element' && data.rawContent) {

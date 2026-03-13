@@ -49,6 +49,24 @@ export interface UseElementData {
    * Original href imported from SVG before it was remapped to internal canvas IDs.
    */
   originalHref?: string;
+
+  /**
+   * Original x attribute imported from SVG. Preserved so native <use> export can
+   * retain browser transform semantics for unedited imported instances.
+   */
+  originalXAttr?: string;
+
+  /**
+   * Original y attribute imported from SVG. Preserved so native <use> export can
+   * retain browser transform semantics for unedited imported instances.
+   */
+  originalYAttr?: string;
+
+  /**
+   * Original transform attribute imported from SVG. Preserved so native <use>
+   * export does not collapse transform lists into a single matrix.
+   */
+  originalTransformAttr?: string;
   
   /**
    * Type of reference

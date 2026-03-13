@@ -7,6 +7,12 @@ import {
   Flex,
   Text,
   Box,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useEnabledPlugins } from '../../hooks/useEnabledPlugins';
@@ -46,6 +52,7 @@ export const SettingsPanel: React.FC = () => {
   const [logLevel, setLogLevel] = useState<LogLevel>(LogLevel.WARN); // Default log level
   const [showCallerInfo, setShowCallerInfo] = useState(false);
   const [keyboardPrecision, setKeyboardPrecision] = useState(settings.keyboardMovementPrecision);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const { isFullscreen, setFullscreen } = useFullscreen();
 
   // Sync selected theme with Chakra color mode
@@ -117,13 +124,22 @@ export const SettingsPanel: React.FC = () => {
   const handleResetApp = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    setIsResetModalOpen(true);
+  };
+
+  const handleConfirmResetApp = () => {
     useCanvasStore.persist.clearStorage();
     window.location.reload();
   };
 
+  const handleCloseResetModal = () => {
+    setIsResetModalOpen(false);
+  };
+
   return (
-    <Panel>
-      <VStack spacing={1} align="stretch">
+    <>
+      <Panel>
+        <VStack spacing={1} align="stretch">
         {/* Theme - Always visible at the top */}
         <FormControl>
           <Flex align="center" gap={2}>
@@ -144,28 +160,28 @@ export const SettingsPanel: React.FC = () => {
           </Flex>
         </FormControl>
 
-        <Box pt={0.5}>
-          <PanelStyledButton
-            onClick={handleResetApp}
-            size="sm"
-            width="full"
-            title="Reset Application - This will clear all data and reload the page"
-            color="red.600"
-            borderColor="red.400"
-            _hover={{
-              bg: 'red.50',
-            }}
-            _dark={{
-              color: 'red.300',
-              borderColor: 'red.400',
-              _hover: {
-                bg: 'rgba(239, 68, 68, 0.14)',
-              },
-            }}
-          >
-            Reset App
-          </PanelStyledButton>
-        </Box>
+          <Box pt={0.5}>
+            <PanelStyledButton
+              onClick={handleResetApp}
+              size="sm"
+              width="full"
+              title="Reset Application - This will clear all data and reload the page"
+              color="red.600"
+              borderColor="red.400"
+              _hover={{
+                bg: 'red.50',
+              }}
+              _dark={{
+                color: 'red.300',
+                borderColor: 'red.400',
+                _hover: {
+                  bg: 'rgba(239, 68, 68, 0.14)',
+                },
+              }}
+            >
+              Reset App
+            </PanelStyledButton>
+          </Box>
 
         {/* Configuration Panel */}
         <Panel
@@ -311,7 +327,43 @@ export const SettingsPanel: React.FC = () => {
             })}
           </VStack>
         </Panel>
-      </VStack>
-    </Panel>
+        </VStack>
+      </Panel>
+
+      <Modal isOpen={isResetModalOpen} onClose={handleCloseResetModal} isCentered size="sm">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Confirm Reset App</ModalHeader>
+          <ModalBody>
+            <Text fontSize="sm">
+              This will permanently remove all canvas content and reset the editor settings.
+            </Text>
+          </ModalBody>
+          <ModalFooter gap={2}>
+            <PanelStyledButton onClick={handleCloseResetModal} size="sm">
+              Cancel
+            </PanelStyledButton>
+            <PanelStyledButton
+              onClick={handleConfirmResetApp}
+              size="sm"
+              color="red.600"
+              borderColor="red.400"
+              _hover={{
+                bg: 'red.50',
+              }}
+              _dark={{
+                color: 'red.300',
+                borderColor: 'red.400',
+                _hover: {
+                  bg: 'rgba(239, 68, 68, 0.14)',
+                },
+              }}
+            >
+              Reset App
+            </PanelStyledButton>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   );
 };

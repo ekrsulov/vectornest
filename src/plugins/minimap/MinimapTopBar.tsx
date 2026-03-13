@@ -17,6 +17,7 @@ import {
     Minimize,
     Maximize,
     Target,
+    ArrowLeftRight,
 } from 'lucide-react';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
@@ -30,6 +31,7 @@ interface MinimapTopBarProps {
     onResetZoom: () => void;
     hasSelectionToFit: boolean;
     onFitSelection: () => void;
+    onFitSelectionWidth: () => void;
     hasActiveArtboard: boolean;
     onFitArtboard: () => void;
 }
@@ -43,6 +45,7 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
     onResetZoom,
     hasSelectionToFit,
     onFitSelection,
+    onFitSelectionWidth,
     hasActiveArtboard,
     onFitArtboard,
 }) => {
@@ -147,6 +150,9 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
                             <MenuItem icon={<Target size={16} />} onClick={onFitSelection} isDisabled={!hasSelectionToFit} {...menuItemProps}>
                                 Zoom to Selection
                             </MenuItem>
+                            <MenuItem icon={<ArrowLeftRight size={16} />} onClick={onFitSelectionWidth} isDisabled={!hasSelectionToFit} {...menuItemProps}>
+                                Zoom to Width
+                            </MenuItem>
                             {hasActiveArtboard && (
                                 <MenuItem icon={<Maximize size={16} />} onClick={onFitArtboard} {...menuItemProps}>
                                     Fit Artboard
@@ -201,6 +207,9 @@ export const MinimapTopBar: React.FC<MinimapTopBarProps> = ({
                         <MenuList {...menuListProps}>
                             <MenuItem icon={<Target size={16} />} onClick={onFitSelection} isDisabled={!hasSelectionToFit} {...menuItemProps}>
                                 Zoom to Selection
+                            </MenuItem>
+                            <MenuItem icon={<ArrowLeftRight size={16} />} onClick={onFitSelectionWidth} isDisabled={!hasSelectionToFit} {...menuItemProps}>
+                                Zoom to Width
                             </MenuItem>
                             {hasActiveArtboard && (
                                 <MenuItem icon={<Maximize size={16} />} onClick={onFitArtboard} {...menuItemProps}>

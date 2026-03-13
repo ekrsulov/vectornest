@@ -217,16 +217,16 @@ export const FilePanel: React.FC = () => {
           </Flex>
 
           <HStack spacing={1} pb={1.5}>
-            <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm" h="40px">
+            <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm" h="44px" fontSize="12px">
               <HStack spacing={1.5}>
-                <Download size={11} />
-                <span>SVG</span>
+                <Download size={14} />
+                <Text as="span" fontSize="12px" fontWeight="semibold">SVG</Text>
               </HStack>
             </PanelStyledButton>
-            <PanelStyledButton onClick={handleSaveAsPng} flex={1} size="sm" h="40px">
+            <PanelStyledButton onClick={handleSaveAsPng} flex={1} size="sm" h="44px" fontSize="12px">
               <HStack spacing={1.5}>
-                <Download size={11} />
-                <span>PNG</span>
+                <Download size={14} />
+                <Text as="span" fontSize="12px" fontWeight="semibold">PNG</Text>
               </HStack>
             </PanelStyledButton>
           </HStack>
@@ -264,10 +264,10 @@ export const FilePanel: React.FC = () => {
             onResizeHeightChange={setResizeHeight}
           />
 
-          <PanelStyledButton onClick={handleImportSVG} width="full" size="sm" h="40px">
+          <PanelStyledButton onClick={handleImportSVG} width="full" size="sm" h="44px" fontSize="12px">
             <HStack spacing={1.5}>
-              <Upload size={11} />
-              <span>Import SVG</span>
+              <Upload size={14} />
+              <Text as="span" fontSize="12px" fontWeight="semibold">Import SVG</Text>
             </HStack>
           </PanelStyledButton>
 

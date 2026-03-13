@@ -36,6 +36,12 @@ export interface FitToSelectionOptions extends ClampOptions {
   padding?: number;
 }
 
+export interface FitToSelectionWidthOptions extends ClampOptions {
+  bounds: Bounds | null | undefined;
+  viewportSize: ViewportSize;
+  padding?: number;
+}
+
 const DEFAULT_MIN_ZOOM = 0.1;
 const DEFAULT_MAX_ZOOM = 5;
 const DEFAULT_PADDING = 32;
@@ -180,6 +186,33 @@ export const fitToSelection = (
   const zoomX = selectionWidth > 0 ? availableWidth / selectionWidth : DEFAULT_MAX_ZOOM;
   const zoomY = selectionHeight > 0 ? availableHeight / selectionHeight : DEFAULT_MAX_ZOOM;
   const targetZoom = Math.min(zoomX, zoomY);
+
+  const centreX = (bounds.minX + bounds.maxX) / 2;
+  const centreY = (bounds.minY + bounds.maxY) / 2;
+
+  const nextZoom = clampNumber(targetZoom, options.minZoom ?? DEFAULT_MIN_ZOOM, options.maxZoom ?? DEFAULT_MAX_ZOOM);
+  const panX = viewportSize.width / 2 - centreX * nextZoom;
+  const panY = viewportSize.height / 2 - centreY * nextZoom;
+
+  return clampViewport(
+    { zoom: nextZoom, panX, panY },
+    { ...options, viewportSize }
+  );
+};
+
+export const fitToSelectionWidth = (
+  viewport: Viewport,
+  options: FitToSelectionWidthOptions
+): Viewport => {
+  const { bounds, viewportSize } = options;
+  if (!bounds) {
+    return clampViewport(viewport, options);
+  }
+
+  const padding = getPadding(options.padding);
+  const selectionWidth = Math.max(bounds.maxX - bounds.minX, 0);
+  const availableWidth = Math.max(viewportSize.width - padding * 2, 1);
+  const targetZoom = selectionWidth > 0 ? availableWidth / selectionWidth : DEFAULT_MAX_ZOOM;
 
   const centreX = (bounds.minX + bounds.maxX) / 2;
   const centreY = (bounds.minY + bounds.maxY) / 2;

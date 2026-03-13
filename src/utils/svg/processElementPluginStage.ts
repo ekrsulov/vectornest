@@ -71,6 +71,7 @@ export const processPluginStage = ({
 
   const startOffsetAttr = textPathNode?.getAttribute('startOffset');
   const startOffset = startOffsetAttr ? parseFloat(startOffsetAttr.replace('%', '')) : undefined;
+  const inheritedFilterId = (context.inheritedStyle as { filterId?: string } | undefined)?.filterId;
   const inheritedMaskId = (context.inheritedStyle as { maskId?: string } | undefined)?.maskId;
   const inheritedOpacity = (context.inheritedStyle as { opacity?: number } | undefined)?.opacity;
 
@@ -88,6 +89,7 @@ export const processPluginStage = ({
     startOffset: Number.isFinite(startOffset)
       ? startOffset
       : pathWithText.data.textPath?.startOffset,
+    filterId: baseTextPath.filterId ?? inheritedFilterId,
     maskId: baseTextPath.maskId ?? inheritedMaskId,
     opacity: baseTextPath.opacity ?? inheritedOpacity,
     anchorGroupSourceIds:

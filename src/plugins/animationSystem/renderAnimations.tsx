@@ -69,22 +69,28 @@ export const renderAnimationsForElement = (
           />
         );
         break;
-      case 'animateTransform':
+      case 'animateTransform': {
+        const animateTransformProps: React.SVGProps<SVGElement> & { transformOrigin?: string } = {
+          id: animationDomId,
+          ...commonProps,
+          attributeName: animation.attributeName,
+          type: animation.transformType,
+          transformOrigin: animation.transformOrigin,
+          values: animation.values,
+          from: animation.from,
+          to: animation.to,
+          additive: animation.additive ?? 'replace',
+          accumulate: animation.accumulate ?? 'none',
+        };
+
         nodes.push(
           <animateTransform
             key={`${animation.id}-${restartKey}`}
-            id={animationDomId}
-            {...commonProps}
-            attributeName={animation.attributeName}
-            type={animation.transformType}
-            values={animation.values}
-            from={animation.from}
-            to={animation.to}
-            additive={animation.additive ?? 'replace'}
-            accumulate={animation.accumulate ?? 'none'}
+            {...animateTransformProps}
           />
         );
         break;
+      }
       case 'animateMotion':
         nodes.push(
           <animateMotion

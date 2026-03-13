@@ -44,6 +44,11 @@ export interface UseElementData {
    * The href reference (without #) - can be element ID or symbol ID
    */
   href: string;
+
+  /**
+   * Original href imported from SVG before it was remapped to internal canvas IDs.
+   */
+  originalHref?: string;
   
   /**
    * Type of reference
@@ -94,6 +99,13 @@ export interface UseElementData {
    * Raw SVG content for referenced grouped definitions that should be rendered inline.
    */
   rawContent?: string;
+
+  /**
+   * When true, export should preserve this reference as a native <use> instead
+   * of materializing cached geometry/raw content. Used for imported refs that
+   * originally pointed at reusable defs content.
+   */
+  preserveHrefOnExport?: boolean;
   
   /**
    * Cached bounds for the referenced element
@@ -129,4 +141,3 @@ export interface UseElementData {
 export interface UseElement extends CanvasElementBase<'use', UseElementData> {
   type: 'use';
 }
-

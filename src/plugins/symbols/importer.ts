@@ -15,6 +15,8 @@ import { normalizeToMLCZ } from '../../utils/svg/normalizer';
 /** Extended PathData with computed bounds for symbol viewBox mapping. */
 type SymbolPathData = PathData & { x: number; y: number; width: number; height: number };
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
 const composeMatrices = (left: BaseMatrix, right: BaseMatrix): BaseMatrix => {
     return multiplyMatrices(left, right);
 };
@@ -136,11 +138,16 @@ const parseViewBox = (value: string | null | undefined): ViewBox | null => {
     };
 };
 
-const resolveImplicitViewportSize = (element: Element): { width: number; height: number } | null => {
+export const resolveImplicitViewportViewBox = (element: Element): ViewBox | null => {
     const preservedWidth = parseFloat(element.getAttribute(IMPLICIT_VIEWPORT_WIDTH_ATTR) || '');
     const preservedHeight = parseFloat(element.getAttribute(IMPLICIT_VIEWPORT_HEIGHT_ATTR) || '');
     if (Number.isFinite(preservedWidth) && preservedWidth > 0 && Number.isFinite(preservedHeight) && preservedHeight > 0) {
-        return { width: preservedWidth, height: preservedHeight };
+        return {
+            minX: 0,
+            minY: 0,
+            width: preservedWidth,
+            height: preservedHeight,
+        };
     }
 
     let current: Element | null = element.parentElement;
@@ -149,19 +156,29 @@ const resolveImplicitViewportSize = (element: Element): { width: number; height:
         const ancestorPreservedWidth = parseFloat(current.getAttribute(IMPLICIT_VIEWPORT_WIDTH_ATTR) || '');
         const ancestorPreservedHeight = parseFloat(current.getAttribute(IMPLICIT_VIEWPORT_HEIGHT_ATTR) || '');
         if (Number.isFinite(ancestorPreservedWidth) && ancestorPreservedWidth > 0 && Number.isFinite(ancestorPreservedHeight) && ancestorPreservedHeight > 0) {
-            return { width: ancestorPreservedWidth, height: ancestorPreservedHeight };
+            return {
+                minX: 0,
+                minY: 0,
+                width: ancestorPreservedWidth,
+                height: ancestorPreservedHeight,
+            };
         }
 
         if (current.tagName.toLowerCase() === 'svg') {
             const viewBox = parseViewBox(current.getAttribute('viewBox'));
             if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
-                return { width: viewBox.width, height: viewBox.height };
+                return viewBox;
             }
 
             const width = parseFloat(current.getAttribute('width') || '');
             const height = parseFloat(current.getAttribute('height') || '');
             if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
-                return { width, height };
+                return {
+                    minX: 0,
+                    minY: 0,
+                    width,
+                    height,
+                };
             }
         }
 
@@ -169,6 +186,76 @@ const resolveImplicitViewportSize = (element: Element): { width: number; height:
     }
 
     return null;
+};
+
+const resolveImplicitViewportSize = (element: Element): { width: number; height: number } | null => {
+    const viewBox = resolveImplicitViewportViewBox(element);
+    if (!viewBox) {
+        return null;
+    }
+
+    return {
+        width: viewBox.width,
+        height: viewBox.height,
+    };
+};
+
+export const measureSymbolContentBounds = (symbolNode: Element | null | undefined): ViewBox | null => {
+    if (!symbolNode || typeof document === 'undefined' || !document.body) {
+        return null;
+    }
+
+    let measurementSvg: SVGSVGElement | null = null;
+
+    try {
+        measurementSvg = document.createElementNS(SVG_NS, 'svg');
+        measurementSvg.setAttribute('width', '0');
+        measurementSvg.setAttribute('height', '0');
+        measurementSvg.setAttribute('aria-hidden', 'true');
+        measurementSvg.style.position = 'absolute';
+        measurementSvg.style.left = '-99999px';
+        measurementSvg.style.top = '-99999px';
+        measurementSvg.style.opacity = '0';
+        measurementSvg.style.pointerEvents = 'none';
+        measurementSvg.style.overflow = 'visible';
+
+        const sourceDefs = symbolNode.ownerDocument?.querySelector('defs');
+        if (sourceDefs) {
+            measurementSvg.appendChild(sourceDefs.cloneNode(true));
+        }
+
+        const wrapper = document.createElementNS(SVG_NS, 'g');
+        Array.from(symbolNode.childNodes).forEach((child) => {
+            wrapper.appendChild(child.cloneNode(true));
+        });
+
+        measurementSvg.appendChild(wrapper);
+        document.body.appendChild(measurementSvg);
+
+        const bbox = wrapper.getBBox?.();
+        if (!bbox) {
+            return null;
+        }
+
+        const width = Number.isFinite(bbox.width) && bbox.width > 0 ? bbox.width : 0;
+        const height = Number.isFinite(bbox.height) && bbox.height > 0 ? bbox.height : 0;
+        if (width <= 0 && height <= 0) {
+            return null;
+        }
+
+        return {
+            minX: bbox.x,
+            minY: bbox.y,
+            width: Math.max(width, 1),
+            height: Math.max(height, 1),
+        };
+    } catch {
+        return null;
+    } finally {
+        if (measurementSvg?.parentNode) {
+            measurementSvg.parentNode.removeChild(measurementSvg);
+        }
+    }
 };
 
 const applyViewBoxTransform = (
@@ -326,6 +413,12 @@ export function importUse(
 
     const parsedViewBox = parseViewBox(symbolNode?.getAttribute('viewBox'));
     const implicitViewportSize = resolveImplicitViewportSize(element);
+    const implicitViewportViewBox = !parsedViewBox
+        ? resolveImplicitViewportViewBox(symbolNode ?? element)
+        : null;
+    const measuredSymbolBounds = !parsedViewBox && !implicitViewportViewBox
+        ? measureSymbolContentBounds(symbolNode)
+        : null;
 
     if (parsedViewBox) {
         if (!hasExplicitWidth && (!Number.isFinite(finalWidth) || finalWidth === 0)) {
@@ -334,10 +427,21 @@ export function importUse(
         if (!hasExplicitHeight && (!Number.isFinite(finalHeight) || finalHeight === 0)) {
             finalHeight = implicitViewportSize?.height ?? parsedViewBox.height;
         }
+    } else {
+        if (!hasExplicitWidth && (!Number.isFinite(finalWidth) || finalWidth === 0)) {
+            finalWidth = implicitViewportViewBox?.width ?? measuredSymbolBounds?.width ?? 0;
+        }
+        if (!hasExplicitHeight && (!Number.isFinite(finalHeight) || finalHeight === 0)) {
+            finalHeight = implicitViewportViewBox?.height ?? measuredSymbolBounds?.height ?? 0;
+        }
     }
 
-    if (!Number.isFinite(finalWidth) || finalWidth === 0) finalWidth = parsedViewBox?.width ?? 100;
-    if (!Number.isFinite(finalHeight) || finalHeight === 0) finalHeight = parsedViewBox?.height ?? 100;
+    if (!Number.isFinite(finalWidth) || finalWidth === 0) {
+        finalWidth = parsedViewBox?.width ?? implicitViewportViewBox?.width ?? measuredSymbolBounds?.width ?? 100;
+    }
+    if (!Number.isFinite(finalHeight) || finalHeight === 0) {
+        finalHeight = parsedViewBox?.height ?? implicitViewportViewBox?.height ?? measuredSymbolBounds?.height ?? 100;
+    }
 
     void hasExplicitX;
     void hasExplicitY;
@@ -384,14 +488,6 @@ export function importUse(
         }
     }
 
-    // Per SVG spec, the implicit x/y translation happens before the element's transform.
-    // Width/height on <use> already scale the symbol's viewBox, so we avoid baking that scale
-    // into the transform matrix (prevents double-scaling on export).
-    const matrix = composeMatrices(
-        transformMatrix,
-        createTranslateMatrix(x, y)
-    );
-
     // Try to resolve geometry for thumbnails/bounds; fall back to rendering via <use> when unresolved
     let pathData =
         symbolHasMultipleChildren
@@ -415,15 +511,27 @@ export function importUse(
     if ((!Number.isFinite(finalHeight) || finalHeight === 0) && pathData) {
         finalHeight = pathData.height;
     }
-    if (!Number.isFinite(finalWidth) || finalWidth === 0) finalWidth = parsedViewBox?.width ?? 100;
-    if (!Number.isFinite(finalHeight) || finalHeight === 0) finalHeight = parsedViewBox?.height ?? 100;
+    if (!Number.isFinite(finalWidth) || finalWidth === 0) {
+        finalWidth = parsedViewBox?.width ?? implicitViewportViewBox?.width ?? measuredSymbolBounds?.width ?? 100;
+    }
+    if (!Number.isFinite(finalHeight) || finalHeight === 0) {
+        finalHeight = parsedViewBox?.height ?? implicitViewportViewBox?.height ?? measuredSymbolBounds?.height ?? 100;
+    }
+
+    // Complex symbols should preserve <use> x/y separately from transform. Browsers do not fold
+    // these geometry attributes into the element's consolidated transform, and baking them into the
+    // matrix mispositions symbol instances that also carry transforms/animations.
+    const shouldPreserveUsePosition = !pathData;
+    const matrix = shouldPreserveUsePosition
+        ? transformMatrix
+        : composeMatrices(transformMatrix, createTranslateMatrix(x, y));
 
     return {
         type: 'symbolInstance',
         data: {
             symbolId, // This ID is the clean ID (without symbol- prefix) used by the app
-            x: 0, // positioning handled by matrix
-            y: 0,
+            x: shouldPreserveUsePosition ? x : 0,
+            y: shouldPreserveUsePosition ? y : 0,
             width: finalWidth,
             height: finalHeight,
             ...styleAttrs,

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <ellipse id="petal" cx="40" cy="0" rx="40" ry="15" fill="#FF6B6B" opacity="0.8">
+      <animate attributeName="fill" values="#FF6B6B;#FCA048;#F9D423;#00C9FF;#FF6B6B" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="ry" values="15; 25; 15" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="rx" values="40; 50; 40" dur="4s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <g id="flower">
+      <use href="#petal" />
+      <use href="#petal" transform="rotate(72)" />
+      <use href="#petal" transform="rotate(144)" />
+      <use href="#petal" transform="rotate(216)" />
+      <use href="#petal" transform="rotate(288)" />
+      <circle r="15" fill="#FFFFFF" opacity="0.9">
+        <animate attributeName="fill" values="#FFFFFF;#FFE66D;#FFFFFF" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="r" values="15; 20; 15" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+      <animateTransform attributeName="transform" type="rotate" values="0; 360" dur="10s" repeatCount="indefinite"/>
+    </g>
+
+    <path id="orbit" d="M 60,200 A 140,140 0 1,0 340,200 A 140,140 0 1,0 60,200" fill="none" stroke-width="0"/>
+
+    <g id="system">
+      <g>
+        <use href="#flower" transform="scale(0.35)" />
+        <animateMotion dur="9s" repeatCount="indefinite">
+          <mpath href="#orbit" />
+        </animateMotion>
+      </g>
+      <g>
+        <use href="#flower" transform="scale(0.35)" />
+        <animateMotion dur="9s" begin="-3s" repeatCount="indefinite">
+          <mpath href="#orbit" />
+        </animateMotion>
+      </g>
+      <g>
+        <use href="#flower" transform="scale(0.35)" />
+        <animateMotion dur="9s" begin="-6s" repeatCount="indefinite">
+          <mpath href="#orbit" />
+        </animateMotion>
+      </g>
+    </g>
+  </defs>
+
+  <rect width="400" height="400" fill="#FF7E5F">
+    <animate attributeName="fill" values="#FF7E5F;#FEB47B;#4CB8C4;#3CD3AD;#FF7E5F" dur="15s" repeatCount="indefinite"/>
+  </rect>
+
+  <use href="#flower" transform="translate(200, 200)" />
+  <use href="#flower" transform="translate(200, 200) scale(0.5) rotate(180)" />
+  <use href="#system" />
+  <use href="#system" transform="translate(400, 400) scale(-1, -1)" opacity="0.6" />
+
+  <polygon points="200,20 205,30 215,30 207,37 210,47 200,40 190,47 193,37 185,30 195,30" fill="#F9D423" opacity="0.9">
+    <animateTransform attributeName="transform" type="rotate" values="0 200 34; 360 200 34" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="fill" values="#F9D423;#FF8C00;#F9D423" dur="2s" repeatCount="indefinite" />
+  </polygon>
+</svg>

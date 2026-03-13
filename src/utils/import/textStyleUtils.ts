@@ -5,6 +5,85 @@ export interface GlobalTextStyle {
   fontStyle?: 'normal' | 'italic';
 }
 
+const applyTextDeclarations = (
+  target: GlobalTextStyle,
+  declarationString: string,
+): void => {
+  declarationString.split(';').forEach((rawDecl) => {
+    const [rawProp, ...rawValParts] = rawDecl.split(':');
+    if (!rawProp || rawValParts.length === 0) return;
+    const prop = rawProp.trim().toLowerCase();
+    const value = rawValParts.join(':').trim();
+    if (!value) return;
+
+    switch (prop) {
+      case 'font': {
+        const parsed = parseFontShorthand(value, target.fontSize ?? 16);
+        target.fontFamily = parsed.fontFamily ?? target.fontFamily;
+        target.fontSize = parsed.fontSize ?? target.fontSize;
+        target.fontWeight = parsed.fontWeight ?? target.fontWeight;
+        target.fontStyle = parsed.fontStyle ?? target.fontStyle;
+        break;
+      }
+      case 'font-family':
+        target.fontFamily = value.replace(/;$/, '') || target.fontFamily;
+        break;
+      case 'font-size': {
+        const numeric = parseFontSize(value, target.fontSize ?? 16);
+        if (numeric !== undefined) target.fontSize = numeric;
+        break;
+      }
+      case 'font-weight':
+        target.fontWeight = value.replace(/;$/, '') || target.fontWeight;
+        break;
+      case 'font-style':
+        target.fontStyle = sanitizeFontStyle(value);
+        break;
+      default:
+        break;
+    }
+  });
+};
+
+const extractTextStyleFromElement = (element: Element | null): GlobalTextStyle => {
+  if (!element) {
+    return {};
+  }
+
+  const extracted: GlobalTextStyle = {};
+  const fontAttr = element.getAttribute('font');
+  if (fontAttr) {
+    applyTextDeclarations(extracted, `font:${fontAttr}`);
+  }
+
+  const fontFamily = element.getAttribute('font-family');
+  if (fontFamily) {
+    extracted.fontFamily = fontFamily;
+  }
+
+  const fontSize = parseFontSize(element.getAttribute('font-size'), extracted.fontSize ?? 16);
+  if (fontSize !== undefined) {
+    extracted.fontSize = fontSize;
+  }
+
+  const fontWeight = element.getAttribute('font-weight');
+  if (fontWeight) {
+    extracted.fontWeight = fontWeight;
+  }
+
+  const fontStyle = element.getAttribute('font-style');
+  if (fontStyle) {
+    extracted.fontStyle = sanitizeFontStyle(fontStyle);
+  }
+
+  const styleAttr = element.getAttribute('style');
+  if (styleAttr) {
+    applyTextDeclarations(extracted, styleAttr);
+  }
+
+  return extracted;
+};
+
 export const normalizeTextContent = (value: string): string => {
   const lines = value.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.length > 0);
   return lines.join('\n');
@@ -78,63 +157,34 @@ export const resolveInheritedFontSize = (element: Element | null, defaults?: Glo
 
 export const extractGlobalTextStyle = (doc: Document): GlobalTextStyle | null => {
   const styleEls = Array.from(doc.querySelectorAll('style'));
-  if (!styleEls.length) return null;
-
-  const aggregated: GlobalTextStyle = {};
+  const textRuleDefaults: GlobalTextStyle = {};
 
   styleEls.forEach((node) => {
     const content = node.textContent || '';
     const matches = content.match(/text\s*{[^}]*}/gis);
 
-    const parseDeclarations = (declString: string) => {
-      declString.split(';').forEach((rawDecl) => {
-        const [rawProp, rawVal] = rawDecl.split(':');
-        if (!rawProp || !rawVal) return;
-        const prop = rawProp.trim().toLowerCase();
-        const value = rawVal.trim();
-
-        switch (prop) {
-          case 'font': {
-            const parsed = parseFontShorthand(value, aggregated.fontSize ?? 16);
-            aggregated.fontFamily = parsed.fontFamily ?? aggregated.fontFamily;
-            aggregated.fontSize = parsed.fontSize ?? aggregated.fontSize;
-            aggregated.fontWeight = parsed.fontWeight ?? aggregated.fontWeight;
-            aggregated.fontStyle = parsed.fontStyle ?? aggregated.fontStyle;
-            break;
-          }
-          case 'font-family':
-            aggregated.fontFamily = value.replace(/;$/, '') || aggregated.fontFamily;
-            break;
-          case 'font-size': {
-            const numeric = parseFontSize(value, aggregated.fontSize ?? 16);
-            if (numeric !== undefined) aggregated.fontSize = numeric;
-            break;
-          }
-          case 'font-weight':
-            aggregated.fontWeight = value.replace(/;$/, '') || aggregated.fontWeight;
-            break;
-          case 'font-style':
-            aggregated.fontStyle = sanitizeFontStyle(value);
-            break;
-          default:
-            break;
-        }
-      });
-    };
-
     if (matches && matches.length) {
       matches.forEach((rule) => {
         const declarationMatch = rule.match(/text\s*{([^}]*)}/i);
         if (!declarationMatch) return;
-        parseDeclarations(declarationMatch[1]);
+        applyTextDeclarations(textRuleDefaults, declarationMatch[1]);
       });
     } else if (!content.includes('{')) {
       const fontMatch = content.match(/font\s*:\s*([^;]+);?/i);
       if (fontMatch) {
-        parseDeclarations(`font:${fontMatch[1]}`);
+        applyTextDeclarations(textRuleDefaults, `font:${fontMatch[1]}`);
       }
     }
   });
+
+  const svgRoot = doc.documentElement?.tagName.toLowerCase() === 'svg'
+    ? doc.documentElement
+    : doc.querySelector('svg');
+  const inheritedRootDefaults = extractTextStyleFromElement(svgRoot);
+  const aggregated: GlobalTextStyle = {
+    ...inheritedRootDefaults,
+    ...textRuleDefaults,
+  };
 
   return Object.keys(aggregated).length ? aggregated : null;
 };

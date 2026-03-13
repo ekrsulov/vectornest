@@ -12,6 +12,8 @@ export interface SymbolInstanceTransform {
 
 export interface SymbolInstanceData {
   symbolId: string;
+  x?: number;
+  y?: number;
   width: number;
   height: number;
   color?: string;

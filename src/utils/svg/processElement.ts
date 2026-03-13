@@ -1,4 +1,8 @@
 import type { PathData, PresentationAttributes } from '../../types';
+import {
+  collectExplicitPresentationAttributes,
+  rememberExplicitPresentationAttributes,
+} from '../sourcePresentationAttributes';
 import { applyInheritedStyleAttributes, resolveInheritedColor } from './styleAttributes';
 import { parseTransform, multiplyMatrices } from './transform';
 import type { Matrix } from './transform';
@@ -203,8 +207,10 @@ export function processElement(
   };
 
   const sourceTagName = element.tagName.toLowerCase();
+  const explicitPresentationAttributes = collectExplicitPresentationAttributes(element);
   const needsDetachedClone = Boolean(context.inheritedStyle) || sourceTagName === 'rect' || sourceTagName === 'text';
   const workingElement = needsDetachedClone ? (element.cloneNode(true) as Element) : element;
+  rememberExplicitPresentationAttributes(workingElement, explicitPresentationAttributes);
   if (needsDetachedClone) {
     const inheritedColor = resolveInheritedColor(element);
     if (inheritedColor && !workingElement.hasAttribute('color')) {

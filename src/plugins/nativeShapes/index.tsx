@@ -20,6 +20,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import type { Point, Viewport } from '../../types';
 import { normalizeMarkerId } from '../../utils/markerUtils';
 import { cloneValue } from '../../utils/clone';
+import { shouldSerializeDefinitionPresentationAttribute } from '../../utils/sourcePresentationAttributes';
 
 import { shapeToNativeShape } from './importer';
 import { NativeShapeGizmoOverlay } from './gizmos/NativeShapeGizmoOverlay';
@@ -485,14 +486,27 @@ const nativeShapeContribution: ElementContribution<NativeShapeElement> = {
     // Use precision for consistent decimal formatting
     const p = 4;
     const fmt = (v: number) => parseFloat(v.toFixed(p)).toString();
-    const attrs = [
-      `id="${el.id}"`,
-      `stroke="${d.strokeColor ?? '#000'}"`,
-      `stroke-width="${fmt(d.strokeWidth ?? 1)}"`,
-      `stroke-opacity="${fmt(d.strokeOpacity ?? 1)}"`,
-      `fill="${d.fillColor ?? 'none'}"`,
-      `fill-opacity="${fmt(d.fillOpacity ?? 1)}"`,
-    ];
+    const attrs = [`id="${el.id}"`];
+    const strokeColor = d.strokeColor ?? '#000';
+    const strokeWidth = d.strokeWidth ?? 1;
+    const strokeOpacity = d.strokeOpacity ?? 1;
+    const fillColor = d.fillColor ?? 'none';
+    const fillOpacity = d.fillOpacity ?? 1;
+    if (shouldSerializeDefinitionPresentationAttribute(d, 'stroke', strokeColor)) {
+      attrs.push(`stroke="${strokeColor}"`);
+    }
+    if (shouldSerializeDefinitionPresentationAttribute(d, 'stroke-width', strokeWidth)) {
+      attrs.push(`stroke-width="${fmt(strokeWidth)}"`);
+    }
+    if (shouldSerializeDefinitionPresentationAttribute(d, 'stroke-opacity', strokeOpacity)) {
+      attrs.push(`stroke-opacity="${fmt(strokeOpacity)}"`);
+    }
+    if (shouldSerializeDefinitionPresentationAttribute(d, 'fill', fillColor)) {
+      attrs.push(`fill="${fillColor}"`);
+    }
+    if (shouldSerializeDefinitionPresentationAttribute(d, 'fill-opacity', fillOpacity)) {
+      attrs.push(`fill-opacity="${fmt(fillOpacity)}"`);
+    }
     if (d.opacity !== undefined) attrs.push(`opacity="${fmt(d.opacity)}"`);
     if (d.strokeLinecap) attrs.push(`stroke-linecap="${d.strokeLinecap}"`);
     if (d.strokeLinejoin) attrs.push(`stroke-linejoin="${d.strokeLinejoin}"`);

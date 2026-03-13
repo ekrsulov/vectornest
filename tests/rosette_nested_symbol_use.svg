@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200"
+     height="1200"
+     viewBox="0 0 1200 1200">
+
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="44%" r="76%">
+      <stop offset="0%" stop-color="#151735"/>
+      <stop offset="38%" stop-color="#1d1548"/>
+      <stop offset="72%" stop-color="#090b18"/>
+      <stop offset="100%" stop-color="#020307"/>
+    </radialGradient>
+
+    <linearGradient id="blade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe27a"/>
+      <stop offset="30%" stop-color="#ff9957"/>
+      <stop offset="62%" stop-color="#ff3d8e"/>
+      <stop offset="100%" stop-color="#74f1ff"/>
+    </linearGradient>
+
+    <radialGradient id="spark" cx="50%" cy="50%" r="68%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="28%" stop-color="#fff7cf"/>
+      <stop offset="62%" stop-color="#9af7ff"/>
+      <stop offset="100%" stop-color="#9af7ff" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="grain"
+            x="-10%" y="-10%" width="120%" height="120%"
+            color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise"
+                    baseFrequency="0.85"
+                    numOctaves="2"
+                    seed="7"
+                    result="n">
+        <animate attributeName="baseFrequency"
+                 dur="36s"
+                 values="0.8;1.05;0.9;0.8"
+                 repeatCount="indefinite"/>
+      </feTurbulence>
+      <feColorMatrix in="n" type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 0.06 0"
+        result="gn"/>
+      <feBlend in="SourceGraphic" in2="gn" mode="screen"/>
+    </filter>
+
+    <filter id="aura"
+            x="-40%" y="-40%" width="180%" height="180%"
+            color-interpolation-filters="sRGB">
+      <feTurbulence type="turbulence"
+                    baseFrequency="0.006 0.010"
+                    numOctaves="2"
+                    seed="4"
+                    result="field">
+        <animate attributeName="baseFrequency"
+                 dur="20s"
+                 values="0.006 0.010;0.012 0.006;0.004 0.014;0.006 0.010"
+                 repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic"
+                         in2="field"
+                         scale="14"
+                         xChannelSelector="R"
+                         yChannelSelector="G"
+                         result="warp">
+        <animate attributeName="scale"
+                 dur="16s"
+                 values="8;22;12;28;8"
+                 repeatCount="indefinite"/>
+      </feDisplacementMap>
+      <feGaussianBlur in="warp" stdDeviation="0.8" result="soft">
+        <animate attributeName="stdDeviation"
+                 dur="10s"
+                 values="0.4;1.4;0.8;1.8;0.4"
+                 repeatCount="indefinite"/>
+      </feGaussianBlur>
+      <feColorMatrix in="soft" type="matrix"
+        values="1.15 0    0    0 0
+                0    1.10 0    0 0
+                0    0    1.35 0 0
+                0    0    0    1 0"
+        result="lift"/>
+      <feMerge>
+        <feMergeNode in="lift"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="glow"
+            x="-60%" y="-60%" width="220%" height="220%"
+            color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="b">
+        <animate attributeName="stdDeviation"
+                 dur="8s"
+                 values="10;20;14;24;10"
+                 repeatCount="indefinite"/>
+      </feGaussianBlur>
+      <feColorMatrix in="b" type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 0.9 0"
+        result="g"/>
+      <feMerge>
+        <feMergeNode in="g"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <symbol id="petal" viewBox="-150 -320 300 640" overflow="visible">
+      <path d="M0,-280 C86,-185 92,185 0,280 C-92,185 -86,-185 0,-280Z"
+            fill="url(#blade)"/>
+      <path d="M0,-238 C51,-160 56,160 0,238 C-56,160 -51,-160 0,-238Z"
+            fill="none"
+            stroke="#ffffff"
+            stroke-opacity=".55"
+            stroke-width="3"/>
+      <circle cx="0" cy="-208" r="16" fill="url(#spark)">
+        <animate attributeName="cy"
+                 dur="7s"
+                 values="-208;-226;-214;-232;-208"
+                 repeatCount="indefinite"/>
+        <animate attributeName="opacity"
+                 dur="7s"
+                 values=".75;1;.82;1;.75"
+                 repeatCount="indefinite"/>
+      </circle>
+    </symbol>
+
+    <symbol id="rosette" viewBox="-430 -430 860 860" overflow="visible">
+      <use href="#petal"/>
+      <use href="#petal" transform="rotate(60)"/>
+      <use href="#petal" transform="rotate(120)"/>
+      <use href="#petal" transform="rotate(180)"/>
+      <use href="#petal" transform="rotate(240)"/>
+      <use href="#petal" transform="rotate(300)"/>
+
+      <circle r="84" fill="url(#spark)" opacity=".9">
+        <animate attributeName="r"
+                 dur="10s"
+                 values="70;90;76;96;70"
+                 repeatCount="indefinite"/>
+        <animate attributeName="opacity"
+                 dur="10s"
+                 values=".78;1;.84;1;.78"
+                 repeatCount="indefinite"/>
+      </circle>
+
+      <circle r="18" fill="#ffffff">
+        <animate attributeName="r"
+                 dur="4s"
+                 values="14;22;16;24;14"
+                 repeatCount="indefinite"/>
+        <animate attributeName="opacity"
+                 dur="4s"
+                 values=".85;1;.9;1;.85"
+                 repeatCount="indefinite"/>
+      </circle>
+    </symbol>
+  </defs>
+
+  <rect width="1200" height="1200" fill="url(#bg)" filter="url(#grain)"/>
+
+  <g transform="translate(600 600)">
+    <circle r="370"
+            fill="none"
+            stroke="#ffffff"
+            stroke-opacity=".08"
+            stroke-width="1.5">
+      <animate attributeName="r"
+               dur="18s"
+               values="338;386;350;404;338"
+               repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity"
+               dur="18s"
+               values=".03;.12;.05;.14;.03"
+               repeatCount="indefinite"/>
+    </circle>
+
+    <use href="#rosette" filter="url(#glow)" opacity=".42">
+      <animateTransform attributeName="transform"
+                        type="rotate"
+                        from="0"
+                        to="360"
+                        dur="56s"
+                        repeatCount="indefinite"/>
+      <animateTransform attributeName="transform"
+                        additive="sum"
+                        type="scale"
+                        values="1.02;1.08;1.03;1.10;1.02"
+                        dur="14s"
+                        repeatCount="indefinite"/>
+    </use>
+
+    <use href="#rosette"
+         filter="url(#aura)"
+         opacity=".98"
+         transform="rotate(30) scale(.86)">
+      <animateTransform attributeName="transform"
+                        additive="sum"
+                        type="rotate"
+                        from="360"
+                        to="0"
+                        dur="28s"
+                        repeatCount="indefinite"/>
+      <animateTransform attributeName="transform"
+                        additive="sum"
+                        type="scale"
+                        values=".82;.90;.84;.93;.82"
+                        dur="12s"
+                        repeatCount="indefinite"/>
+    </use>
+  </g>
+</svg>

@@ -184,6 +184,9 @@ const collectClipUsage = (elements: CanvasElement[]): Set<string> => {
 const serializeClipAnimation = (anim: SVGAnimation, chainDelays: Map<string, number>): string => {
   const delayMs = chainDelays.get(anim.id) ?? 0;
   const beginValue = delayMs > 0 ? `${(delayMs / 1000).toFixed(3)}s` : (anim.begin ?? '0s');
+  const hrefAttr = anim.targetElementId && anim.targetElementId !== anim.clipPathTargetId
+    ? `href="#${anim.targetElementId}"`
+    : null;
 
   const commonAttrs = [
     `dur="${anim.dur ?? '2s'}"`,
@@ -201,6 +204,7 @@ const serializeClipAnimation = (anim: SVGAnimation, chainDelays: Map<string, num
     case 'animate': {
       const attrs = [
         `attributeName="${anim.attributeName}"`,
+        hrefAttr,
         commonAttrs,
         anim.values ? `values="${anim.values}"` : null,
         anim.from !== undefined ? `from="${anim.from}"` : null,
@@ -214,6 +218,7 @@ const serializeClipAnimation = (anim: SVGAnimation, chainDelays: Map<string, num
       const attrs = [
         `attributeName="${anim.attributeName ?? 'transform'}"`,
         `type="${anim.transformType ?? 'translate'}"`,
+        hrefAttr,
         commonAttrs,
         anim.values ? `values="${anim.values}"` : null,
         anim.from !== undefined ? `from="${anim.from}"` : null,
@@ -225,6 +230,7 @@ const serializeClipAnimation = (anim: SVGAnimation, chainDelays: Map<string, num
     }
     case 'animateMotion': {
       const attrs = [
+        hrefAttr,
         commonAttrs,
         anim.path ? `path="${anim.path}"` : null,
         `rotate="${anim.rotate ?? 'auto'}"`,
@@ -238,6 +244,7 @@ const serializeClipAnimation = (anim: SVGAnimation, chainDelays: Map<string, num
     case 'set': {
       const attrs = [
         `attributeName="${anim.attributeName}"`,
+        hrefAttr,
         `to="${anim.to}"`,
         commonAttrs,
       ].filter(Boolean).join(' ');

@@ -18,6 +18,7 @@ import { useMemo } from 'react';
 import { useShallow } from 'zustand/shallow';
 import { generateShortId } from '../../utils/idGenerator';
 import { createPluginSlice } from '../../utils/pluginUtils';
+import type { SymbolPluginSlice } from '../symbols/slice';
 import './persistence';
 import './importContribution';
 
@@ -163,6 +164,20 @@ const stripAnimationsFromContent = (node: Element): string => {
   clone.querySelectorAll(animationSelectors).forEach((el) => el.remove());
   return clone.innerHTML;
 };
+
+const HREF_REFERENCE_REGEX = /\b(xlink:href|href)=("|')#([^"']+)\2/g;
+
+const rewritePatternSymbolReferencesInContent = (
+  rawContent: string,
+  symbolIds: Set<string>,
+): string => rawContent.replace(HREF_REFERENCE_REGEX, (match, attribute, quote, refId) => {
+  const normalizedRef = refId.replace(/^symbol-/, '');
+  if (!symbolIds.has(normalizedRef)) {
+    return match;
+  }
+
+  return `${attribute}=${quote}#symbol-${normalizedRef}${quote}`;
+});
 
 /**
  * Inject animations into pattern rawContent at the correct child element positions.
@@ -546,6 +561,8 @@ defsContributionRegistry.register({
   collectUsedIds: (elements) => collectUsedPaintIds(elements),
   renderDefs: (state, usedIds) => {
     const patternState = state as unknown as PatternsSlice & AnimationPluginSlice;
+    const symbolState = state as unknown as SymbolPluginSlice;
+    const symbolIds = new Set((symbolState.symbols ?? []).map((symbol) => symbol.id));
     const maskState = state as unknown as import('../masks/types').MasksSlice;
     const maskContents = [...(maskState?.masks ?? []), ...(maskState as unknown as { importedMasks?: import('../masks/types').MasksSlice['masks'] })?.importedMasks ?? []]
       .map((m) => m?.content ?? '')
@@ -579,9 +596,10 @@ defsContributionRegistry.register({
           const geometry = resolvePatternTileGeometry(p);
 
           if (p.type === 'raw' && p.rawContent) {
+            const rewrittenRawContent = rewritePatternSymbolReferencesInContent(p.rawContent, symbolIds);
             // If there are animations targeting child elements, inject them properly
             if (hasPatternChildAnimations) {
-              const contentWithAnimations = injectAnimationsIntoPatternContent(p.rawContent, p.id, animations, chainDelays);
+              const contentWithAnimations = injectAnimationsIntoPatternContent(rewrittenRawContent, p.id, animations, chainDelays);
               return (
                 <pattern
                   id={p.id}
@@ -601,7 +619,7 @@ defsContributionRegistry.register({
             const patternLevelAnimations = patternAnimations.filter((a) => a.patternChildIndex === undefined);
             const animMarkup = patternLevelAnimations.map((a) => serializePatternAnimation(a, chainDelays)).join('\n');
             const animBlock = animMarkup ? `${animMarkup}\n` : '';
-            const inner = `${animBlock}${p.rawContent}`;
+            const inner = `${animBlock}${rewrittenRawContent}`;
             return (
               <pattern
                 id={p.id}
@@ -658,6 +676,8 @@ defsContributionRegistry.register({
   },
   serializeDefs: (state, usedIds) => {
     const patternState = state as unknown as PatternsSlice & AnimationPluginSlice;
+    const symbolState = state as unknown as SymbolPluginSlice;
+    const symbolIds = new Set((symbolState.symbols ?? []).map((symbol) => symbol.id));
     const maskState = state as unknown as import('../masks/types').MasksSlice;
     const maskContents = [...(maskState?.masks ?? []), ...(maskState as unknown as { importedMasks?: import('../masks/types').MasksSlice['masks'] })?.importedMasks ?? []]
       .map((m) => m?.content ?? '')
@@ -686,9 +706,10 @@ defsContributionRegistry.register({
         const viewBoxAttr = geometry.viewBox ? ` viewBox="${geometry.viewBox}"` : '';
         
         if (type === 'raw' && p.rawContent) {
+          const rewrittenRawContent = rewritePatternSymbolReferencesInContent(p.rawContent, symbolIds);
           const transformAttr = p.patternTransform ? ` patternTransform="${p.patternTransform}"` : '';
           // Inject animations into the correct child elements
-          const contentWithAnimations = injectAnimationsIntoPatternContent(p.rawContent, id, animations, chainDelays);
+          const contentWithAnimations = injectAnimationsIntoPatternContent(rewrittenRawContent, id, animations, chainDelays);
           return `<pattern id="${id}" patternUnits="${geometry.units}" width="${geometry.tileWidth}" height="${geometry.tileHeight}"${viewBoxAttr}${transformAttr}>\n${contentWithAnimations}\n</pattern>`;
         }
         

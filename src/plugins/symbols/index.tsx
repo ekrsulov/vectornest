@@ -20,7 +20,7 @@ import { measurePath } from '../../utils/measurementUtils';
 import { generateShortId } from '../../utils/idGenerator';
 import { normalizeToMLCZ } from '../../utils/svg/normalizer';
 import { useSymbolPlacementHook } from './hooks/useSymbolPlacementHook';
-import { importUse } from './importer';
+import { importUse, measureSymbolContentBounds, resolveImplicitViewportViewBox } from './importer';
 import { Box, useColorMode, useColorModeValue } from '@chakra-ui/react';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import type React from 'react';
@@ -44,6 +44,7 @@ import type { AnimationPluginSlice } from '../animationSystem/types';
 import { ensureChainDelays } from '../animationSystem/chainUtils';
 import { createCircleCommands, createDiamondCommands, createHeartCommands, createTriangleCommands } from '../../utils/ShapeFactory';
 import { cloneValue } from '../../utils/clone';
+import type { PatternsSlice } from '../patterns/slice';
 import './importContribution';
 
 const symbolsSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
@@ -70,21 +71,22 @@ const stripAnimationsFromContent = (node: Element): string => {
 const parseSymbolContent = (rawContent: string): Document | null => {
   if (typeof DOMParser === 'undefined') return null;
   const parser = new DOMParser();
-  // Wrap in a container to handle multiple root elements
-  const doc = parser.parseFromString(`<root>${rawContent}</root>`, 'application/xml');
+  const doc = parser.parseFromString(
+    `<svg xmlns="http://www.w3.org/2000/svg"><g id="__symbol_wrapper__">${rawContent}</g></svg>`,
+    'image/svg+xml'
+  );
   if (doc.querySelector('parsererror')) return null;
   return doc;
 };
 
 const serializeSymbolContent = (doc: Document): string => {
-  const root = doc.querySelector('root');
+  const root = doc.querySelector('#__symbol_wrapper__');
   if (!root) return '';
-  // Get innerHTML without the wrapper
+  const serializer = new XMLSerializer();
   return Array.from(root.childNodes)
     .map((node) => {
       if (node.nodeType === Node.ELEMENT_NODE) {
-        const serializer = new XMLSerializer();
-        return serializer.serializeToString(node);
+        return serializer.serializeToString(node).replace(/ xmlns=""/g, '');
       }
       return node.textContent ?? '';
     })
@@ -92,7 +94,7 @@ const serializeSymbolContent = (doc: Document): string => {
 };
 
 const findChildElementByIndex = (doc: Document, childIndex: number): Element | null => {
-  const root = doc.querySelector('root');
+  const root = doc.querySelector('#__symbol_wrapper__');
   if (!root) return null;
   const elements = Array.from(root.children);
   return elements[childIndex] ?? null;
@@ -153,9 +155,11 @@ export const injectAnimationsIntoSymbolContent = (
     anims.forEach((anim) => {
       const animHtml = serializeAnimation(anim, chainDelays, scopedAnimations);
       if (animHtml) {
-        // Parse the animation HTML and append to target
-        const animDoc = new DOMParser().parseFromString(`<root>${animHtml}</root>`, 'application/xml');
-        const animElement = animDoc.querySelector('root')?.firstElementChild;
+        const animDoc = new DOMParser().parseFromString(
+          `<svg xmlns="http://www.w3.org/2000/svg">${animHtml}</svg>`,
+          'image/svg+xml'
+        );
+        const animElement = animDoc.querySelector('svg')?.firstElementChild;
         if (animElement) {
           const imported = doc.importNode(animElement, true);
           targetElement.appendChild(imported);
@@ -352,17 +356,145 @@ const collectSymbolUsage = (elements: CanvasElement[]): Set<string> => {
   return usage;
 };
 
+const collectPatternSymbolUsage = (
+  patterns: Array<{ type: string; rawContent?: string }>,
+  symbolIds: Set<string>,
+): Set<string> => {
+  const usage = new Set<string>();
+
+  patterns.forEach((pattern) => {
+    if (pattern.type !== 'raw' || !pattern.rawContent) {
+      return;
+    }
+
+    const regex = /\b(?:xlink:href|href)=("|')#([^"']+)\1/g;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(pattern.rawContent)) !== null) {
+      const normalizedRef = match[2]?.replace(/^symbol-/, '');
+      if (normalizedRef && symbolIds.has(normalizedRef)) {
+        usage.add(normalizedRef);
+      }
+    }
+  });
+
+  return usage;
+};
+
+const collectReferencedSymbolIds = (
+  symbol: SymbolDefinition,
+  symbolIds: Set<string>
+): string[] => {
+  if (!symbol.rawContent) {
+    return [];
+  }
+
+  const doc = parseSymbolContent(symbol.rawContent);
+  if (!doc) {
+    return [];
+  }
+
+  const referenced = new Set<string>();
+  doc.querySelectorAll('use').forEach((useNode) => {
+    const href = useNode.getAttribute('href') || useNode.getAttribute('xlink:href');
+    if (!href || !href.startsWith('#')) {
+      return;
+    }
+
+    const rawRef = href.slice(1);
+    const normalizedRef = rawRef.replace(/^symbol-/, '');
+    if (symbolIds.has(normalizedRef)) {
+      referenced.add(normalizedRef);
+    }
+  });
+
+  return [...referenced];
+};
+
+const rewriteSymbolReferencesInContent = (
+  rawContent: string,
+  symbolIds: Set<string>
+): string => {
+  const doc = parseSymbolContent(rawContent);
+  if (!doc) {
+    return rawContent;
+  }
+
+  let changed = false;
+  Array.from(doc.querySelectorAll('*')).forEach((element) => {
+    const href = element.getAttribute('href');
+    const xlinkHref = element.getAttribute('xlink:href');
+    const rawRef = href ?? xlinkHref;
+    if (!rawRef || !rawRef.startsWith('#')) {
+      return;
+    }
+
+    const normalizedRef = rawRef.slice(1).replace(/^symbol-/, '');
+    if (!symbolIds.has(normalizedRef)) {
+      return;
+    }
+
+    const nextRef = `#symbol-${normalizedRef}`;
+    if (href !== null && href !== nextRef) {
+      element.setAttribute('href', nextRef);
+      changed = true;
+    }
+    if (xlinkHref !== null && xlinkHref !== nextRef) {
+      element.setAttribute('xlink:href', nextRef);
+      changed = true;
+    }
+  });
+
+  return changed ? serializeSymbolContent(doc) : rawContent;
+};
+
+const resolveReferencedSymbols = (
+  symbols: SymbolDefinition[],
+  usedIds: Set<string>
+): SymbolDefinition[] => {
+  if (usedIds.size === 0 || symbols.length === 0) {
+    return [];
+  }
+
+  const symbolsById = new Map(symbols.map((symbol) => [symbol.id, symbol]));
+  const symbolIds = new Set(symbolsById.keys());
+  const ordered: SymbolDefinition[] = [];
+  const visited = new Set<string>();
+  const visiting = new Set<string>();
+
+  const visit = (symbolId: string): void => {
+    if (visited.has(symbolId) || visiting.has(symbolId)) {
+      return;
+    }
+
+    const symbol = symbolsById.get(symbolId);
+    if (!symbol) {
+      return;
+    }
+
+    visiting.add(symbolId);
+    collectReferencedSymbolIds(symbol, symbolIds).forEach(visit);
+    visiting.delete(symbolId);
+    visited.add(symbolId);
+    ordered.push(symbol);
+  };
+
+  usedIds.forEach(visit);
+  return ordered;
+};
+
 const renderSymbolNode = (
   symbol: SymbolDefinition,
+  symbolIds: Set<string>,
   animations?: SVGAnimation[],
   chainDelays?: Map<string, number>,
   animationState?: AnimationState
 ) => {
   if (symbol.rawContent) {
     // Inject animations for child elements if available
-    const content = (animations && chainDelays)
+    const animatedContent = (animations && chainDelays)
       ? injectAnimationsIntoSymbolContent(symbol.rawContent, symbol.id, animations, chainDelays, animationState)
       : symbol.rawContent;
+    const content = rewriteSymbolReferencesInContent(animatedContent, symbolIds);
     
     return (
       <symbol
@@ -405,8 +537,15 @@ defsContributionRegistry.register({
   renderDefs: (state, usedIds) => {
     const symbolState = state as CanvasStore & SymbolPluginSlice;
     const symbols = symbolState.symbols ?? [];
-    const filtered = symbols.filter((symbol) => usedIds.has(symbol.id));
+    const symbolIds = new Set(symbols.map((symbol) => symbol.id));
+    const patternState = state as CanvasStore & Partial<PatternsSlice>;
+    const effectiveUsedIds = new Set([
+      ...usedIds,
+      ...collectPatternSymbolUsage(patternState.patterns ?? [], symbolIds),
+    ]);
+    const filtered = resolveReferencedSymbols(symbols, effectiveUsedIds);
     if (!filtered.length) return null;
+    const filteredIds = new Set(filtered.map((symbol) => symbol.id));
     
     // Get animations for symbol children
     const animState = state as CanvasStore & AnimationPluginSlice;
@@ -414,13 +553,20 @@ defsContributionRegistry.register({
     const chainDelays = animState.animationState?.chainDelays ? ensureChainDelays(animState.animationState.chainDelays) : new Map();
     const animationState = animState.animationState;
     
-    return <>{filtered.map((s) => renderSymbolNode(s, animations, chainDelays, animationState))}</>;
+    return <>{filtered.map((s) => renderSymbolNode(s, filteredIds, animations, chainDelays, animationState))}</>;
   },
   serializeDefs: (state, usedIds) => {
     const symbolState = state as CanvasStore & SymbolPluginSlice;
     const symbols = symbolState.symbols ?? [];
-    const filtered = symbols.filter((symbol) => usedIds.has(symbol.id));
+    const symbolIds = new Set(symbols.map((symbol) => symbol.id));
+    const patternState = state as CanvasStore & Partial<PatternsSlice>;
+    const effectiveUsedIds = new Set([
+      ...usedIds,
+      ...collectPatternSymbolUsage(patternState.patterns ?? [], symbolIds),
+    ]);
+    const filtered = resolveReferencedSymbols(symbols, effectiveUsedIds);
     if (!filtered.length) return [];
+    const filteredIds = new Set(filtered.map((symbol) => symbol.id));
     
     // Get animations for symbol children
     const animState = state as CanvasStore & AnimationPluginSlice;
@@ -432,7 +578,8 @@ defsContributionRegistry.register({
       .map((symbol) => {
         if (symbol.rawContent) {
           // Inject animations for child elements
-          const content = injectAnimationsIntoSymbolContent(symbol.rawContent, symbol.id, animations, chainDelays, animationState);
+          const animatedContent = injectAnimationsIntoSymbolContent(symbol.rawContent, symbol.id, animations, chainDelays, animationState);
+          const content = rewriteSymbolReferencesInContent(animatedContent, filteredIds);
           return `<symbol id="symbol-${symbol.id}" viewBox="${symbol.bounds.minX} ${symbol.bounds.minY} ${symbol.bounds.width} ${symbol.bounds.height}" preserveAspectRatio="xMidYMid meet" overflow="visible">${content}</symbol>`;
         }
         const pathD = commandsToString(symbol.pathData.subPaths.flat());
@@ -559,11 +706,13 @@ const computeSymbolBounds = (data: SymbolInstanceData) => {
     }
 
     const { width, height } = getInstanceDimensions(data);
+    const x = data.x ?? 0;
+    const y = data.y ?? 0;
     return {
-      minX: -halfStroke,
-      minY: -halfStroke,
-      maxX: width + halfStroke,
-      maxY: height + halfStroke,
+      minX: x - halfStroke,
+      minY: y - halfStroke,
+      maxX: x + width + halfStroke,
+      maxY: y + height + halfStroke,
     };
   })();
   const corners = [
@@ -746,9 +895,6 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
     (rendererContext.animations as SVGAnimation[] | undefined) ?? [],
     rendererContext.animationState as AnimationState | undefined
   );
-  if (initialAttrs.transform) {
-    styleAttrs.transform = String(initialAttrs.transform);
-  }
   const allAnimations = (rendererContext.animations as SVGAnimation[] | undefined) ?? [];
   const animationState = rendererContext.animationState as AnimationState | undefined;
   const isTransformAnimation = (anim: SVGAnimation) =>
@@ -766,6 +912,13 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
     animationState,
     allAnimations
   );
+  const allAnimationNodes = [...transformAnimationNodes, ...attributeAnimationNodes];
+  const targetTransformAttr = initialAttrs.transform
+    ? String(initialAttrs.transform)
+    : transformAttr;
+  const { transform: _initialTransformAttr, ...nonTransformInitialAttrs } = initialAttrs;
+  const positionX = data.x ?? 0;
+  const positionY = data.y ?? 0;
 
   return (
     <g
@@ -774,34 +927,35 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
       {...filterAttr}
       {...maskAttr}
     >
-      {transformAnimationNodes}
-      <g transform={transformAttr} data-element-id={element.id}>
       {data.pathData ? (
         <path
           d={commandsToString(data.pathData.subPaths.flat())}
           data-element-id={element.id}
+          transform={targetTransformAttr}
           {...clipAttr}
           {...styleAttrs}
           style={Object.keys(blendStyle).length ? blendStyle : undefined}
-          {...initialAttrs}
+          {...nonTransformInitialAttrs}
         >
-          {attributeAnimationNodes}
+          {allAnimationNodes}
         </path>
       ) : (
         <use
           href={`#symbol-${data.symbolId}`}
+          x={positionX}
+          y={positionY}
           width={width}
           height={height}
           data-element-id={element.id}
+          transform={targetTransformAttr}
           {...clipAttr}
           {...styleAttrs}
           style={Object.keys(blendStyle).length ? blendStyle : undefined}
-          {...initialAttrs}
+          {...nonTransformInitialAttrs}
         >
-          {attributeAnimationNodes}
+          {allAnimationNodes}
         </use>
       )}
-      </g>
     </g>
   );
 };
@@ -819,6 +973,8 @@ const createSymbolInstanceContribution = (): ElementContribution => {
         ...symbolElement.data,
         transformMatrix: matrix,
         transform: undefined,
+        x: 0,
+        y: 0,
       },
     };
   };
@@ -862,6 +1018,8 @@ const createSymbolInstanceContribution = (): ElementContribution => {
       const matrix = data.transformMatrix ? `matrix(${data.transformMatrix.join(' ')})` : '';
       const transform = matrix || serializeTransform(data);
       const transformAttr = transform ? ` transform="${transform}"` : '';
+      const xAttr = (data.x ?? 0) !== 0 ? ` x="${data.x}"` : '';
+      const yAttr = (data.y ?? 0) !== 0 ? ` y="${data.y}"` : '';
       const clipRef = data.clipPathId ?? data.clipPathTemplateId;
       const clipAttr = clipRef ? ` clip-path="url(#${clipRef})"` : '';
       const filterAttr = data.filterId ? ` filter="url(#${data.filterId})"` : '';
@@ -894,7 +1052,7 @@ const createSymbolInstanceContribution = (): ElementContribution => {
         return attrs;
       })();
 
-      return `<use id="${id}" href="#symbol-${data.symbolId}" width="${width}" height="${height}"${transformAttr}${clipAttr}${filterAttr}${maskAttr}${paintAttrs} vector-effect="non-scaling-stroke" />`;
+      return `<use id="${id}" href="#symbol-${data.symbolId}"${xAttr}${yAttr} width="${width}" height="${height}"${transformAttr}${clipAttr}${filterAttr}${maskAttr}${paintAttrs} vector-effect="non-scaling-stroke" />`;
     },
   };
 };
@@ -936,6 +1094,16 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
           width: Number.isFinite(w) && w > 0 ? w : 100,
           height: Number.isFinite(h) && h > 0 ? h : 100,
         };
+      } else {
+        const implicitViewport = resolveImplicitViewportViewBox(node);
+        if (implicitViewport) {
+          bounds = implicitViewport;
+        } else {
+          const measuredBounds = measureSymbolContentBounds(node);
+          if (measuredBounds) {
+            bounds = measuredBounds;
+          }
+        }
       }
 
       let pathData: import('./types').SymbolInstanceData['pathData'];
@@ -955,7 +1123,7 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
 
         const parsedCommands = parsePathD(normalizeToMLCZ(pathD));
         const subPaths = [parsedCommands];
-        if (!viewBoxAttr) {
+        if (!viewBoxAttr && !resolveImplicitViewportViewBox(node)) {
           const measured = measurePath(subPaths, strokeWidth, 1);
           bounds = {
             minX: measured.minX,
@@ -972,7 +1140,7 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
           strokeOpacity: safeStrokeOpacity,
           fillOpacity: safeFillOpacity,
         };
-      } else if (viewBoxAttr) {
+      } else {
         // Fallback path covering the viewBox so we have sizing
         const rectD = `M ${bounds.minX} ${bounds.minY} L ${bounds.minX + bounds.width} ${bounds.minY} L ${bounds.minX + bounds.width} ${bounds.minY + bounds.height} L ${bounds.minX} ${bounds.minY + bounds.height} Z`;
         pathData = {
@@ -983,8 +1151,6 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
           strokeOpacity: 1,
           fillOpacity: 1,
         };
-      } else {
-        return null;
       }
 
       // Remove 'symbol-' prefix if present

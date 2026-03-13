@@ -1,0 +1,189 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 900 900"
+     width="900"
+     height="900"
+     aria-labelledby="title desc"
+     role="img">
+  <title id="title">Prismatic Halo</title>
+  <desc id="desc">SVG minimalista en cantidad de elementos visibles, pero complejo en tecnicas: symbol/use, filters, patterns, gradients, masks, clipPaths, textPath y animaciones SMIL.</desc>
+
+  <defs>
+    <path id="orbitPath"
+          d="M 170 450
+             a 280 280 0 1 1 560 0
+             a 280 280 0 1 1 -560 0"/>
+
+    <radialGradient id="bgGlow" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#1b1f5e"/>
+      <stop offset="38%" stop-color="#0f1036"/>
+      <stop offset="72%" stop-color="#070816"/>
+      <stop offset="100%" stop-color="#02030a"/>
+      <animate attributeName="fx" values="48%;54%;48%" dur="12s" repeatCount="indefinite"/>
+      <animate attributeName="fy" values="38%;46%;38%" dur="15s" repeatCount="indefinite"/>
+    </radialGradient>
+
+    <linearGradient id="prismGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7df9ff"/>
+      <stop offset="28%" stop-color="#6c63ff"/>
+      <stop offset="58%" stop-color="#ff4fd8"/>
+      <stop offset="82%" stop-color="#ffd166"/>
+      <stop offset="100%" stop-color="#7df9ff"/>
+      <animateTransform attributeName="gradientTransform"
+                        type="rotate"
+                        values="0 0.5 0.5;360 0.5 0.5"
+                        dur="18s"
+                        repeatCount="indefinite"/>
+    </linearGradient>
+
+    <radialGradient id="rimGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="35%" stop-color="#8af3ff" stop-opacity="0.9"/>
+      <stop offset="70%" stop-color="#7c5cff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <pattern id="lattice" width="48" height="48" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+      <path d="M0 24H48M24 0V48" fill="none" stroke="url(#prismGrad)" stroke-width="1.4" stroke-opacity="0.28"/>
+      <circle cx="24" cy="24" r="1.8" fill="#ffffff" fill-opacity="0.35"/>
+      <animateTransform attributeName="patternTransform"
+                        type="rotate"
+                        values="15 24 24;375 24 24"
+                        dur="24s"
+                        repeatCount="indefinite"/>
+    </pattern>
+
+    <filter id="halo" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 24 -8" result="bloom"/>
+      <feSpecularLighting in="blur" surfaceScale="5" specularConstant="1.1" specularExponent="20" lighting-color="#ffffff" result="light">
+        <fePointLight x="450" y="280" z="220">
+          <animate attributeName="x" values="360;540;360" dur="10s" repeatCount="indefinite"/>
+          <animate attributeName="y" values="260;340;260" dur="13s" repeatCount="indefinite"/>
+        </fePointLight>
+      </feSpecularLighting>
+      <feComposite in="light" in2="SourceAlpha" operator="in" result="spec"/>
+      <feBlend in="SourceGraphic" in2="bloom" mode="screen" result="glowMix"/>
+      <feBlend in="glowMix" in2="spec" mode="screen"/>
+    </filter>
+
+    <mask id="eclipseMask">
+      <rect width="100%" height="100%" fill="black"/>
+      <radialGradient id="maskGrad" cx="50%" cy="50%" r="42%">
+        <stop offset="0%" stop-color="white"/>
+        <stop offset="72%" stop-color="white"/>
+        <stop offset="100%" stop-color="black"/>
+      </radialGradient>
+      <circle id="maskCore" cx="450" cy="450" r="255" fill="url(#maskGrad)">
+        <animate attributeName="r" values="220;275;220" dur="9s" repeatCount="indefinite"/>
+      </circle>
+      <ellipse cx="450" cy="450" rx="315" ry="120" fill="white" fill-opacity="0.65" transform="rotate(-22 450 450)">
+        <animateTransform attributeName="transform"
+                          type="rotate"
+                          values="-22 450 450;338 450 450"
+                          dur="20s"
+                          repeatCount="indefinite"/>
+      </ellipse>
+    </mask>
+
+    <clipPath id="portalClip">
+      <circle cx="450" cy="450" r="275"/>
+    </clipPath>
+
+    <symbol id="shard" viewBox="-160 -160 320 320">
+      <g>
+        <path d="M0,-132 L114,0 L0,132 L-114,0 Z"
+              fill="url(#prismGrad)"
+              fill-opacity="0.90"/>
+        <circle r="74"
+                fill="none"
+                stroke="url(#rimGrad)"
+                stroke-width="16"
+                stroke-opacity="0.9"/>
+        <path d="M-120 0 Q0 -56 120 0 Q0 56 -120 0Z"
+              fill="url(#prismGrad)"
+              fill-opacity="0.22"
+              stroke="#ffffff"
+              stroke-opacity="0.45"
+              stroke-width="2.4"/>
+      </g>
+    </symbol>
+  </defs>
+
+  <rect width="900" height="900" fill="url(#bgGlow)"/>
+
+  <g clip-path="url(#portalClip)" mask="url(#eclipseMask)" filter="url(#halo)">
+    <rect x="140" y="140" width="620" height="620" fill="url(#lattice)">
+      <animate attributeName="opacity" values="0.55;0.9;0.55" dur="8s" repeatCount="indefinite"/>
+    </rect>
+
+    <use xlink:href="#shard" x="450" y="450" width="320" height="320" opacity="0.92">
+      <animateTransform attributeName="transform"
+                        type="translate"
+                        values="0 0;0 -12;0 0"
+                        dur="7s"
+                        repeatCount="indefinite"/>
+      <animateTransform attributeName="transform"
+                        additive="sum"
+                        type="rotate"
+                        values="0 450 450;360 450 450"
+                        dur="18s"
+                        repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.85;1;0.85" dur="5s" repeatCount="indefinite"/>
+    </use>
+
+    <use xlink:href="#shard" x="450" y="450" width="320" height="320" opacity="0.35"
+         transform="scale(1.55) rotate(18 450 450)">
+      <animateTransform attributeName="transform"
+                        type="rotate"
+                        values="18 450 450;-342 450 450"
+                        dur="26s"
+                        repeatCount="indefinite"/>
+    </use>
+
+    <use xlink:href="#shard" x="450" y="450" width="320" height="320" opacity="0.18"
+         transform="scale(2.2) rotate(-12 450 450)">
+      <animateTransform attributeName="transform"
+                        type="rotate"
+                        values="-12 450 450;348 450 450"
+                        dur="34s"
+                        repeatCount="indefinite"/>
+    </use>
+  </g>
+
+  <circle cx="450" cy="450" r="280"
+          fill="none"
+          stroke="url(#rimGrad)"
+          stroke-width="18"
+          stroke-linecap="round"
+          stroke-dasharray="2 16"
+          filter="url(#halo)">
+    <animateTransform attributeName="transform"
+                      type="rotate"
+                      values="0 450 450;360 450 450"
+                      dur="24s"
+                      repeatCount="indefinite"/>
+    <animate attributeName="stroke-dashoffset"
+             values="0;360"
+             dur="12s"
+             repeatCount="indefinite"/>
+  </circle>
+
+  <text font-family="Georgia, 'Times New Roman', serif"
+        font-size="22"
+        letter-spacing="7"
+        fill="#f7f7ff"
+        fill-opacity="0.92">
+    <textPath xlink:href="#orbitPath" startOffset="0%">
+      LUMEN • PRISM • AETHER • MOTION • FORM • LIGHT •
+      <animate attributeName="startOffset"
+               values="0%;100%"
+               dur="20s"
+               repeatCount="indefinite"/>
+    </textPath>
+  </text>
+</svg>

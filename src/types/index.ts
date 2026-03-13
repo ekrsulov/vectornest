@@ -96,6 +96,11 @@ export interface PresentationAttributes {
   sourceId?: string;
   /** Whether this element was defined inside an SVG <defs> block. */
   isDefinition?: boolean;
+  /**
+   * Presentation attributes that were explicitly present on the original SVG
+   * element before inherited styles were pushed down during import.
+   */
+  sourceExplicitAttributes?: string[];
 }
 
 export interface PathData extends StrokeProperties, FillProperties, PresentationAttributes {

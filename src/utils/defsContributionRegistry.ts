@@ -2,6 +2,10 @@ import React from 'react';
 import type { CanvasElement } from '../types';
 import type { CanvasStore } from '../store/canvasStore';
 import { ContributionRegistry } from './ContributionRegistry';
+import {
+  expandElementsWithReferencedDefinitions,
+  isDefinitionElement,
+} from './importedDefinitionUtils';
 
 /**
  * DefContribution interface for registering SVG <defs> contributions.
@@ -50,9 +54,11 @@ const collectArtboardBackgroundPaintId = (state?: CanvasStore): string | null =>
 class DefsContributionRegistry extends ContributionRegistry<DefContribution> {
 
   private collectUsage(elements: CanvasElement[], state?: CanvasStore): UsageMap {
+    const visibleElements = elements.filter((element) => !isDefinitionElement(element));
+    const usageElements = expandElementsWithReferencedDefinitions(visibleElements, state);
     const usage: UsageMap = new Map();
     this.contributions.forEach((c) => {
-      usage.set(c.id, c.collectUsedIds ? c.collectUsedIds(elements) : new Set<string>());
+      usage.set(c.id, c.collectUsedIds ? c.collectUsedIds(usageElements) : new Set<string>());
     });
 
     const artboardPaintId = collectArtboardBackgroundPaintId(state);

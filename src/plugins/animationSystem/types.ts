@@ -79,6 +79,7 @@ export interface SVGAnimation {
   keySplines?: string;
   // Transform props
   transformType?: 'translate' | 'scale' | 'rotate' | 'skewX' | 'skewY';
+  transformOrigin?: string;
   additive?: 'replace' | 'sum';
   accumulate?: 'none' | 'sum';
   // Motion props

@@ -1,5 +1,6 @@
 import type { Matrix, ImportedNativeShapeElement } from '../../utils/svgImportUtils';
 import { extractStyleAttributes } from '../../utils/svgImportUtils';
+import { getExplicitPresentationAttributes } from '../../utils/sourcePresentationAttributes';
 
 /**
  * Check if matrix is identity (no transformation)
@@ -35,6 +36,7 @@ export function shapeToNativeShape(
     // Note: We don't need to pass inheritedStyle explicitly because 
     // svgImportUtils pushes them down to attributes before calling this.
     const style = extractStyleAttributes(element);
+    const sourceExplicitAttributes = Array.from(getExplicitPresentationAttributes(element));
 
     const baseStyles = {
         strokeColor: style.strokeColor ?? 'none',
@@ -57,6 +59,7 @@ export function shapeToNativeShape(
         mixBlendMode: (style as { mixBlendMode?: string }).mixBlendMode,
         isolation: (style as { isolation?: 'auto' | 'isolate' }).isolation,
         sourceId: element.getAttribute('id') ?? undefined,
+        ...(sourceExplicitAttributes.length > 0 ? { sourceExplicitAttributes } : {}),
     };
 
     const matrixArr: [number, number, number, number, number, number] = [

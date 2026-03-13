@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" style="background-color: #030008; overflow: hidden;">
+  <defs>
+    <radialGradient id="spaceGradient" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#2a004a"/>
+      <stop offset="60%" stop-color="#0a001a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ffff">
+        <animate attributeName="stop-color" values="#00ffff;#ff00ff;#ffff00;#00ffff" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="50%" stop-color="#ff00ff">
+        <animate attributeName="stop-color" values="#ff00ff;#ffff00;#00ffff;#ff00ff" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#ffff00">
+        <animate attributeName="stop-color" values="#ffff00;#00ffff;#ff00ff;#ffff00" dur="8s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+
+    <filter id="liquidWarp" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="2" result="noise">
+        <animate attributeName="baseFrequency" values="0.015;0.025;0.015" dur="15s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="40" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="cinematicGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blurSmall"/>
+      <feGaussianBlur stdDeviation="18" result="blurLarge"/>
+      <feMerge>
+        <feMergeNode in="blurLarge"/>
+        <feMergeNode in="blurSmall"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <pattern id="cyberGrid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(0, 255, 255, 0.08)" stroke-width="1"/>
+      <circle cx="60" cy="60" r="2" fill="rgba(255, 0, 255, 0.3)"/>
+    </pattern>
+
+    <mask id="fadeMask">
+      <radialGradient id="maskGrad">
+        <stop offset="10%" stop-color="#ffffff"/>
+        <stop offset="90%" stop-color="#000000"/>
+      </radialGradient>
+      <rect width="1000" height="1000" fill="url(#maskGrad)"/>
+    </mask>
+
+    <clipPath id="geometricClip">
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="0 500 500; -360 500 500" dur="30s" repeatCount="indefinite"/>
+        <polygon points="500,50 950,500 500,950 50,500">
+          <animate attributeName="points"
+                   values="500,50 950,500 500,950 50,500;
+                           500,200 800,500 500,800 200,500;
+                           500,50 950,500 500,950 50,500"
+                   dur="10s" repeatCount="indefinite" />
+        </polygon>
+      </g>
+    </clipPath>
+
+    <symbol id="nexusCore" viewBox="0 0 1000 1000">
+      <circle cx="500" cy="500" r="420" fill="none" stroke="url(#neonGradient)" stroke-width="1" opacity="0.3"/>
+      <circle cx="500" cy="500" r="380" fill="none" stroke="url(#neonGradient)" stroke-width="3" stroke-dasharray="2 16" stroke-linecap="round"/>
+      <polygon points="500,100 750,300 850,700 500,900 150,700 250,300" fill="none" stroke="url(#neonGradient)" stroke-width="4">
+        <animateTransform attributeName="transform" type="rotate" values="0 500 500; 360 500 500" dur="20s" repeatCount="indefinite"/>
+      </polygon>
+      <polygon points="500,100 750,300 850,700 500,900 150,700 250,300" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.6">
+        <animateTransform attributeName="transform" type="rotate" values="180 500 500; -180 500 500" dur="25s" repeatCount="indefinite"/>
+      </polygon>
+      <circle cx="500" cy="500" r="140" fill="none" stroke="url(#neonGradient)" stroke-width="8" stroke-dasharray="40 80">
+        <animateTransform attributeName="transform" type="rotate" values="0 500 500; 360 500 500" dur="8s" repeatCount="indefinite"/>
+      </circle>
+    </symbol>
+
+    <path id="textCircle" d="M 500, 180 A 320 320 0 1 1 499.9, 180"/>
+    <path id="figureEight" d="M 500 500 C 700 100, 950 500, 500 500 C 50 500, 300 100, 500 500 Z"/>
+  </defs>
+
+  <rect width="1000" height="1000" fill="url(#spaceGradient)"/>
+  <rect width="1000" height="1000" fill="url(#cyberGrid)" filter="url(#liquidWarp)" mask="url(#fadeMask)"/>
+
+  <g filter="url(#cinematicGlow)">
+    <g clip-path="url(#geometricClip)">
+      <use href="#nexusCore" transform="scale(1.2) translate(-83, -83)" opacity="0.4"/>
+    </g>
+
+    <use href="#nexusCore"/>
+
+    <text font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="900" fill="#ffffff" letter-spacing="8">
+      <textPath href="#textCircle" startOffset="0%">
+        AWARD-WINNING ABSTRACT SVG ALCHEMY • PURE DECLARATIVE MAGNIFICENCE •
+        <animate attributeName="startOffset" values="0%; 100%" dur="20s" repeatCount="indefinite"/>
+      </textPath>
+    </text>
+
+    <circle r="14" fill="#ffffff">
+      <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+        <mpath href="#figureEight"/>
+      </animateMotion>
+      <animate attributeName="r" values="8; 24; 8" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+
+    <g>
+      <animateMotion dur="6s" repeatCount="indefinite" rotate="auto" begin="3s">
+        <mpath href="#figureEight"/>
+      </animateMotion>
+      <polygon points="0,-12 10.4,6 -10.4,6" fill="url(#neonGradient)">
+        <animateTransform attributeName="transform" type="rotate" values="0; 360" dur="2s" repeatCount="indefinite"/>
+      </polygon>
+    </g>
+  </g>
+</svg>

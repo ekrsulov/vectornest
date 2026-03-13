@@ -175,6 +175,15 @@ const parseAbsoluteTransformOrigin = (element: Element): { x: number; y: number 
   return { x, y };
 };
 
+const resolveRawTransformOrigin = (animationElement: Element, targetElement: Element | null): string | undefined => {
+  const rawOrigin = animationElement.getAttribute('transform-origin')
+    ?? getInlineStyleProperty(animationElement, 'transform-origin')
+    ?? targetElement?.getAttribute('transform-origin')
+    ?? (targetElement ? getInlineStyleProperty(targetElement, 'transform-origin') : null);
+
+  return rawOrigin?.trim() || undefined;
+};
+
 const normalizeRotateValueWithOrigin = (
   value: string | undefined,
   origin: { x: number; y: number } | null
@@ -608,8 +617,9 @@ function importAnimationDefs(doc: Document): Record<string, unknown[]> | null {
       case 'animatetransform': {
         const attributeName = animEl.getAttribute('attributeName') ?? 'transform';
         const transformType = (animEl.getAttribute('type') as 'translate' | 'scale' | 'rotate' | 'skewX' | 'skewY') ?? 'translate';
+        const rawTransformOrigin = resolveRawTransformOrigin(animEl, parentElement);
         const transformOrigin = transformType === 'rotate'
-          ? parseAbsoluteTransformOrigin(parentElement)
+          ? (parseAbsoluteTransformOrigin(animEl) ?? parseAbsoluteTransformOrigin(parentElement))
           : null;
         const from = normalizeRotateValueWithOrigin(animEl.getAttribute('from') ?? undefined, transformOrigin);
         const to = normalizeRotateValueWithOrigin(animEl.getAttribute('to') ?? undefined, transformOrigin);
@@ -623,6 +633,7 @@ function importAnimationDefs(doc: Document): Record<string, unknown[]> | null {
             ...baseAnimation,
             attributeName,
             transformType,
+            transformOrigin: rawTransformOrigin,
             from,
             to,
             values,
@@ -721,7 +732,8 @@ function importAnimationDefs(doc: Document): Record<string, unknown[]> | null {
 export function serializeAnimation(
   anim: SVGAnimation,
   chainDelays: Map<string, number> = new Map<string, number>(),
-  referenceAnimations: SVGAnimation[] = [anim]
+  referenceAnimations: SVGAnimation[] = [anim],
+  referenceIdResolver?: (id: string) => string
 ): string {
   const smilIdMap = buildSmilReferenceMap(referenceAnimations);
   const beginValue = chainDelays.has(anim.id)
@@ -761,6 +773,7 @@ export function serializeAnimation(
         `attributeName="${anim.attributeName ?? 'transform'}"`,
         `type="${anim.transformType ?? 'translate'}"`,
         commonAttrs,
+        anim.transformOrigin ? `transform-origin="${anim.transformOrigin}"` : null,
         anim.values ? `values="${anim.values}"` : null,
         anim.from !== undefined ? `from="${anim.from}"` : null,
         anim.to !== undefined ? `to="${anim.to}"` : null,
@@ -770,14 +783,15 @@ export function serializeAnimation(
       return `<animateTransform ${attrs} />`;
     }
     case 'animateMotion': {
+      const resolvedMpath = anim.mpath && referenceIdResolver ? referenceIdResolver(anim.mpath) : anim.mpath;
       const attrs = [
         commonAttrs,
         !anim.mpath && anim.path ? `path="${anim.path}"` : null,
         `rotate="${anim.rotate ?? 'auto'}"`,
         anim.keyPoints ? `keyPoints="${anim.keyPoints}"` : null,
       ].filter(Boolean).join(' ');
-      if (anim.mpath) {
-        return `<animateMotion ${attrs}>\n  <mpath href="#${anim.mpath}" />\n</animateMotion>`;
+      if (resolvedMpath) {
+        return `<animateMotion ${attrs}>\n  <mpath href="#${resolvedMpath}" />\n</animateMotion>`;
       }
       return `<animateMotion ${attrs} />`;
     }
@@ -815,6 +829,19 @@ animationContributionRegistry.register({
 
     // Calculate chain delays fresh (not from cached state)
     const chainDelays = animState.calculateChainDelays ? animState.calculateChainDelays() : new Map<string, number>();
+    const resolveExportReferenceId = (id: string): string => {
+      const referencedElement = (state.elements ?? []).find((candidate) => candidate.id === id);
+      if (!referencedElement) {
+        return id;
+      }
+
+      const referencedData = referencedElement.data as { isDefinition?: boolean; sourceId?: string } | undefined;
+      if (referencedData?.isDefinition && typeof referencedData.sourceId === 'string' && referencedData.sourceId.trim()) {
+        return referencedData.sourceId;
+      }
+
+      return id;
+    };
 
     // Filter animations for this element
     const elementAnimations = animations
@@ -824,7 +851,7 @@ animationContributionRegistry.register({
     // Serialize each animation
     const serialized: string[] = [];
     elementAnimations.forEach((anim) => {
-      serialized.push(serializeAnimation(anim, chainDelays, animations));
+      serialized.push(serializeAnimation(anim, chainDelays, animations, resolveExportReferenceId));
     });
     return serialized;
   },

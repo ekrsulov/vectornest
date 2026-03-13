@@ -3,7 +3,7 @@
  * Eliminates duplication between saveAsSvg and saveAsPng
  */
 
-import type { CanvasElement, GroupElement, PathElement, Viewport } from '../../types';
+import type { CanvasElement, GroupElement, PathElement, PresentationAttributes, Viewport } from '../../types';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { Bounds } from '../boundsUtils';
 import { mergeBounds } from '../measurementUtils';
@@ -14,7 +14,7 @@ import { animationContributionRegistry } from '../animationContributionRegistry'
 import { escapeXmlAttribute } from '../xmlEscapeUtils';
 import { pluginManager } from '../pluginManager';
 import { parseSeconds } from '../svgLengthUtils';
-import { serializePathElement } from './pathSerialization';
+import { serializePathElement, serializeTextPathOnlyElement } from './pathSerialization';
 import { safeChildIdsFromElement as safeChildIds } from '../groupTraversalUtils';
 import { isMonoColor, transformMonoColor } from '../colorModeSyncUtils';
 
@@ -152,6 +152,11 @@ const serializeArtboardMetadata = (
 };
 
 function serializeElementWithContribution(element: CanvasElement, indent: string, state?: CanvasStore): string | null {
+  const isDefinition = Boolean((element.data as PresentationAttributes | undefined)?.isDefinition);
+  if (isDefinition) {
+    return null;
+  }
+
   const isHidden = state?.isElementHidden?.(element.id) ?? false;
   const applyHiddenDisplay = (markup: string): string => {
     if (!isHidden) return markup;
@@ -206,6 +211,35 @@ function serializeNode(node: ExportNode, indentLevel: number, state?: CanvasStor
   }
 
   const groupElement = node.element as GroupElement;
+  const groupPathData = groupElement.data as PresentationAttributes & {
+    textPath?: { text?: string; href?: string };
+  };
+  if (groupPathData.textPath?.text) {
+    const textPathHref = typeof groupPathData.textPath.href === 'string'
+      ? groupPathData.textPath.href.trim()
+      : '';
+    const definitionSourceId = textPathHref.startsWith('#') ? textPathHref.slice(1) : null;
+    const referencedPath = definitionSourceId && state?.elements
+      ? state.elements.find((element): element is PathElement =>
+        element.type === 'path' &&
+          (
+            element.id === definitionSourceId ||
+            (element.data as PresentationAttributes | undefined)?.sourceId === definitionSourceId
+          ))
+      : null;
+    const exportHrefId = definitionSourceId
+      ?? ((referencedPath?.data as PresentationAttributes | undefined)?.sourceId || referencedPath?.id || groupElement.id);
+    const proxyPathElement = {
+      ...groupElement,
+      type: 'path',
+      data: groupElement.data as unknown as PathElement['data'],
+    } as PathElement;
+    return serializeTextPathOnlyElement(proxyPathElement, indent, state, {
+      textPathHrefId: exportHrefId,
+      animationTargetElementId: referencedPath?.id ?? groupElement.id,
+    });
+  }
+
   const attributes: string[] = [`id="${groupElement.id}"`];
   const isHidden = state?.isElementHidden?.(groupElement.id) ?? Boolean(groupElement.data.isHidden);
   if (groupElement.data.name) {

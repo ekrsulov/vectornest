@@ -3,6 +3,7 @@ import type { Command, PathData, SubPath } from '../../types';
 import { logger } from '../logger';
 import { shapeToPath } from '../import/shapeToPath';
 import { normalizeMarkerId } from '../markerUtils';
+import { getExplicitPresentationAttributes } from '../sourcePresentationAttributes';
 import { normalizeToMLCZ as normalizePathToMLCZ } from './normalizer';
 import { extractStyleAttributes } from './styleAttributes';
 import { shouldPreserveTransform } from './transformPreservation';
@@ -61,6 +62,7 @@ export const processPathStage = ({
   }
 
   const styleAttrsRaw = extractStyleAttributes(element, context.inheritedStyle);
+  const sourceExplicitAttributes = Array.from(getExplicitPresentationAttributes(element));
   const { hasDisplayNone, sanitizedStyleAttrs } = sanitizeDisplayStyleAttributes(styleAttrsRaw);
   const styleAttrs = sanitizedStyleAttrs;
 
@@ -147,6 +149,7 @@ export const processPathStage = ({
     maskId: (styleAttrs as { maskId?: string }).maskId,
     opacity: styleAttrs.opacity,
     transformMatrix: storedTransformMatrix,
+    ...(sourceExplicitAttributes.length > 0 ? { sourceExplicitAttributes } : {}),
   };
 
   if (styleAttrs.visibility) {

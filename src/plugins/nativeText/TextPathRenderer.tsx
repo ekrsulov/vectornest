@@ -47,6 +47,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
     const textPath = pathData.textPath;
     if (!textPath || !textPath.text) return;
     const maskUrl = textPath.maskId ?? pathData.maskId;
+    const textFilterId = textPath.filterId ?? pathData.filterId;
     const clipRuntimeId = getClipRuntimeId(
       pathData.clipPathId,
       (pathData as unknown as Record<string, unknown>).clipPathTemplateId as string | undefined,
@@ -251,7 +252,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
           strokeOpacity={strokeOpacity}
           pointerEvents="all"
           style={{ cursor: 'move' }}
-          filter={wireframeEnabled ? undefined : (pathData.filterId ? `url(#${pathData.filterId})` : undefined)}
+          filter={wireframeEnabled ? undefined : (textFilterId ? `url(#${textFilterId})` : undefined)}
         >
           {textAttributeAnimations.length > 0
             ? renderAnimationsForElement(element.id, textAttributeAnimations, animationState, animations)

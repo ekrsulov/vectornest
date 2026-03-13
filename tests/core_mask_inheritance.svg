@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" style="background:#050505">
+  <defs>
+    <radialGradient id="grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff0055">
+        <animate attributeName="stop-color" values="#ff0055;#00f3ff;#ff0055" dur="4s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="100%" stop-color="#3a0088">
+        <animate attributeName="stop-color" values="#3a0088;#ff00ea;#3a0088" dur="4s" repeatCount="indefinite" />
+      </stop>
+    </radialGradient>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <circle cx="30" cy="30" r="2" fill="#ffffff" opacity="0.2">
+        <animate attributeName="r" values="1;4;1" dur="3s" repeatCount="indefinite" />
+      </circle>
+      <path d="M 60 0 L 0 60" stroke="#ffffff" stroke-width="0.5" opacity="0.05" />
+    </pattern>
+
+    <symbol id="core" viewBox="-100 -100 200 200">
+      <path d="M 0 -80 Q 80 0 0 80 Q -80 0 0 -80 Z" fill="none" stroke="url(#grad)" stroke-width="3" filter="url(#glow)">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="8s" repeatCount="indefinite" />
+      </path>
+      <path d="M -80 0 Q 0 80 80 0 Q 0 -80 -80 0 Z" fill="none" stroke="url(#grad)" stroke-width="3" filter="url(#glow)">
+        <animateTransform attributeName="transform" type="rotate" from="360" to="0" dur="12s" repeatCount="indefinite" />
+      </path>
+      <circle cx="0" cy="0" r="15" fill="url(#grad)" filter="url(#glow)">
+        <animate attributeName="r" values="10;25;10" dur="2.5s" repeatCount="indefinite" />
+      </circle>
+    </symbol>
+
+    <clipPath id="clip">
+      <polygon points="500,100 846,300 846,700 500,900 154,700 154,300">
+        <animateTransform attributeName="transform" type="rotate" from="0 500 500" to="360 500 500" dur="40s" repeatCount="indefinite" />
+      </polygon>
+    </clipPath>
+
+    <radialGradient id="maskGrad">
+      <stop offset="40%" stop-color="white" />
+      <stop offset="100%" stop-color="black" />
+    </radialGradient>
+    <mask id="fade">
+      <circle cx="500" cy="500" r="450" fill="url(#maskGrad)" />
+    </mask>
+
+    <path id="textCircle" d="M 500,200 A 300,300 0 1,1 499.9,200" fill="none" />
+  </defs>
+
+  <rect width="1000" height="1000" fill="url(#grid)" />
+
+  <g mask="url(#fade)" clip-path="url(#clip)">
+    <g transform="translate(500,500)">
+      <use href="#core" x="-150" y="-150" width="300" height="300" />
+      <use href="#core" x="-350" y="-350" width="700" height="700" opacity="0.4">
+         <animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="24s" repeatCount="indefinite" />
+      </use>
+      <use href="#core" x="-50" y="-50" width="100" height="100" opacity="0.9">
+         <animateTransform attributeName="transform" type="rotate" from="0" to="720" dur="4s" repeatCount="indefinite" />
+      </use>
+    </g>
+  </g>
+
+  <text font-family="'Courier New', monospace" font-size="28" font-weight="bold" fill="#00f3ff" letter-spacing="12" filter="url(#glow)">
+    <textPath href="#textCircle" startOffset="0%">
+      MINIMAL COMPLEXITY • SPECTACULAR SVG • AWARD WINNING DESIGN •
+      <animate attributeName="startOffset" from="0%" to="100%" dur="15s" repeatCount="indefinite" />
+    </textPath>
+  </text>
+
+  <circle cx="500" cy="500" r="420" fill="none" stroke="url(#grad)" stroke-width="2" stroke-dasharray="15 30" opacity="0.6">
+    <animateTransform attributeName="transform" type="rotate" from="360 500 500" to="0 500 500" dur="30s" repeatCount="indefinite" />
+  </circle>
+</svg>

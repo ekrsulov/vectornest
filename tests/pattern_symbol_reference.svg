@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <radialGradient id="orbGrad" cx="50%" cy="50%" r="65%">
+      <stop offset="0" stop-color="#fff8d6" stop-opacity="1"/>
+      <stop offset="0.7" stop-color="#ff5ea8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#6a5cff" stop-opacity="0.1"/>
+    </radialGradient>
+
+    <symbol id="sigil" viewBox="-80 -80 160 160">
+      <path
+        d="M0,-60 L14,-12 L60,0 L14,12 L0,60 L-14,12 L-60,0 L-14,-12 Z"
+        fill="url(#orbGrad)"
+      />
+      <circle r="10" fill="#060814"/>
+    </symbol>
+
+    <pattern id="sigilPattern" patternUnits="userSpaceOnUse" width="120" height="120" patternTransform="rotate(18)">
+      <rect width="120" height="120" fill="none"/>
+      <use href="#sigil" x="60" y="60" width="48" height="48" opacity="0.35"/>
+      <circle cx="60" cy="60" r="42" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5"/>
+    </pattern>
+  </defs>
+
+  <rect width="300" height="300" fill="url(#sigilPattern)"/>
+</svg>

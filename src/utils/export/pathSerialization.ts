@@ -4,6 +4,7 @@ import { commandsToString } from '../pathParserUtils';
 import { animationContributionRegistry } from '../animationContributionRegistry';
 import { serializeAnimationFromContributions } from '../exportContributionRegistry';
 import { normalizeMarkerId } from '../markerUtils';
+import { shouldSerializeDefinitionPresentationAttribute } from '../sourcePresentationAttributes';
 import { escapeXmlAttribute, escapeXmlText } from '../xmlEscapeUtils';
 import { getEffectiveStrokeColor } from '../pathDataBehaviors';
 import { generateShortId } from '../idGenerator';
@@ -24,6 +25,12 @@ interface PathAnimationContext {
   textPathAnimations: Array<Record<string, unknown>>;
   serializedElementAnimations: string;
   extraAttrs: PathAnimationExtraAttributes;
+}
+
+interface PathSerializationOptions {
+  includeTextPath?: boolean;
+  textPathHrefId?: string;
+  animationTargetElementId?: string;
 }
 
 type TextPathData = NonNullable<PathData['textPath']>;
@@ -107,12 +114,24 @@ const buildPathAttributeList = ({
   const attributes: string[] = [
     `id="${pathElement.id}"`,
     ...(pathData.name ? [`data-name="${escapeXmlAttribute(pathData.name)}"`] : []),
-    `d="${pathD}"`,    `stroke="${effectiveStrokeColor}"`,
-    `stroke-width="${pathData.strokeWidth}"`,
-    `fill="${pathData.fillColor}"`,
-    `fill-opacity="${pathData.fillOpacity}"`,
-    `stroke-opacity="${pathData.strokeOpacity}"`,
+    `d="${pathD}"`,
   ];
+
+  if (shouldSerializeDefinitionPresentationAttribute(pathData, 'stroke', effectiveStrokeColor)) {
+    attributes.push(`stroke="${effectiveStrokeColor}"`);
+  }
+  if (shouldSerializeDefinitionPresentationAttribute(pathData, 'stroke-width', pathData.strokeWidth)) {
+    attributes.push(`stroke-width="${pathData.strokeWidth}"`);
+  }
+  if (shouldSerializeDefinitionPresentationAttribute(pathData, 'fill', pathData.fillColor)) {
+    attributes.push(`fill="${pathData.fillColor}"`);
+  }
+  if (shouldSerializeDefinitionPresentationAttribute(pathData, 'fill-opacity', pathData.fillOpacity)) {
+    attributes.push(`fill-opacity="${pathData.fillOpacity}"`);
+  }
+  if (shouldSerializeDefinitionPresentationAttribute(pathData, 'stroke-opacity', pathData.strokeOpacity)) {
+    attributes.push(`stroke-opacity="${pathData.strokeOpacity}"`);
+  }
 
   if (pathData.transformMatrix) {
     attributes.push(`transform="matrix(${pathData.transformMatrix.join(' ')})"`);
@@ -242,7 +261,8 @@ const serializeTextPathElement = (
   isHidden: boolean,
   chainDelays: Map<string, number>,
   textPathAnimations: Array<Record<string, unknown>>,
-  indent: string
+  indent: string,
+  pathHrefId: string = pathElement.id
 ): string => {
   const textPath = pathData.textPath;
   if (!textPath || !textPath.text) {
@@ -329,12 +349,57 @@ const serializeTextPathElement = (
     .join('\n');
   const textPathAnimBlock = textPathAnims ? `\n${textPathAnims}` : '';
 
-  return `\n${indent}<text ${textAttrs.join(' ')}${transformAttr}${textDisplayAttr} pointer-events="none"><textPath href="#${pathElement.id}"${startOffset}${methodAttr}${spacingAttr}${richAttr}>${textPathContent}${textPathAnimBlock ? `\n${textPathAnimBlock}\n${indent}` : ''}</textPath></text>`;
+  return `\n${indent}<text ${textAttrs.join(' ')}${transformAttr}${textDisplayAttr} pointer-events="none"><textPath href="#${pathHrefId}"${startOffset}${methodAttr}${spacingAttr}${richAttr}>${textPathContent}${textPathAnimBlock ? `\n${textPathAnimBlock}\n${indent}` : ''}</textPath></text>`;
 };
 
-export function serializePathElement(pathElement: PathElement, indent: string, state?: CanvasStore): string {
+export function serializeTextPathOnlyElement(
+  pathElement: PathElement,
+  indent: string,
+  state?: CanvasStore,
+  options: Pick<PathSerializationOptions, 'textPathHrefId' | 'animationTargetElementId'> = {},
+): string {
+  const pathData = pathElement.data as PathData;
+  const textPath = pathData.textPath;
+  if (!textPath?.text) {
+    return '';
+  }
+
+  const isHidden = state?.isElementHidden?.(pathElement.id) ?? pathData.display === 'none';
+  const effectiveStrokeColor = getEffectiveStrokeColor(pathData);
+  const animSlice = state as unknown as AnimationSliceLike | undefined;
+  const chainDelays = animSlice?.calculateChainDelays
+    ? animSlice.calculateChainDelays()
+    : new Map<string, number>();
+  const animationTargetElementId = options.animationTargetElementId ?? pathElement.id;
+  const textPathAnimations =
+    animSlice?.animations?.filter(
+      (animation) =>
+        animation.targetElementId === animationTargetElementId &&
+        !(animation as { clipPathTargetId?: string }).clipPathTargetId &&
+        animation.attributeName === 'startOffset'
+    ) ?? [];
+
+  return serializeTextPathElement(
+    pathElement,
+    pathData,
+    effectiveStrokeColor,
+    isHidden,
+    chainDelays,
+    textPathAnimations,
+    indent,
+    options.textPathHrefId ?? pathElement.id,
+  ).replace(/^\n/, '');
+}
+
+export function serializePathElement(
+  pathElement: PathElement,
+  indent: string,
+  state?: CanvasStore,
+  options: PathSerializationOptions = {},
+): string {
   const pathData = pathElement.data as PathData;
   const pathD = commandsToString(pathData.subPaths.flat());
+  const includeTextPath = options.includeTextPath !== false;
   const isHidden = state?.isElementHidden?.(pathElement.id) ?? pathData.display === 'none';
   const displayValue = isHidden ? 'none' : pathData.display;
   const effectiveStrokeColor = getEffectiveStrokeColor(pathData);
@@ -362,7 +427,7 @@ export function serializePathElement(pathElement: PathElement, indent: string, s
   // When a path has textPath AND element-level animations (e.g. animateTransform translate/scale),
   // wrap the <path> and <text> together in a <g> that carries the animations.
   // This makes the text follow the animated path because the group transform applies to both.
-  if (pathData.textPath?.text && serializedElementAnimations.length > 0) {
+  if (includeTextPath && pathData.textPath?.text && serializedElementAnimations.length > 0) {
     const innerIndent = `${indent}  `;
     // Place animations on the <g> (same indentation logic as serializePathElementTag)
     const animLines = serializedElementAnimations
@@ -379,12 +444,17 @@ export function serializePathElement(pathElement: PathElement, indent: string, s
       isHidden,
       chainDelays,
       textPathAnimations,
-      innerIndent
+      innerIndent,
+      options.textPathHrefId ?? pathElement.id,
     );
     return `${indent}<g>\n${animLines}\n${pathTag}${textTag}\n${indent}</g>`;
   }
 
   let result = serializePathElementTag(indent, attributes, serializedElementAnimations);
+  if (!includeTextPath) {
+    return result;
+  }
+
   result += serializeTextPathElement(
     pathElement,
     pathData,
@@ -392,7 +462,8 @@ export function serializePathElement(pathElement: PathElement, indent: string, s
     isHidden,
     chainDelays,
     textPathAnimations,
-    indent
+    indent,
+    options.textPathHrefId ?? pathElement.id,
   );
 
   return result;

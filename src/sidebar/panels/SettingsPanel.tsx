@@ -22,6 +22,7 @@ import { CustomSelect } from '../../ui/CustomSelect';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { useFullscreen } from './settings/useFullscreen';
 import { DEFAULT_MODE } from '../../constants';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export const SettingsPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
@@ -30,6 +31,7 @@ export const SettingsPanel: React.FC = () => {
   const setMode = useCanvasStore(state => state.setMode);
   const setShowSettingsPanel = useCanvasStore(state => state.setShowSettingsPanel);
   const { setColorMode } = useColorMode();
+  const { panelHeader: { titleColor } } = useThemeColors();
 
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
   useEnabledPlugins();
@@ -125,7 +127,7 @@ export const SettingsPanel: React.FC = () => {
         {/* Theme - Always visible at the top */}
         <FormControl>
           <Flex align="center" gap={2}>
-            <FormLabel fontSize="12px" fontWeight="bold" color="gray.600" _dark={{ color: 'gray.400' }} mb={0} minW="42px">
+            <FormLabel fontSize="12px" fontWeight="bold" color={titleColor} mb={0} minW="42px">
               Theme
             </FormLabel>
             <JoinedButtonGroup

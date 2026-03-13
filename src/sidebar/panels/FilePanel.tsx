@@ -164,10 +164,9 @@ export const FilePanel: React.FC = () => {
           </Text>
 
           {/* Name inline row */}
-          <HStack spacing={1.5} mb={1.5} align="center">
+          <HStack spacing={1.5} pb={0.5} align="center">
             <Text
               fontSize="12px"
-              fontWeight="medium"
               color="gray.600"
               _dark={{ color: 'gray.400' }}
               flexShrink={0}
@@ -190,9 +189,9 @@ export const FilePanel: React.FC = () => {
             )}
           </HStack>
 
-          <Box pr={0.5} mb={1.5}>
+          <Box pr={0.5} pb={1}>
             <SliderControl
-              label="Export Padding:"
+              label="Export Padding"
               value={settings.exportPadding}
               min={0}
               max={100}
@@ -202,7 +201,7 @@ export const FilePanel: React.FC = () => {
             />
           </Box>
 
-          <Box mb={1.5}>
+          <Box pb={1}>
             <PanelToggle
               isChecked={saveSelectedOnly}
               onChange={(event) => setSaveSelectedOnly(event.target.checked)}
@@ -211,7 +210,7 @@ export const FilePanel: React.FC = () => {
             </PanelToggle>
           </Box>
 
-          <HStack spacing={1}>
+          <HStack spacing={1} pb={1}>
             <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm">
               <HStack spacing={1.5}>
                 <Download size={11} />
@@ -226,7 +225,7 @@ export const FilePanel: React.FC = () => {
             </PanelStyledButton>
           </HStack>
 
-          <Box mt={1}>
+          <Box>
             <PanelStyledButton onClick={handleOpenSourceDialog} width="full" size="sm">
               SVG Source
             </PanelStyledButton>

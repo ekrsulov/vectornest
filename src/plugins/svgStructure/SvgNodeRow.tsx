@@ -28,6 +28,11 @@ import {
 import type { SvgTreeNode, AnimationTargetKey, ReferencedElementData } from './svgStructureTypes';
 import {
   ROW_SPACING,
+  TREE_CONNECTOR_CENTER_PX,
+  TREE_GUIDE_WIDTH_PX,
+  TREE_INDENT_PX,
+  TREE_ROW_TOP_PADDING_PX,
+  TREE_THUMBNAIL_SIZE_PX,
   textProps,
   DEF_CONTAINER_TAGS,
   getReferencedElementData,
@@ -39,6 +44,9 @@ import {
 
 interface SvgNodeRowProps {
   node: SvgTreeNode;
+  depth: number;
+  isLastSibling: boolean;
+  ancestorHasNextSibling: boolean[];
   expandedKeys: Set<string>;
   onToggle: (key: string) => void;
   detailExpandedKeys: Set<string>;
@@ -62,6 +70,9 @@ interface SvgNodeRowProps {
 
 export const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
   node,
+  depth,
+  isLastSibling,
+  ancestorHasNextSibling,
   expandedKeys,
   onToggle,
   detailExpandedKeys,
@@ -85,6 +96,7 @@ export const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
   const isExpanded = true;
   const isDetailsExpanded = detailExpandedKeys.has(node.key);
   const isSvgRoot = node.tagName === 'svg';
+  const visualDepth = Math.max(depth - 1, 0);
 
   const [openAttributeEditor, setOpenAttributeEditor] = useState<{ name: string; value: string } | null>(null);
   const [newAttribute, setNewAttribute] = useState<{ name: string; value: string }>({ name: '', value: '' });
@@ -105,6 +117,8 @@ export const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
   }, [elementId, lockedElementIds]);
 
   const showDetails = isDetailsExpanded && !isSvgRoot;
+  const treeOffsetPx = visualDepth * TREE_INDENT_PX;
+  const branchX = visualDepth > 0 ? (visualDepth - 1) * TREE_INDENT_PX + TREE_INDENT_PX / 2 : 0;
 
   const numberLabel = node.numberPath;
 
@@ -526,104 +540,164 @@ export const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
       px={0}
       data-node-key={node.key}
     >
-      <VStack spacing={0} align="stretch" px={0}>
-        <HStack
-          spacing={1}
-          align="center"
-          pr={0}
-          py={0}
-        >
-          <Box
-            width="26px"
-            height="26px"
-            borderRadius="md"
-            borderWidth="1px"
-            borderColor={isHighlighted ? 'yellow.400' : 'border.subtle'}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            bg="bg.subtle"
-            overflow="hidden"
-            flexShrink={0}
-            cursor={node.attributes.length > 0 ? 'pointer' : 'default'}
-            onClick={node.attributes.length > 0 ? () => onToggleAttributes(node.key) : undefined}
-            onMouseEnter={() => {
-              if (elementId) {
-                setHoveredStructureElementId(elementId);
-              }
-            }}
-            onMouseLeave={() => {
-              setHoveredStructureElementId(null);
-            }}
-          >
-            {pluginThumbnail ? (
-              pluginThumbnail
-            ) : thumbnailCommands.length > 0 ? (
-              <PathThumbnail commands={thumbnailCommands} />
-            ) : (
-              <Text
-                fontSize="14px"
-                fontWeight="bold"
-                color="gray.500"
-                _dark={{ color: 'gray.300' }}
-                textTransform="uppercase"
-                width="100%"
-                textAlign="center"
-                lineHeight="1"
-              >
-                {typeLetter}
-              </Text>
-            )}
-          </Box>
+      <Box position="relative" pl={treeOffsetPx > 0 ? `${treeOffsetPx}px` : 0}>
+        {ancestorHasNextSibling.map((hasNextSibling, index) => {
+          if (!hasNextSibling) {
+            return null;
+          }
 
-          <VStack
-            spacing={0.25}
-            align="stretch"
-            flex={1}
-            minWidth={0}
-            pr={0}
-            py={0}
-          >
-            <HStack spacing={1} align="center" minWidth={0} width="100%">
-              <HStack
-                spacing={1}
-                align="center"
-                minWidth={0}
-                flexShrink={1}
-                flex={1}
-                onClick={() => onToggleDetails(node.key)}
-                cursor="pointer"
+          if (index === 0) {
+            return null;
+          }
+
+          const guideDepth = index - 1;
+
+          return (
+            <Box
+              key={`${node.key}-ancestor-guide-${index}`}
+              position="absolute"
+              left={`${guideDepth * TREE_INDENT_PX + TREE_INDENT_PX / 2}px`}
+              top={0}
+              bottom={0}
+              width="0"
+              borderLeftWidth={`${TREE_GUIDE_WIDTH_PX}px`}
+              borderColor="gray.300"
+              _dark={{ borderColor: 'whiteAlpha.300' }}
+              pointerEvents="none"
+            />
+          );
+        })}
+
+        {visualDepth > 0 && (
+          <>
+            <Box
+              position="absolute"
+              left={`${branchX}px`}
+              top={0}
+              height={`${TREE_CONNECTOR_CENTER_PX}px`}
+              width="0"
+              borderLeftWidth={`${TREE_GUIDE_WIDTH_PX}px`}
+              borderColor="gray.300"
+              _dark={{ borderColor: 'whiteAlpha.300' }}
+              pointerEvents="none"
+            />
+            {!isLastSibling && (
+              <Box
+                position="absolute"
+                left={`${branchX}px`}
+                top={`${TREE_CONNECTOR_CENTER_PX}px`}
+                bottom={0}
+                width="0"
+                borderLeftWidth={`${TREE_GUIDE_WIDTH_PX}px`}
+                borderColor="gray.300"
+                _dark={{ borderColor: 'whiteAlpha.300' }}
+                pointerEvents="none"
+              />
+            )}
+          </>
+        )}
+
+        <VStack spacing={0} align="stretch" px={0}>
+          <Box position="relative" pt={`${TREE_ROW_TOP_PADDING_PX}px`}>
+
+            <HStack
+              spacing={1}
+              align="center"
+              pr={0}
+              py={0}
+            >
+              <Box
+                width={`${TREE_THUMBNAIL_SIZE_PX}px`}
+                height={`${TREE_THUMBNAIL_SIZE_PX}px`}
+                borderRadius="md"
+                borderWidth="1px"
+                borderColor={isHighlighted ? 'yellow.400' : 'border.subtle'}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                bg="bg.subtle"
+                overflow="hidden"
+                flexShrink={0}
+                cursor={node.attributes.length > 0 ? 'pointer' : 'default'}
+                onClick={node.attributes.length > 0 ? () => onToggleAttributes(node.key) : undefined}
+                onMouseEnter={() => {
+                  if (elementId) {
+                    setHoveredStructureElementId(elementId);
+                  }
+                }}
+                onMouseLeave={() => {
+                  setHoveredStructureElementId(null);
+                }}
               >
-                {numberLabel && (
-                  <Text {...textProps} fontWeight="600" fontSize="xs" noOfLines={1} flexShrink={0}>
-                    {numberLabel}
+                {pluginThumbnail ? (
+                  pluginThumbnail
+                ) : thumbnailCommands.length > 0 ? (
+                  <PathThumbnail commands={thumbnailCommands} />
+                ) : (
+                  <Text
+                    fontSize="14px"
+                    fontWeight="bold"
+                    color="gray.500"
+                    _dark={{ color: 'gray.300' }}
+                    textTransform="uppercase"
+                    width="100%"
+                    textAlign="center"
+                    lineHeight="1"
+                  >
+                    {typeLetter}
                   </Text>
                 )}
-                <Text {...textProps} fontWeight="600" fontSize="xs" noOfLines={1} flexShrink={1} minWidth={0}>
-                  {node.displayId}
-                </Text>
-              </HStack>
+              </Box>
 
-              <HStack spacing={1} align="center" justify="flex-end" flexShrink={0} flexWrap="wrap">
-                <Badge variant="subtle" colorScheme="gray" fontSize="2xs" px={1.5} py={0.5} borderRadius="sm">
-                  {node.tagName}
-                </Badge>
-                {node.isDefs && <Badge colorScheme="purple" fontSize="2xs" px={1} py={0.5}>D</Badge>}
-                {node.dataElementId && !node.idAttribute && (
-                  <Badge colorScheme="blue" fontSize="2xs" px={1} py={0.5}>data-id</Badge>
-                )}
-                {matchingBadgeContributions.map(renderBadgeContribution)}
-                {node.children.length > 0 && (
-                  <Badge variant="outline" colorScheme="gray" fontSize="2xs" px={1} py={0.5} borderRadius="sm">
-                    {node.children.length}
-                  </Badge>
-                )}
-              </HStack>
+              <VStack
+                spacing={0.25}
+                align="stretch"
+                flex={1}
+                minWidth={0}
+                pr={0}
+                py={0}
+              >
+                <HStack spacing={1} align="center" minWidth={0} width="100%">
+                  <HStack
+                    spacing={1}
+                    align="center"
+                    minWidth={0}
+                    flexShrink={1}
+                    flex={1}
+                    onClick={() => onToggleDetails(node.key)}
+                    cursor="pointer"
+                  >
+                    {numberLabel && (
+                      <Text {...textProps} fontWeight="600" fontSize="xs" noOfLines={1} flexShrink={0}>
+                        {numberLabel}
+                      </Text>
+                    )}
+                    <Text {...textProps} fontWeight="600" fontSize="xs" noOfLines={1} flexShrink={1} minWidth={0}>
+                      {node.displayId}
+                    </Text>
+                  </HStack>
+
+                  <HStack spacing={1} align="center" justify="flex-end" flexShrink={0} flexWrap="wrap">
+                    <Badge variant="subtle" colorScheme="gray" fontSize="2xs" px={1.5} py={0.5} borderRadius="sm">
+                      {node.tagName}
+                    </Badge>
+                    {node.isDefs && <Badge colorScheme="purple" fontSize="2xs" px={1} py={0.5}>D</Badge>}
+                    {node.dataElementId && !node.idAttribute && (
+                      <Badge colorScheme="blue" fontSize="2xs" px={1} py={0.5}>data-id</Badge>
+                    )}
+                    {matchingBadgeContributions.map(renderBadgeContribution)}
+                    {node.children.length > 0 && (
+                      <Badge variant="outline" colorScheme="gray" fontSize="2xs" px={1} py={0.5} borderRadius="sm">
+                        {node.children.length}
+                      </Badge>
+                    )}
+                  </HStack>
+                </HStack>
+              </VStack>
             </HStack>
-          </VStack>
-        </HStack>
+          </Box>
 
-        {showDetails && (() => {
+          {showDetails && (() => {
           const showIdSection = fullId && (fullId !== node.displayId || fullId.length >= 13);
           const showDimensions = detailBbox !== null;
           const showPathPoints = pathPointStats !== null;
@@ -632,17 +706,17 @@ export const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
           const hasSectionAboveReferences = hasSectionAbovePathPoints || showPathPoints;
           const hasSectionAboveActions = hasSectionAboveReferences || showReferences;
 
-          return (
-            <VStack
-              spacing={0}
-              align="stretch"
-              pt={hasSectionAboveReferences ? 0.25 : 0}
-              pr={0}
-              pl={2}
-              ml={1}
-              borderLeftWidth="1px"
-              borderColor="border.subtle"
-            >
+            return (
+              <VStack
+                spacing={0}
+                align="stretch"
+                pt={hasSectionAboveReferences ? 0.25 : 0}
+                pr={0}
+                pl={2}
+                ml={1}
+                borderLeftWidth="1px"
+                borderColor="border.subtle"
+              >
               {showIdSection && (
                 <Box width="100%" pb={2}>
                   <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>ID</Text>
@@ -1044,17 +1118,21 @@ export const SvgNodeRow: React.FC<SvgNodeRowProps> = ({
                 {matchingContributions.map(renderContribution)}
               </VStack>
             )}
-            </VStack>
-          );
-        })()}
-      </VStack>
+              </VStack>
+            );
+          })()}
+        </VStack>
+      </Box>
 
       {isExpanded && node.children.length > 0 && (
         <VStack spacing={ROW_SPACING} align="stretch" px={0}>
-          {node.children.map((child) => (
+          {node.children.map((child, index) => (
             <SvgNodeRow
               key={child.key}
               node={child}
+              depth={depth + 1}
+              isLastSibling={index === node.children.length - 1}
+              ancestorHasNextSibling={[...ancestorHasNextSibling, !isLastSibling]}
               expandedKeys={expandedKeys}
               onToggle={onToggle}
               detailExpandedKeys={detailExpandedKeys}

@@ -15,8 +15,13 @@ import { formatToPrecision } from '../../utils/numberUtils';
 import { getReferencedIds } from '../../utils/referenceUtils';
 import type { SvgTreeNode, AnimatedElementSummary, ReferencedElementData } from './svgStructureTypes';
 
-export const ROW_SPACING = 2;
+export const ROW_SPACING = 0;
 export const LAST_OPEN_NODE_KEY = 'svg-structure:last-open-node';
+export const TREE_INDENT_PX = 6;
+export const TREE_GUIDE_WIDTH_PX = 1;
+export const TREE_ROW_TOP_PADDING_PX = 6;
+export const TREE_THUMBNAIL_SIZE_PX = 26;
+export const TREE_CONNECTOR_CENTER_PX = TREE_ROW_TOP_PADDING_PX + (TREE_THUMBNAIL_SIZE_PX / 2);
 
 export const textProps = {
   fontSize: '12px',

@@ -723,6 +723,9 @@ const SvgStructurePanelComponent: React.FC<PanelComponentProps> = ({ panelKey })
           <SvgNodeRow
             key={root.key}
             node={root}
+            depth={0}
+            isLastSibling={true}
+            ancestorHasNextSibling={[]}
             expandedKeys={expandedKeys}
             onToggle={handleToggle}
             detailExpandedKeys={detailExpandedKeys}

@@ -823,7 +823,7 @@ export const AdvancedAnimationStructureContribution: React.FC<SvgStructureContri
               cursor="pointer"
               onClick={() => setShowDetails((open) => !open)}
             >
-              {animationCount} animation{animationCount === 1 ? '' : 's'}
+              {animationCount} ANIM{animationCount === 1 ? '' : 'S'}
             </Badge>
           )}
           {animationCount > 0 && (

@@ -15,7 +15,7 @@ export const StarBurstPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = 
     );
 
     return (
-        <Panel title="Star Burst" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Star Burst" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Rays"
                 value={starBurst?.rays ?? 12}

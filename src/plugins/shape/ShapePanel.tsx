@@ -33,7 +33,7 @@ export const ShapePanel: React.FC<ShapePanelProps> = ({ hideTitle = false }) => 
   };
 
   return (
-    <Panel title="Shape" hideHeader={hideTitle}>
+    <Panel title="Shape" hideHeader={hideTitle} disableExpandedFrame>
       <VStack spacing={3} align="stretch">
         <HStack spacing={1} justify="space-between" w="full">
           {shapes.map((shapeItem) => {

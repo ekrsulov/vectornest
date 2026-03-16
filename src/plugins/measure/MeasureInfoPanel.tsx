@@ -21,7 +21,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
 
   if (!isActive && !(startPoint && endPoint)) {
     return (
-      <Panel title="Measure" hideHeader={hideTitle}>
+      <Panel title="Measure" hideHeader={hideTitle} disableExpandedFrame>
         <VStack spacing={1} align="stretch">
           <Text fontSize="12px" color="gray.500" _dark={{ color: 'gray.500' }} textAlign="left">
             Click and drag to measure
@@ -32,7 +32,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
   }
 
   return (
-    <Panel title="Measure" hideHeader={hideTitle}>
+    <Panel title="Measure" hideHeader={hideTitle} disableExpandedFrame>
       <VStack spacing={0} align="stretch">
 
         {/* Info about coordinates */}

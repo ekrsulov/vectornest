@@ -32,6 +32,7 @@ export const ShapeBuilderPanel: React.FC<ShapeBuilderPanelProps> = ({ hideTitle 
         <Panel 
             title="Shape Builder" 
             hideHeader={hideTitle}
+            disableExpandedFrame
             headerActions={
                 regionsCount > 0 ? (
                     <Tag size="sm" colorScheme="blue" fontSize="xs">

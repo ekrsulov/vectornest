@@ -366,6 +366,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
     <Panel 
       title="Transform"
       hideHeader={hideTitle}
+      disableExpandedFrame
       headerActions={
         <HStack spacing={2}>
           {isSubpathMode && (

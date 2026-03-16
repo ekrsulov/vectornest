@@ -15,7 +15,7 @@ export const CoilToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = f
     );
 
     return (
-        <Panel title="Coil Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Coil Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Coil Radius"
                 value={coilTool?.coilRadius ?? 15}

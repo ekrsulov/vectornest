@@ -15,7 +15,7 @@ export const BridgeToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle =
     );
 
     return (
-        <Panel title="Bridge Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Bridge Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Bridge Width"
                 value={bridgeTool?.bridgeWidth ?? 8}

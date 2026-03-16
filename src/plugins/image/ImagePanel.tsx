@@ -159,7 +159,7 @@ export const ImagePanel: React.FC<ImagePanelProps> = ({ hideTitle = false }) => 
   };
 
   return (
-    <Panel title="Image" hideHeader={hideTitle}>
+    <Panel title="Image" hideHeader={hideTitle} disableExpandedFrame>
       <VStack spacing={2} align="stretch">
         <Box pt={0.5} px={0.5}>
           <Input

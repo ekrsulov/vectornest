@@ -25,7 +25,6 @@ export const wrap3dPlugin: PluginDefinition<CanvasStore> = {
     disablePathInteraction: true,
   },
   behaviorFlags: () => ({
-    hideSelectionOverlay: true,
   }),
   modeConfig: {
     description: '3D surface projection tool for wrapping paths onto various 3D shapes with rotation controls.',

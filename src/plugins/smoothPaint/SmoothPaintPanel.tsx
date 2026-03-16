@@ -16,7 +16,7 @@ export const SmoothPaintPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle 
     if (!smoothPaint) return null;
 
     return (
-        <Panel title="Smooth Paint" hideHeader={hideTitle} isCollapsible defaultOpen>
+        <Panel title="Smooth Paint" hideHeader={hideTitle} isCollapsible defaultOpen disableExpandedFrame>
             <SliderControl
                 label="Brush Radius"
                 value={smoothPaint.brushRadius}

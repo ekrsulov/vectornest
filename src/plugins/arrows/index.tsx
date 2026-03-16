@@ -333,7 +333,6 @@ export const arrowsPlugin: PluginDefinition<CanvasStore> = {
   toolDefinition: { order: 25, visibility: 'always-shown', toolGroup: 'advanced' },
   behaviorFlags: () => ({
     usesMeasureSnap: true, // Use same snap system as measure
-    hideSelectionOverlay: true,
     getSnapOverlayConfig: getArrowsSnapOverlayConfig,
   }),
 

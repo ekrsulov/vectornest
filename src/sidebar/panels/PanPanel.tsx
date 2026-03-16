@@ -49,6 +49,7 @@ export const PanPanel: React.FC = () => {
   return (
     <Panel 
       title="Pan"
+      disableExpandedFrame
       headerActions={
         <ChakraTag size="sm" colorScheme="gray" fontSize="xs">
           {panX}, {panY}

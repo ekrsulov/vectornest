@@ -457,7 +457,7 @@ const Wrap3DPanelComponent: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = f
 
   if (!canApply && !isActive) {
     return (
-      <Panel title="Wrap 3D" hideHeader={hideTitle}>
+      <Panel title="Wrap 3D" hideHeader={hideTitle} disableExpandedFrame>
         <VStack align="stretch" spacing={2}>
           <Text fontSize="12px" color={labelColor} textAlign="center">
             Select paths, groups, or a mix to use Wrap 3D
@@ -477,6 +477,7 @@ const Wrap3DPanelComponent: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = f
   return (
     <Panel
       title="Wrap 3D"
+      disableExpandedFrame
       headerActions={
         <HStack spacing={1}>
           <PanelStyledButton

@@ -13,7 +13,7 @@ export const PathWeldPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = f
     );
 
     return (
-        <Panel title="Path Weld" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Path Weld" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Weld Width"
                 value={pathWeld?.weldWidth ?? 4}

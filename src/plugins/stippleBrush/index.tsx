@@ -26,7 +26,6 @@ export const stippleBrushPlugin: PluginDefinition<CanvasStore> = {
     },
     behaviorFlags: () => ({
         preventsSelection: true,
-        hideSelectionOverlay: true,
         hideSelectionBbox: true,
     }),
     modeConfig: {

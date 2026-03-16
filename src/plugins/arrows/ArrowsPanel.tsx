@@ -164,7 +164,7 @@ export const ArrowsPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = fal
   };
 
   return (
-    <Panel title={hideTitle ? undefined : 'Arrows'}>
+    <Panel title={hideTitle ? undefined : 'Arrows'} disableExpandedFrame>
       <VStack spacing={1} align="stretch">
         {/* Presets - compact row */}
         <HStack spacing={1} flexWrap="wrap">

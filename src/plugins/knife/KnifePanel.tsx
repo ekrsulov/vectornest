@@ -14,7 +14,7 @@ export const KnifePanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = fals
     );
 
     return (
-        <Panel title="Knife Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Knife Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <RenderCountBadgeWrapper componentName="KnifePanel" position="top-left" />
             <SliderControl
                 label="Cut Width"

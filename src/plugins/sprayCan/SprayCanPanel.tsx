@@ -13,7 +13,7 @@ export const SprayCanPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = f
     );
 
     return (
-        <Panel title="Spray Can" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Spray Can" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Spray Radius"
                 value={sprayCan?.sprayRadius ?? 40}

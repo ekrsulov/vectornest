@@ -13,7 +13,7 @@ export const ScallopToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle 
     );
 
     return (
-        <Panel title="Scallop Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Scallop Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Brush Radius"
                 value={scallopTool?.brushRadius ?? 30}

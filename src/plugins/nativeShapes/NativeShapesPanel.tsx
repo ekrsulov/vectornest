@@ -87,7 +87,7 @@ export const NativeShapesPanel: React.FC<NativeShapesPanelProps> = ({ hideTitle 
   };
 
   return (
-    <Panel title="Native Shapes" hideHeader={hideTitle}>
+    <Panel title="Native Shapes" hideHeader={hideTitle} disableExpandedFrame>
       <VStack spacing={2} align="stretch">
         <HStack spacing={1} justify="space-between">
           {[

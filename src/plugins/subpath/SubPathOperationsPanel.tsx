@@ -24,7 +24,7 @@ const SubPathOperationsPanelComponent: React.FC = () => {
   };
 
   return (
-    <Panel title="SubPath Operations">
+    <Panel title="SubPath Operations" disableExpandedFrame>
       {selectedSubpathsCount === 1 && (
         <PanelStyledButton
           aria-label="Reverse subpath direction"

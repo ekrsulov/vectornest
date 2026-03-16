@@ -15,7 +15,7 @@ export const ZigzagToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle =
     );
 
     return (
-        <Panel title="Zigzag Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Zigzag Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SectionHeader title="Wave Style" />
             <JoinedButtonGroup
                 options={[

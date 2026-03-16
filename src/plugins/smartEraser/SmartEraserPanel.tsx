@@ -14,7 +14,7 @@ export const SmartEraserPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle 
     );
 
     return (
-        <Panel title="Smart Eraser" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Smart Eraser" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <RenderCountBadgeWrapper componentName="SmartEraserPanel" position="top-left" />
             <SliderControl
                 label="Eraser Size"

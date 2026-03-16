@@ -102,7 +102,7 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
     );
 
     return (
-        <Panel title="Pen Tool" hideHeader={hideTitle} headerActions={modeBadge}>
+        <Panel title="Pen Tool" hideHeader={hideTitle} headerActions={modeBadge} disableExpandedFrame>
             <VStack spacing={0} align="stretch">
                 {/* Tool Preferences */}
                 <VStack spacing={1} align="stretch">

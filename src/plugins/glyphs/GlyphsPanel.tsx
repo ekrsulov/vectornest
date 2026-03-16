@@ -82,7 +82,7 @@ export const GlyphsPanel: React.FC = () => {
 
   if (!target) {
     return (
-      <Panel title="Glyphs" isCollapsible defaultOpen>
+      <Panel title="Glyphs" isCollapsible defaultOpen disableExpandedFrame>
         <Text fontSize="xs" color="gray.500" px={2} py={3}>
           Select a text or text path element to edit individual glyphs.
         </Text>
@@ -91,7 +91,7 @@ export const GlyphsPanel: React.FC = () => {
   }
 
   return (
-    <Panel title="Glyphs" isCollapsible defaultOpen>
+    <Panel title="Glyphs" isCollapsible defaultOpen disableExpandedFrame>
       <VStack gap={2} align="stretch" px={1}>
         <PanelToggle
           isChecked={showLabels}

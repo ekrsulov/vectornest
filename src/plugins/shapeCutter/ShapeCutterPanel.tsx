@@ -14,7 +14,7 @@ export const ShapeCutterPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle 
     );
 
     return (
-        <Panel title="Shape Cutter" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Shape Cutter" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SectionHeader title="Mode" />
             <JoinedButtonGroup
                 options={[

@@ -19,7 +19,7 @@ export const PencilPanel: React.FC<PencilPanelProps> = ({ hideTitle = false }) =
   const currentMode = (pencil?.reusePath ?? false) ? 'add' : 'new';
 
   return (
-    <Panel title="Pencil" hideHeader={hideTitle}>
+    <Panel title="Pencil" hideHeader={hideTitle} disableExpandedFrame>
       <VStack spacing={1} align="stretch" pb={0.5}>
         {/* Path Mode Selection */}
         <HStack spacing={1} justify="space-between">

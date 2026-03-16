@@ -13,7 +13,7 @@ export const RoughenToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle 
     );
 
     return (
-        <Panel title="Roughen Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Roughen Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Brush Radius"
                 value={roughenTool?.roughenRadius ?? 30}

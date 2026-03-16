@@ -13,7 +13,7 @@ export const CornerRounderPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitl
     );
 
     return (
-        <Panel title="Corner Rounder" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Corner Rounder" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Round Radius"
                 value={cornerRounder?.roundRadius ?? 10}

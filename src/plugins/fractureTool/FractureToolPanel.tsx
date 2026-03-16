@@ -15,7 +15,7 @@ export const FractureToolPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle
     );
 
     return (
-        <Panel title="Fracture Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Fracture Tool" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Pieces"
                 value={fractureTool?.numPieces ?? 6}

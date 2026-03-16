@@ -14,7 +14,7 @@ export const BlobBrushPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = 
     );
 
     return (
-        <Panel title="Blob Brush" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Blob Brush" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <RenderCountBadgeWrapper componentName="BlobBrushPanel" position="top-left" />
             <SliderControl
                 label="Brush Size"

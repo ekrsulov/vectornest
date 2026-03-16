@@ -63,7 +63,7 @@ export const TextPanel: React.FC<TextPanelProps> = ({ hideTitle = false }) => {
   };
 
   return (
-    <Panel title="Text" hideHeader={hideTitle}>
+    <Panel title="Text" hideHeader={hideTitle} disableExpandedFrame>
       <VStack spacing={2} align="stretch" p={0.5}>
         {/* Font Selector */}
         <FontSelector

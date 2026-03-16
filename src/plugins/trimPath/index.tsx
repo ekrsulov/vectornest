@@ -30,7 +30,6 @@ export const trimPathPlugin: PluginDefinition<CanvasStore> = {
     disablePathInteraction: true,
   },
   behaviorFlags: () => ({
-    hideIndividualSelectionOverlays: true,
     notifyOnSelectionChange: true,
   }),
   toolDefinition: {

@@ -211,7 +211,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
   if (!nativeText || !setNativeTextSettings) return null;
 
   return (
-    <Panel title="Native Text" hideHeader={hideTitle}>
+    <Panel title="Native Text" hideHeader={hideTitle} disableExpandedFrame>
       <VStack spacing={1} align="stretch" pt={0.5}>
         {!hasSelectedPath && (
           <>

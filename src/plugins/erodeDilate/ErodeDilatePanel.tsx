@@ -15,7 +15,7 @@ export const ErodeDilatePanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle 
     );
 
     return (
-        <Panel title="Erode / Dilate" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Erode / Dilate" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SectionHeader title="Mode" />
             <JoinedButtonGroup
                 options={[

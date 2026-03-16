@@ -13,7 +13,7 @@ export const StampBrushPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle =
     );
 
     return (
-        <Panel title="Stamp Brush" hideHeader={hideTitle} isCollapsible defaultOpen={true}>
+        <Panel title="Stamp Brush" hideHeader={hideTitle} isCollapsible defaultOpen={true} disableExpandedFrame>
             <SliderControl
                 label="Spacing"
                 value={stampBrush?.spacing ?? 40}

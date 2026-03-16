@@ -26,7 +26,6 @@ export const coilToolPlugin: PluginDefinition<CanvasStore> = {
     },
     behaviorFlags: () => ({
         preventsSelection: true,
-        hideSelectionOverlay: true,
         hideSelectionBbox: true,
     }),
     modeConfig: {

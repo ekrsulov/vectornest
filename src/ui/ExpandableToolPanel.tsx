@@ -154,11 +154,18 @@ export const ExpandableToolPanel: React.FC = () => {
             borderTop="none"
             px={2}
             pb={2}
-            boxShadow="0 -2px 8px rgba(0, 0, 0, 0.1)"
+            boxShadow="none"
             w="250px"
             minW="250px"
             maxW="250px"
             overflow="hidden"
+            sx={{
+              '& [data-panel-open="true"]::before': {
+                boxShadow: 'none !important',
+                opacity: '0 !important',
+                animation: 'none !important',
+              },
+            }}
           >
             <Suspense fallback={<Box py={4} />}>
               <PanelComponent />

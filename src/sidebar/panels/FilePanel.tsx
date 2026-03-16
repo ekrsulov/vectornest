@@ -163,7 +163,7 @@ export const FilePanel: React.FC = () => {
   };
 
   return (
-    <Panel>
+    <Panel disableExpandedFrame>
       <VStack spacing={2} align="stretch">
         <Box>
           <Text
@@ -178,7 +178,7 @@ export const FilePanel: React.FC = () => {
           </Text>
 
           {/* Name inline row */}
-          <HStack spacing={1.5} pb={1.5} align="center">
+          <HStack spacing={1.5} align="center">
             <Text
               fontSize="12px"
               color="gray.600"
@@ -204,7 +204,7 @@ export const FilePanel: React.FC = () => {
             )}
           </HStack>
 
-          <Box pr={0.5} pb={1}>
+          <Box pr={0.5}>
             <SliderControl
               label="Padding"
               labelWidth="56px"
@@ -217,7 +217,7 @@ export const FilePanel: React.FC = () => {
             />
           </Box>
 
-          <Box pr={0.5} pb={1}>
+          <Box pr={0.5}>
             <SliderControl
               label="Precision"
               labelWidth="56px"
@@ -230,44 +230,48 @@ export const FilePanel: React.FC = () => {
             />
           </Box>
 
-          <Flex justify="space-between" align="center" pb={1.5}>
-            <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
-              Theme
-            </Text>
-            <JoinedButtonGroup<ExportTheme>
-              options={[
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' },
-              ]}
-              value={settings.exportTheme}
-              onChange={(value) => updateSettings({ exportTheme: value })}
-              size="sm"
-              disableTooltips
-            />
-          </Flex>
+          <Box>
+            <Flex justify="space-between" align="center" h="24px">
+              <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                Theme
+              </Text>
+              <JoinedButtonGroup<ExportTheme>
+                options={[
+                  { value: 'light', label: 'Light' },
+                  { value: 'dark', label: 'Dark' },
+                ]}
+                value={settings.exportTheme}
+                onChange={(value) => updateSettings({ exportTheme: value })}
+                size="sm"
+                disableTooltips
+              />
+            </Flex>
+          </Box>
 
-          <Flex justify="space-between" align="center" pb={2}>
-            <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
-              Selected
-            </Text>
-            <PanelSwitch
-              isChecked={saveSelectedOnly}
-              onChange={(event) => setSaveSelectedOnly(event.target.checked)}
-              title="Selected Only"
-              aria-label="Selected Only"
-            />
-          </Flex>
+          <Box>
+            <Flex justify="space-between" align="center" h="24px">
+              <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                Selected
+              </Text>
+              <PanelSwitch
+                isChecked={saveSelectedOnly}
+                onChange={(event) => setSaveSelectedOnly(event.target.checked)}
+                title="Selected Only"
+                aria-label="Selected Only"
+              />
+            </Flex>
+          </Box>
 
-          <HStack spacing={1} pb={1.5}>
-            <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm" h="44px" fontSize="12px">
-              <HStack spacing={1.5}>
-                <Download size={14} />
+          <HStack spacing={1} pb={0.5}>
+            <PanelStyledButton onClick={handleSaveAsSvg} flex={1} size="sm" h="30px" fontSize="12px">
+              <HStack spacing={1.25}>
+                <Download size={13} />
                 <Text as="span" fontSize="12px" fontWeight="semibold">SVG</Text>
               </HStack>
             </PanelStyledButton>
-            <PanelStyledButton onClick={handleSaveAsPng} flex={1} size="sm" h="44px" fontSize="12px">
-              <HStack spacing={1.5}>
-                <Download size={14} />
+            <PanelStyledButton onClick={handleSaveAsPng} flex={1} size="sm" h="30px" fontSize="12px">
+              <HStack spacing={1.25}>
+                <Download size={13} />
                 <Text as="span" fontSize="12px" fontWeight="semibold">PNG</Text>
               </HStack>
             </PanelStyledButton>
@@ -303,9 +307,9 @@ export const FilePanel: React.FC = () => {
             onSwapColorsChange={setSwapColors}
           />
 
-          <PanelStyledButton onClick={handleImportSVG} width="full" size="sm" h="44px" fontSize="12px">
-            <HStack spacing={1.5}>
-              <Upload size={14} />
+          <PanelStyledButton onClick={handleImportSVG} width="full" size="sm" h="30px" fontSize="12px">
+            <HStack spacing={1.25}>
+              <Upload size={13} />
               <Text as="span" fontSize="12px" fontWeight="semibold">Import SVG</Text>
             </HStack>
           </PanelStyledButton>
@@ -331,9 +335,9 @@ export const FilePanel: React.FC = () => {
             Source
           </Text>
 
-          <PanelStyledButton onClick={handleOpenSourceDialog} width="full" size="sm" h="44px" fontSize="12px">
-            <HStack spacing={1.5}>
-              <FileCode size={14} />
+          <PanelStyledButton onClick={handleOpenSourceDialog} width="full" size="sm" h="30px" fontSize="12px">
+            <HStack spacing={1.25}>
+              <FileCode size={13} />
               <Text as="span" fontSize="12px" fontWeight="semibold">View SVG</Text>
             </HStack>
           </PanelStyledButton>
@@ -352,11 +356,11 @@ export const FilePanel: React.FC = () => {
             </Text>
 
             <HStack spacing={1}>
-              <PanelStyledButton onClick={handleSave} flex={1} size="sm">
-                Save
+              <PanelStyledButton onClick={handleSave} flex={1} size="sm" h="30px" >
+                <Text as="span" fontSize="12px" fontWeight="semibold">Save</Text>
               </PanelStyledButton>
-              <PanelStyledButton onClick={handleLoad} flex={1} size="sm">
-                Load
+              <PanelStyledButton onClick={handleLoad} flex={1} size="sm" h="30px" >
+                <Text as="span" fontSize="12px" fontWeight="semibold">Load</Text>
               </PanelStyledButton>
             </HStack>
           </Box>

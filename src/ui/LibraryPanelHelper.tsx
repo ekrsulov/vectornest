@@ -110,7 +110,7 @@ export function LibraryPanelHelper<T extends LibraryItem>(props: LibraryPanelHel
     const dividerColor = useColorModeValue('gray.200', 'gray.600');
 
     return (
-        <Panel title={title} isCollapsible defaultOpen={initialOpen} panelKey={`sidebar:library:${title.toLowerCase().replace(/\s+/g, '-')}`}>
+        <Panel title={title} isCollapsible defaultOpen={initialOpen} disableExpandedFrame panelKey={`sidebar:library:${title.toLowerCase().replace(/\s+/g, '-')}`}>
             <VStack spacing={1.5} align="stretch">
                 {/* Library Header Section */}
                 <LibrarySectionHeader

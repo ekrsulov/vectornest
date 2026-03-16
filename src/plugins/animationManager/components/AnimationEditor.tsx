@@ -182,7 +182,7 @@ export const AnimationEditor: React.FC = () => {
 
   if (editorMode === 'idle') {
     return (
-      <Panel title="Editor" isCollapsible defaultOpen>
+      <Panel title="Editor" isCollapsible defaultOpen disableExpandedFrame>
         <Text fontSize="11px" color="gray.500" px={2} py={3} textAlign="center">
           Select an animation to edit, or click + to create one
         </Text>
@@ -194,7 +194,7 @@ export const AnimationEditor: React.FC = () => {
 
   if (editorMode === 'creating') {
     return (
-      <Panel title="New Animation" isCollapsible defaultOpen>
+      <Panel title="New Animation" isCollapsible defaultOpen disableExpandedFrame>
         <VStack spacing={2} align="stretch" px={1}>
           <CustomSelect
             value={draftType}
@@ -262,7 +262,7 @@ export const AnimationEditor: React.FC = () => {
 
   if (!selectedAnimation) {
     return (
-      <Panel title="Editor" isCollapsible defaultOpen>
+      <Panel title="Editor" isCollapsible defaultOpen disableExpandedFrame>
         <Text fontSize="11px" color="gray.500" px={2} py={3} textAlign="center">
           Animation not found
         </Text>
@@ -271,7 +271,7 @@ export const AnimationEditor: React.FC = () => {
   }
 
   return (
-    <Panel title="Editor" isCollapsible defaultOpen>
+    <Panel title="Editor" isCollapsible defaultOpen disableExpandedFrame>
       <Box pb={1}>
         <AnimationCard
           animation={selectedAnimation}

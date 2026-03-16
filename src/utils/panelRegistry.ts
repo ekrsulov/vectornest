@@ -128,6 +128,7 @@ export const panelRegistry = new PanelRegistry();
 
 import { FilePanel } from '../sidebar/panels/FilePanel';
 import { SettingsPanel } from '../sidebar/panels/SettingsPanel';
+import { SettingsConfigurationPanel } from '../sidebar/panels/SettingsConfigurationPanel';
 import { SnapPointsPanel } from '../sidebar/panels/SnapPointsPanel';
 
 /**
@@ -146,7 +147,14 @@ const CORE_PANELS: PanelConfig[] = [
     component: SettingsPanel,
   },
   {
+    key: 'configuration',
+    settingsTitle: 'Configuration',
+    condition: (ctx) => ctx.showSettingsPanel,
+    component: SettingsConfigurationPanel,
+  },
+  {
     key: 'snap-points',
+    settingsTitle: 'Snap Points',
     condition: (ctx) => ctx.showSettingsPanel,
     component: SnapPointsPanel,
   },

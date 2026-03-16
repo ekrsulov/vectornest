@@ -523,7 +523,7 @@ export const IconifyLibraryPanel: React.FC = () => {
   ]);
 
   return (
-    <Panel title="Iconify" defaultOpen={false} panelKey="sidebar:library:iconify">
+    <Panel title="Iconify" defaultOpen={false} disableExpandedFrame panelKey="sidebar:library:iconify">
       <VStack spacing={2} align="stretch">
         <LibrarySectionHeader
           title="Find"

@@ -500,31 +500,27 @@ export const ControlPointAlignmentPanel: React.FC = () => {
           {/* Always visible Position controls */}
           {singlePointInfo && (
             <VStack spacing={0} align="stretch">
-              <HStack spacing={2}>
-                <Box flex={1}>
-                  <NumberInput
-                    label="X"
-                    value={formatToPrecision(singlePointInfo.point.x, settings.keyboardMovementPrecision)}
-                    onChange={(value) => handlePositionChange('x', value)}
-                    step={0.1}
-                    labelWidth="20px"
-                    inputWidth="100%"
-                  />
-                </Box>
-                <Box flex={1}>
-                  <NumberInput
-                    label="Y"
-                    value={formatToPrecision(singlePointInfo.point.y, settings.keyboardMovementPrecision)}
-                    onChange={(value) => handlePositionChange('y', value)}
-                    step={0.1}
-                    labelWidth="20px"
-                    inputWidth="100%"
-                  />
-                </Box>
-              </HStack>
-              <Text fontSize="xs" color="text.muted">
+              <Text>
                 Command {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}
               </Text>
+              <HStack spacing={2}>
+                <NumberInput
+                  label="X"
+                  value={formatToPrecision(singlePointInfo.point.x, settings.keyboardMovementPrecision)}
+                  onChange={(value) => handlePositionChange('x', value)}
+                  step={0.1}
+                  labelWidth="14px"
+                  inputWidth="100%"
+                />
+                <NumberInput
+                  label="Y"
+                  value={formatToPrecision(singlePointInfo.point.y, settings.keyboardMovementPrecision)}
+                  onChange={(value) => handlePositionChange('y', value)}
+                  step={0.1}
+                  labelWidth="14px"
+                  inputWidth="100%"
+                />
+              </HStack>
             </VStack>
           )}
 
@@ -538,7 +534,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   <PanelStyledButton
                     onClick={() => deleteZCommandForMPoint?.(selectedCmd.elementId, selectedCmd.commandIndex)}
                     size="xs"
-                    fontSize="12px"
                     w="full"
                     title="Delete the Z command that closes this path"
                   >
@@ -547,7 +542,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   <PanelStyledButton
                     onClick={() => convertZToLineForMPoint?.(selectedCmd.elementId, selectedCmd.commandIndex)}
                     size="xs"
-                    fontSize="12px"
                     w="full"
                     title="Convert the Z command to a line command"
                   >
@@ -561,7 +555,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   <PanelStyledButton
                     onClick={() => moveToM?.(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex)}
                     size="xs"
-                    fontSize="12px"
                     w="full"
                     title="Move this point to start a new subpath"
                   >
@@ -575,7 +568,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   <PanelStyledButton
                     onClick={() => addZCommandToSubpath?.(selectedCmd.elementId, selectedCmd.commandIndex)}
                     size="xs"
-                    fontSize="12px"
                     w="full"
                     title="Add Z command to close this subpath"
                   >
@@ -586,7 +578,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                 <PanelStyledButton
                   onClick={() => convertCommandType?.(selectedCmd.elementId, selectedCmd.commandIndex)}
                   size="xs"
-                  fontSize="12px"
                   w="full"
                   title={`Change to ${singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}`}
                 >
@@ -598,7 +589,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   <PanelStyledButton
                     onClick={() => cutSubpathAtPoint?.(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex)}
                     size="xs"
-                    fontSize="12px"
                     w="full"
                     title="Cut the subpath at this point, creating two separate subpaths"
                   >

@@ -144,7 +144,7 @@ export const BatchActions: React.FC = () => {
   };
 
   return (
-    <Panel title="Batch Actions" isCollapsible defaultOpen>
+    <Panel title="Batch Actions" isCollapsible defaultOpen disableExpandedFrame>
       <VStack spacing={2} align="stretch">
         <Text fontSize="10px" color="gray.500">
           {selectedIds.length} elements selected •{' '}

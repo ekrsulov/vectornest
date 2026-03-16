@@ -228,7 +228,7 @@ export const PresetCatalog: React.FC = () => {
   const hasMore = filteredPresets.length > showCount;
 
   return (
-    <Panel title="Presets" isCollapsible defaultOpen={false}>
+    <Panel title="Presets" isCollapsible defaultOpen={false} disableExpandedFrame>
       <VStack spacing={2} align="stretch">
         {/* Search */}
         <PanelTextInput

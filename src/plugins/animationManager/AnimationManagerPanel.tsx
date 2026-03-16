@@ -245,7 +245,7 @@ const AnimationManagerPanelComponent: React.FC = () => {
   // Empty state when nothing selected
   if (selectedIds.length === 0) {
     return (
-      <Panel title="Animation Manager" isCollapsible defaultOpen>
+      <Panel title="Animation Manager" isCollapsible defaultOpen disableExpandedFrame>
         <Box px={2} py={4} textAlign="center">
           <Text fontSize="11px" color="gray.500">
             Select one or more elements to manage their animations.
@@ -263,6 +263,7 @@ const AnimationManagerPanelComponent: React.FC = () => {
           title="Animation Manager"
           isCollapsible
           defaultOpen
+          disableExpandedFrame
           headerActions={
             <PlaybackControlsContainer />
           }

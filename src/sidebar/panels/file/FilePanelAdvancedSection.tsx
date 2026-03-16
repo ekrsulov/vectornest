@@ -1,7 +1,7 @@
 import React from 'react';
-import { VStack } from '@chakra-ui/react';
-import { PanelToggle } from '../../../ui/PanelToggle';
+import { Flex, Text, VStack } from '@chakra-ui/react';
 import { NumberInput } from '../../../ui/NumberInput';
+import { PanelSwitch } from '../../../ui/PanelSwitch';
 
 interface FilePanelImportOptionsProps {
   appendToExisting: boolean;
@@ -36,41 +36,66 @@ export const FilePanelImportOptions: React.FC<FilePanelImportOptionsProps> = ({
   swapColors,
   onSwapColorsChange,
 }) => (
-  <VStack spacing={2} align="stretch" pt={0.5} pb={2}>
-    <PanelToggle
-      isChecked={appendToExisting}
-      onChange={(event) => onAppendToExistingChange(event.target.checked)}
-    >
-      Append
-    </PanelToggle>
+  <VStack spacing={0.5} align="stretch" pt={0.5}>
+    <Flex justify="space-between" align="center" h="24px">
+      <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+        Append
+      </Text>
+      <PanelSwitch
+        isChecked={appendToExisting}
+        onChange={(event) => onAppendToExistingChange(event.target.checked)}
+        title="Append to existing"
+        aria-label="Append to existing"
+      />
+    </Flex>
 
-    <PanelToggle
-      isChecked={addFrame}
-      onChange={(event) => onAddFrameChange(event.target.checked)}
-    >
-      Add frame
-    </PanelToggle>
+    <Flex justify="space-between" align="center" h="24px">
+      <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+        Add frame
+      </Text>
+      <PanelSwitch
+        isChecked={addFrame}
+        onChange={(event) => onAddFrameChange(event.target.checked)}
+        title="Add frame"
+        aria-label="Add frame"
+      />
+    </Flex>
 
-    <PanelToggle
-      isChecked={applyUnion}
-      onChange={(event) => onApplyUnionChange(event.target.checked)}
-    >
-      Union Paths
-    </PanelToggle>
+    <Flex justify="space-between" align="center" h="24px">
+      <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+        Union Paths
+      </Text>
+      <PanelSwitch
+        isChecked={applyUnion}
+        onChange={(event) => onApplyUnionChange(event.target.checked)}
+        title="Union paths"
+        aria-label="Union paths"
+      />
+    </Flex>
 
-    <PanelToggle
-      isChecked={swapColors}
-      onChange={(event) => onSwapColorsChange(event.target.checked)}
-    >
-      Swap black/white
-    </PanelToggle>
+    <Flex justify="space-between" align="center" h="24px">
+      <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+        Swap black/white
+      </Text>
+      <PanelSwitch
+        isChecked={swapColors}
+        onChange={(event) => onSwapColorsChange(event.target.checked)}
+        title="Swap black and white"
+        aria-label="Swap black and white"
+      />
+    </Flex>
 
-    <PanelToggle
-      isChecked={resizeImport}
-      onChange={(event) => onResizeImportChange(event.target.checked)}
-    >
-      Resize SVG
-    </PanelToggle>
+    <Flex justify="space-between" align="center" h="24px">
+      <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+        Resize SVG
+      </Text>
+      <PanelSwitch
+        isChecked={resizeImport}
+        onChange={(event) => onResizeImportChange(event.target.checked)}
+        title="Resize SVG"
+        aria-label="Resize SVG"
+      />
+    </Flex>
 
     {resizeImport && (
       <VStack spacing={1} align="stretch">

@@ -100,7 +100,12 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
 
       {/* Header Actions */}
       {actions && (
-        <Box mr={isCollapsible ? 1 : 0}>
+        <Box
+          mr={isCollapsible ? 1 : 0}
+          display="flex"
+          alignItems="center"
+          alignSelf="stretch"
+        >
           {actions}
         </Box>
       )}

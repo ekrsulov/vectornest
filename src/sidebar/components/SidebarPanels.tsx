@@ -62,7 +62,6 @@ const preloadLazyPanelComponent = async (component: PanelConfig['component']): P
 
 const getSettingsPanelSortGroup = (panelConfig: { key: string }): number => {
   if (panelConfig.key === 'settings') return 0;
-  if (panelConfig.key === 'snap-points') return 1;
   if (panelConfig.key === 'documentation') return 3;
   return 2;
 };

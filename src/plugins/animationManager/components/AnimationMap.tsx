@@ -354,6 +354,7 @@ export const AnimationMap: React.FC = () => {
         title="Animation Map"
         isCollapsible
         defaultOpen
+        disableExpandedFrame
       >
         <Text fontSize="11px" color="gray.500" px={2} py={3} textAlign="center">
           Select elements to see their animations
@@ -367,6 +368,7 @@ export const AnimationMap: React.FC = () => {
       title="Animation Map"
       isCollapsible
       defaultOpen
+      disableExpandedFrame
       headerActions={
         <HStack spacing={2}>
           {totalAnimCount > 0 && (

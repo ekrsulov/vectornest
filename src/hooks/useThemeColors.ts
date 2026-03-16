@@ -47,6 +47,14 @@ export function useThemeColors() {
       titleColor: 'text.primary',
     },
 
+    // Shared panel container colors
+    panelContainer: {
+      openFrameBorder: isDark ? 'whiteAlpha.200' : 'blackAlpha.200',
+      openFrameShadow: isDark
+        ? '0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 18px 3px rgba(255, 255, 255, 0.12), 0 0 34px -4px rgba(255, 255, 255, 0.08), 0 0 42px -10px rgba(0, 0, 0, 0.82)'
+        : '0 0 0 1px rgba(255, 255, 255, 0.84), 0 0 12px 1px rgba(15, 23, 42, 0.08), 0 0 24px -6px rgba(15, 23, 42, 0.16)',
+    },
+
     // Counter badge colors (toolbar buttons)
     counter: {
       neutral: {

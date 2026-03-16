@@ -41,35 +41,35 @@ export const FilePanelImportOptions: React.FC<FilePanelImportOptionsProps> = ({
       isChecked={appendToExisting}
       onChange={(event) => onAppendToExistingChange(event.target.checked)}
     >
-      Append to existing
+      Append
     </PanelToggle>
 
     <PanelToggle
       isChecked={addFrame}
       onChange={(event) => onAddFrameChange(event.target.checked)}
     >
-      Add frame to imported SVG
+      Add frame
     </PanelToggle>
 
     <PanelToggle
       isChecked={applyUnion}
       onChange={(event) => onApplyUnionChange(event.target.checked)}
     >
-      Apply union to imported paths
+      Union Paths
     </PanelToggle>
 
     <PanelToggle
       isChecked={swapColors}
       onChange={(event) => onSwapColorsChange(event.target.checked)}
     >
-      Swap black/white colors for theme
+      Swap black/white
     </PanelToggle>
 
     <PanelToggle
       isChecked={resizeImport}
       onChange={(event) => onResizeImportChange(event.target.checked)}
     >
-      Resize imported SVG
+      Resize SVG
     </PanelToggle>
 
     {resizeImport && (

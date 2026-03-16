@@ -178,12 +178,13 @@ export const FilePanel: React.FC = () => {
           </Text>
 
           {/* Name inline row */}
-          <HStack spacing={1.5} pb={0.5} align="center">
+          <HStack spacing={1.5} pb={1.5} align="center">
             <Text
               fontSize="12px"
               color="gray.600"
               _dark={{ color: 'gray.400' }}
               flexShrink={0}
+              w="56px"
             >
               Name
             </Text>
@@ -192,7 +193,7 @@ export const FilePanel: React.FC = () => {
                 value={localDocumentName}
                 onChange={handleDocumentNameChange}
                 placeholder="Document name"
-                width="190px"
+                width="168px"
                 height="20px"
               />
             </Box>
@@ -205,7 +206,8 @@ export const FilePanel: React.FC = () => {
 
           <Box pr={0.5} pb={1}>
             <SliderControl
-              label="Export Padding"
+              label="Padding"
+              labelWidth="56px"
               value={settings.exportPadding}
               min={0}
               max={100}
@@ -218,9 +220,10 @@ export const FilePanel: React.FC = () => {
           <Box pr={0.5} pb={1}>
             <SliderControl
               label="Precision"
+              labelWidth="56px"
               value={settings.exportPrecision}
               min={0}
-              max={6}
+              max={4}
               step={1}
               onChange={(value) => updateSettings({ exportPrecision: value })}
               title="Number of decimal places for numeric values in exported SVG"
@@ -229,7 +232,7 @@ export const FilePanel: React.FC = () => {
 
           <Flex justify="space-between" align="center" pb={1.5}>
             <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
-              Export Theme
+              Theme
             </Text>
             <JoinedButtonGroup<ExportTheme>
               options={[
@@ -243,15 +246,15 @@ export const FilePanel: React.FC = () => {
             />
           </Flex>
 
-          <Flex justify="space-between" align="center" pb={1.5}>
+          <Flex justify="space-between" align="center" pb={2}>
             <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
-              Save selected elements only
+              Selected
             </Text>
             <PanelSwitch
               isChecked={saveSelectedOnly}
               onChange={(event) => setSaveSelectedOnly(event.target.checked)}
-              title="Save selected elements only"
-              aria-label="Save selected elements only"
+              title="Selected Only"
+              aria-label="Selected Only"
             />
           </Flex>
 

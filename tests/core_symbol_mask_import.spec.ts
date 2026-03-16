@@ -349,6 +349,50 @@ const viewportlessPatternMaskSymbolSvg = `<svg xmlns="http://www.w3.org/2000/svg
   </text>
 </svg>`;
 
+const symbolTextPathSvg = `<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff00a0" />
+      <stop offset="100%" stop-color="#0a00ff" />
+    </radialGradient>
+    <pattern id="p" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="20" height="40" fill="url(#g)" />
+      <circle cx="20" cy="20" r="15" fill="#fff" opacity="0.3">
+        <animate attributeName="r" values="2;18;2" dur="3s" repeatCount="indefinite" />
+      </circle>
+    </pattern>
+    <filter id="f" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise">
+        <animate attributeName="baseFrequency" values="0.01;0.05;0.01" dur="8s" repeatCount="indefinite" />
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="35" xChannelSelector="R" yChannelSelector="G" />
+      <feDropShadow dx="8" dy="8" stdDeviation="5" flood-color="#0ff" />
+    </filter>
+    <clipPath id="c">
+      <circle cx="300" cy="300" r="280">
+        <animate attributeName="r" values="280;150;280" dur="5s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
+      </circle>
+    </clipPath>
+    <mask id="m">
+      <rect width="100%" height="100%" fill="#fff" />
+      <path d="M 300 50 L 550 500 L 50 500 Z" fill="#000">
+        <animateTransform attributeName="transform" type="rotate" values="0 300 350; 360 300 350" dur="4s" repeatCount="indefinite" />
+      </path>
+    </mask>
+    <path id="tp" d="M 150 300 A 150 150 0 1 1 450 300 A 150 150 0 1 1 150 300 Z" />
+    <symbol id="s">
+      <rect width="600" height="600" fill="url(#p)" mask="url(#m)" />
+      <text font-family="system-ui, sans-serif" font-size="28" font-weight="900" fill="#0ff" letter-spacing="4">
+        <textPath href="#tp">
+          • COMPLEX SVG MAGIC • SMIL ANIMATION EXTREME • 
+          <animate attributeName="startOffset" values="0%;100%" dur="10s" repeatCount="indefinite" />
+        </textPath>
+      </text>
+    </symbol>
+  </defs>
+  <use href="#s" x="0" y="0" filter="url(#f)" clip-path="url(#c)" />
+</svg>`;
+
 async function bootstrap(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('http://127.0.0.1:5173', { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'File' }).waitFor();
@@ -951,6 +995,45 @@ test('applies mask filter and clip to the runtime use for viewportless imported 
 
   const exportedSvg = await exportSvg(page);
   expect(exportedSvg).toMatch(/<use[^>]*href="#symbol-star"[^>]*x="-250"[^>]*y="-250"[^>]*clip-path="url\(#c5\)"[^>]*filter="url\(#f5\)"[^>]*mask="url\(#m5\)"/);
+});
+
+test('preserves textPath carrier paths referenced only inside imported symbol content', async ({ page }) => {
+  await bootstrap(page);
+  await importSvgContent(page, 'symbol-textpath.svg', symbolTextPathSvg);
+
+  const runtime = await page.evaluate(() => {
+    const canvas = document.querySelector<SVGSVGElement>('svg[data-canvas="true"]');
+    if (!canvas) {
+      throw new Error('Canvas SVG not found');
+    }
+
+    const defs = canvas.querySelector('defs');
+    const textPathCarrier = defs?.querySelector('path#tp');
+    const symbolDef = defs?.querySelector('#symbol-s');
+    const symbolTextPath = symbolDef?.querySelector('textPath');
+
+    return {
+      pathId: textPathCarrier?.getAttribute('id') ?? null,
+      pathDisplay: textPathCarrier?.getAttribute('display') ?? null,
+      pathVisibility: textPathCarrier?.getAttribute('visibility') ?? null,
+      symbolId: symbolDef?.getAttribute('id') ?? null,
+      textPathHref: symbolTextPath?.getAttribute('href') ?? null,
+      textContent: symbolTextPath?.textContent?.trim() ?? null,
+    };
+  });
+
+  expect(runtime.pathId).toBe('tp');
+  expect(runtime.pathDisplay).toBe('none');
+  expect(runtime.pathVisibility).toBe('hidden');
+  expect(runtime.symbolId).toBe('symbol-s');
+  expect(runtime.textPathHref).toBe('#tp');
+  expect(runtime.textContent).toContain('COMPLEX SVG MAGIC');
+
+  const exportedSvg = await exportSvg(page);
+  expect(exportedSvg).toContain('<path id="tp"');
+  expect(exportedSvg).toContain('<textPath href="#tp"');
+  expect(exportedSvg).toContain('COMPLEX SVG MAGIC');
+  expect(exportedSvg).toContain('attributeName="startOffset"');
 });
 
 test('visually matches browser rendering for imported liquid symbol filters', async ({ page }, testInfo) => {

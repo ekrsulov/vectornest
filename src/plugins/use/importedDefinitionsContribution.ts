@@ -87,6 +87,56 @@ const buildDefinitionRuntimeIdMap = (elements: CanvasElement[]): Map<string, str
   return runtimeIdMap;
 };
 
+const buildDefinitionReferenceMap = (elements: CanvasElement[]): Map<string, CanvasElement> => {
+  const referenceMap = new Map<string, CanvasElement>();
+
+  elements.forEach((element) => {
+    if (!isDefinitionElement(element)) {
+      return;
+    }
+
+    referenceMap.set(element.id, element);
+    const sourceId = (element.data as { sourceId?: unknown } | undefined)?.sourceId;
+    if (typeof sourceId === 'string' && sourceId.trim().length > 0) {
+      referenceMap.set(sourceId, element);
+    }
+  });
+
+  return referenceMap;
+};
+
+const collectDefinitionRefsFromSymbolRawContent = (
+  symbols?: Array<{ rawContent?: string }>,
+): Set<string> => {
+  const refs = new Set<string>();
+  const hrefRegex = /\b(?:xlink:href|href)=(?:"|')#([^"']+)(?:"|')/gi;
+  const urlRegex = /url\(#([^)]+)\)/gi;
+
+  (symbols ?? []).forEach((symbol) => {
+    const rawContent = symbol.rawContent;
+    if (!rawContent) {
+      return;
+    }
+
+    let match: RegExpExecArray | null;
+    hrefRegex.lastIndex = 0;
+    while ((match = hrefRegex.exec(rawContent)) !== null) {
+      if (match[1]) {
+        refs.add(match[1]);
+      }
+    }
+
+    urlRegex.lastIndex = 0;
+    while ((match = urlRegex.exec(rawContent)) !== null) {
+      if (match[1]) {
+        refs.add(match[1]);
+      }
+    }
+  });
+
+  return refs;
+};
+
 const collectUseVisibleDefinitionIds = (
   elements: CanvasElement[],
   childrenByParent: Map<string, CanvasElement[]>,
@@ -288,11 +338,15 @@ defsContributionRegistry.register({
   collectUsedIds: (elements) => collectReferencedDefinitionIds(elements),
   renderDefs: (state, usedIds) => {
     const elements = state.elements ?? [];
-    if (!elements.length || usedIds.size === 0) {
+    const effectiveUsedIds = new Set(usedIds);
+    collectDefinitionRefsFromSymbolRawContent((state as CanvasStore & { symbols?: Array<{ rawContent?: string }> }).symbols)
+      .forEach((id) => effectiveUsedIds.add(id));
+
+    if (!elements.length || effectiveUsedIds.size === 0) {
       return null;
     }
 
-    const elementMap = new Map(elements.map((element) => [element.id, element]));
+    const elementMap = buildDefinitionReferenceMap(elements);
     const childrenByParent = new Map<string, CanvasElement[]>();
     elements.forEach((element) => {
       if (!element.parentId) {
@@ -304,13 +358,13 @@ defsContributionRegistry.register({
       childrenByParent.set(element.parentId, existing);
     });
 
-    const roots = Array.from(usedIds)
+    const roots = Array.from(effectiveUsedIds)
       .map((id) => elementMap.get(id))
       .filter((element): element is CanvasElement => Boolean(element && isDefinitionElement(element)))
       .filter((element) => {
         let currentParentId = element.parentId;
         while (currentParentId) {
-          if (usedIds.has(currentParentId)) {
+          if (effectiveUsedIds.has(currentParentId)) {
             return false;
           }
           currentParentId = elementMap.get(currentParentId)?.parentId ?? null;
@@ -339,11 +393,15 @@ defsContributionRegistry.register({
   },
   serializeDefs: (state, usedIds) => {
     const elements = state.elements ?? [];
-    if (!elements.length || usedIds.size === 0) {
+    const effectiveUsedIds = new Set(usedIds);
+    collectDefinitionRefsFromSymbolRawContent((state as CanvasStore & { symbols?: Array<{ rawContent?: string }> }).symbols)
+      .forEach((id) => effectiveUsedIds.add(id));
+
+    if (!elements.length || effectiveUsedIds.size === 0) {
       return [];
     }
 
-    const elementMap = new Map(elements.map((element) => [element.id, element]));
+    const elementMap = buildDefinitionReferenceMap(elements);
     const childrenByParent = new Map<string, CanvasElement[]>();
     elements.forEach((element) => {
       if (!element.parentId) {
@@ -355,13 +413,13 @@ defsContributionRegistry.register({
       childrenByParent.set(element.parentId, existing);
     });
 
-    const roots = Array.from(usedIds)
+    const roots = Array.from(effectiveUsedIds)
       .map((id) => elementMap.get(id))
       .filter((element): element is CanvasElement => Boolean(element && isDefinitionElement(element)))
       .filter((element) => {
         let currentParentId = element.parentId;
         while (currentParentId) {
-          if (usedIds.has(currentParentId)) {
+          if (effectiveUsedIds.has(currentParentId)) {
             return false;
           }
           currentParentId = elementMap.get(currentParentId)?.parentId ?? null;

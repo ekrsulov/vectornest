@@ -7,6 +7,7 @@ import {
   MenuItem,
   Text,
   Input,
+  Portal,
 } from '@chakra-ui/react';
 import { ChevronDown, Search } from 'lucide-react';
 import { useThemeColors } from '../hooks/useThemeColors';
@@ -165,68 +166,72 @@ const CustomSelectComponent: React.FC<CustomSelectProps> = ({
           </Box>
         </MenuButton>
       </Box>
-      <MenuList
-        bg={menuBg}
-        borderColor={borderColor}
-        borderRadius="md"
-        boxShadow="lg"
-        minW="120px"
-        maxH={`${dropdownMaxH}px`}
-        overflowY="auto"
-        zIndex={9999}
-      >
-        {searchable && (
-          <Box px={2} py={2} borderBottom="1px solid" borderColor={borderColor}>
-            <Box position="relative">
-              <Input
-                ref={searchInputRef}
-                value={searchQuery}
-                onChange={handleSearchChange}
-                placeholder="Search..."
-                size="sm"
-                fontSize={fontSize}
-                bg={bg}
-                borderColor={borderColor}
-                color={textColor}
-                pl="28px"
-                _focus={{ outline: 'none', borderColor: 'blue.500' }}
-                onKeyDown={(e) => {
-                  e.stopPropagation();
-                }}
-              />
-              <Box
-                position="absolute"
-                left="8px"
-                top="50%"
-                transform="translateY(-50%)"
-                pointerEvents="none"
-                opacity={0.5}
-              >
-                <Search size={14} />
+      <Portal>
+        <MenuList
+          bg={menuBg}
+          backgroundColor={menuBg}
+          borderColor={borderColor}
+          borderRadius="md"
+          boxShadow="lg"
+          minW="120px"
+          maxH={`${dropdownMaxH}px`}
+          overflowY="auto"
+          opacity={1}
+          zIndex={9999}
+        >
+          {searchable && (
+            <Box px={2} py={2} borderBottom="1px solid" borderColor={borderColor} bg={menuBg}>
+              <Box position="relative">
+                <Input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder="Search..."
+                  size="sm"
+                  fontSize={fontSize}
+                  bg={bg}
+                  borderColor={borderColor}
+                  color={textColor}
+                  pl="28px"
+                  _focus={{ outline: 'none', borderColor: 'blue.500' }}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                />
+                <Box
+                  position="absolute"
+                  left="8px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                  pointerEvents="none"
+                  opacity={0.5}
+                >
+                  <Search size={14} />
+                </Box>
               </Box>
             </Box>
-          </Box>
-        )}
-        {filteredOptions.length === 0 ? (
-          <MenuItem isDisabled fontSize={fontSize} color={textColor} opacity={0.5}>
-            No results found
-          </MenuItem>
-        ) : (
-          filteredOptions.map(option => (
-            <MenuItem
-              key={option.value}
-              ref={option.value === value ? selectedRef : null}
-              bg={option.value === value ? selectedBg : 'transparent'}
-              color={option.value === value ? selectedColor : textColor}
-              fontSize={fontSize}
-              onClick={() => onChange(option.value)}
-              _hover={{ bg: hoverBg }}
-            >
-              {option.label}
+          )}
+          {filteredOptions.length === 0 ? (
+            <MenuItem isDisabled fontSize={fontSize} color={textColor} opacity={0.5}>
+              No results found
             </MenuItem>
-          ))
-        )}
-      </MenuList>
+          ) : (
+            filteredOptions.map(option => (
+              <MenuItem
+                key={option.value}
+                ref={option.value === value ? selectedRef : null}
+                bg={option.value === value ? selectedBg : menuBg}
+                color={option.value === value ? selectedColor : textColor}
+                fontSize={fontSize}
+                onClick={() => onChange(option.value)}
+                _hover={{ bg: hoverBg }}
+              >
+                {option.label}
+              </MenuItem>
+            ))
+          )}
+        </MenuList>
+      </Portal>
     </Menu>
   );
 };

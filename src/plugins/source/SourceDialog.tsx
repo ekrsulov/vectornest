@@ -19,8 +19,21 @@ import { PanelToggle } from '../../ui/PanelToggle';
 import { ExportManager } from '../../utils/export/ExportManager';
 import { ImportManager } from '../../utils/import/ImportManager';
 import { logger } from '../../utils/logger';
+import type { ExportTheme } from '../../types';
 
-export const SourceDialog: React.FC = () => {
+interface SourceDialogProps {
+    selectedOnly?: boolean;
+    padding?: number;
+    precision?: number;
+    exportTheme?: ExportTheme;
+}
+
+export const SourceDialog: React.FC<SourceDialogProps> = ({
+    selectedOnly = false,
+    padding = 0,
+    precision,
+    exportTheme,
+}) => {
     const toast = useToast();
     const bgColor = useColorModeValue('white', 'gray.800');
     const borderColor = useColorModeValue('gray.200', 'gray.700');
@@ -51,12 +64,26 @@ export const SourceDialog: React.FC = () => {
     // Export on open
     useEffect(() => {
         if (isDialogOpen) {
-            const { content } = ExportManager.generateSvgContent();
+            const { content } = ExportManager.generateSvgContent(
+                selectedOnly,
+                padding,
+                undefined,
+                precision,
+                exportTheme,
+            );
             setLocalSvgContent(content);
             setSourceSvgContent(content);
             setSourceHasUnsavedChanges(false);
         }
-    }, [isDialogOpen, setSourceSvgContent, setSourceHasUnsavedChanges]);
+    }, [
+        exportTheme,
+        isDialogOpen,
+        padding,
+        precision,
+        selectedOnly,
+        setSourceSvgContent,
+        setSourceHasUnsavedChanges,
+    ]);
 
     const handleClose = () => {
         setSourceDialogOpen(false);

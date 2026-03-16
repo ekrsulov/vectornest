@@ -10,12 +10,15 @@ const createDefaultSettings = (): BaseSlice['settings'] => ({
   defaultStrokeColor: '#000000',
   scaleStrokeWithZoom: true,
   exportPadding: 0,
-  importAppendToExisting: true,
+  exportPrecision: 4,
+  exportTheme: 'light',
+  importAppendToExisting: false,
   importResize: false,
   importResizeWidth: 64,
   importResizeHeight: 64,
   importApplyUnion: false,
   importAddFrame: false,
+  importSwapColors: false,
 });
 
 export const createBaseInitialState = (

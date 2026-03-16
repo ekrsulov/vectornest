@@ -403,7 +403,7 @@ const SvgStructurePanelComponent: React.FC<PanelComponentProps> = ({ panelKey })
     if (typeof DOMParser === 'undefined') return;
 
     const state = (storeApi.getState?.() ?? canvasStoreApi.getState()) as CanvasStore;
-    const { content } = ExportManager.generateSvgContent(false, 0, state);
+    const { content } = ExportManager.generateSvgContent(false, 0, state, undefined, undefined, false);
 
     if (!content) {
       setTree(null);

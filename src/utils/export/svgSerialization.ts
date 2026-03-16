@@ -18,6 +18,8 @@ import { serializePathElement, serializeTextPathOnlyElement } from './pathSerial
 import { safeChildIdsFromElement as safeChildIds } from '../groupTraversalUtils';
 import { isMonoColor, transformMonoColor } from '../colorModeSyncUtils';
 import { IDENTITY_MATRIX, multiplyMatrices, type Matrix } from '../matrixUtils';
+import { optimizeSvg } from './svgExportOptimizer';
+import type { ExportTheme } from '../../types';
 
 export interface ExportOptions {
   selectedOnly: boolean;
@@ -25,6 +27,9 @@ export interface ExportOptions {
   defs?: string;
   state?: CanvasStore;
   normalizeMetadataToLightMode?: boolean;
+  precision?: number;
+  exportTheme?: ExportTheme;
+  removeUnreferencedIds?: boolean;
 }
 
 export interface SerializedExport {
@@ -593,11 +598,25 @@ export function serializePathsForExport(
     svgContent += `<rect ${VECTORNEST_ARTBOARD_BACKGROUND_ATTR}="true" x="${artboardBounds.minX}" y="${artboardBounds.minY}" width="${artboardBounds.width}" height="${artboardBounds.height}" fill="${fill}" />\n`;
   }
 
+  // Dark theme background: when exporting in dark mode without an artboard background,
+  // add a black background rect covering the entire viewBox.
+  if (options.exportTheme === 'dark' && !artboardBackgroundColor) {
+    svgContent += `<rect x="${minX}" y="${minY}" width="${width}" height="${height}" fill="#000000" />\n`;
+  }
+
   if (serializedElements) {
     svgContent += `${defs ? '' : '\n'}${serializedElements}\n`;
   }
 
   svgContent += `</svg>`;
+
+  // Apply SVG optimizations
+  svgContent = optimizeSvg(svgContent, {
+    removeUnreferencedIds: options.removeUnreferencedIds ?? true,
+    removeDefaults: true,
+    prettify: true,
+    precision: options.precision,
+  });
 
   return {
     svgContent,

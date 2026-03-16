@@ -24,6 +24,8 @@ export type PartialElementTransform = Partial<ElementTransform>;
  * Canonical definition for application-level settings.
  * Used in BaseSlice, CanvasLayerContext (plugins.ts), and CanvasLayerProps (ui-contributions.ts).
  */
+export type ExportTheme = 'light' | 'dark';
+
 export interface AppSettings {
   keyboardMovementPrecision: number;
   showRenderCountBadges: boolean;
@@ -34,12 +36,15 @@ export interface AppSettings {
   defaultStrokeColor: string;
   scaleStrokeWithZoom: boolean;
   exportPadding: number;
+  exportPrecision: number;
+  exportTheme: ExportTheme;
   importAppendToExisting: boolean;
   importResize: boolean;
   importResizeWidth: number;
   importResizeHeight: number;
   importApplyUnion: boolean;
   importAddFrame: boolean;
+  importSwapColors: boolean;
 }
 
 // Control point alignment types (calculated on-demand)

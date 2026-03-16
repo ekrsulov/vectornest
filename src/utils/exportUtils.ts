@@ -3,7 +3,7 @@
  * Orchestrates export flow while delegating SVG serialization.
  */
 
-import type { CanvasElement } from '../types';
+import type { CanvasElement, ExportTheme } from '../types';
 import type { CanvasStore } from '../store/canvasStore';
 import { detectThemeColorMode, transformMonoColor } from './colorModeSyncUtils';
 import { logger } from './logger';
@@ -212,11 +212,13 @@ export function exportSelection(
   selectedOnly: boolean = false,
   padding: number = 20,
   defsContent?: string,
-  state?: CanvasStore
+  state?: CanvasStore,
+  precision?: number,
+  exportTheme?: ExportTheme,
 ): void {
   // Prepare animation state so definition animations render during export.
   const exportState = state ? prepareExportAnimationState(state) : undefined;
-  const colorMode = detectThemeColorMode();
+  const colorMode = exportTheme ?? detectThemeColorMode();
 
   if (elements.length === 0) {
     return;
@@ -228,6 +230,8 @@ export function exportSelection(
     defs: defsContent,
     state: exportState,
     normalizeMetadataToLightMode: colorMode === 'dark',
+    precision,
+    exportTheme,
   });
 
   if (!result) {

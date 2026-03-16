@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { HStack, VStack, Text, Box, Flex, useToast } from '@chakra-ui/react';
 import { PanelTextInput } from '../../ui/PanelTextInput';
-import { Upload, Download } from 'lucide-react';
+import { Upload, Download, FileCode } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 
 import { logger } from '../../utils/logger';
@@ -11,10 +11,12 @@ import { ExportManager } from '../../utils/export/ExportManager';
 import { FilePanelImportOptions } from './file/FilePanelAdvancedSection';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SliderControl } from '../../ui/SliderControl';
+import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import type { SourcePluginSlice } from '../../plugins/source/sourcePluginSlice';
 import { SourceDialog } from '../../plugins/source/SourceDialog';
 import { PanelSwitch } from '../../ui/PanelSwitch';
 import { DocumentationCTA } from '../../ui/DocumentationCTA';
+import type { ExportTheme } from '../../types';
 
 const HIDDEN_INPUT_STYLE: React.CSSProperties = { display: 'none' };
 const buildVersionLabel = `${__APP_COMMIT_HASH__} ${__APP_COMMIT_DATE__}`;
@@ -28,12 +30,13 @@ export const FilePanel: React.FC = () => {
   const toast = useToast();
 
   const {
-    importAppendToExisting: appendToExisting = true,
+    importAppendToExisting: appendToExisting = false,
     importResize: resizeImport,
     importResizeWidth: resizeWidth,
     importResizeHeight: resizeHeight,
     importApplyUnion: applyUnion,
-    importAddFrame: addFrame
+    importAddFrame: addFrame,
+    importSwapColors: swapColors = false,
   } = settings;
 
   const setAppendToExisting = (value: boolean) => updateSettings({ importAppendToExisting: value });
@@ -42,6 +45,7 @@ export const FilePanel: React.FC = () => {
   const setResizeHeight = (value: number) => updateSettings({ importResizeHeight: value });
   const setApplyUnion = (value: boolean) => updateSettings({ importApplyUnion: value });
   const setAddFrame = (value: boolean) => updateSettings({ importAddFrame: value });
+  const setSwapColors = (value: boolean) => updateSettings({ importSwapColors: value });
 
   const [saveSelectedOnly, setSaveSelectedOnly] = useState(false);
   const svgInputRef = useRef<HTMLInputElement>(null);
@@ -95,11 +99,17 @@ export const FilePanel: React.FC = () => {
   };
 
   const handleSaveAsSvg = () => {
-    ExportManager.exportSelection('svg', documentName, saveSelectedOnly, settings.exportPadding);
+    ExportManager.exportSelection(
+      'svg', documentName, saveSelectedOnly, settings.exportPadding,
+      undefined, settings.exportPrecision, settings.exportTheme,
+    );
   };
 
   const handleSaveAsPng = () => {
-    ExportManager.exportSelection('png', documentName, saveSelectedOnly, settings.exportPadding);
+    ExportManager.exportSelection(
+      'png', documentName, saveSelectedOnly, settings.exportPadding,
+      undefined, settings.exportPrecision, settings.exportTheme,
+    );
   };
 
   const handleLoad = async () => {
@@ -142,7 +152,8 @@ export const FilePanel: React.FC = () => {
       resizeWidth,
       resizeHeight,
       applyUnion,
-      addFrame
+      addFrame,
+      skipDarkModeColorTransform: !swapColors,
     });
 
     // Reset file input
@@ -204,6 +215,34 @@ export const FilePanel: React.FC = () => {
             />
           </Box>
 
+          <Box pr={0.5} pb={1}>
+            <SliderControl
+              label="Precision"
+              value={settings.exportPrecision}
+              min={0}
+              max={6}
+              step={1}
+              onChange={(value) => updateSettings({ exportPrecision: value })}
+              title="Number of decimal places for numeric values in exported SVG"
+            />
+          </Box>
+
+          <Flex justify="space-between" align="center" pb={1.5}>
+            <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+              Export Theme
+            </Text>
+            <JoinedButtonGroup<ExportTheme>
+              options={[
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+              ]}
+              value={settings.exportTheme}
+              onChange={(value) => updateSettings({ exportTheme: value })}
+              size="sm"
+              disableTooltips
+            />
+          </Flex>
+
           <Flex justify="space-between" align="center" pb={1.5}>
             <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
               Save selected elements only
@@ -231,11 +270,6 @@ export const FilePanel: React.FC = () => {
             </PanelStyledButton>
           </HStack>
 
-          <Box>
-            <PanelStyledButton onClick={handleOpenSourceDialog} width="full" size="sm">
-              SVG Source
-            </PanelStyledButton>
-          </Box>
         </Box>
 
         <Box pt={2}>
@@ -262,6 +296,8 @@ export const FilePanel: React.FC = () => {
             onResizeWidthChange={setResizeWidth}
             resizeHeight={resizeHeight}
             onResizeHeightChange={setResizeHeight}
+            swapColors={swapColors}
+            onSwapColorsChange={setSwapColors}
           />
 
           <PanelStyledButton onClick={handleImportSVG} width="full" size="sm" h="44px" fontSize="12px">
@@ -279,6 +315,25 @@ export const FilePanel: React.FC = () => {
             style={HIDDEN_INPUT_STYLE}
             onChange={handleSVGFileSelected}
           />
+        </Box>
+
+        <Box pt={2}>
+          <Text
+            fontSize="12px"
+            fontWeight="bold"
+            color="gray.700"
+            _dark={{ color: 'gray.300' }}
+            mb={1.5}
+          >
+            Source
+          </Text>
+
+          <PanelStyledButton onClick={handleOpenSourceDialog} width="full" size="sm" h="44px" fontSize="12px">
+            <HStack spacing={1.5}>
+              <FileCode size={14} />
+              <Text as="span" fontSize="12px" fontWeight="semibold">View SVG</Text>
+            </HStack>
+          </PanelStyledButton>
         </Box>
 
         {import.meta.env.DEV && (
@@ -308,7 +363,12 @@ export const FilePanel: React.FC = () => {
           <DocumentationCTA versionLabel={buildVersionLabel} />
         </Box>
       </VStack>
-      <SourceDialog />
+      <SourceDialog
+        selectedOnly={saveSelectedOnly}
+        padding={settings.exportPadding}
+        precision={settings.exportPrecision}
+        exportTheme={settings.exportTheme}
+      />
     </Panel>
   );
 };

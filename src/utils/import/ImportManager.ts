@@ -20,6 +20,7 @@ export interface ImportOptions {
     resizeHeight?: number;
     applyUnion?: boolean;
     addFrame?: boolean;
+    skipDarkModeColorTransform?: boolean;
 }
 
 export class ImportManager {
@@ -32,7 +33,8 @@ export class ImportManager {
             resizeWidth = settings.importResizeWidth,
             resizeHeight = settings.importResizeHeight,
             applyUnion = settings.importApplyUnion,
-            addFrame = settings.importAddFrame
+            addFrame = settings.importAddFrame,
+            skipDarkModeColorTransform = !settings.importSwapColors,
         } = options;
 
         if (!files || files.length === 0) return 0;
@@ -84,7 +86,8 @@ export class ImportManager {
                     resizeImport,
                     resizeWidth,
                     resizeHeight,
-                    applyUnion
+                    applyUnion,
+                    skipDarkModeColorTransform,
                 });
 
                 if (!processed) continue;

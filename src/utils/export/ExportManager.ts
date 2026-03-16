@@ -5,6 +5,7 @@ import {
 import { canvasStoreApi, type CanvasStore } from '../../store/canvasStore';
 import { defsContributionRegistry } from '../defsContributionRegistry';
 import { prepareExportAnimationState } from '../animationStatePreparation';
+import type { ExportTheme } from '../../types';
 
 export class ExportManager {
     static exportSelection(
@@ -12,7 +13,9 @@ export class ExportManager {
         documentName: string,
         selectedOnly: boolean = false,
         padding: number = 20,
-        state: CanvasStore = canvasStoreApi.getState()
+        state: CanvasStore = canvasStoreApi.getState(),
+        precision?: number,
+        exportTheme?: ExportTheme,
     ): void {
         const { elements, selectedIds } = state;
         const defs = defsContributionRegistry.serializeDefs(state, elements);
@@ -25,14 +28,19 @@ export class ExportManager {
             selectedOnly,
             padding,
             defs,
-            state
+            state,
+            precision,
+            exportTheme,
         );
     }
 
     static generateSvgContent(
         selectedOnly: boolean = false,
         padding: number = 0,
-        state: CanvasStore = canvasStoreApi.getState()
+        state: CanvasStore = canvasStoreApi.getState(),
+        precision?: number,
+        exportTheme?: ExportTheme,
+        removeUnreferencedIds?: boolean,
     ): { content: string, hasUnsavedChanges: boolean } {
         const exportState = prepareExportAnimationState(state);
 
@@ -44,6 +52,9 @@ export class ExportManager {
             padding,
             defs,
             state: exportState,
+            precision,
+            exportTheme,
+            removeUnreferencedIds,
         });
 
         return {

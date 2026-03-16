@@ -10,6 +10,7 @@ export interface ImportOptions {
     resizeHeight?: number;
     applyUnion?: boolean;
     addFrame?: boolean;
+    skipDarkModeColorTransform?: boolean;
 }
 
 export const useSvgImport = () => {

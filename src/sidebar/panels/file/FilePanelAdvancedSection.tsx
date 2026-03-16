@@ -16,6 +16,8 @@ interface FilePanelImportOptionsProps {
   onResizeWidthChange: (value: number) => void;
   resizeHeight: number;
   onResizeHeightChange: (value: number) => void;
+  swapColors: boolean;
+  onSwapColorsChange: (checked: boolean) => void;
 }
 
 export const FilePanelImportOptions: React.FC<FilePanelImportOptionsProps> = ({
@@ -31,6 +33,8 @@ export const FilePanelImportOptions: React.FC<FilePanelImportOptionsProps> = ({
   onResizeWidthChange,
   resizeHeight,
   onResizeHeightChange,
+  swapColors,
+  onSwapColorsChange,
 }) => (
   <VStack spacing={2} align="stretch" pt={0.5} pb={2}>
     <PanelToggle
@@ -52,6 +56,13 @@ export const FilePanelImportOptions: React.FC<FilePanelImportOptionsProps> = ({
       onChange={(event) => onApplyUnionChange(event.target.checked)}
     >
       Apply union to imported paths
+    </PanelToggle>
+
+    <PanelToggle
+      isChecked={swapColors}
+      onChange={(event) => onSwapColorsChange(event.target.checked)}
+    >
+      Swap black/white colors for theme
     </PanelToggle>
 
     <PanelToggle

@@ -1,6 +1,31 @@
 import { test, expect } from '@playwright/test';
 import {getCanvas, waitForLoad, selectTool} from './helpers';
 
+const animatedWaveUseSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <linearGradient id="neonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff0055" />
+      <stop offset="100%" stop-color="#00ffcc" />
+    </linearGradient>
+    <filter id="hyperGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur1" />
+      <feMerge>
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <path id="waveLine" d="M -100 400 Q 100 200, 400 400 T 900 400" fill="none" stroke="url(#neonGlow)" stroke-width="4" stroke-dasharray="150 100" stroke-linecap="round"/>
+  </defs>
+  <g filter="url(#hyperGlow)" opacity="0.4">
+    <use href="#waveLine" y="-200">
+       <animate attributeName="stroke-dashoffset" values="500; 0" dur="10s" repeatCount="indefinite" />
+    </use>
+    <use href="#waveLine" y="200" transform="scale(1, -1) translate(0, -800)">
+       <animate attributeName="stroke-dashoffset" values="0; 500" dur="10s" repeatCount="indefinite" />
+    </use>
+  </g>
+</svg>`;
+
 test.describe('Use element import and rendering', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -167,5 +192,53 @@ test.describe('Use element import and rendering', () => {
         rootUseIds.has(animation.targetElementId)
       )
     ).toBeTruthy();
+  });
+
+  test('should preserve dash animation styling for use-referenced definition paths on canvas and export', async ({ page }) => {
+    await page.locator('[aria-label="File"]').click();
+
+    const fileInput = page.locator('input[type="file"][accept=".svg,image/svg+xml"]');
+    await fileInput.setInputFiles({
+      name: 'animated-wave-use.svg',
+      mimeType: 'image/svg+xml',
+      buffer: Buffer.from(animatedWaveUseSvg, 'utf8'),
+    });
+
+    await page.waitForTimeout(1000);
+
+    const runtime = await page.evaluate(() => {
+      const state = window.useCanvasStore?.getState?.();
+      const useElements = (state?.elements ?? []).filter((element) => element.type === 'use');
+      const useElementIds = new Set(useElements.map((element) => element.id));
+      const renderedPaths = Array.from(document.querySelectorAll<SVGPathElement>('svg[data-canvas="true"] path[data-element-id]'))
+        .map((node) => ({
+        elementId: node.getAttribute('data-element-id'),
+        dasharray: node.getAttribute('stroke-dasharray'),
+        animateCount: node.querySelectorAll('animate[attributeName="stroke-dashoffset"]').length,
+        }))
+        .filter((node) => node.elementId !== null && useElementIds.has(node.elementId));
+
+      return {
+        useCount: useElements.length,
+        renderedPaths,
+      };
+    });
+
+    expect(runtime.useCount).toBe(2);
+    expect(runtime.renderedPaths).toHaveLength(2);
+    expect(runtime.renderedPaths.every((path) => path.dasharray === '150 100')).toBeTruthy();
+    expect(runtime.renderedPaths.every((path) => path.animateCount === 1)).toBeTruthy();
+
+    const exportedSvg = await page.evaluate(async () => {
+      const { ExportManager } = await import('/src/utils/export/ExportManager.ts');
+      return ExportManager.generateSvgContent(false, 0).content;
+    });
+
+    expect(exportedSvg).toContain('<path id="waveLine"');
+    expect(exportedSvg).toContain('stroke-dasharray="150 100"');
+    expect(exportedSvg).not.toMatch(/<path id="waveLine"[^>]*display="none"/);
+    expect(exportedSvg).not.toMatch(/<path id="waveLine"[^>]*visibility="hidden"/);
+    expect((exportedSvg.match(/<use[^>]*href="#waveLine"/g) ?? [])).toHaveLength(2);
+    expect((exportedSvg.match(/attributeName="stroke-dashoffset"/g) ?? []).length).toBeGreaterThanOrEqual(2);
   });
 });

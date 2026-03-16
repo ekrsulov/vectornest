@@ -307,6 +307,7 @@ export function shapeToNativeText(
         if (href && href.startsWith('#')) {
             const method = (textPathNode.getAttribute('method') as 'align' | 'stretch' | null) ?? undefined;
             const spacing = (textPathNode.getAttribute('spacing') as 'auto' | 'exact' | null) ?? undefined;
+            const textPathTextAnchor = (textPathNode.getAttribute('text-anchor') as 'start' | 'middle' | 'end' | null) ?? textAnchor;
             const startOffsetAttr = textPathNode.getAttribute('startOffset');
             const startOffsetValue = startOffsetAttr
                 ? parseFloat(startOffsetAttr.replace('%', ''))
@@ -338,7 +339,7 @@ export function shapeToNativeText(
                         fontStyle,
                         textDecoration,
                         letterSpacing,
-                        textAnchor,
+                        textAnchor: textPathTextAnchor,
                         startOffset: Number.isFinite(startOffsetValue) ? startOffsetValue : undefined,
                         method,
                         spacing,

@@ -16,6 +16,17 @@ export interface SymbolInstanceData {
   y?: number;
   width: number;
   height: number;
+  originalXAttr?: string;
+  originalYAttr?: string;
+  originalWidthAttr?: string;
+  originalHeightAttr?: string;
+  preserveViewportlessSymbol?: boolean;
+  viewportlessBounds?: {
+    minX: number;
+    minY: number;
+    width: number;
+    height: number;
+  };
   color?: string;
   /** Path data for simple symbols. Omit for complex symbols with rawContent (uses <use> reference) */
   pathData?: PathData;

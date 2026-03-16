@@ -426,6 +426,23 @@ function getDefAncestorInfo(animEl: Element): {
   return {};
 }
 
+const resolveReferencedTextPathId = (animEl: Element): string | null => {
+  const textPathAncestor = animEl.closest('textPath');
+  const candidateTextPath = textPathAncestor
+    ?? animEl.closest('text')?.querySelector('textPath');
+
+  if (!candidateTextPath) {
+    return null;
+  }
+
+  const href = candidateTextPath.getAttribute('href') || candidateTextPath.getAttribute('xlink:href');
+  if (!href || !href.startsWith('#')) {
+    return null;
+  }
+
+  return href.slice(1);
+};
+
 /**
  * Parse animation elements from SVG document
  */
@@ -455,6 +472,7 @@ function importAnimationDefs(doc: Document): Record<string, unknown[]> | null {
     // (not the def container itself) so we can inject the animation back into the correct
     // position during serialization. This normalizes both mask and clipPath handling.
     let sourceElementId: string | null = null;
+    const referencedTextPathId = resolveReferencedTextPathId(animEl);
 
     if (symbolId) {
       // Animation is inside a symbol - get or generate ID for the actual parent element
@@ -485,38 +503,26 @@ function importAnimationDefs(doc: Document): Record<string, unknown[]> | null {
       // Animation is inside a textPath and text has an ID - use it
       // But we also need to check if textPath has an href, because in the store model
       // textPath data is attached to the referenced PATH element, not stored as a separate text element.
-      const textPathAncestor = animEl.closest('textPath');
-      if (textPathAncestor) {
-        const href = textPathAncestor.getAttribute('href') || textPathAncestor.getAttribute('xlink:href');
-        if (href && href.startsWith('#')) {
-          // Use the referenced path's ID - that's where textPath data will be attached
-          sourceElementId = href.slice(1);
-        } else {
-          sourceElementId = textId;
-
-        }
+      if (referencedTextPathId) {
+        sourceElementId = referencedTextPathId;
       } else {
         sourceElementId = textId;
       }
     } else {
       // Animation is inside a textPath but text has no ID - check href first
-      const textPathAncestor = animEl.closest('textPath');
-      if (textPathAncestor) {
-        const href = textPathAncestor.getAttribute('href') || textPathAncestor.getAttribute('xlink:href');
-        if (href && href.startsWith('#')) {
-          // Use the referenced path's ID as the target
-          sourceElementId = href.slice(1);
-
-        } else {
+      if (referencedTextPathId) {
+        sourceElementId = referencedTextPathId;
+      } else {
+        const textPathAncestor = animEl.closest('textPath');
+        if (textPathAncestor) {
           // Fallback: generate ID for text element (unlikely case)
           const textAncestor = textPathAncestor.closest('text');
           if (textAncestor) {
             sourceElementId = textAncestor.getAttribute('id');
 
             if (!sourceElementId) {
-                sourceElementId = generateShortId('ant');
+              sourceElementId = generateShortId('ant');
               textAncestor.setAttribute('id', sourceElementId);
-
             }
           }
         }

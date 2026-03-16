@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { useLayoutEffect, useRef } from 'react';
+import React from 'react';
 import { generateShortId } from '../../utils/idGenerator';
 
 export type FilterType = 'blur' | 'glow' | 'shadow' | 'wave' | 'custom';
@@ -11,52 +11,51 @@ export interface FilterDefinition {
   svg: string;
 }
 
-/**
- * Component that properly inserts SVG filter content using the SVG parser.
- * Filters must be direct children of <defs>, so we use a ref-based approach
- * that inserts the filter element next to a hidden placeholder.
- */
-const FilterSvgContent: React.FC<{ svg: string }> = ({ svg }) => {
-  const gRef = useRef<SVGGElement>(null);
-  const insertedRef = useRef<Element | null>(null);
+const parseImportedFilterSvg = (svg: string): Element | null => {
+  if (typeof DOMParser === 'undefined') {
+    return null;
+  }
 
-  useLayoutEffect(() => {
-    if (!gRef.current) return;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(
+    `<svg xmlns="http://www.w3.org/2000/svg">${svg}</svg>`,
+    'image/svg+xml'
+  );
 
-    // Clean up any previously inserted element
-    if (insertedRef.current && insertedRef.current.parentElement) {
+  const filter = doc.querySelector('filter');
+  return filter;
+};
+
+const ImportedFilterElement: React.FC<{ svg: string }> = ({ svg }) => {
+  const placeholderRef = React.useRef<SVGGElement>(null);
+  const insertedRef = React.useRef<SVGFilterElement | null>(null);
+  const parsed = React.useMemo(() => parseImportedFilterSvg(svg), [svg]);
+
+  React.useLayoutEffect(() => {
+    const placeholder = placeholderRef.current;
+    const parent = placeholder?.parentElement;
+    if (!placeholder || !parent || !parsed) {
+      return;
+    }
+
+    if (insertedRef.current?.parentElement) {
       insertedRef.current.parentElement.removeChild(insertedRef.current);
       insertedRef.current = null;
     }
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(
-      `<svg xmlns="http://www.w3.org/2000/svg">${svg}</svg>`,
-      'image/svg+xml'
-    );
-
-    const filter = doc.querySelector('filter');
-    if (!filter) return;
-
-    const parent = gRef.current.parentElement;
-    if (!parent) return;
-
-    // Import the filter node and insert it before our placeholder
-    const imported = document.importNode(filter, true);
-    parent.insertBefore(imported, gRef.current);
+    const imported = document.importNode(parsed, true) as SVGFilterElement;
+    parent.insertBefore(imported, placeholder);
     insertedRef.current = imported;
 
-    // Cleanup on unmount or when svg changes
     return () => {
-      if (insertedRef.current && insertedRef.current.parentElement) {
+      if (insertedRef.current?.parentElement) {
         insertedRef.current.parentElement.removeChild(insertedRef.current);
-        insertedRef.current = null;
       }
+      insertedRef.current = null;
     };
-  }, [svg]);
+  }, [parsed]);
 
-  // Return a hidden placeholder <g> element that marks the insertion point
-  return <g ref={gRef} style={{ display: 'none' }} />;
+  return <g ref={placeholderRef} style={{ display: 'none' }} />;
 };
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
@@ -151,8 +150,7 @@ export const serializeFilterDefs = (defs: FilterDefinition[], usedIds: Set<strin
 export const renderFilterElement = (def: FilterDefinition): React.ReactElement => {
   // For custom filters (including animated imports), render the raw SVG using the SVG parser
   if (def.type === 'custom' || def.svg.includes('<animate') || def.svg.includes('<animateTransform') || def.svg.includes('<set')) {
-    // Use FilterSvgContent to properly parse and insert the filter element
-    return <FilterSvgContent svg={def.svg} />;
+    return <ImportedFilterElement svg={def.svg} />;
   }
   if (def.type === 'blur') {
     const std = (def.value / 100) * 8 + 1;

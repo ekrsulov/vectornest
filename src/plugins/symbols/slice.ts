@@ -23,6 +23,8 @@ export interface SymbolDefinition {
   pathData: PathData;
   bounds: SymbolBounds;
   rawContent?: string;
+  hasExplicitViewBox?: boolean;
+  overflow?: string | null;
 }
 
 export interface SymbolPluginSlice {

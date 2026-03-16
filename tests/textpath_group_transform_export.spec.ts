@@ -1,6 +1,28 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
+const anchoredTextPathSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <path id="ring" d="M 400,60 A 340,340 0 1,1 399.9,60" fill="none" />
+  </defs>
+  <g>
+    <animateTransform attributeName="transform" type="rotate" values="360 400 400; 0 400 400" dur="40s" repeatCount="indefinite" />
+    <text font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="900" fill="#00ffff" letter-spacing="10">
+      <textPath href="#ring" startOffset="50%" text-anchor="middle">★ SPECTACULAR SVG ★ PURE MAGIC ★ ADVANCED GRAPHICS ★ MINIMAL CODE ★</textPath>
+    </text>
+  </g>
+</svg>`;
+
+const textLevelAnimatedTextPathSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <path id="orbit" d="M 400,110 A 290,290 0 1,1 399.9,110" fill="none" />
+  </defs>
+  <text font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="700" fill="#ff7a00" letter-spacing="8">
+    <animateTransform attributeName="transform" type="rotate" values="0 400 400; 360 400 400" dur="18s" repeatCount="indefinite" />
+    <textPath href="#orbit" startOffset="0%">ROTATING TEXTPATH IMPORT SHOULD STAY ANIMATED</textPath>
+  </text>
+</svg>`;
+
 async function bootstrap(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('http://127.0.0.1:5173', { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'File' }).waitFor();
@@ -67,4 +89,54 @@ test('exports textPath inside transformed groups without duplicating the ancesto
 
   expect(roundTrip.textCount).toBe(1);
   expect(roundTrip.textPathCount).toBe(1);
+});
+
+test('preserves textPath text-anchor overrides declared on the textPath node', async ({ page }) => {
+  await bootstrap(page);
+  await importFixture(page, 'anchored-textpath.svg', Buffer.from(anchoredTextPathSvg, 'utf8'));
+
+  const importedState = await page.evaluate(() => {
+    const state = window.useCanvasStore?.getState?.();
+    const carrier = (state?.elements ?? []).find((element) => element.type === 'path' && element.data?.textPath?.text);
+    const textNode = document.querySelector<SVGTextElement>('svg[data-canvas="true"] text[data-element-id]');
+    return {
+      importedTextAnchor: carrier?.data?.textPath?.textAnchor ?? null,
+      renderedTextAnchor: textNode?.getAttribute('text-anchor') ?? null,
+    };
+  });
+
+  expect(importedState.importedTextAnchor).toBe('middle');
+  expect(importedState.renderedTextAnchor).toBe('middle');
+
+  const exportedSvg = await exportSvg(page);
+  expect(exportedSvg).toContain('text-anchor="middle"');
+});
+
+test('preserves animateTransform declared on the text wrapper of a textPath', async ({ page }) => {
+  await bootstrap(page);
+  await importFixture(page, 'text-level-animated-textpath.svg', Buffer.from(textLevelAnimatedTextPathSvg, 'utf8'));
+
+  const importedState = await page.evaluate(() => {
+    const state = window.useCanvasStore?.getState?.();
+    const carrier = (state?.elements ?? []).find((element) =>
+      element.type === 'path' && element.data?.textPath?.text?.includes('ROTATING TEXTPATH IMPORT')
+    );
+    const animations = state?.animations ?? [];
+    const carrierAnimations = animations.filter((animation) => animation.targetElementId === carrier?.id);
+
+    return {
+      carrierId: carrier?.id ?? null,
+      animateTransformCount: carrierAnimations.filter((animation) => animation.type === 'animateTransform').length,
+      canvasAnimateTransformCount: document.querySelectorAll('svg[data-canvas="true"] animateTransform').length,
+    };
+  });
+
+  expect(importedState.carrierId).not.toBeNull();
+  expect(importedState.animateTransformCount).toBeGreaterThan(0);
+  expect(importedState.canvasAnimateTransformCount).toBeGreaterThan(0);
+
+  const exportedSvg = await exportSvg(page);
+  expect(exportedSvg).toContain('ROTATING TEXTPATH IMPORT SHOULD STAY ANIMATED');
+  expect(exportedSvg).toContain('<textPath href="#orbit"');
+  expect(exportedSvg).toContain('<animateTransform attributeName="transform" type="rotate"');
 });

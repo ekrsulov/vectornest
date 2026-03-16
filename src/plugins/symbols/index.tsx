@@ -20,7 +20,7 @@ import { measurePath } from '../../utils/measurementUtils';
 import { generateShortId } from '../../utils/idGenerator';
 import { normalizeToMLCZ } from '../../utils/svg/normalizer';
 import { useSymbolPlacementHook } from './hooks/useSymbolPlacementHook';
-import { importUse, measureSymbolContentBounds, resolveImplicitViewportViewBox } from './importer';
+import { importUse, measureSymbolContentBounds } from './importer';
 import { Box, useColorMode, useColorModeValue } from '@chakra-ui/react';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { BlockingOverlay } from '../../overlays/BlockingOverlay';
@@ -92,31 +92,48 @@ const serializeSymbolContent = (doc: Document): string => {
     .join('\n      ');
 };
 
-const SymbolContent: React.FC<{ content: string }> = ({ content }) => {
-  const groupRef = React.useRef<SVGGElement>(null);
+const parseImportedSymbolMarkup = (markup: string): Element | null => {
+  if (typeof DOMParser === 'undefined') return null;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(
+    `<svg xmlns="http://www.w3.org/2000/svg">${markup}</svg>`,
+    'image/svg+xml'
+  );
+
+  return doc.querySelector('symbol');
+};
+
+const ImportedSymbolElement: React.FC<{ markup: string }> = ({ markup }) => {
+  const placeholderRef = React.useRef<SVGGElement>(null);
+  const insertedRef = React.useRef<SVGSymbolElement | null>(null);
+  const parsed = React.useMemo(() => parseImportedSymbolMarkup(markup), [markup]);
 
   React.useLayoutEffect(() => {
-    const group = groupRef.current;
-    if (!group) return;
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(
-      `<svg xmlns="http://www.w3.org/2000/svg"><g id="__root__">${content}</g></svg>`,
-      'image/svg+xml'
-    );
-    const root = doc.querySelector('#__root__');
-    if (!root) return;
-
-    while (group.firstChild) {
-      group.removeChild(group.firstChild);
+    const placeholder = placeholderRef.current;
+    const parent = placeholder?.parentElement;
+    if (!placeholder || !parent || !parsed) {
+      return;
     }
 
-    Array.from(root.childNodes).forEach((node) => {
-      group.appendChild(document.importNode(node, true));
-    });
-  }, [content]);
+    if (insertedRef.current?.parentElement) {
+      insertedRef.current.parentElement.removeChild(insertedRef.current);
+      insertedRef.current = null;
+    }
 
-  return <g ref={groupRef} />;
+    const imported = document.importNode(parsed, true) as SVGSymbolElement;
+    parent.insertBefore(imported, placeholder);
+    insertedRef.current = imported;
+
+    return () => {
+      if (insertedRef.current?.parentElement) {
+        insertedRef.current.parentElement.removeChild(insertedRef.current);
+      }
+      insertedRef.current = null;
+    };
+  }, [parsed]);
+
+  return <g ref={placeholderRef} style={{ display: 'none' }} />;
 };
 
 const findChildElementByIndex = (doc: Document, childIndex: number): Element | null => {
@@ -518,24 +535,25 @@ const renderSymbolNode = (
   chainDelays?: Map<string, number>,
   animationState?: AnimationState
 ) => {
+  const overflowProps = symbol.overflow !== undefined
+    ? (symbol.overflow ? { overflow: symbol.overflow } : {})
+    : { overflow: 'visible' as const };
+
   if (symbol.rawContent) {
     // Inject animations for child elements if available
     const animatedContent = (animations && chainDelays)
       ? injectAnimationsIntoSymbolContent(symbol.rawContent, symbol.id, animations, chainDelays, animationState)
       : symbol.rawContent;
     const content = rewriteSymbolReferencesInContent(animatedContent, symbolIds);
+    const overflowAttr = symbol.overflow !== undefined
+      ? (symbol.overflow ? ` overflow="${escapeAttr(symbol.overflow)}"` : '')
+      : ' overflow="visible"';
+    const viewportAttr = symbol.hasExplicitViewBox
+      ? ` viewBox="${symbol.bounds.minX} ${symbol.bounds.minY} ${symbol.bounds.width} ${symbol.bounds.height}" preserveAspectRatio="xMidYMid meet"`
+      : '';
+    const markup = `<symbol id="symbol-${symbol.id}"${viewportAttr}${overflowAttr}>${content}</symbol>`;
     
-    return (
-      <symbol
-        key={symbol.id}
-        id={`symbol-${symbol.id}`}
-        viewBox={`${symbol.bounds.minX} ${symbol.bounds.minY} ${symbol.bounds.width} ${symbol.bounds.height}`}
-        preserveAspectRatio="xMidYMid meet"
-        overflow="visible"
-      >
-        <SymbolContent content={content} />
-      </symbol>
-    );
+    return <ImportedSymbolElement key={symbol.id} markup={markup} />;
   }
   const pathD = commandsToString(symbol.pathData.subPaths.flat());
   const padding = 0; // Removed padding to avoid scaling issues
@@ -545,9 +563,13 @@ const renderSymbolNode = (
     <symbol
       key={symbol.id}
       id={`symbol-${symbol.id}`}
-      viewBox={`${symbol.bounds.minX - padding} ${symbol.bounds.minY - padding} ${Math.max(symbol.bounds.width, 1) + 2 * padding} ${Math.max(symbol.bounds.height, 1) + 2 * padding}`}
-      preserveAspectRatio="xMidYMid meet"
-      overflow="visible"
+      {...(symbol.hasExplicitViewBox
+        ? {
+          viewBox: `${symbol.bounds.minX - padding} ${symbol.bounds.minY - padding} ${Math.max(symbol.bounds.width, 1) + 2 * padding} ${Math.max(symbol.bounds.height, 1) + 2 * padding}`,
+          preserveAspectRatio: 'xMidYMid meet' as const,
+        }
+        : {})}
+      {...overflowProps}
     >
       <path
         d={pathD}
@@ -618,7 +640,13 @@ defsContributionRegistry.register({
             { forceRender: true }
           );
           const content = rewriteSymbolReferencesInContent(animatedContent, filteredIds);
-          return `<symbol id="symbol-${symbol.id}" viewBox="${symbol.bounds.minX} ${symbol.bounds.minY} ${symbol.bounds.width} ${symbol.bounds.height}" preserveAspectRatio="xMidYMid meet" overflow="visible">${content}</symbol>`;
+          const overflowAttr = symbol.overflow !== undefined
+            ? (symbol.overflow ? ` overflow="${escapeAttr(symbol.overflow)}"` : '')
+            : ' overflow="visible"';
+          const viewportAttr = symbol.hasExplicitViewBox
+            ? ` viewBox="${symbol.bounds.minX} ${symbol.bounds.minY} ${symbol.bounds.width} ${symbol.bounds.height}" preserveAspectRatio="xMidYMid meet"`
+            : '';
+          return `<symbol id="symbol-${symbol.id}"${viewportAttr}${overflowAttr}>${content}</symbol>`;
         }
         const pathD = commandsToString(symbol.pathData.subPaths.flat());
         const padding = 0;
@@ -630,10 +658,13 @@ defsContributionRegistry.register({
           `stroke-width="${pd.strokeWidth ?? 1}"`,
           `stroke-opacity="${pd.strokeOpacity ?? 1}"`,
         ].join(' ');
-        return `<symbol id="symbol-${symbol.id}" viewBox="${symbol.bounds.minX - padding} ${symbol.bounds.minY - padding} ${Math.max(symbol.bounds.width, 1) + 2 * padding} ${Math.max(
-          symbol.bounds.height,
-          1
-        ) + 2 * padding}" preserveAspectRatio="xMidYMid meet" overflow="visible"><path ${attrs} /></symbol>`;
+        const overflowAttr = symbol.overflow !== undefined
+          ? (symbol.overflow ? ` overflow="${escapeAttr(symbol.overflow)}"` : '')
+          : ' overflow="visible"';
+        const viewportAttr = symbol.hasExplicitViewBox
+          ? ` viewBox="${symbol.bounds.minX - padding} ${symbol.bounds.minY - padding} ${Math.max(symbol.bounds.width, 1) + 2 * padding} ${Math.max(symbol.bounds.height, 1) + 2 * padding}" preserveAspectRatio="xMidYMid meet"`
+          : '';
+        return `<symbol id="symbol-${symbol.id}"${viewportAttr}${overflowAttr}><path ${attrs} /></symbol>`;
       });
   },
 });
@@ -750,6 +781,15 @@ const computeSymbolBounds = (data: SymbolInstanceData) => {
         minY: measured.minY - halfStroke,
         maxX: measured.maxX + halfStroke,
         maxY: measured.maxY + halfStroke,
+      };
+    }
+
+    if (data.preserveViewportlessSymbol && data.viewportlessBounds) {
+      return {
+        minX: data.viewportlessBounds.minX - halfStroke,
+        minY: data.viewportlessBounds.minY - halfStroke,
+        maxX: data.viewportlessBounds.minX + data.viewportlessBounds.width + halfStroke,
+        maxY: data.viewportlessBounds.minY + data.viewportlessBounds.height + halfStroke,
       };
     }
 
@@ -967,13 +1007,24 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
   const { transform: _initialTransformAttr, ...nonTransformInitialAttrs } = initialAttrs;
   const positionX = data.x ?? 0;
   const positionY = data.y ?? 0;
+  const shouldPreserveViewportlessUse = !data.pathData && data.preserveViewportlessSymbol;
+  const useX = shouldPreserveViewportlessUse
+    ? (data.originalXAttr ?? undefined)
+    : positionX;
+  const useY = shouldPreserveViewportlessUse
+    ? (data.originalYAttr ?? undefined)
+    : positionY;
+  const useWidth = shouldPreserveViewportlessUse
+    ? (data.originalWidthAttr ?? undefined)
+    : width;
+  const useHeight = shouldPreserveViewportlessUse
+    ? (data.originalHeightAttr ?? undefined)
+    : height;
 
   return (
     <g
       key={element.id}
       data-element-id={element.id}
-      {...filterAttr}
-      {...maskAttr}
     >
       {data.pathData ? (
         <g
@@ -984,6 +1035,8 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
             data-element-id={element.id}
             transform={(data.x ?? 0) !== 0 || (data.y ?? 0) !== 0 ? `translate(${data.x ?? 0} ${data.y ?? 0})` : undefined}
             {...clipAttr}
+            {...filterAttr}
+            {...maskAttr}
             {...styleAttrs}
             style={Object.keys(blendStyle).length ? blendStyle : undefined}
             {...nonTransformInitialAttrs}
@@ -995,13 +1048,15 @@ const SymbolInstanceRendererComponent: React.FC<{ element: SymbolInstanceElement
       ) : (
         <use
           href={`#symbol-${data.symbolId}`}
-          x={positionX}
-          y={positionY}
-          width={width}
-          height={height}
+          x={useX}
+          y={useY}
+          width={useWidth}
+          height={useHeight}
           data-element-id={element.id}
           transform={targetTransformAttr}
           {...clipAttr}
+          {...filterAttr}
+          {...maskAttr}
           {...styleAttrs}
           style={Object.keys(blendStyle).length ? blendStyle : undefined}
           {...nonTransformInitialAttrs}
@@ -1071,13 +1126,24 @@ const createSymbolInstanceContribution = (): ElementContribution => {
       const matrix = data.transformMatrix ? `matrix(${data.transformMatrix.join(' ')})` : '';
       const transform = matrix || serializeTransform(data);
       const transformAttr = transform ? ` transform="${transform}"` : '';
-      const xAttr = (data.x ?? 0) !== 0 ? ` x="${data.x}"` : '';
-      const yAttr = (data.y ?? 0) !== 0 ? ` y="${data.y}"` : '';
+      const shouldPreserveViewportlessUse = !data.pathData && data.preserveViewportlessSymbol;
+      const xAttr = shouldPreserveViewportlessUse
+        ? (data.originalXAttr !== undefined ? ` x="${escapeAttr(data.originalXAttr)}"` : '')
+        : ((data.x ?? 0) !== 0 ? ` x="${data.x}"` : '');
+      const yAttr = shouldPreserveViewportlessUse
+        ? (data.originalYAttr !== undefined ? ` y="${escapeAttr(data.originalYAttr)}"` : '')
+        : ((data.y ?? 0) !== 0 ? ` y="${data.y}"` : '');
       const clipRef = data.clipPathId ?? data.clipPathTemplateId;
       const clipAttr = clipRef ? ` clip-path="url(#${clipRef})"` : '';
       const filterAttr = data.filterId ? ` filter="url(#${data.filterId})"` : '';
       const maskAttr = data.maskId ? ` mask="url(#${data.maskId})"` : '';
       const { width, height } = getInstanceDimensions(data);
+      const widthAttr = shouldPreserveViewportlessUse
+        ? (data.originalWidthAttr !== undefined ? ` width="${escapeAttr(data.originalWidthAttr)}"` : '')
+        : ` width="${data.originalWidthAttr ?? width}"`;
+      const heightAttr = shouldPreserveViewportlessUse
+        ? (data.originalHeightAttr !== undefined ? ` height="${escapeAttr(data.originalHeightAttr)}"` : '')
+        : ` height="${data.originalHeightAttr ?? height}"`;
 
       const styleParts: string[] = [];
       if (data.mixBlendMode) styleParts.push(`mix-blend-mode:${data.mixBlendMode}`);
@@ -1105,7 +1171,7 @@ const createSymbolInstanceContribution = (): ElementContribution => {
         return attrs;
       })();
 
-      return `<use id="${id}" href="#symbol-${data.symbolId}"${xAttr}${yAttr} width="${width}" height="${height}"${transformAttr}${clipAttr}${filterAttr}${maskAttr}${paintAttrs} vector-effect="non-scaling-stroke" />`;
+      return `<use id="${id}" href="#symbol-${data.symbolId}"${xAttr}${yAttr}${widthAttr}${heightAttr}${transformAttr}${clipAttr}${filterAttr}${maskAttr}${paintAttrs} vector-effect="non-scaling-stroke" />`;
     },
   };
 };
@@ -1138,6 +1204,7 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
         }
       }
       const viewBoxAttr = node.getAttribute('viewBox');
+      const hasExplicitViewBox = Boolean(viewBoxAttr);
       let bounds = { minX: 0, minY: 0, width: 100, height: 100 };
       if (viewBoxAttr) {
         const [x, y, w, h] = viewBoxAttr.split(/\s+/).map(parseFloat);
@@ -1148,14 +1215,9 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
           height: Number.isFinite(h) && h > 0 ? h : 100,
         };
       } else {
-        const implicitViewport = resolveImplicitViewportViewBox(node);
-        if (implicitViewport) {
-          bounds = implicitViewport;
-        } else {
-          const measuredBounds = measureSymbolContentBounds(node);
-          if (measuredBounds) {
-            bounds = measuredBounds;
-          }
+        const measuredBounds = measureSymbolContentBounds(node);
+        if (measuredBounds) {
+          bounds = measuredBounds;
         }
       }
 
@@ -1176,7 +1238,7 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
 
         const parsedCommands = parsePathD(normalizeToMLCZ(pathD));
         const subPaths = [parsedCommands];
-        if (!viewBoxAttr && !resolveImplicitViewportViewBox(node)) {
+        if (!viewBoxAttr) {
           const measured = measurePath(subPaths, strokeWidth, 1);
           bounds = {
             minX: measured.minX,
@@ -1215,6 +1277,8 @@ const importSymbolDefs = (doc: Document): Record<string, SymbolDefinition[]> | n
         pathData,
         bounds,
         rawContent,
+        hasExplicitViewBox,
+        overflow: node.hasAttribute('overflow') ? node.getAttribute('overflow') : null,
       } as SymbolDefinition;
     })
     .filter((s): s is SymbolDefinition => s !== null);

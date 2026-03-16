@@ -54,6 +54,12 @@ const applyHiddenDisplay = (markup: string, isHidden: boolean): string => {
   return withoutDisplay.replace(/^(\s*<\w+)/, '$1 display="none"');
 };
 
+const stripHiddenPresentation = (markup: string): string => (
+  markup
+    .replace(/\sdisplay="[^"]*"/g, '')
+    .replace(/\svisibility="[^"]*"/g, '')
+);
+
 const getDefinitionExportId = (element: CanvasElement): string => {
   const sourceId = (element.data as { sourceId?: unknown } | undefined)?.sourceId;
   return typeof sourceId === 'string' && sourceId.trim().length > 0 ? sourceId : element.id;
@@ -81,6 +87,52 @@ const buildDefinitionRuntimeIdMap = (elements: CanvasElement[]): Map<string, str
   return runtimeIdMap;
 };
 
+const collectUseVisibleDefinitionIds = (
+  elements: CanvasElement[],
+  childrenByParent: Map<string, CanvasElement[]>,
+): Set<string> => {
+  const definitionMap = new Map<string, CanvasElement>();
+  elements.forEach((element) => {
+    if (!isDefinitionElement(element)) {
+      return;
+    }
+
+    definitionMap.set(element.id, element);
+    const sourceId = (element.data as { sourceId?: unknown } | undefined)?.sourceId;
+    if (typeof sourceId === 'string' && sourceId.trim().length > 0) {
+      definitionMap.set(sourceId, element);
+    }
+  });
+
+  const visibleIds = new Set<string>();
+  const includeSubtree = (element: CanvasElement): void => {
+    if (visibleIds.has(element.id)) {
+      return;
+    }
+
+    visibleIds.add(element.id);
+    (childrenByParent.get(element.id) ?? []).forEach(includeSubtree);
+  };
+
+  elements.forEach((element) => {
+    if (element.type !== 'use') {
+      return;
+    }
+
+    const href = (element.data as { href?: unknown } | undefined)?.href;
+    if (typeof href !== 'string' || href.trim().length === 0) {
+      return;
+    }
+
+    const target = definitionMap.get(href);
+    if (target) {
+      includeSubtree(target);
+    }
+  });
+
+  return visibleIds;
+};
+
 const rewriteDefinitionReferenceIds = (
   markup: string,
   exportIdMap: Map<string, string>,
@@ -94,8 +146,10 @@ const serializeDefinitionLeaf = (
   state: CanvasStore,
   isHidden: boolean,
   exportIdMap: Map<string, string>,
+  useVisibleDefinitionIds: Set<string>,
 ): string | null => {
   const exportId = getDefinitionExportId(element);
+  const shouldRemainVisibleForUse = useVisibleDefinitionIds.has(element.id);
 
   if (element.type === 'path') {
     const markup = serializePathElement(element as PathElement, '', state, { includeTextPath: false });
@@ -107,7 +161,9 @@ const serializeDefinitionLeaf = (
       ? markup.trim()
       : markup.trim().replace(`id="${element.id}"`, `id="${exportId}"`);
 
-    return applyHiddenDisplay(normalizedMarkup, isHidden);
+    return shouldRemainVisibleForUse
+      ? stripHiddenPresentation(normalizedMarkup)
+      : applyHiddenDisplay(normalizedMarkup, isHidden);
   }
 
   const exportElement = exportId === element.id
@@ -136,7 +192,9 @@ const serializeDefinitionLeaf = (
     }
   }
 
-  return applyHiddenDisplay(markup, isHidden);
+  return shouldRemainVisibleForUse
+    ? stripHiddenPresentation(markup)
+    : applyHiddenDisplay(markup, isHidden);
 };
 
 const serializeDefinitionTree = (
@@ -144,12 +202,14 @@ const serializeDefinitionTree = (
   childrenByParent: Map<string, CanvasElement[]>,
   state: CanvasStore,
   exportIdMap: Map<string, string>,
+  useVisibleDefinitionIds: Set<string>,
 ): string | null => {
   const isHidden = state.isElementHidden?.(element.id) ?? Boolean((element.data as { isHidden?: boolean } | undefined)?.isHidden);
   const exportId = getDefinitionExportId(element);
+  const shouldRemainVisibleForUse = useVisibleDefinitionIds.has(element.id);
 
   if (element.type !== 'group') {
-    return serializeDefinitionLeaf(element, state, isHidden, exportIdMap);
+    return serializeDefinitionLeaf(element, state, isHidden, exportIdMap, useVisibleDefinitionIds);
   }
 
   const groupElement = element as GroupElement;
@@ -158,7 +218,7 @@ const serializeDefinitionTree = (
   if (groupElement.data.name) {
     attributes.push(`data-name="${escapeXmlAttribute(groupElement.data.name)}"`);
   }
-  if (isHidden) {
+  if (isHidden && !shouldRemainVisibleForUse) {
     attributes.push('display="none"');
   }
   if (groupElement.data.transformMatrix) {
@@ -206,7 +266,7 @@ const serializeDefinitionTree = (
 
   const childMarkup = (childrenByParent.get(groupElement.id) ?? [])
     .sort(sortByZIndex)
-    .map((child) => serializeDefinitionTree(child, childrenByParent, state, exportIdMap))
+    .map((child) => serializeDefinitionTree(child, childrenByParent, state, exportIdMap, useVisibleDefinitionIds))
     .filter((value): value is string => Boolean(value))
     .join('\n');
 
@@ -259,8 +319,9 @@ defsContributionRegistry.register({
       })
       .sort(sortByZIndex);
     const runtimeIdMap = buildDefinitionRuntimeIdMap(elements);
+    const useVisibleDefinitionIds = collectUseVisibleDefinitionIds(elements, childrenByParent);
     const markups = roots
-      .map((root) => serializeDefinitionTree(root, childrenByParent, state, runtimeIdMap))
+      .map((root) => serializeDefinitionTree(root, childrenByParent, state, runtimeIdMap, useVisibleDefinitionIds))
       .filter((value): value is string => Boolean(value));
 
     if (!markups.length) {
@@ -309,9 +370,10 @@ defsContributionRegistry.register({
       })
       .sort(sortByZIndex);
     const exportIdMap = buildDefinitionExportIdMap(elements);
+    const useVisibleDefinitionIds = collectUseVisibleDefinitionIds(elements, childrenByParent);
 
     return roots
-      .map((root) => serializeDefinitionTree(root, childrenByParent, state, exportIdMap))
+      .map((root) => serializeDefinitionTree(root, childrenByParent, state, exportIdMap, useVisibleDefinitionIds))
       .filter((value): value is string => Boolean(value));
   },
 });

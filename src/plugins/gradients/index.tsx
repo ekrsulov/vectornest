@@ -15,6 +15,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { collectUsedPaintIds } from '../../utils/paintUsageUtils';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
 import type { MasksSlice } from '../masks/types';
+import type { PatternsSlice } from '../patterns/slice';
 import { generateShortId } from '../../utils/idGenerator';
 import { resolveLinearGradientCoordinates } from './linearGradientUtils';
 import './persistence';
@@ -994,10 +995,18 @@ defsContributionRegistry.register({
         symbolGradientIds.add(id);
       });
     });
+    const patternState = state as unknown as Partial<PatternsSlice>;
+    const patternGradientIds = new Set<string>();
+    (patternState.patterns ?? []).forEach((pattern) => {
+      collectGradientReferencesFromRawContent(pattern.rawContent).forEach((id) => {
+        patternGradientIds.add(id);
+      });
+    });
     const initialUsed = new Set<string>([
       ...Array.from(usedIds),
       ...Array.from(maskGradientIds),
       ...Array.from(symbolGradientIds),
+      ...Array.from(patternGradientIds),
     ]);
     const used = expandGradientUsageWithReferences(gradients, initialUsed);
     
@@ -1114,10 +1123,18 @@ defsContributionRegistry.register({
         symbolGradientIds.add(id);
       });
     });
+    const patternState = state as unknown as Partial<PatternsSlice>;
+    const patternGradientIds = new Set<string>();
+    (patternState.patterns ?? []).forEach((pattern) => {
+      collectGradientReferencesFromRawContent(pattern.rawContent).forEach((id) => {
+        patternGradientIds.add(id);
+      });
+    });
     const initialUsed = new Set<string>([
       ...Array.from(usedIds),
       ...Array.from(maskGradientIds),
       ...Array.from(symbolGradientIds),
+      ...Array.from(patternGradientIds),
     ]);
     
     const expandedUsed = expandGradientUsageWithReferences(gradients, initialUsed);

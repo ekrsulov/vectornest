@@ -134,6 +134,35 @@ const extractFilterId = (element: Element): string | undefined => {
   return extractFilterIdFromValue(styleMap.filter);
 };
 
+const collectFilterReferencesFromRawContent = (rawContent?: string): string[] => {
+  if (!rawContent) {
+    return [];
+  }
+
+  const refs: string[] = [];
+  const regex = /\bfilter\s*=\s*("|')url\(#([^)]+)\)\1/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(rawContent)) !== null) {
+    refs.push(match[2]);
+  }
+
+  return refs;
+};
+
+const collectUsedFiltersWithSymbolRefs = (
+  state: CanvasStore & FilterSlice & { symbols?: Array<{ rawContent?: string }> },
+  baseUsed?: Set<string>,
+): Set<string> => {
+  const used = new Set<string>(baseUsed ?? collectUsedFilterIds(state.elements));
+  (state.symbols ?? []).forEach((symbol) => {
+    collectFilterReferencesFromRawContent(symbol.rawContent).forEach((id) => {
+      used.add(id);
+    });
+  });
+  return used;
+};
+
 export const filterPlugin: PluginDefinition<CanvasStore> = {
   id: 'filter',
   metadata: {
@@ -198,13 +227,13 @@ paintContributionRegistry.register({
   showInPicker: false,
   renderPicker: () => null,
   renderDefs: () => {
-    const state = useCanvasStore.getState() as unknown as CanvasStore & FilterSlice;
-    const used = collectUsedFilterIds(state.elements);
+    const state = useCanvasStore.getState() as unknown as CanvasStore & FilterSlice & { symbols?: Array<{ rawContent?: string }> };
+    const used = collectUsedFiltersWithSymbolRefs(state);
     return <FilterDefsContent state={state} used={used} />;
   },
   serializeDefs: (state) => {
-    const filterState = state as unknown as CanvasStore & FilterSlice;
-    const used = collectUsedFilterIds(filterState.elements);
+    const filterState = state as unknown as CanvasStore & FilterSlice & { symbols?: Array<{ rawContent?: string }> };
+    const used = collectUsedFiltersWithSymbolRefs(filterState);
     return serializeFilterDefs(filterState, used);
   },
 });
@@ -213,11 +242,11 @@ defsContributionRegistry.register({
   id: 'filters',
   collectUsedIds: (elements) => collectUsedFilterIds(elements),
   renderDefs: (state, used) => {
-    const filterState = state as unknown as CanvasStore & FilterSlice;
-    return <FilterDefsContent state={filterState} used={used} />;
+    const filterState = state as unknown as CanvasStore & FilterSlice & { symbols?: Array<{ rawContent?: string }> };
+    return <FilterDefsContent state={filterState} used={collectUsedFiltersWithSymbolRefs(filterState, used)} />;
   },
   serializeDefs: (state, used) => {
-    const filterState = state as unknown as CanvasStore & FilterSlice;
-    return serializeFilterDefs(filterState, used);
+    const filterState = state as unknown as CanvasStore & FilterSlice & { symbols?: Array<{ rawContent?: string }> };
+    return serializeFilterDefs(filterState, collectUsedFiltersWithSymbolRefs(filterState, used));
   },
 });

@@ -74,6 +74,38 @@ const resolvePrimarySymbolGraphicsElement = (symbolNode: Element | null | undefi
     return null;
 };
 
+const SYMBOL_ANIMATION_SELECTOR = 'animate, animateTransform, animateMotion, animateColor, set';
+
+const canInlineSymbolAsPath = (
+    symbolNode: Element | null | undefined,
+    graphicsNode: Element | null | undefined,
+): boolean => {
+    if (!symbolNode || !graphicsNode) {
+        return false;
+    }
+
+    if (symbolNode.querySelector(SYMBOL_ANIMATION_SELECTOR)) {
+        return false;
+    }
+
+    if (symbolNode.querySelector('[filter], [mask], [clip-path]')) {
+        return false;
+    }
+
+    let current: Element | null = graphicsNode;
+    while (current) {
+        if (current.hasAttribute('transform')) {
+            return false;
+        }
+        if (current === symbolNode) {
+            break;
+        }
+        current = current.parentElement;
+    }
+
+    return true;
+};
+
 const UNSUPPORTED_PATH_COMMAND_PATTERN = /[AHQSTVahqstv]/;
 
 const canConvertPathDataSafely = (pathD: string): boolean => !UNSUPPORTED_PATH_COMMAND_PATTERN.test(pathD);
@@ -258,6 +290,19 @@ export const measureSymbolContentBounds = (symbolNode: Element | null | undefine
     }
 };
 
+const resolveSymbolBounds = (symbolNode: Element | null | undefined): ViewBox | null => {
+    if (!symbolNode) {
+        return null;
+    }
+
+    const explicitViewBox = parseViewBox(symbolNode.getAttribute('viewBox'));
+    if (explicitViewBox) {
+        return explicitViewBox;
+    }
+
+    return measureSymbolContentBounds(symbolNode);
+};
+
 const applyViewBoxTransform = (
     pathData: SymbolPathData,
     viewBox: ViewBox,
@@ -413,11 +458,8 @@ export function importUse(
 
     const parsedViewBox = parseViewBox(symbolNode?.getAttribute('viewBox'));
     const implicitViewportSize = resolveImplicitViewportSize(element);
-    const implicitViewportViewBox = !parsedViewBox
-        ? resolveImplicitViewportViewBox(symbolNode ?? element)
-        : null;
-    const measuredSymbolBounds = !parsedViewBox && !implicitViewportViewBox
-        ? measureSymbolContentBounds(symbolNode)
+    const measuredSymbolBounds = !parsedViewBox
+        ? resolveSymbolBounds(symbolNode)
         : null;
 
     if (parsedViewBox) {
@@ -429,18 +471,18 @@ export function importUse(
         }
     } else {
         if (!hasExplicitWidth && (!Number.isFinite(finalWidth) || finalWidth === 0)) {
-            finalWidth = implicitViewportViewBox?.width ?? measuredSymbolBounds?.width ?? 0;
+            finalWidth = measuredSymbolBounds?.width ?? 0;
         }
         if (!hasExplicitHeight && (!Number.isFinite(finalHeight) || finalHeight === 0)) {
-            finalHeight = implicitViewportViewBox?.height ?? measuredSymbolBounds?.height ?? 0;
+            finalHeight = measuredSymbolBounds?.height ?? 0;
         }
     }
 
     if (!Number.isFinite(finalWidth) || finalWidth === 0) {
-        finalWidth = parsedViewBox?.width ?? implicitViewportViewBox?.width ?? measuredSymbolBounds?.width ?? 100;
+        finalWidth = parsedViewBox?.width ?? measuredSymbolBounds?.width ?? 100;
     }
     if (!Number.isFinite(finalHeight) || finalHeight === 0) {
-        finalHeight = parsedViewBox?.height ?? implicitViewportViewBox?.height ?? measuredSymbolBounds?.height ?? 100;
+        finalHeight = parsedViewBox?.height ?? measuredSymbolBounds?.height ?? 100;
     }
 
     void hasExplicitX;
@@ -489,11 +531,11 @@ export function importUse(
     }
 
     // Try to resolve geometry for thumbnails/bounds; fall back to rendering via <use> when unresolved
+    const shouldInlineSymbolPath = !symbolHasMultipleChildren && canInlineSymbolAsPath(symbolNode, symbolGraphicsNode);
     let pathData =
-        symbolHasMultipleChildren
-            ? undefined
-            : buildPathData(symbolGraphicsNode, styleAttrs) ??
-              undefined;
+        shouldInlineSymbolPath
+            ? buildPathData(symbolGraphicsNode, styleAttrs) ?? undefined
+            : undefined;
 
     // Apply symbol viewBox transform so imported geometry matches how SVG renders the symbol
     if (pathData && parsedViewBox) {
@@ -512,10 +554,10 @@ export function importUse(
         finalHeight = pathData.height;
     }
     if (!Number.isFinite(finalWidth) || finalWidth === 0) {
-        finalWidth = parsedViewBox?.width ?? implicitViewportViewBox?.width ?? measuredSymbolBounds?.width ?? 100;
+        finalWidth = parsedViewBox?.width ?? measuredSymbolBounds?.width ?? 100;
     }
     if (!Number.isFinite(finalHeight) || finalHeight === 0) {
-        finalHeight = parsedViewBox?.height ?? implicitViewportViewBox?.height ?? measuredSymbolBounds?.height ?? 100;
+        finalHeight = parsedViewBox?.height ?? measuredSymbolBounds?.height ?? 100;
     }
 
     // Preserve <use> x/y separately when the symbol instance is complex OR when it carries
@@ -535,6 +577,21 @@ export function importUse(
             y: shouldPreserveUsePosition ? y : 0,
             width: finalWidth,
             height: finalHeight,
+            originalXAttr: xAttrRaw ?? undefined,
+            originalYAttr: yAttrRaw ?? undefined,
+            originalWidthAttr: widthAttrRaw ?? undefined,
+            originalHeightAttr: heightAttrRaw ?? undefined,
+            ...(parsedViewBox ? {} : {
+                preserveViewportlessSymbol: true,
+                ...(measuredSymbolBounds ? {
+                    viewportlessBounds: {
+                        minX: measuredSymbolBounds.minX,
+                        minY: measuredSymbolBounds.minY,
+                        width: measuredSymbolBounds.width,
+                        height: measuredSymbolBounds.height,
+                    },
+                } : {}),
+            }),
             ...styleAttrs,
             ...(inheritedColor ? { color: inheritedColor } : {}),
             fillColor: (styleAttrs as { fillColor?: string }).fillColor ?? 'currentColor',

@@ -181,6 +181,35 @@ const collectClipUsage = (elements: CanvasElement[]): Set<string> => {
   return usage;
 };
 
+const collectClipReferencesFromRawContent = (rawContent?: string): string[] => {
+  if (!rawContent) {
+    return [];
+  }
+
+  const refs: string[] = [];
+  const regex = /\bclip-path\s*=\s*("|')url\(#([^)]+)\)\1/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(rawContent)) !== null) {
+    refs.push(match[2]);
+  }
+
+  return refs;
+};
+
+const collectUsedClipIdsWithSymbolRefs = (
+  elements: CanvasElement[],
+  symbols?: Array<{ rawContent?: string }>,
+): Set<string> => {
+  const used = collectClipUsage(elements);
+  (symbols ?? []).forEach((symbol) => {
+    collectClipReferencesFromRawContent(symbol.rawContent).forEach((id) => {
+      used.add(id);
+    });
+  });
+  return used;
+};
+
 const serializeClipAnimation = (anim: SVGAnimation, chainDelays: Map<string, number>): string => {
   const delayMs = chainDelays.get(anim.id) ?? 0;
   const beginValue = delayMs > 0 ? `${(delayMs / 1000).toFixed(3)}s` : (anim.begin ?? '0s');
@@ -833,7 +862,7 @@ const createClipInstances = (
   const viewport = state.viewport ?? { zoom: 1, panX: 0, panY: 0 };
   const elementMap = new Map<string, CanvasElement>();
   elements.forEach((element) => elementMap.set(element.id, element));
-  return elements
+  const elementInstances = elements
     .map((element) => {
       const data = element.data as Record<string, unknown>;
       const clipPathId = data.clipPathId as string | undefined;
@@ -896,14 +925,33 @@ const createClipInstances = (
       };
     })
     .filter(Boolean) as Array<{ clip: ClipDefinition; instanceId: string; runtimeInstanceId: string; elementBounds: { minX: number; minY: number; width: number; height: number } }>;
+
+  const existingInstanceIds = new Set(elementInstances.map((instance) => instance.instanceId));
+  const directInstances = clips
+    .filter((clip) => usedIds.has(clip.id) && !existingInstanceIds.has(clip.id))
+    .map((clip) => ({
+      clip,
+      instanceId: clip.id,
+      runtimeInstanceId: clip.version ? `${clip.id}-v${clip.version}` : clip.id,
+      elementBounds: {
+        minX: clip.originX ?? clip.bounds.minX,
+        minY: clip.originY ?? clip.bounds.minY,
+        width: clip.bounds.width,
+        height: clip.bounds.height,
+      },
+    }));
+
+  return [...elementInstances, ...directInstances];
 };
 
 defsContributionRegistry.register({
   id: 'clips',
   collectUsedIds: collectClipUsage,
   renderDefs: (state, usedIds) => {
-    const clipState = state as CanvasStore & ClippingPluginSlice & AnimationPluginSlice;
-    const instances = createClipInstances(clipState, usedIds, state.elements ?? []);
+    const clipState = state as CanvasStore & ClippingPluginSlice & AnimationPluginSlice & { symbols?: Array<{ rawContent?: string }> };
+    const effectiveUsedIds = collectUsedClipIdsWithSymbolRefs(state.elements ?? [], clipState.symbols);
+    usedIds.forEach((id) => effectiveUsedIds.add(id));
+    const instances = createClipInstances(clipState, effectiveUsedIds, state.elements ?? []);
     if (!instances.length) return null;
     const animations = clipState.animations ?? [];
     const chainDelays = clipState.calculateChainDelays ? clipState.calculateChainDelays() : new Map<string, number>();
@@ -935,8 +983,10 @@ defsContributionRegistry.register({
     );
   },
   serializeDefs: (state, usedIds) => {
-    const clipState = state as CanvasStore & ClippingPluginSlice & AnimationPluginSlice;
-    const instances = createClipInstances(clipState, usedIds, state.elements ?? []);
+    const clipState = state as CanvasStore & ClippingPluginSlice & AnimationPluginSlice & { symbols?: Array<{ rawContent?: string }> };
+    const effectiveUsedIds = collectUsedClipIdsWithSymbolRefs(state.elements ?? [], clipState.symbols);
+    usedIds.forEach((id) => effectiveUsedIds.add(id));
+    const instances = createClipInstances(clipState, effectiveUsedIds, state.elements ?? []);
     if (!instances.length) return [];
     const animations = clipState.animations ?? [];
     const chainDelays = clipState.calculateChainDelays ? clipState.calculateChainDelays() : new Map<string, number>();

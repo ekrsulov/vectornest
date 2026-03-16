@@ -279,6 +279,35 @@ const collectUsedMaskIds = (elements: CanvasElement[]): Set<string> => {
   return used;
 };
 
+const collectMaskReferencesFromRawContent = (rawContent?: string): string[] => {
+  if (!rawContent) {
+    return [];
+  }
+
+  const refs: string[] = [];
+  const regex = /\bmask\s*=\s*("|')url\(#([^)]+)\)\1/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(rawContent)) !== null) {
+    refs.push(match[2]);
+  }
+
+  return refs;
+};
+
+const collectUsedMaskIdsWithSymbolRefs = (
+  elements: CanvasElement[],
+  symbols?: Array<{ rawContent?: string }>,
+): Set<string> => {
+  const used = collectUsedMaskIds(elements);
+  (symbols ?? []).forEach((symbol) => {
+    collectMaskReferencesFromRawContent(symbol.rawContent).forEach((id) => {
+      used.add(id);
+    });
+  });
+  return used;
+};
+
 defsContributionRegistry.register({
   id: 'masks',
   collectUsedIds: collectUsedMaskIds,
@@ -291,9 +320,12 @@ defsContributionRegistry.register({
       || (maskState.animationState?.hasPlayed ?? false)
       || (maskState.animationState?.isWorkspaceOpen ?? false);
     const restartKey = maskState.animationState?.restartKey ?? 0;
+    const symbols = (state as CanvasStore & { symbols?: Array<{ rawContent?: string }> }).symbols;
+    const effectiveUsedIds = collectUsedMaskIdsWithSymbolRefs([], symbols);
+    usedIds.forEach((id) => effectiveUsedIds.add(id));
     
     return masks
-      .filter((m) => usedIds.has(m.id))
+      .filter((m) => effectiveUsedIds.has(m.id))
       .map((m) => {
         // Calculate offset for userSpaceOnUse masks
         // This represents how much the element has moved from its original position
@@ -346,9 +378,12 @@ defsContributionRegistry.register({
     const masks = maskState.masks ?? [];
     const animations = maskState.animations ?? [];
     const chainDelays = maskState.calculateChainDelays ? maskState.calculateChainDelays() : new Map<string, number>();
+    const symbols = (state as CanvasStore & { symbols?: Array<{ rawContent?: string }> }).symbols;
+    const effectiveUsedIds = collectUsedMaskIdsWithSymbolRefs([], symbols);
+    usedIds.forEach((id) => effectiveUsedIds.add(id));
     
     return masks
-      .filter((m) => usedIds.has(m.id))
+      .filter((m) => effectiveUsedIds.has(m.id))
       .map((m) => {
         // Calculate offset for moved masks (element movement tracking)
         const originX = m.originX ?? 0;

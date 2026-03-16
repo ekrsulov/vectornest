@@ -444,6 +444,12 @@ export function importUse(
   if ((useStyleAttrs as { strokeLinejoin?: string }).strokeLinejoin !== undefined) {
     styleOverrides.strokeLinejoin = (useStyleAttrs as { strokeLinejoin?: string }).strokeLinejoin as 'miter' | 'round' | 'bevel';
   }
+  if ((useStyleAttrs as { strokeDasharray?: string }).strokeDasharray !== undefined) {
+    styleOverrides.strokeDasharray = (useStyleAttrs as { strokeDasharray?: string }).strokeDasharray;
+  }
+  if ((useStyleAttrs as { strokeDashoffset?: number }).strokeDashoffset !== undefined) {
+    styleOverrides.strokeDashoffset = (useStyleAttrs as { strokeDashoffset?: number }).strokeDashoffset;
+  }
 
   const useData: UseElementData = {
     href: rawId,
@@ -458,6 +464,12 @@ export function importUse(
     height,
     transformMatrix: matrix,
     sourceId: element.getAttribute('id') ?? undefined,
+    clipPathId: (useStyleAttrs as { clipPathId?: string }).clipPathId,
+    clipPathTemplateId: (useStyleAttrs as { clipPathTemplateId?: string }).clipPathTemplateId,
+    filterId: (useStyleAttrs as { filterId?: string }).filterId,
+    maskId: (useStyleAttrs as { maskId?: string }).maskId,
+    mixBlendMode: (useStyleAttrs as { mixBlendMode?: string }).mixBlendMode,
+    isolation: (useStyleAttrs as { isolation?: 'auto' | 'isolate' }).isolation,
     ...(shouldPreserveHrefOnExport ? { preserveHrefOnExport: true } : {}),
     ...(cachedPathData ? { cachedPathData } : {}),
     ...(rawContent ? { rawContent } : {}),

@@ -29,6 +29,7 @@ export interface UseStyleOverrides {
   strokeLinecap?: 'butt' | 'round' | 'square';
   strokeLinejoin?: 'miter' | 'round' | 'bevel';
   strokeDasharray?: string;
+  strokeDashoffset?: number;
   fillColor?: string;
   fillOpacity?: number;
   fillRule?: 'nonzero' | 'evenodd';
@@ -149,6 +150,21 @@ export interface UseElementData {
    * Filter ID
    */
   filterId?: string;
+
+  /**
+   * Mask ID
+   */
+  maskId?: string;
+
+  /**
+   * CSS mix-blend-mode applied to the instance.
+   */
+  mixBlendMode?: string;
+
+  /**
+   * CSS isolation applied to the instance.
+   */
+  isolation?: 'auto' | 'isolate';
   
   /**
    * Source ID from import

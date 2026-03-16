@@ -180,6 +180,22 @@ const rewritePatternSymbolReferencesInContent = (
   return `${attribute}=${quote}#symbol-${normalizedRef}${quote}`;
 });
 
+const collectPatternReferencesFromRawContent = (rawContent?: string): string[] => {
+  if (!rawContent) {
+    return [];
+  }
+
+  const refs: string[] = [];
+  const regex = /url\(#([^)]+)\)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(rawContent)) !== null) {
+    refs.push(match[1]);
+  }
+
+  return refs;
+};
+
 /**
  * Inject animations into pattern rawContent at the correct child element positions.
  * Groups animations by patternChildIndex and injects them into the corresponding elements.
@@ -579,7 +595,17 @@ defsContributionRegistry.register({
         maskPatternIds.add(match[1]);
       }
     });
-    const used = new Set<string>([...Array.from(usedIds), ...Array.from(maskPatternIds)]);
+    const symbolPatternIds = new Set<string>();
+    (symbolState.symbols ?? []).forEach((symbol) => {
+      collectPatternReferencesFromRawContent(symbol.rawContent).forEach((id) => {
+        symbolPatternIds.add(id);
+      });
+    });
+    const used = new Set<string>([
+      ...Array.from(usedIds),
+      ...Array.from(maskPatternIds),
+      ...Array.from(symbolPatternIds),
+    ]);
     const patterns = patternState.patterns ?? [];
     const animations = patternState.animations ?? [];
     const chainDelays = patternState.calculateChainDelays ? patternState.calculateChainDelays() : new Map<string, number>();
@@ -693,7 +719,17 @@ defsContributionRegistry.register({
         maskPatternIds.add(match[1]);
       }
     });
-    const used = new Set<string>([...Array.from(usedIds), ...Array.from(maskPatternIds)]);
+    const symbolPatternIds = new Set<string>();
+    (symbolState.symbols ?? []).forEach((symbol) => {
+      collectPatternReferencesFromRawContent(symbol.rawContent).forEach((id) => {
+        symbolPatternIds.add(id);
+      });
+    });
+    const used = new Set<string>([
+      ...Array.from(usedIds),
+      ...Array.from(maskPatternIds),
+      ...Array.from(symbolPatternIds),
+    ]);
     const patterns = patternState.patterns ?? [];
     const animations = patternState.animations ?? [];
     const chainDelays = patternState.calculateChainDelays ? patternState.calculateChainDelays() : new Map<string, number>();

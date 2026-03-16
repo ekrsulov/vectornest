@@ -4,7 +4,7 @@ import { useColorMode } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useShallow } from 'zustand/react/shallow';
 import type { CanvasLayerContext } from '../../types/plugins';
-import type { PathElement } from '../../types';
+import type { GroupElement, PathElement } from '../../types';
 import type { WireframePluginSlice } from '../wireframe/slice';
 import { commandsToString } from '../../utils/pathParserUtils';
 import type { AnimationPluginSlice, SVGAnimation } from '../animationSystem/types';
@@ -16,10 +16,63 @@ import {
   renderInlineTextEffectAnimations,
 } from '../textEffectsLibrary/renderLayerUtils';
 import { getAnimationDomId, resolveAnimationBegin, resolveAnimationEnd } from '../animationSystem/smilTimingUtils';
+import { getElementTransformMatrix } from '../../utils/elementTransformUtils';
+import { IDENTITY_MATRIX, inverseMatrix, multiplyMatrices, type Matrix } from '../../utils/matrixUtils';
 
 const getEffectiveStrokeColor = (path: PathElement['data']): string => {
   if (path.strokeColor === 'none') return '#00000001';
   return path.strokeColor;
+};
+
+const toTransformAttr = (matrix: Matrix | number[] | undefined): string | undefined => {
+  if (!Array.isArray(matrix) || matrix.length !== 6) {
+    return undefined;
+  }
+  return `matrix(${matrix.join(',')})`;
+};
+
+const resolveBaseTransformMatrix = (pathData: PathElement['data']): Matrix | undefined => {
+  if (pathData.textPath?.transformMatrix) {
+    return pathData.textPath.transformMatrix as Matrix;
+  }
+  if (pathData.transformMatrix) {
+    return pathData.transformMatrix as Matrix;
+  }
+  const t = pathData.transform;
+  if (t && (t.translateX || t.translateY || t.rotation || t.scaleX !== 1 || t.scaleY !== 1)) {
+    return getElementTransformMatrix({
+      id: 'textpath-transform-proxy',
+      type: 'path',
+      parentId: null,
+      zIndex: 0,
+      data: pathData,
+    } as PathElement);
+  }
+  return undefined;
+};
+
+const buildAncestorGroupChain = (
+  sortedElements: CanvasLayerContext['sortedElements'],
+  anchorGroupSourceIds: string[] | undefined,
+): GroupElement[] => {
+  if (!anchorGroupSourceIds?.length) {
+    return [];
+  }
+
+  const groupsBySourceId = new Map<string, GroupElement>();
+  sortedElements.forEach((candidate) => {
+    if (candidate.type !== 'group') {
+      return;
+    }
+    const sourceId = candidate.data.sourceId;
+    if (typeof sourceId === 'string' && sourceId.length > 0) {
+      groupsBySourceId.set(sourceId, candidate as GroupElement);
+    }
+  });
+
+  return anchorGroupSourceIds
+    .map((sourceId) => groupsBySourceId.get(sourceId))
+    .filter((group): group is GroupElement => Boolean(group));
 };
 
 const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) => {
@@ -98,16 +151,6 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
     const groupAnimationNodes = transformAnimations.length > 0
       ? renderAnimationsForElement(animationTargetElementId, transformAnimations, animationState, animations)
       : null;
-    const transformAttr = (() => {
-      if (textPath.transformMatrix) return `matrix(${textPath.transformMatrix.join(' ')})`;
-      const pathTransform = (pathData as { transformMatrix?: number[] }).transformMatrix;
-      if (pathTransform) return `matrix(${pathTransform.join(' ')})`;
-      const t = (pathData as { transform?: { translateX?: number; translateY?: number; rotation?: number; scaleX?: number; scaleY?: number } }).transform;
-      if (t && (t.translateX || t.translateY || t.rotation || t.scaleX !== 1 || t.scaleY !== 1)) {
-        return `translate(${t.translateX ?? 0} ${t.translateY ?? 0}) rotate(${t.rotation ?? 0}) scale(${t.scaleX ?? 1} ${t.scaleY ?? 1})`;
-      }
-      return undefined;
-    })();
 
     const textPathAnimations: SVGAnimation[] = animations.filter(
       (anim) =>
@@ -159,6 +202,26 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
         })
         : textPath.text
     );
+
+    const ancestorGroups = buildAncestorGroupChain(sortedElements, textPath.anchorGroupSourceIds);
+    const ancestorMatrix = ancestorGroups.reduce<Matrix>(
+      (matrix, group) => multiplyMatrices(matrix, getElementTransformMatrix(group)),
+      [...IDENTITY_MATRIX] as Matrix,
+    );
+    const baseTransformMatrix = resolveBaseTransformMatrix(pathData);
+    const relativeBaseTransformMatrix = (() => {
+      if (!baseTransformMatrix || ancestorGroups.length === 0) {
+        return baseTransformMatrix;
+      }
+
+      const inverseAncestorMatrix = inverseMatrix(ancestorMatrix);
+      if (!inverseAncestorMatrix) {
+        return baseTransformMatrix;
+      }
+
+      return multiplyMatrices(inverseAncestorMatrix, baseTransformMatrix);
+    })();
+    const transformAttr = toTransformAttr(relativeBaseTransformMatrix);
 
     const renderEffectLayer = (layer: typeof textEffectLayers[number], index: number) => {
       const layerFill = layer.useSourceFill ? fillColor : (layer.fillColor ?? 'none');
@@ -222,7 +285,7 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
       );
     };
 
-    nodes.push(
+    const content = (
       <g
         key={`${element.id}-textpath`}
         data-element-id={element.id}
@@ -318,6 +381,23 @@ const TextPathLayer: React.FC<{ context: CanvasLayerContext }> = ({ context }) =
         {overlays.map(renderEffectLayer)}
       </g>
     );
+
+    const wrappedContent = ancestorGroups.reduceRight<React.ReactNode>((child, group, index) => {
+      const groupTransform = toTransformAttr(getElementTransformMatrix(group));
+      const groupAnimationNodes = renderAnimationsForElement(group.id, animations, animationState, animations);
+
+      return (
+        <g
+          key={`${element.id}-textpath-ancestor-${group.id}-${index}`}
+          transform={groupTransform}
+        >
+          {groupAnimationNodes}
+          {child}
+        </g>
+      );
+    }, content);
+
+    nodes.push(wrappedContent);
   });
 
   return nodes.length ? <>{nodes}</> : null;

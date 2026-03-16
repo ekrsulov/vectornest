@@ -23,6 +23,7 @@ import type { AnimationState, SVGAnimation } from '../animationSystem/types';
 import { registerStateKeys } from '../../store/persistenceRegistry';
 import { importUse } from './importer';
 import { cloneValue } from '../../utils/clone';
+import { getClipRuntimeId, getMaskRuntimeId } from '../../utils/maskUtils';
 import './importedDefinitionsContribution';
 
 // Register persistence
@@ -177,6 +178,7 @@ const mergePathWithOverrides = (pathData: PathData | null | undefined, overrides
     strokeLinecap: overrides.strokeLinecap ?? pathData.strokeLinecap,
     strokeLinejoin: overrides.strokeLinejoin ?? pathData.strokeLinejoin,
     strokeDasharray: overrides.strokeDasharray ?? pathData.strokeDasharray,
+    strokeDashoffset: overrides.strokeDashoffset ?? pathData.strokeDashoffset,
     fillRule: overrides.fillRule ?? pathData.fillRule,
     opacity: overrides.opacity ?? (pathData as { opacity?: number }).opacity,
   };
@@ -361,9 +363,14 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
   const baseMatrix = ensureBaseMatrix(data);
   const transformAttr = `matrix(${baseMatrix.join(' ')})`;
   const positionTransformAttr = getPositionTransformAttr(data);
-  
-  const clipAttr = data.clipPathId ? { clipPath: `url(#${data.clipPathId})` } : {};
+
+  const clipVersions = rendererContext.extensionsContext?.clipVersions as Map<string, number> | undefined;
+  const maskVersions = rendererContext.extensionsContext?.maskVersions as Map<string, number> | undefined;
+  const clipRuntimeId = getClipRuntimeId(data.clipPathId, data.clipPathTemplateId, clipVersions);
+  const maskRuntimeId = getMaskRuntimeId(data.maskId, maskVersions);
+  const clipAttr = clipRuntimeId ? { clipPath: `url(#${clipRuntimeId})` } : {};
   const filterAttr = data.filterId ? { filter: `url(#${data.filterId})` } : {};
+  const maskAttr = maskRuntimeId ? { mask: `url(#${maskRuntimeId})` } : {};
   
   // Get animation attributes
   const initialAttrs = getInitialAnimationAttributes(
@@ -400,6 +407,8 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
     const strokeColor = overrides.strokeColor ?? baseData?.strokeColor ?? 'none';
     const strokeWidth = overrides.strokeWidth ?? baseData?.strokeWidth ?? 1;
     const strokeOpacity = overrides.strokeOpacity ?? baseData?.strokeOpacity ?? 1;
+    const strokeDasharray = overrides.strokeDasharray ?? baseData?.strokeDasharray;
+    const strokeDashoffset = overrides.strokeDashoffset ?? baseData?.strokeDashoffset;
     const fillColor = overrides.fillColor ?? baseData?.fillColor ?? 'none';
     const fillOpacity = overrides.fillOpacity ?? baseData?.fillOpacity ?? 1;
     const fillRule = overrides.fillRule ?? baseData?.fillRule;
@@ -420,9 +429,10 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
       attrs.fillOpacity = fillOpacity;
       if (overrides.opacity !== undefined) attrs.opacity = overrides.opacity;
       if (fillRule) attrs.fillRule = fillRule;
-      if (overrides.strokeLinecap) attrs.strokeLinecap = overrides.strokeLinecap;
-      if (overrides.strokeLinejoin) attrs.strokeLinejoin = overrides.strokeLinejoin;
-      if (overrides.strokeDasharray) attrs.strokeDasharray = overrides.strokeDasharray;
+      if (overrides.strokeLinecap ?? baseData?.strokeLinecap) attrs.strokeLinecap = overrides.strokeLinecap ?? baseData?.strokeLinecap;
+      if (overrides.strokeLinejoin ?? baseData?.strokeLinejoin) attrs.strokeLinejoin = overrides.strokeLinejoin ?? baseData?.strokeLinejoin;
+      if (strokeDasharray && strokeDasharray !== 'none') attrs.strokeDasharray = strokeDasharray;
+      if (strokeDashoffset !== undefined) attrs.strokeDashoffset = strokeDashoffset;
     }
     
     const hasVisibleStroke =
@@ -456,6 +466,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
     if (overrides.strokeLinecap !== undefined) attrs.strokeLinecap = overrides.strokeLinecap;
     if (overrides.strokeLinejoin !== undefined) attrs.strokeLinejoin = overrides.strokeLinejoin;
     if (overrides.strokeDasharray !== undefined) attrs.strokeDasharray = overrides.strokeDasharray;
+    if (overrides.strokeDashoffset !== undefined) attrs.strokeDashoffset = overrides.strokeDashoffset;
     if (overrides.opacity !== undefined) attrs.opacity = overrides.opacity;
 
     return attrs;
@@ -483,6 +494,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
           data-element-id={element.id}
           {...clipAttr}
           {...filterAttr}
+          {...maskAttr}
           {...containerOpacityAttr}
           {...nonTransformInitialAttrs}
           {...containerDoubleClickProps}
@@ -502,6 +514,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
           transform={transformAttr}
           data-element-id={element.id}
           {...filterAttr}
+          {...maskAttr}
           {...containerDoubleClickProps}
         >
           <rect
@@ -538,6 +551,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
           data-element-id={element.id}
           {...clipAttr}
           {...filterAttr}
+          {...maskAttr}
           {...containerOpacityAttr}
           {...containerDoubleClickProps}
         >
@@ -591,6 +605,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
           data-element-id={element.id}
           {...clipAttr}
           {...filterAttr}
+          {...maskAttr}
           {...containerOpacityAttr}
           {...containerDoubleClickProps}
           {...nonTransformInitialAttrs}
@@ -619,6 +634,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
         y={data.y ?? 0}
         {...filterAttr}
         {...clipAttr}
+        {...maskAttr}
         {...buildUseOverrideAttrs()}
         {...containerDoubleClickProps}
         {...nonTransformInitialAttrs}
@@ -647,6 +663,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
           data-element-id={element.id}
           {...clipAttr}
           {...filterAttr}
+          {...maskAttr}
           {...containerOpacityAttr}
           {...containerDoubleClickProps}
           {...nonTransformInitialAttrs}
@@ -678,6 +695,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
         {...clipAttr}
         {...styleAttrs}
         {...filterAttr}
+        {...maskAttr}
         {...containerDoubleClickProps}
         {...nonTransformInitialAttrs}
       >
@@ -694,6 +712,7 @@ const UseRendererComponent: React.FC<{ element: UseElement; rendererContext: Can
       transform={transformAttr}
       data-element-id={element.id}
       {...filterAttr}
+      {...maskAttr}
       {...containerDoubleClickProps}
     >
       <rect

@@ -54,13 +54,19 @@ const SymbolsPanel = lazy(() =>
 );
 
 /**
- * Strip animation elements from a node's innerHTML.
- * Animations are imported separately by the animation system.
+ * Strip nested animation elements from a symbol's innerHTML.
+ * Child animations are re-injected from the animation system, but symbol-root
+ * animations must stay in rawContent because they are not re-injected.
  */
 const stripAnimationsFromContent = (node: Element): string => {
   const clone = node.cloneNode(true) as Element;
   const animationSelectors = 'animate, animateTransform, animateMotion, animateColor, set';
-  clone.querySelectorAll(animationSelectors).forEach((el) => el.remove());
+    clone.querySelectorAll(animationSelectors).forEach((el) => {
+      if (el.parentElement === clone) {
+        return;
+      }
+      el.remove();
+    });
   return clone.innerHTML;
 };
 

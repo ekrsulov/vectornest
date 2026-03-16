@@ -393,6 +393,85 @@ const symbolTextPathSvg = `<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2
   <use href="#s" x="0" y="0" filter="url(#f)" clip-path="url(#c)" />
 </svg>`;
 
+const rotatingMondrianUseSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".5" stop-color="#f7d100">
+        <animate attributeName="stop-color" values="#f7d100;#0047ab;#d40920;#f7d100" dur="9s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="1" stop-color="#0047ab"/>
+    </linearGradient>
+    <pattern id="p" width="120" height="120" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="120" height="120" fill="#fff"/>
+      <path d="M0 0H120M0 60H120M60 0V120" stroke="#000" stroke-width="18"/>
+      <rect x="0" y="0" width="60" height="60" fill="#d40920"/>
+      <rect x="60" y="60" width="60" height="60" fill="#0047ab"/>
+      <animateTransform attributeName="patternTransform" type="rotate" values="45 60 60;135 60 60;45 60 60" dur="12s" repeatCount="indefinite"/>
+    </pattern>
+    <filter id="f" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency=".01" numOctaves="2" seed="7" result="n">
+        <animate attributeName="baseFrequency" values=".01;.02;.01" dur="10s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="18">
+        <animate attributeName="scale" values="8;22;8" dur="8s" repeatCount="indefinite"/>
+      </feDisplacementMap>
+    </filter>
+    <clipPath id="c">
+      <path d="M90 90H710V710H90Z M210 210H590V590H210Z" fill-rule="evenodd">
+        <animate attributeName="d"
+          values="M90 90H710V710H90Z M210 210H590V590H210Z;
+                  M70 120H730V680H70Z M260 180H540V620H260Z;
+                  M90 90H710V710H90Z M210 210H590V590H210Z"
+          dur="11s" repeatCount="indefinite"/>
+      </path>
+    </clipPath>
+    <mask id="m">
+      <rect width="800" height="800" fill="#fff"/>
+      <circle cx="400" cy="400" r="150" fill="#000">
+        <animate attributeName="r" values="90;220;90" dur="7s" repeatCount="indefinite"/>
+      </circle>
+      <rect x="160" y="160" width="480" height="480" fill="#fff" opacity=".8"/>
+    </mask>
+    <path id="tp" d="M130 690C220 580 340 760 400 690S580 580 670 690">
+      <animate attributeName="d"
+        values="M130 690C220 580 340 760 400 690S580 580 670 690;
+                M130 650C220 780 340 560 400 650S580 780 670 650;
+                M130 690C220 580 340 760 400 690S580 580 670 690"
+        dur="9s" repeatCount="indefinite"/>
+    </path>
+    <symbol id="tile" viewBox="0 0 200 200">
+      <rect width="200" height="200" fill="url(#g)" stroke="#000" stroke-width="14"/>
+      <rect x="0" y="0" width="120" height="120" fill="#d40920"/>
+      <rect x="120" y="0" width="80" height="70" fill="#fff"/>
+      <rect x="120" y="70" width="80" height="130" fill="#0047ab"/>
+      <rect x="0" y="120" width="70" height="80" fill="#fff"/>
+      <rect x="70" y="120" width="50" height="80" fill="#f7d100"/>
+      <rect x="120" y="0" width="14" height="200" fill="#000"/>
+      <rect x="0" y="120" width="200" height="14" fill="#000"/>
+      <rect x="70" y="120" width="14" height="80" fill="#000"/>
+      <rect x="120" y="70" width="80" height="14" fill="#000"/>
+      <animateTransform attributeName="transform" type="rotate" values="0 100 100;90 100 100;180 100 100;270 100 100;360 100 100" dur="20s" repeatCount="indefinite"/>
+    </symbol>
+  </defs>
+  <rect width="800" height="800" fill="#f2f2ee"/>
+  <rect x="40" y="40" width="720" height="720" fill="url(#p)" mask="url(#m)" clip-path="url(#c)" filter="url(#f)">
+    <animate attributeName="rx" values="0;40;0" dur="6s" repeatCount="indefinite"/>
+  </rect>
+  <g>
+    <use href="#tile" x="100" y="100" width="250" height="250"/>
+    <use href="#tile" x="450" y="100" width="250" height="250" transform="rotate(90 575 225)"/>
+    <use href="#tile" x="100" y="450" width="250" height="250" transform="rotate(180 225 575)"/>
+    <use href="#tile" x="450" y="450" width="250" height="250" transform="rotate(270 575 575)"/>
+  </g>
+  <rect x="40" y="40" width="720" height="720" fill="none" stroke="#000" stroke-width="22"/>
+  <text font-family="Arial Black, sans-serif" font-size="42" letter-spacing="8" fill="#000">
+    <textPath href="#tp" startOffset="0%">MONDRIAN • SYMBOL • USE • FILTER • MASK • CLIP • SMIL •
+      <animate attributeName="startOffset" values="0%;50%;0%" dur="10s" repeatCount="indefinite"/>
+    </textPath>
+  </text>
+</svg>`;
+
 async function bootstrap(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('http://127.0.0.1:5173', { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'File' }).waitFor();
@@ -1034,6 +1113,36 @@ test('preserves textPath carrier paths referenced only inside imported symbol co
   expect(exportedSvg).toContain('<textPath href="#tp"');
   expect(exportedSvg).toContain('COMPLEX SVG MAGIC');
   expect(exportedSvg).toContain('attributeName="startOffset"');
+});
+
+test('preserves symbol-root animateTransform for imported symbols reused via use', async ({ page }) => {
+  await bootstrap(page);
+  await importSvgContent(page, 'rotating-mondrian-use.svg', rotatingMondrianUseSvg);
+
+  const runtime = await page.evaluate(() => {
+    const canvas = document.querySelector<SVGSVGElement>('svg[data-canvas="true"]');
+    if (!canvas) {
+      throw new Error('Canvas SVG not found');
+    }
+
+    const symbolDef = canvas.querySelector('defs #symbol-tile');
+    const symbolAnimations = symbolDef?.querySelectorAll('animateTransform') ?? [];
+    const symbolUses = canvas.querySelectorAll('use[href="#symbol-tile"]');
+
+    return {
+      symbolAnimateTransformCount: symbolAnimations.length,
+      symbolAnimateTransformValues: symbolAnimations[0]?.getAttribute('values') ?? null,
+      symbolUseCount: symbolUses.length,
+    };
+  });
+
+  expect(runtime.symbolAnimateTransformCount).toBe(1);
+  expect(runtime.symbolAnimateTransformValues).toBe('0 100 100;90 100 100;180 100 100;270 100 100;360 100 100');
+  expect(runtime.symbolUseCount).toBe(4);
+
+  const exportedSvg = await exportSvg(page);
+  expect(exportedSvg).toMatch(/<symbol id="symbol-tile"[\s\S]*?<animateTransform[^>]*type="rotate"[^>]*values="0 100 100;90 100 100;180 100 100;270 100 100;360 100 100"/);
+  expect(exportedSvg.match(/<use[^>]*href="#symbol-tile"/g) ?? []).toHaveLength(4);
 });
 
 test('visually matches browser rendering for imported liquid symbol filters', async ({ page }, testInfo) => {

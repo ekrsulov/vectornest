@@ -72,6 +72,32 @@ const GridPanelComponent: React.FC = () => {
     updateGridState?.({ spacing: value });
   };
 
+  const getSpacingStep = (value: number) => {
+    if (value < 1) {
+      return 0.1;
+    }
+    if (value < 5) {
+      return 1;
+    }
+    if (value < 50) {
+      return 5;
+    }
+    return 10;
+  };
+
+  const formatSpacingValue = (value: number) => {
+    if (value === 0) {
+      return '0px';
+    }
+    if (value < 1) {
+      return `${value.toFixed(1)}px`;
+    }
+    if (Number.isInteger(value)) {
+      return `${value}px`;
+    }
+    return `${value.toFixed(1)}px`;
+  };
+
   const handlePolarDivisionsChange = (value: number) => {
     updateGridState?.({ polarDivisions: value });
   };
@@ -164,8 +190,9 @@ const GridPanelComponent: React.FC = () => {
             min={0.1}
             max={100}
             step={0.1}
+            stepFunction={getSpacingStep}
             onChange={handleSpacingChange}
-            formatter={(value) => `${value}px`}
+            formatter={formatSpacingValue}
             title="Grid spacing in pixels"
             valueWidth="55px"
             marginBottom='0'

@@ -161,9 +161,9 @@ const GridPanelComponent: React.FC = () => {
           <SliderControl
             label="Spacing"
             value={grid?.spacing ?? 20}
-            min={5}
+            min={0.1}
             max={100}
-            step={5}
+            step={0.1}
             onChange={handleSpacingChange}
             formatter={(value) => `${value}px`}
             title="Grid spacing in pixels"

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { Box, HStack, VStack, Text } from '@chakra-ui/react';
 import { Bold, Italic, Underline } from 'lucide-react';
 import { ToggleButton } from './ToggleButton';
@@ -7,6 +7,10 @@ import { SliderControl } from './SliderControl';
 import { FontSelector } from './FontSelector';
 import { JoinedButtonGroup } from './JoinedButtonGroup';
 import { useRichTextFormatting } from '../hooks/useRichTextFormatting';
+import {
+  createContentEditableRangeFromOffsets,
+  type TextSelectionOffsets,
+} from '../utils/contentEditableSelection';
 
 export type RichSpan = {
   text: string;
@@ -21,6 +25,46 @@ export type RichTextValue = {
   html: string;
   spans: RichSpan[];
   plainText: string;
+};
+
+const MIRRORED_SELECTION_HIGHLIGHT = 'vectornest-richtext-mirror';
+
+const ensureMirroredSelectionStyle = () => {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  if (document.getElementById('vectornest-richtext-mirror-style')) {
+    return;
+  }
+
+  const style = document.createElement('style');
+  style.id = 'vectornest-richtext-mirror-style';
+  style.textContent = `::highlight(${MIRRORED_SELECTION_HIGHLIGHT}) { background: rgba(66, 153, 225, 0.28); }`;
+  document.head.appendChild(style);
+};
+
+const clearMirroredSelectionHighlight = () => {
+  if (typeof CSS === 'undefined' || !('highlights' in CSS)) {
+    return;
+  }
+
+  CSS.highlights.delete(MIRRORED_SELECTION_HIGHLIGHT);
+};
+
+const setMirroredSelectionHighlight = (range: Range | null) => {
+  if (typeof Highlight === 'undefined' || typeof CSS === 'undefined' || !('highlights' in CSS)) {
+    return;
+  }
+
+  ensureMirroredSelectionStyle();
+
+  if (!range || range.collapsed) {
+    clearMirroredSelectionHighlight();
+    return;
+  }
+
+  CSS.highlights.set(MIRRORED_SELECTION_HIGHLIGHT, new Highlight(range));
 };
 
 /** Cached DOM element reused across parseRichText calls to avoid repeated allocations */
@@ -106,6 +150,7 @@ interface RichTextEditorProps {
   label?: string;
   onChange: (value: RichTextValue) => void;
   onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
+  mirroredSelection?: TextSelectionOffsets | null;
   fontSize?: number;
   fontFamily?: string;
   fontWeight?: string;
@@ -130,6 +175,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   label,
   onChange,
   onKeyDown,
+  mirroredSelection = null,
   fontSize = 16,
   fontFamily = 'Arial',
   fontWeight = 'normal',
@@ -150,12 +196,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const textColorSlotRef = useRef<HTMLDivElement>(null);
+  const editorInstanceId = useId();
+  const preserveInlineFocus = Boolean(mirroredSelection);
   const {
     currentColor,
     isBold,
     isItalic,
     isUnderline,
     saveSelection,
+    setSelectionRange,
     handleCommand,
   } = useRichTextFormatting({
     editorRef,
@@ -168,6 +217,27 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       editorRef.current.innerHTML = value;
     }
   }, [value]);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) {
+      return;
+    }
+
+    if (!mirroredSelection) {
+      setSelectionRange(null);
+      clearMirroredSelectionHighlight();
+      return;
+    }
+
+    const range = createContentEditableRangeFromOffsets(editor, mirroredSelection);
+    setSelectionRange(range);
+    setMirroredSelectionHighlight(range);
+
+    return () => {
+      clearMirroredSelectionHighlight();
+    };
+  }, [editorInstanceId, mirroredSelection, setSelectionRange, value]);
 
   return (
     <VStack spacing={1} align="stretch">
@@ -185,10 +255,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             defaultColor="#000000"
             mode="fill"
             floatingContainerRef={textColorSlotRef}
+            preserveFocusOnMouseDown={preserveInlineFocus}
           />
           <ToggleButton
             isActive={isBold}
             onClick={() => handleCommand('bold')}
+            preventFocusOnMouseDown={preserveInlineFocus}
             icon={<Bold size={12} />}
             aria-label="Bold"
             size="sm"
@@ -196,6 +268,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <ToggleButton
             isActive={isItalic}
             onClick={() => handleCommand('italic')}
+            preventFocusOnMouseDown={preserveInlineFocus}
             icon={<Italic size={12} />}
             aria-label="Italic"
             size="sm"
@@ -203,6 +276,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <ToggleButton
             isActive={isUnderline}
             onClick={() => handleCommand('underline')}
+            preventFocusOnMouseDown={preserveInlineFocus}
             icon={<Underline size={12} />}
             aria-label="Underline"
             size="sm"

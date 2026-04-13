@@ -13,6 +13,7 @@ interface UseRichTextFormattingResult {
   isItalic: boolean;
   isUnderline: boolean;
   saveSelection: () => void;
+  setSelectionRange: (range: Range | null) => void;
   handleCommand: (command: string, value?: string) => void;
 }
 
@@ -63,6 +64,22 @@ export function useRichTextFormatting<TParsedValue>({
     return { selection, range };
   }, [editorRef]);
 
+  const getEffectiveSelectionRange = useCallback((): { selection: Selection | null; range: Range } | null => {
+    const liveSelection = getSelectionInEditor();
+    if (liveSelection) {
+      return liveSelection;
+    }
+
+    if (!selectionRef.current) {
+      return null;
+    }
+
+    return {
+      selection: null,
+      range: selectionRef.current,
+    };
+  }, [getSelectionInEditor]);
+
   const getSelectionContainerElement = useCallback((range: Range): HTMLElement | null => {
     let node: Node | null = range.startContainer;
     if (node.nodeType === Node.TEXT_NODE) {
@@ -94,10 +111,39 @@ export function useRichTextFormatting<TParsedValue>({
     return null;
   }, [editorRef]);
 
+  const updateActiveStatesFromRange = useCallback((range: Range | null) => {
+    if (!range) {
+      setIsBold(false);
+      setIsItalic(false);
+      setIsUnderline(false);
+      return;
+    }
+
+    const element = getSelectionContainerElement(range);
+    if (!element) {
+      setIsBold(false);
+      setIsItalic(false);
+      setIsUnderline(false);
+      return;
+    }
+
+    const computedStyle = window.getComputedStyle(element);
+    setIsBold(isBoldFontWeight(computedStyle.fontWeight));
+    setIsItalic(computedStyle.fontStyle === 'italic' || computedStyle.fontStyle === 'oblique');
+
+    const textDecoration = computedStyle.textDecorationLine || computedStyle.textDecoration || '';
+    setIsUnderline(textDecoration.includes('underline'));
+
+    const fillColor = resolveDataFillColor(element) || computedStyle.color;
+    if (fillColor) {
+      setCurrentColor(fillColor);
+    }
+  }, [getSelectionContainerElement, resolveDataFillColor]);
+
   const applyStyledWrapperToSelection = useCallback((
     styles: { fontWeight?: string; fontStyle?: string; textDecoration?: string }
   ): boolean => {
-    const selectionState = getSelectionInEditor();
+    const selectionState = getEffectiveSelectionRange();
     if (!selectionState) {
       return false;
     }
@@ -123,59 +169,32 @@ export function useRichTextFormatting<TParsedValue>({
     range.insertNode(wrapper);
     const nextRange = document.createRange();
     nextRange.selectNodeContents(wrapper);
-    selection.removeAllRanges();
-    selection.addRange(nextRange);
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(nextRange);
+    }
     selectionRef.current = nextRange;
 
     return true;
-  }, [getSelectionInEditor]);
+  }, [getEffectiveSelectionRange]);
 
   const updateActiveStates = useCallback(() => {
-    const selectionState = getSelectionInEditor();
-    if (!selectionState) {
-      setIsBold(false);
-      setIsItalic(false);
-      setIsUnderline(false);
-      return;
-    }
-
-    const { range } = selectionState;
-    const element = getSelectionContainerElement(range);
-    if (!element) {
-      setIsBold(false);
-      setIsItalic(false);
-      setIsUnderline(false);
-      return;
-    }
-
-    const computedStyle = window.getComputedStyle(element);
-    setIsBold(isBoldFontWeight(computedStyle.fontWeight));
-    setIsItalic(computedStyle.fontStyle === 'italic' || computedStyle.fontStyle === 'oblique');
-
-    const textDecoration = computedStyle.textDecorationLine || computedStyle.textDecoration || '';
-    setIsUnderline(textDecoration.includes('underline'));
-
-    const fillColor = resolveDataFillColor(element) || computedStyle.color;
-    if (fillColor) {
-      setCurrentColor(fillColor);
-    }
-  }, [getSelectionContainerElement, getSelectionInEditor, resolveDataFillColor]);
+    const selectionState = getEffectiveSelectionRange();
+    updateActiveStatesFromRange(selectionState?.range ?? null);
+  }, [getEffectiveSelectionRange, updateActiveStatesFromRange]);
 
   const saveSelection = useCallback(() => {
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      selectionRef.current = selection.getRangeAt(0);
+    const selectionState = getSelectionInEditor();
+    if (selectionState) {
+      selectionRef.current = selectionState.range;
     }
     updateActiveStates();
-  }, [updateActiveStates]);
+  }, [getSelectionInEditor, updateActiveStates]);
 
-  const restoreSelection = useCallback(() => {
-    const selection = window.getSelection();
-    if (selectionRef.current && selection) {
-      selection.removeAllRanges();
-      selection.addRange(selectionRef.current);
-    }
-  }, []);
+  const setSelectionRange = useCallback((range: Range | null) => {
+    selectionRef.current = range;
+    updateActiveStatesFromRange(range);
+  }, [updateActiveStatesFromRange]);
 
   const emitEditorChange = useCallback(() => {
     const html = editorRef.current?.innerHTML || '';
@@ -187,10 +206,10 @@ export function useRichTextFormatting<TParsedValue>({
       return;
     }
 
-    restoreSelection();
+    const liveSelection = getSelectionInEditor();
 
     if (command === 'foreColor') {
-      const selectionState = getSelectionInEditor();
+      const selectionState = getEffectiveSelectionRange();
       if (selectionState) {
         const { selection, range } = selectionState;
         if (!range.collapsed) {
@@ -205,7 +224,7 @@ export function useRichTextFormatting<TParsedValue>({
 
           let displayColor = value || '';
           if (value?.startsWith('url(')) {
-            const container = selection.anchorNode?.parentElement;
+            const container = selection?.anchorNode?.parentElement ?? getSelectionContainerElement(range);
             if (container) {
               const computedColor = window.getComputedStyle(container).color;
               if (
@@ -252,8 +271,10 @@ export function useRichTextFormatting<TParsedValue>({
           range.insertNode(span);
           const nextRange = document.createRange();
           nextRange.selectNodeContents(span);
-          selection.removeAllRanges();
-          selection.addRange(nextRange);
+          if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(nextRange);
+          }
           selectionRef.current = nextRange;
           emitEditorChange();
         }
@@ -270,20 +291,24 @@ export function useRichTextFormatting<TParsedValue>({
       }
     }
 
-    editorRef.current?.focus();
-    saveSelection();
-    updateActiveStates();
+    if (liveSelection) {
+      editorRef.current?.focus();
+      saveSelection();
+    } else {
+      updateActiveStatesFromRange(selectionRef.current);
+    }
   }, [
     applyStyledWrapperToSelection,
     editorRef,
     emitEditorChange,
+    getEffectiveSelectionRange,
+    getSelectionContainerElement,
     getSelectionInEditor,
     isBold,
     isItalic,
     isUnderline,
-    restoreSelection,
     saveSelection,
-    updateActiveStates,
+    updateActiveStatesFromRange,
   ]);
 
   return {
@@ -292,6 +317,7 @@ export function useRichTextFormatting<TParsedValue>({
     isItalic,
     isUnderline,
     saveSelection,
+    setSelectionRange,
     handleCommand,
   };
 }

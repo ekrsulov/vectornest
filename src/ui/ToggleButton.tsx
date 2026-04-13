@@ -6,6 +6,7 @@ import ConditionalTooltip from './ConditionalTooltip';
 interface ToggleButtonProps {
   isActive: boolean;
   onClick: () => void;
+  preventFocusOnMouseDown?: boolean;
   children?: React.ReactNode;
   icon?: React.ReactElement;
   'aria-label': string;
@@ -20,6 +21,7 @@ interface ToggleButtonProps {
 export const ToggleButton: React.FC<ToggleButtonProps> = ({
   isActive,
   onClick,
+  preventFocusOnMouseDown = false,
   children,
   icon,
   'aria-label': ariaLabel,
@@ -92,15 +94,23 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
     onClick();
   };
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (preventFocusOnMouseDown) {
+      e.preventDefault();
+    }
+  };
+
   const renderButton = () =>
     variant === 'icon' && icon ? (
       <ChakraIconButton
         {...commonProps}
         icon={icon}
+        onMouseDown={handleMouseDown}
         onClick={handleClick}
       />
     ) : (
-      <Button {...commonProps} onClick={handleClick}>
+      <Button {...commonProps} onMouseDown={handleMouseDown} onClick={handleClick}>
         {children}
       </Button>
     );

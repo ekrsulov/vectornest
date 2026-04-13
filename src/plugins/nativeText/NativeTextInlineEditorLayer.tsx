@@ -7,6 +7,10 @@ import {
   buildRichTextFromPlainTextAndSpans,
   buildSpansPreservingGlyphTransforms,
 } from './inlineTextSpanUtils';
+import {
+  createContentEditableRangeFromOffsets,
+  getContentEditableSelectionOffsets,
+} from '../../utils/contentEditableSelection';
 import { measureNativeTextBounds } from '../../utils/measurementUtils';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
 import {
@@ -46,6 +50,13 @@ const DEFAULT_GLYPH_METRIC: GlyphMetric = {
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const INLINE_EDITOR_LINE_HEIGHT = 1;
+const INLINE_SELECTION_TRAVERSAL_OPTIONS = {
+  isIgnoredNode: (node: Node) => (
+    node instanceof Element && node.getAttribute('data-inline-line-baseline') === '1'
+  ),
+  isLineContainer: (element: Element) => element.hasAttribute('data-inline-line'),
+  isBlockElement: () => false,
+};
 
 const escapeHtml = (text: string): string =>
   text
@@ -711,6 +722,21 @@ const buildInlineEditedNativeTextData = (
   };
 };
 
+const buildInlineEditorRenderSignature = (data: NativeTextElement['data']): string => JSON.stringify({
+  text: data.text ?? '',
+  spans: data.spans ?? [],
+  fontSize: data.fontSize,
+  fontFamily: data.fontFamily,
+  fontWeight: data.fontWeight ?? 'normal',
+  fontStyle: data.fontStyle ?? 'normal',
+  textDecoration: data.textDecoration ?? 'none',
+  fillColor: data.fillColor ?? '',
+  letterSpacing: data.letterSpacing ?? null,
+  textTransform: data.textTransform ?? 'none',
+  writingMode: data.writingMode ?? 'horizontal-tb',
+  direction: data.direction ?? null,
+});
+
 const hasInlineEditorVisualTransform = (data: NativeTextElement['data']): boolean =>
   Boolean(
     data.transformMatrix ||
@@ -732,6 +758,9 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
   const setInlineTextEditReady = useCanvasStore(
     (state) => (state as unknown as InlineTextEditSlice).setInlineTextEditReady
   );
+  const setInlineTextEditSelection = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).setInlineTextEditSelection
+  );
   const isInlineEditorReady = useCanvasStore(
     (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.isEditorReady ?? false
   );
@@ -743,6 +772,7 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
   const skipBlurCommitRef = useRef(false);
   const pendingVisualSyncFrameRef = useRef<number | null>(null);
   const editorVisualOffsetRef = useRef({ x: 0, y: 0 });
+  const inlineRenderSignatureRef = useRef<string | null>(null);
   const [editorHtml, setEditorHtml] = useState('');
 
   const element = useMemo(() => {
@@ -864,6 +894,46 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
     syncDraftFeedback(nextData);
   }, [scheduleVisualSync, syncDraftFeedback]);
 
+  const syncInlineSelection = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor || !setInlineTextEditSelection) {
+      return;
+    }
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (!editor.contains(range.commonAncestorContainer)) {
+      return;
+    }
+
+    setInlineTextEditSelection(
+      getContentEditableSelectionOffsets(editor, range, INLINE_SELECTION_TRAVERSAL_OPTIONS)
+    );
+  }, [setInlineTextEditSelection]);
+
+  const getInlineSelectionSnapshot = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) {
+      return null;
+    }
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return null;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (!editor.contains(range.commonAncestorContainer)) {
+      return null;
+    }
+
+    return getContentEditableSelectionOffsets(editor, range, INLINE_SELECTION_TRAVERSAL_OPTIONS);
+  }, []);
+
   useEffect(() => {
     if (!isInlineNativeTextEditing || !element) return;
     if (previousEditingIdRef.current === element.id) return;
@@ -884,6 +954,7 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
       editorBox.paddingX,
       editorBox.paddingY,
     );
+    inlineRenderSignatureRef.current = buildInlineEditorRenderSignature(element.data);
     setEditorHtml(initialHtml);
 
     let innerFrame = 0;
@@ -895,6 +966,7 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
         syncDraftFeedback(element.data);
         editor.focus();
         placeCaretAtEnd(editor);
+        syncInlineSelection();
         revealFrame = window.requestAnimationFrame(() => {
           setInlineTextEditReady?.(true);
         });
@@ -910,11 +982,102 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
         window.cancelAnimationFrame(revealFrame);
       }
     };
-  }, [element, isInlineNativeTextEditing, setInlineTextEditReady, syncDraftFeedback]);
+  }, [element, isInlineNativeTextEditing, setInlineTextEditReady, syncDraftFeedback, syncInlineSelection]);
+
+  useEffect(() => {
+    if (!isInlineNativeTextEditing) {
+      setInlineTextEditSelection?.(null);
+      return;
+    }
+
+    const handleSelectionChange = () => {
+      syncInlineSelection();
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, [isInlineNativeTextEditing, setInlineTextEditSelection, syncInlineSelection]);
 
   useEffect(() => {
     liveElementDataRef.current = element?.data ?? null;
+    if (element && previousEditingIdRef.current === element.id) {
+      originalElementRef.current = element;
+    }
   }, [element]);
+
+  useEffect(() => {
+    if (!isInlineNativeTextEditing || !element || !isInlineEditorReady) {
+      return;
+    }
+
+    const nextSignature = buildInlineEditorRenderSignature(element.data);
+    if (inlineRenderSignatureRef.current === nextSignature) {
+      return;
+    }
+
+    const editor = editorRef.current;
+    if (!editor) {
+      inlineRenderSignatureRef.current = nextSignature;
+      return;
+    }
+
+    const currentPlainText = parseEditablePlainText(editor);
+    if (currentPlainText !== (element.data.text ?? '')) {
+      inlineRenderSignatureRef.current = nextSignature;
+      return;
+    }
+
+    const selectionSnapshot = getInlineSelectionSnapshot();
+
+    const editorBox = getNativeTextEditorBox(element.data);
+    const measuredBounds = editorBox.bounds ?? measureNativeTextBounds(element.data);
+    const { lineBoxes, glyphMetrics } = measureTextLayout(element.data);
+    const nextHtml = buildInitialEditorHtml(
+      element.data,
+      measuredBounds,
+      lineBoxes,
+      glyphMetrics,
+      editorBox.paddingX,
+      editorBox.paddingY,
+    );
+    inlineRenderSignatureRef.current = nextSignature;
+
+    if (editor.innerHTML === nextHtml) {
+      scheduleVisualSync(element.data);
+      return;
+    }
+
+    setEditorHtml(nextHtml);
+
+    const restoreFrame = window.requestAnimationFrame(() => {
+      const currentEditor = editorRef.current;
+      if (!currentEditor) {
+        return;
+      }
+
+      if (selectionSnapshot) {
+        const range = createContentEditableRangeFromOffsets(
+          currentEditor,
+          selectionSnapshot,
+          INLINE_SELECTION_TRAVERSAL_OPTIONS,
+        );
+        const selection = window.getSelection();
+        if (selection) {
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+
+      syncInlineSelection();
+      scheduleVisualSync(element.data);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(restoreFrame);
+    };
+  }, [element, getInlineSelectionSnapshot, isInlineEditorReady, isInlineNativeTextEditing, scheduleVisualSync, syncInlineSelection]);
 
   useEffect(() => {
     if (!isInlineNativeTextEditing) return;
@@ -935,8 +1098,10 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
       window.cancelAnimationFrame(pendingVisualSyncFrameRef.current);
       pendingVisualSyncFrameRef.current = null;
     }
+    inlineRenderSignatureRef.current = null;
+    setInlineTextEditSelection?.(null);
     setEditorHtml('');
-  }, [editingElementId, setInlineTextEditReady]);
+  }, [editingElementId, setInlineTextEditReady, setInlineTextEditSelection]);
 
   const commitEdit = useCallback(() => {
     const originalElement = originalElementRef.current;
@@ -1012,12 +1177,14 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
             onInput={(event) => {
               event.stopPropagation();
               syncLiveElementText(event.currentTarget);
+              syncInlineSelection();
             }}
             onBlur={() => {
               if (skipBlurCommitRef.current) {
                 skipBlurCommitRef.current = false;
                 return;
               }
+
               commitEdit();
             }}
             onKeyDown={(event) => {
@@ -1026,6 +1193,12 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
                 event.preventDefault();
                 cancelEdit();
               }
+            }}
+            onKeyUp={() => {
+              syncInlineSelection();
+            }}
+            onMouseUp={() => {
+              syncInlineSelection();
             }}
             style={{
               width: '100%',

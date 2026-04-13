@@ -27,6 +27,7 @@ interface MultiPaintPickerProps {
   mode: 'fill' | 'stroke';
   fullWidth?: boolean;
   floatingContainerRef?: React.RefObject<HTMLElement | null>;
+  preserveFocusOnMouseDown?: boolean;
 }
 
 export const MultiPaintPicker: React.FC<MultiPaintPickerProps> = ({
@@ -37,6 +38,7 @@ export const MultiPaintPicker: React.FC<MultiPaintPickerProps> = ({
   mode,
   fullWidth = true,
   floatingContainerRef,
+  preserveFocusOnMouseDown = false,
 }) => {
   const normalizedValue = typeof value === 'string' ? value : '';
   const [tempColor, setTempColor] = useState(
@@ -71,6 +73,23 @@ export const MultiPaintPicker: React.FC<MultiPaintPickerProps> = ({
     setIsOpen(false);
   };
 
+  const handleMouseDownCapture = (event: React.MouseEvent<HTMLElement>) => {
+    if (!preserveFocusOnMouseDown) {
+      return;
+    }
+
+    const target = event.target;
+    if (target instanceof HTMLInputElement && target.type === 'text') {
+      return;
+    }
+
+    if (target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    event.preventDefault();
+  };
+
   const isPatternOrGradient = normalizedValue.startsWith('url(');
   const chipStyle = isPatternOrGradient
     ? {
@@ -99,6 +118,7 @@ export const MultiPaintPicker: React.FC<MultiPaintPickerProps> = ({
         boxShadow="none"
         bg={pickerBg}
         p={0}
+        onMouseDownCapture={handleMouseDownCapture}
       >
         <Tabs size="sm" variant="unstyled" w="100%">
           <TabList
@@ -228,6 +248,7 @@ export const MultiPaintPicker: React.FC<MultiPaintPickerProps> = ({
         type="button"
         aria-label={`Select ${label}`}
         aria-expanded={isOpen}
+        onMouseDown={handleMouseDownCapture}
         onClick={() => setIsOpen((prev) => !prev)}
         title={`Select ${label}`}
         sx={{

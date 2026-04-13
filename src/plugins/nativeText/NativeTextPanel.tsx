@@ -29,6 +29,9 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
   const inlineEditingElementId = useCanvasStore(
     (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.editingElementId ?? null
   );
+  const inlineEditingSelection = useCanvasStore(
+    (state) => (state as unknown as InlineTextEditSlice).inlineTextEdit?.selection ?? null
+  );
 
   const selectedText = useMemo(() => {
     const first = elements.find((el) => selectedIds.includes(el.id) && el.type === 'nativeText');
@@ -219,6 +222,7 @@ export const NativeTextPanel: React.FC<NativeTextPanelProps> = ({ hideTitle = fa
               value={current.richText || current.text || ''}
               onKeyDown={preventSpacebarPropagation as unknown as React.KeyboardEventHandler<HTMLDivElement>}
               onChange={handleRichChange}
+              mirroredSelection={inlineEditingElementId === selectedText?.id ? inlineEditingSelection : null}
               fontSize={current.fontSize}
               fontFamily={current.fontFamily}
               fontWeight={current.fontWeight}

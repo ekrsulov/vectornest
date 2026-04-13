@@ -3,7 +3,10 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { isTouchDevice } from '../../utils/domHelpers';
 import type { InlineTextEditSlice } from './inlineEditSlice';
 import type { NativeTextElement } from './types';
-import { buildSpansPreservingGlyphTransforms } from './inlineTextSpanUtils';
+import {
+  buildRichTextFromPlainTextAndSpans,
+  buildSpansPreservingGlyphTransforms,
+} from './inlineTextSpanUtils';
 import { measureNativeTextBounds } from '../../utils/measurementUtils';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
 import {
@@ -176,15 +179,20 @@ const createMeasurementText = (
   if (data.direction) textEl.setAttribute('direction', data.direction);
   if (data.unicodeBidi) textEl.setAttribute('unicode-bidi', data.unicodeBidi);
 
-  spans.forEach((span) => {
+  spans.forEach((span, index) => {
+    const previousSpan = index > 0 ? spans[index - 1] : undefined;
+    const isLineStart = index === 0 || span.editorLine !== previousSpan?.editorLine;
     const tspan = document.createElementNS(SVG_NS, 'tspan');
-    tspan.setAttribute('x', String(data.x));
+    if (isLineStart) {
+      tspan.setAttribute('x', String(data.x));
+    }
     const dyValue = resolveSpanDy(span, spans, data);
     if (dyValue) tspan.setAttribute('dy', dyValue);
     if (span.dx) tspan.setAttribute('dx', span.dx);
     if (includeRotate && span.rotate) tspan.setAttribute('rotate', span.rotate);
     if (span.fontWeight) tspan.setAttribute('font-weight', span.fontWeight);
     if (span.fontStyle) tspan.setAttribute('font-style', span.fontStyle);
+    if (span.fontSize) tspan.setAttribute('font-size', String(span.fontSize));
     if (span.textDecoration && span.textDecoration !== 'none') tspan.setAttribute('text-decoration', span.textDecoration);
     if (span.fillColor) tspan.setAttribute('fill', span.fillColor);
     tspan.textContent = span.text || ' ';
@@ -676,20 +684,32 @@ const syncEditableLineLayout = (
 const buildInlineEditedNativeTextData = (
   data: NativeTextElement['data'],
   plainText: string,
-): NativeTextElement['data'] => ({
-  ...data,
-  text: plainText,
-  richText: plainText,
-  spans: buildSpansPreservingGlyphTransforms(
+  originalData?: NativeTextElement['data'],
+): NativeTextElement['data'] => {
+  if (originalData && plainText === (originalData.text ?? '')) {
+    return originalData;
+  }
+
+  const spans = buildSpansPreservingGlyphTransforms(
     plainText,
     data.text ?? '',
     data.spans,
     {
       fontWeight: data.fontWeight ?? undefined,
       fontStyle: data.fontStyle ?? undefined,
+      fontSize: data.fontSize,
+      textDecoration: data.textDecoration ?? undefined,
+      fillColor: data.fillColor ?? undefined,
     }
-  ),
-});
+  );
+
+  return {
+    ...data,
+    text: plainText,
+    richText: buildRichTextFromPlainTextAndSpans(plainText, spans),
+    spans,
+  };
+};
 
 const hasInlineEditorVisualTransform = (data: NativeTextElement['data']): boolean =>
   Boolean(
@@ -840,7 +860,7 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
       return;
     }
 
-    const nextData = buildInlineEditedNativeTextData(baseData, plainText);
+    const nextData = buildInlineEditedNativeTextData(baseData, plainText, originalElement.data);
     syncDraftFeedback(nextData);
   }, [scheduleVisualSync, syncDraftFeedback]);
 
@@ -930,6 +950,7 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
     const nextData = buildInlineEditedNativeTextData(
       liveElementDataRef.current ?? originalElement.data,
       plainText,
+      originalElement.data,
     );
     liveElementDataRef.current = nextData;
     updateElement(originalElement.id, {

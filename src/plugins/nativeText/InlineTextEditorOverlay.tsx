@@ -3,7 +3,10 @@ import { useCanvasStore } from '../../store/canvasStore';
 import type { InlineTextEditSlice } from './inlineEditSlice';
 import type { PathElement } from '../../types';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
-import { buildSpansPreservingGlyphTransforms } from './inlineTextSpanUtils';
+import {
+  buildRichTextFromPlainTextAndSpans,
+  buildSpansPreservingGlyphTransforms,
+} from './inlineTextSpanUtils';
 import type { NativeTextElement } from './types';
 import { isTouchDevice } from '../../utils/domHelpers';
 
@@ -92,42 +95,52 @@ export const InlineTextEditorOverlay: React.FC<InlineTextEditorOverlayProps> = (
     if (!editingElementId || !updateElement || !editingTarget) return;
 
     if (editingTarget.kind === 'textPath') {
+      const spans = buildSpansPreservingGlyphTransforms(
+        plainText,
+        editingTarget.element.data.textPath?.text ?? '',
+        editingTarget.element.data.textPath?.spans,
+        {
+          fontWeight: editingTarget.fontWeight,
+          fontStyle: editingTarget.fontStyle,
+          fontSize: editingTarget.element.data.textPath?.fontSize,
+          textDecoration: editingTarget.element.data.textPath?.textDecoration,
+          fillColor: editingTarget.element.data.textPath?.fillColor,
+        }
+      );
+
       updateElement(editingElementId, {
         data: {
           ...editingTarget.element.data,
           textPath: {
             ...editingTarget.element.data.textPath,
             text: plainText,
-            richText: plainText,
-            spans: buildSpansPreservingGlyphTransforms(
-              plainText,
-              editingTarget.element.data.textPath?.text ?? '',
-              editingTarget.element.data.textPath?.spans,
-              {
-                fontWeight: editingTarget.fontWeight,
-                fontStyle: editingTarget.fontStyle,
-              }
-            ),
+            richText: buildRichTextFromPlainTextAndSpans(plainText, spans),
+            spans,
           },
         },
       });
       return;
     }
 
+    const spans = buildSpansPreservingGlyphTransforms(
+      plainText,
+      editingTarget.element.data.text ?? '',
+      editingTarget.element.data.spans,
+      {
+        fontWeight: editingTarget.fontWeight,
+        fontStyle: editingTarget.fontStyle,
+        fontSize: editingTarget.element.data.fontSize,
+        textDecoration: editingTarget.element.data.textDecoration,
+        fillColor: editingTarget.element.data.fillColor,
+      }
+    );
+
     updateElement(editingElementId, {
       data: {
         ...editingTarget.element.data,
         text: plainText,
-        richText: plainText,
-        spans: buildSpansPreservingGlyphTransforms(
-          plainText,
-          editingTarget.element.data.text ?? '',
-          editingTarget.element.data.spans,
-          {
-            fontWeight: editingTarget.fontWeight,
-            fontStyle: editingTarget.fontStyle,
-          }
-        ),
+        richText: buildRichTextFromPlainTextAndSpans(plainText, spans),
+        spans,
       },
     });
   }, [editingElementId, editingTarget, updateElement]);

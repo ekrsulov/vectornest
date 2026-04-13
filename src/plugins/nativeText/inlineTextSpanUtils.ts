@@ -8,6 +8,9 @@ type SupportedSpan = EditableSpan | EditableTextPathSpan;
 interface SpanDefaults {
   fontWeight?: string;
   fontStyle?: 'normal' | 'italic';
+  fontSize?: number;
+  textDecoration?: 'none' | 'underline' | 'line-through';
+  fillColor?: string;
 }
 
 interface GlyphTransformValues {
@@ -15,6 +18,16 @@ interface GlyphTransformValues {
   dy: number;
   rotate: number;
 }
+
+interface GlyphStyleOverrides {
+  fontWeight?: string;
+  fontStyle?: 'normal' | 'italic';
+  fontSize?: number;
+  textDecoration?: 'none' | 'underline' | 'line-through';
+  fillColor?: string;
+}
+
+const EMPTY_GLYPH_STYLE_OVERRIDES: GlyphStyleOverrides = {};
 
 const parseNumberList = (value?: string): number[] => {
   if (!value || !value.trim()) return [];
@@ -26,6 +39,49 @@ const parseNumberList = (value?: string): number[] => {
 };
 
 const normalizeText = (text: string): string => text.replace(/\r\n/g, '\n');
+
+const escapeHtml = (text: string): string =>
+  text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const normalizeComparableString = (value?: string): string => (value ?? '').trim().toLowerCase();
+
+const getCanonicalFontWeight = (value?: string): string => {
+  if (!value || !value.trim()) {
+    return 'normal';
+  }
+
+  const normalized = normalizeComparableString(value);
+  return normalized === '400' ? 'normal' : normalized;
+};
+
+const getCanonicalFontStyle = (value?: string): string => {
+  if (!value || !value.trim()) {
+    return 'normal';
+  }
+
+  return normalizeComparableString(value);
+};
+
+const getCanonicalTextDecoration = (value?: string): string => {
+  if (!value || !value.trim()) {
+    return 'none';
+  }
+
+  return normalizeComparableString(value);
+};
+
+const getCanonicalColor = (value?: string): string => {
+  if (!value || !value.trim()) {
+    return '';
+  }
+
+  return normalizeComparableString(value);
+};
 
 const trimTrailingZeros = (values: number[]): number[] => {
   let lastIndex = values.length - 1;
@@ -39,6 +95,57 @@ const getRotateValueForGlyph = (values: number[], index: number): number => {
   if (values.length === 0) return 0;
   return values[index] ?? values[values.length - 1] ?? 0;
 };
+
+const buildStyleOverrides = (
+  span: SupportedSpan,
+  defaults: SpanDefaults
+): GlyphStyleOverrides => {
+  const fontWeight = span.fontWeight?.trim();
+  const fontStyle = span.fontStyle?.trim() as GlyphStyleOverrides['fontStyle'] | undefined;
+  const textDecoration = span.textDecoration?.trim() as GlyphStyleOverrides['textDecoration'] | undefined;
+  const fillColor = span.fillColor?.trim();
+  const fontSize = 'fontSize' in span ? span.fontSize : undefined;
+
+  return {
+    fontWeight:
+      fontWeight !== undefined && getCanonicalFontWeight(fontWeight) !== getCanonicalFontWeight(defaults.fontWeight)
+        ? fontWeight
+        : undefined,
+    fontStyle:
+      fontStyle !== undefined && getCanonicalFontStyle(fontStyle) !== getCanonicalFontStyle(defaults.fontStyle)
+        ? fontStyle
+        : undefined,
+    fontSize:
+      fontSize !== undefined && fontSize !== defaults.fontSize
+        ? fontSize
+        : undefined,
+    textDecoration:
+      textDecoration !== undefined &&
+      getCanonicalTextDecoration(textDecoration) !== getCanonicalTextDecoration(defaults.textDecoration)
+        ? textDecoration
+        : undefined,
+    fillColor:
+      fillColor !== undefined && getCanonicalColor(fillColor) !== getCanonicalColor(defaults.fillColor)
+        ? fillColor
+        : undefined,
+  };
+};
+
+const styleOverridesEqual = (left: GlyphStyleOverrides, right: GlyphStyleOverrides): boolean => (
+  left.fontWeight === right.fontWeight &&
+  left.fontStyle === right.fontStyle &&
+  left.fontSize === right.fontSize &&
+  left.textDecoration === right.textDecoration &&
+  left.fillColor === right.fillColor
+);
+
+const hasStyleOverrides = (style: GlyphStyleOverrides): boolean => (
+  style.fontWeight !== undefined ||
+  style.fontStyle !== undefined ||
+  style.fontSize !== undefined ||
+  style.textDecoration !== undefined ||
+  style.fillColor !== undefined
+);
 
 const extractGlyphTransformsByTextIndex = (
   text: string,
@@ -78,6 +185,97 @@ const extractGlyphTransformsByTextIndex = (
   }
 
   return transformsByIndex;
+};
+
+const extractGlyphStylesByTextIndex = (
+  text: string,
+  spans: SupportedSpan[] | undefined,
+  defaults: SpanDefaults
+): Array<GlyphStyleOverrides | undefined> => {
+  const normalizedText = normalizeText(text);
+  const stylesByIndex = Array<GlyphStyleOverrides | undefined>(normalizedText.length).fill(undefined);
+
+  if (!spans || spans.length === 0) {
+    return stylesByIndex;
+  }
+
+  const glyphStream: GlyphStyleOverrides[] = [];
+
+  spans.forEach((span) => {
+    const styleOverrides = buildStyleOverrides(span, defaults);
+    for (let charIndex = 0; charIndex < span.text.length; charIndex += 1) {
+      glyphStream.push(styleOverrides);
+    }
+  });
+
+  let glyphIndex = 0;
+  for (let textIndex = 0; textIndex < normalizedText.length; textIndex += 1) {
+    if (normalizedText[textIndex] === '\n') {
+      continue;
+    }
+
+    stylesByIndex[textIndex] = glyphStream[glyphIndex] ?? EMPTY_GLYPH_STYLE_OVERRIDES;
+    glyphIndex += 1;
+  }
+
+  return stylesByIndex;
+};
+
+const findInheritedStyle = (
+  stylesByIndex: Array<GlyphStyleOverrides | undefined>,
+  lineStartIndex: number,
+  lineEndIndex: number,
+  glyphIndex: number
+): GlyphStyleOverrides => {
+  for (let index = glyphIndex - 1; index >= lineStartIndex; index -= 1) {
+    const style = stylesByIndex[index];
+    if (style) {
+      return style;
+    }
+  }
+
+  for (let index = glyphIndex + 1; index <= lineEndIndex; index += 1) {
+    const style = stylesByIndex[index];
+    if (style) {
+      return style;
+    }
+  }
+
+  return EMPTY_GLYPH_STYLE_OVERRIDES;
+};
+
+const trimTrailingZeroFloats = (values: number[]): string | undefined => {
+  const trimmed = trimTrailingZeros(values);
+  return trimmed.length > 0 ? trimmed.join(' ') : undefined;
+};
+
+const serializeRichTextSpan = (span: EditableSpan): string => {
+  const styles = [
+    span.fontWeight ? `font-weight:${span.fontWeight}` : null,
+    span.fontStyle ? `font-style:${span.fontStyle}` : null,
+    span.textDecoration ? `text-decoration:${span.textDecoration}` : null,
+    span.fillColor ? `color:${span.fillColor}` : null,
+  ].filter(Boolean).join(';');
+  const text = escapeHtml(span.text);
+
+  return styles ? `<span style="${styles}">${text}</span>` : text;
+};
+
+export const buildRichTextFromPlainTextAndSpans = (
+  plainText: string,
+  spans?: EditableSpan[]
+): string => {
+  if (!spans || spans.length === 0) {
+    return escapeHtml(plainText).replace(/\n/g, '<br>');
+  }
+
+  let previousLine = 0;
+
+  return spans.map((span, index) => {
+    const prefix = index === 0 ? '' : '<br>'.repeat(Math.max(0, span.line - previousLine));
+    previousLine = span.line;
+    return `${prefix}${serializeRichTextSpan(span)}`;
+  }).join('');
 };
 
 const mapMatchedIndices = (previousText: string, nextText: string): Map<number, number> => {
@@ -166,11 +364,14 @@ export const buildSpansPreservingGlyphTransforms = (
   const normalizedNextText = normalizeText(nextText);
   const normalizedPreviousText = normalizeText(previousText);
   const previousTransforms = extractGlyphTransformsByTextIndex(normalizedPreviousText, previousSpans);
+  const previousStyles = extractGlyphStylesByTextIndex(normalizedPreviousText, previousSpans, defaults);
   const matchedIndices = mapMatchedIndices(normalizedPreviousText, normalizedNextText);
   const preservedTransformsByNewIndex = Array<GlyphTransformValues | undefined>(normalizedNextText.length).fill(undefined);
+  const preservedStylesByNewIndex = Array<GlyphStyleOverrides | undefined>(normalizedNextText.length).fill(undefined);
 
   matchedIndices.forEach((oldIndex, newIndex) => {
     preservedTransformsByNewIndex[newIndex] = previousTransforms[oldIndex];
+    preservedStylesByNewIndex[newIndex] = previousStyles[oldIndex] ?? EMPTY_GLYPH_STYLE_OVERRIDES;
   });
 
   const lines = normalizedNextText.split('\n');
@@ -178,38 +379,66 @@ export const buildSpansPreservingGlyphTransforms = (
   let globalIndex = 0;
 
   lines.forEach((lineText, lineIndex) => {
-    const dxValues = Array<number>(lineText.length).fill(0);
-    const dyValues = Array<number>(lineText.length).fill(0);
-    const rotateValues = Array<number>(lineText.length).fill(0);
+    const lineStartIndex = globalIndex;
+    const lineEndIndex = lineStartIndex + lineText.length - 1;
+
+    let activeSpan:
+      | (GlyphStyleOverrides & {
+          text: string;
+          line: number;
+          dxValues: number[];
+          dyValues: number[];
+          rotateValues: number[];
+        })
+      | null = null;
+
+    const flushActiveSpan = () => {
+      if (!activeSpan) {
+        return;
+      }
+
+      nextSpans.push({
+        text: activeSpan.text,
+        line: activeSpan.line,
+        fontWeight: activeSpan.fontWeight,
+        fontStyle: activeSpan.fontStyle,
+        fontSize: activeSpan.fontSize,
+        textDecoration: activeSpan.textDecoration,
+        fillColor: activeSpan.fillColor,
+        dx: trimTrailingZeroFloats(activeSpan.dxValues),
+        dy: trimTrailingZeroFloats(activeSpan.dyValues),
+        rotate: trimTrailingZeroFloats(activeSpan.rotateValues),
+      });
+
+      activeSpan = null;
+    };
 
     for (let charIndex = 0; charIndex < lineText.length; charIndex += 1) {
-      const transforms = preservedTransformsByNewIndex[globalIndex];
-      if (transforms) {
-        dxValues[charIndex] = transforms.dx;
-        dyValues[charIndex] = transforms.dy;
-        rotateValues[charIndex] = transforms.rotate;
+      const textIndex = globalIndex;
+      const transforms = preservedTransformsByNewIndex[textIndex];
+      const styleOverrides = preservedStylesByNewIndex[textIndex]
+        ?? findInheritedStyle(preservedStylesByNewIndex, lineStartIndex, lineEndIndex, textIndex);
+
+      if (!activeSpan || !styleOverridesEqual(activeSpan, styleOverrides)) {
+        flushActiveSpan();
+        activeSpan = {
+          ...styleOverrides,
+          text: '',
+          line: lineIndex,
+          dxValues: [],
+          dyValues: [],
+          rotateValues: [],
+        };
       }
+
+      activeSpan.text += lineText[charIndex] ?? '';
+      activeSpan.dxValues.push(transforms?.dx ?? 0);
+      activeSpan.dyValues.push(transforms?.dy ?? 0);
+      activeSpan.rotateValues.push(transforms?.rotate ?? 0);
       globalIndex += 1;
     }
 
-    nextSpans.push({
-      text: lineText,
-      line: lineIndex,
-      fontWeight: defaults.fontWeight,
-      fontStyle: defaults.fontStyle,
-      dx: (() => {
-        const trimmed = trimTrailingZeros(dxValues);
-        return trimmed.length > 0 ? trimmed.join(' ') : undefined;
-      })(),
-      dy: (() => {
-        const trimmed = trimTrailingZeros(dyValues);
-        return trimmed.length > 0 ? trimmed.join(' ') : undefined;
-      })(),
-      rotate: (() => {
-        const trimmed = trimTrailingZeros(rotateValues);
-        return trimmed.length > 0 ? trimmed.join(' ') : undefined;
-      })(),
-    });
+    flushActiveSpan();
 
     if (lineIndex < lines.length - 1) {
       globalIndex += 1;
@@ -217,8 +446,9 @@ export const buildSpansPreservingGlyphTransforms = (
   });
 
   const hasGlyphTransforms = nextSpans.some((span) => span.dx || span.dy || span.rotate);
+  const hasInlineStyleOverrides = nextSpans.some((span) => hasStyleOverrides(span));
 
-  if (nextSpans.length === 1 && !hasGlyphTransforms) {
+  if (nextSpans.length === 1 && !hasGlyphTransforms && !hasInlineStyleOverrides) {
     return undefined;
   }
 

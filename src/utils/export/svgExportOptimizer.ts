@@ -64,6 +64,8 @@ const ID_REF_PATTERNS = [
   /xlink:href="#([^"]+)"/g,
 ];
 
+const INLINE_TEXT_ROOT_TAGS = new Set(['text']);
+
 // ---------------------------------------------------------------------------
 // 1. Remove unreferenced IDs
 // ---------------------------------------------------------------------------
@@ -136,16 +138,34 @@ export function prettifySvg(svg: string): string {
   const lines: string[] = [];
   let depth = 0;
 
-  for (const token of tokens) {
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    const trimmed = token.trim();
+    const tagName = getTagName(trimmed);
+
+    if (
+      trimmed.startsWith('<') &&
+      !trimmed.startsWith('</') &&
+      !trimmed.startsWith('<?') &&
+      !trimmed.startsWith('<!') &&
+      tagName &&
+      INLINE_TEXT_ROOT_TAGS.has(tagName) &&
+      !trimmed.endsWith('/>')
+    ) {
+      const opaqueElement = collectOpaqueElement(tokens, index, tagName);
+      lines.push('  '.repeat(depth) + opaqueElement.markup);
+      index = opaqueElement.endIndex;
+      continue;
+    }
+
     if (token.startsWith('<?') || token.startsWith('<!')) {
       // Processing instruction / doctype — no indent change
-      lines.push(token.trim());
+      lines.push(trimmed);
     } else if (token.startsWith('</')) {
       // Closing tag
       depth = Math.max(0, depth - 1);
-      lines.push('  '.repeat(depth) + token.trim());
+      lines.push('  '.repeat(depth) + trimmed);
     } else if (token.startsWith('<')) {
-      const trimmed = token.trim();
       lines.push('  '.repeat(depth) + trimmed);
       // Self-closing tags don't increase depth
       if (!trimmed.endsWith('/>') && !isVoidSvgElement(trimmed)) {
@@ -161,6 +181,41 @@ export function prettifySvg(svg: string): string {
   }
 
   return lines.join('\n') + '\n';
+}
+
+function getTagName(token: string): string | null {
+  const match = token.match(/^<\/?\s*([a-zA-Z][\w:-]*)/);
+  return match ? match[1] : null;
+}
+
+function collectOpaqueElement(tokens: string[], startIndex: number, rootTagName: string): { markup: string; endIndex: number } {
+  let markup = '';
+  let depth = 0;
+
+  for (let index = startIndex; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    const trimmed = token.trim();
+    const tagName = getTagName(trimmed);
+    markup += token;
+
+    if (!tagName || tagName !== rootTagName) {
+      continue;
+    }
+
+    if (trimmed.startsWith('</')) {
+      depth -= 1;
+      if (depth === 0) {
+        return { markup, endIndex: index };
+      }
+      continue;
+    }
+
+    if (!trimmed.endsWith('/>') && !isVoidSvgElement(trimmed)) {
+      depth += 1;
+    }
+  }
+
+  return { markup, endIndex: tokens.length - 1 };
 }
 
 /** Tokenize SVG string into tags and text runs. */

@@ -236,7 +236,10 @@ export function shapeToNativeText(
             }
 
             const rawText = node.textContent ?? '';
-            const textContent = rawText.trim();
+            const textContent = normalizeInlineTextSegment(rawText, parsedSpans.length > 0);
+            if (!textContent.trim()) {
+                return;
+            }
             const glyphCount = Math.max(1, textContent.length);
 
             // Consume dx

@@ -243,7 +243,7 @@ const createMeasurementText = (
     if (isLineStart) {
       tspan.setAttribute('x', String(data.x));
     }
-    const dyValue = resolveSpanDy(span, spans, data);
+    const dyValue = isLineStart ? resolveSpanDy(span, spans, data) : undefined;
     if (dyValue) tspan.setAttribute('dy', dyValue);
     if (span.dx) tspan.setAttribute('dx', span.dx);
     if (includeRotate && span.rotate) tspan.setAttribute('rotate', span.rotate);

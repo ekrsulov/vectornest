@@ -11,6 +11,7 @@ import {
   createContentEditableRangeFromOffsets,
   getContentEditableSelectionOffsets,
 } from '../../utils/contentEditableSelection';
+import { parseColorOpacity } from '../../utils/svg/parser';
 import { measureNativeTextBounds } from '../../utils/measurementUtils';
 import { elementContributionRegistry } from '../../utils/elementContributionRegistry';
 import {
@@ -78,6 +79,51 @@ const parseNumberList = (value?: string): number[] => {
 const getRotateValueForGlyph = (values: number[], index: number): number => {
   if (values.length === 0) return 0;
   return values[index] ?? values[values.length - 1] ?? 0;
+};
+
+const clampOpacity = (value: number): number => Math.min(1, Math.max(0, value));
+
+const parseRgbComponents = (value: string): [number, number, number] | null => {
+  const rgbMatch = value.match(/^rgb\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*\)$/i);
+  if (rgbMatch) {
+    return [Number(rgbMatch[1]), Number(rgbMatch[2]), Number(rgbMatch[3])];
+  }
+
+  const hexMatch = value.match(/^#([a-f\d]{3}|[a-f\d]{6})$/i);
+  if (!hexMatch) {
+    return null;
+  }
+
+  const hex = hexMatch[1].length === 3
+    ? hexMatch[1].split('').map((char) => `${char}${char}`).join('')
+    : hexMatch[1];
+
+  return [
+    parseInt(hex.slice(0, 2), 16),
+    parseInt(hex.slice(2, 4), 16),
+    parseInt(hex.slice(4, 6), 16),
+  ];
+};
+
+const resolveCssColorWithOpacity = (color?: string, opacity?: number): string | undefined => {
+  if (!color || color === 'none') {
+    return undefined;
+  }
+
+  const { color: parsedColor, opacity: parsedOpacity } = parseColorOpacity(color);
+  const baseColor = parsedColor ?? color;
+  const effectiveOpacity = clampOpacity((opacity ?? 1) * (parsedOpacity ?? 1));
+
+  if (effectiveOpacity >= 1) {
+    return baseColor;
+  }
+
+  const rgb = parseRgbComponents(baseColor);
+  if (!rgb) {
+    return baseColor;
+  }
+
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${effectiveOpacity})`;
 };
 
 const serializeStyle = (style: Record<string, string | number | undefined>) => Object.entries(style)
@@ -497,6 +543,8 @@ const buildInitialEditorHtml = (
   const spans = resolveVisualSpans(data);
   const lines = new Map<number, string[]>();
   const desiredLineOffsets = computeDesiredLineOffsets(data, bounds, lineBoxes, glyphMetrics, paddingX, paddingY);
+  const strokeWidth = data.strokeWidth ?? 0;
+  const strokeColor = resolveCssColorWithOpacity(data.strokeColor, data.strokeOpacity);
   let glyphCursor = 0;
 
   spans.forEach((span) => {
@@ -531,6 +579,8 @@ const buildInitialEditorHtml = (
         'font-style': span.fontStyle,
         'text-decoration': span.textDecoration !== 'none' ? span.textDecoration : undefined,
         color: span.fillColor,
+        '-webkit-text-stroke-width': strokeWidth > 0 ? `${strokeWidth}px` : undefined,
+        '-webkit-text-stroke-color': strokeColor,
         transform: rotate !== 0 ? `rotate(${rotate}deg)` : undefined,
         'transform-origin': rotate !== 0 ? `${glyphMetric.originX}px ${glyphMetric.originY}px` : undefined,
         'line-height': '1',
@@ -1212,6 +1262,8 @@ export const NativeTextInlineEditorLayer: React.FC = () => {
               margin: 0,
               background: 'transparent',
               color: element.data.fillColor ?? 'var(--chakra-colors-chakra-body-text, #1A202C)',
+              WebkitTextStrokeWidth: (element.data.strokeWidth ?? 0) > 0 ? `${element.data.strokeWidth ?? 0}px` : undefined,
+              WebkitTextStrokeColor: resolveCssColorWithOpacity(element.data.strokeColor, element.data.strokeOpacity),
               caretColor: 'var(--chakra-colors-blue-500, #3182CE)',
               boxShadow: 'none',
               fontFamily: element.data.fontFamily,
